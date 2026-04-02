@@ -1,0 +1,6 @@
+﻿Usage: insforge storage buckets [options]
+
+List all storage buckets
+
+Options:
+  -h, --help  display help for command
