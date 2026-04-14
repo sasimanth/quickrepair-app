@@ -1,4 +1,5 @@
-export { default as api } from './api';
+import api from './api';
+export { api };
 
 export const login = async (credentials) => {
   const response = await api.post('/auth/login', credentials);

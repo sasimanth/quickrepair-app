@@ -1,6 +1,8 @@
 import { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
-import { insforge } from '../services/insforge';
+import { Wrench, Mail, Lock, ArrowRight, Loader2 } from 'lucide-react';
+
+import { login } from '../services/auth';
 
 const Login = () => {
   const [formData, setFormData] = useState({
@@ -21,115 +23,108 @@ const Login = () => {
     setLoading(true);
     
     try {
-      const { data, error: loginError } = await insforge.auth.signInWithPassword({
+      const data = await login({
         email: formData.email,
         password: formData.password
       });
 
-      if (loginError) throw loginError;
-
-      let role = data.user.user_metadata?.role || data.user.app_metadata?.role || 'user';
-      if (data.user.email?.includes('+admin') || data.user.email?.startsWith('admin')) role = 'admin';
-      if (data.user.email?.includes('+tech') || data.user.email?.startsWith('tech')) role = 'technician';
+      let role = data.role || 'user';
       navigate(role === 'admin' ? '/admin-dashboard' : role === 'technician' ? '/technician-dashboard' : '/dashboard');
       window.location.reload();
     } catch (err) {
       if (err.status === 403) {
          setError('Your email is not verified. Please complete sign up verification.');
       } else {
-         setError(err.message || 'Failed to login');
+         setError(err.response?.data?.message || err.message || 'Failed to login');
       }
     } finally {
       setLoading(false);
     }
   };
 
-  const handleOAuthLogin = async (provider) => {
-    try {
-      await insforge.auth.signInWithOAuth({
-        provider: provider,
-        redirectTo: window.location.origin
-      });
-    } catch (err) {
-      setError(`Failed to login with ${provider}`);
-    }
-  };
 
   return (
-    <div className="max-w-md mx-auto mt-10 p-8 bg-white rounded-xl shadow-md border border-gray-100">
-      <h2 className="text-3xl font-bold text-center text-gray-800 mb-6">Welcome Back</h2>
+    <div className="relative min-h-[85vh] flex items-center justify-center p-4 overflow-hidden">
+      {/* Background Orbs */}
+      <div className="absolute top-0 right-10 w-96 h-96 bg-gradient-to-br from-indigo-500/20 to-purple-500/0 rounded-full blur-3xl -z-10 animate-pulse" style={{ animationDuration: '7s' }}></div>
+      <div className="absolute bottom-10 left-10 w-80 h-80 bg-gradient-to-tr from-blue-400/20 to-cyan-400/0 rounded-full blur-3xl -z-10 animate-pulse" style={{ animationDuration: '10s' }}></div>
       
-      {error && (
-        <div className="bg-red-50 text-red-600 p-3 rounded-md mb-4 text-sm border border-red-200">
-          {error}
+      <div className="w-full max-w-lg bg-white/70 backdrop-blur-xl rounded-[2.5rem] shadow-2xl shadow-indigo-900/10 border border-white/50 p-8 sm:p-12 animate-in zoom-in-95 duration-500">
+        
+        <div className="text-center mb-10">
+          <div className="w-16 h-16 bg-gradient-to-br from-blue-600 to-indigo-600 rounded-2xl flex items-center justify-center mx-auto mb-6 shadow-xl shadow-blue-500/30 transform -rotate-6 hover:rotate-0 transition-transform duration-300">
+            <Wrench className="text-white w-8 h-8" />
+          </div>
+          <h2 className="text-3xl font-extrabold text-slate-900 tracking-tight">Welcome Back</h2>
+          <p className="text-slate-500 font-medium mt-2">Sign in to manage your repair requests</p>
         </div>
-      )}
+        
+        {error && (
+          <div className="bg-rose-50 text-rose-600 p-4 rounded-xl mb-6 text-sm font-bold border border-rose-100 flex items-center gap-2 animate-in fade-in slide-in-from-top-2">
+            <span className="w-5 h-5 rounded-full bg-rose-200 flex items-center justify-center text-rose-700 text-xs text-center border border-rose-300">!</span>
+            {error}
+          </div>
+        )}
 
-      <form onSubmit={handleLogin} className="space-y-4">
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">Email</label>
-          <input
-            type="email"
-            name="email"
-            required
-            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
-            placeholder="you@example.com"
-            value={formData.email}
-            onChange={handleChange}
-          />
-        </div>
+        <form onSubmit={handleLogin} className="space-y-5">
+          <div className="space-y-1">
+            <label className="text-sm font-bold text-slate-700 ml-1">Email Address</label>
+            <div className="relative group">
+              <Mail className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-blue-600 transition-colors" size={20} />
+              <input
+                type="email"
+                name="email"
+                required
+                className="w-full pl-12 pr-4 py-3.5 bg-white/80 border-2 border-slate-100 focus:border-blue-500 rounded-2xl focus:ring-4 focus:ring-blue-50 transition-all font-medium text-slate-800 outline-none"
+                placeholder="hello@quickrepair.com"
+                value={formData.email}
+                onChange={handleChange}
+              />
+            </div>
+          </div>
 
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">Password</label>
-          <input
-            type="password"
-            name="password"
-            required
-            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
-            placeholder="••••••••"
-            value={formData.password}
-            onChange={handleChange}
-          />
-        </div>
+          <div className="space-y-1">
+            <div className="flex items-center justify-between ml-1">
+              <label className="text-sm font-bold text-slate-700">Password</label>
+              <a href="#" className="text-xs font-bold text-indigo-600 hover:text-indigo-500 transition-colors">Forgot password?</a>
+            </div>
+            <div className="relative group">
+              <Lock className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-blue-600 transition-colors" size={20} />
+              <input
+                type="password"
+                name="password"
+                required
+                className="w-full pl-12 pr-4 py-3.5 bg-white/80 border-2 border-slate-100 focus:border-blue-500 rounded-2xl focus:ring-4 focus:ring-blue-50 transition-all font-medium text-slate-800 outline-none"
+                placeholder="••••••••"
+                value={formData.password}
+                onChange={handleChange}
+              />
+            </div>
+          </div>
 
-        <button
-          type="submit"
-          disabled={loading}
-          className={`w-full py-3 rounded-lg text-white font-medium transition-colors mb-4 ${loading ? 'bg-blue-400 cursor-not-allowed' : 'bg-blue-600 hover:bg-blue-700'}`}
-        >
-          {loading ? 'Signing in...' : 'Sign In'}
-        </button>
-      </form>
-      
-      <div className="relative flex items-center py-5">
-        <div className="flex-grow border-t border-gray-300"></div>
-        <span className="flex-shrink-0 mx-4 text-gray-400 text-sm">Or continue with</span>
-        <div className="flex-grow border-t border-gray-300"></div>
+          <button
+            type="submit"
+            disabled={loading}
+            className={`w-full py-4 mt-2 rounded-2xl text-white font-bold text-lg shadow-xl outline-none transition-all duration-300 flex items-center justify-center gap-2 group ${
+              loading ? 'bg-slate-300 shadow-none cursor-not-allowed' : 'bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 hover:shadow-indigo-500/30 transform hover:-translate-y-1'
+            }`}
+          >
+            {loading ? (
+              <><Loader2 className="animate-spin" size={22} /> Authenticating...</>
+            ) : (
+              <>Sign In <ArrowRight className="group-hover:translate-x-1 transition-transform" size={20}/></>
+            )}
+          </button>
+        </form>
+        
+
+        <p className="mt-10 text-center text-slate-500 font-medium">
+          New to QuickRepair?{' '}
+          <Link to="/signup" className="text-blue-600 font-bold hover:text-blue-700 hover:underline transition-colors">
+            Create an account
+          </Link>
+        </p>
       </div>
-      
-      <div className="grid grid-cols-2 gap-4">
-        <button 
-          onClick={() => handleOAuthLogin('google')}
-          className="flex justify-center items-center py-2.5 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
-        >
-          <img src="https://www.svgrepo.com/show/475656/google-color.svg" className="h-5 w-5 mr-2" alt="Google" />
-          <span className="text-sm font-medium text-gray-700">Google</span>
-        </button>
-        <button 
-          onClick={() => handleOAuthLogin('github')}
-          className="flex justify-center items-center py-2.5 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
-        >
-          <img src="https://www.svgrepo.com/show/512317/github-142.svg" className="h-5 w-5 mr-2" alt="GitHub" />
-          <span className="text-sm font-medium text-gray-700">GitHub</span>
-        </button>
-      </div>
-
-      <p className="mt-8 text-center text-gray-600">
-        Don't have an account?{' '}
-        <Link to="/signup" className="text-blue-600 font-medium hover:underline">
-          Sign up
-        </Link>
-      </p>
     </div>
   );
 };

@@ -2,15 +2,28 @@ const mongoose = require('mongoose');
 
 const bookingSchema = new mongoose.Schema({
   userId: {
-    type: String, // Accepts UUID from InsForge
-    required: true,
+    type: String, // Kept as String to maintain backward compatibility with legacy BSON data
+    default: null,
   },
   userEmail: {
-    type: String, // Denormalized for rendering
+    type: String,
+    default: null,
+  },
+  name: {
+    type: String,
+    required: true,
+  },
+  phone: {
+    type: String,
+    required: true,
   },
   serviceId: {
     type: mongoose.Schema.Types.ObjectId,
     ref: 'Service',
+    default: null, // Allow null if using string-based service matching
+  },
+  serviceName: {
+    type: String,
     required: true,
   },
   providerId: {
@@ -23,7 +36,7 @@ const bookingSchema = new mongoose.Schema({
   },
   status: {
     type: String,
-    enum: ['pending', 'accepted', 'completed', 'rejected'],
+    enum: ['pending', 'queued', 'assigned', 'accepted', 'in_progress', 'quote_pending', 'completed', 'rejected'],
     default: 'pending',
   },
   date: {
@@ -32,21 +45,53 @@ const bookingSchema = new mongoose.Schema({
   },
   deviceType: {
     type: String,
-    required: true,
+    default: 'Unknown Device',
   },
   problemDescription: {
     type: String,
-    required: true,
+    required: true, // Will map to 'problem' from BookingFlow
+  },
+  problemId: {
+    type: String,
+    default: null,
   },
   location: {
     type: String,
-    required: true,
+    required: true, // Will map to 'address' from BookingFlow
+  },
+  timeSlot: {
+    type: String,
+    default: 'ASAP'
+  },
+  estimatedArrivalTime: {
+    type: Date,
+    default: null
+  },
+  isQueued: {
+    type: Boolean,
+    default: false
   },
   imageUrl: {
     type: String,
     default: '',
   },
   isReviewed: {
+    type: Boolean,
+    default: false
+  },
+  finalQuote: {
+    type: Number,
+    default: null
+  },
+  quoteReason: {
+    type: String,
+    default: null
+  },
+  quotePhoto: {
+    type: String,
+    default: null
+  },
+  quoteApproved: {
     type: Boolean,
     default: false
   },
@@ -83,6 +128,38 @@ const bookingSchema = new mongoose.Schema({
   suggestedTools: {
     type: [String],
     default: []
+  },
+  paymentStatus: {
+    type: String,
+    enum: ['pending', 'completed', 'failed', 'refunded'],
+    default: 'pending'
+  },
+  paymentMethod: {
+    type: String,
+    enum: ['card', 'cash', 'upi', 'mock'],
+    default: 'mock'
+  },
+  transactionId: {
+    type: String,
+    default: null
+  },
+  amount: {
+    type: Number,
+    default: 0
+  },
+  areaType: {
+    type: String,
+    enum: ['campus', 'nearby', 'far'],
+    default: 'nearby'
+  },
+  transportCharge: {
+    type: Number,
+    default: 50
+  },
+  transportOption: {
+    type: String,
+    enum: ['shop', 'doorstep'],
+    default: 'doorstep'
   }
 }, { timestamps: true });
 

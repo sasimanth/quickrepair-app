@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
-import { insforge } from '../services/insforge';
+import { Wrench, Mail, Lock, User, Phone, Briefcase, MapPin, ArrowRight, Loader2, KeyRound } from 'lucide-react';
+import { register } from '../services/auth';
 
 const Signup = () => {
   const [formData, setFormData] = useState({
@@ -15,8 +16,6 @@ const Signup = () => {
   
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
-  const [requiresVerification, setRequiresVerification] = useState(false);
-  const [otpCode, setOtpCode] = useState('');
   const navigate = useNavigate();
 
   const handleChange = (e) => {
@@ -29,162 +28,126 @@ const Signup = () => {
     setLoading(true);
     
     try {
-      const { data, error: signupError } = await insforge.auth.signUp({
+      const data = await register({
+        name: formData.name,
         email: formData.email,
+        phone: formData.phone,
         password: formData.password,
-        options: {
-          data: {
-            name: formData.name,
-            phone: formData.phone,
-            role: formData.role,
-            skills: formData.skills,
-            location: formData.location
-          }
-        }
+        role: formData.role,
+        skills: formData.skills,
+        location: formData.location
       });
       
-      if (signupError) throw signupError;
-
-      if (data?.requireEmailVerification) {
-        setRequiresVerification(true);
-      } else if (data?.session || data?.user) {
-        let role = data.user.user_metadata?.role || data.user.app_metadata?.role || 'user';
-        if (data.user.email?.includes('+admin') || data.user.email?.startsWith('admin')) role = 'admin';
-        if (data.user.email?.includes('+tech') || data.user.email?.startsWith('tech')) role = 'technician';
-        navigate(role === 'admin' ? '/admin-dashboard' : role === 'technician' ? '/technician-dashboard' : '/dashboard');
-        window.location.reload();
-      }
-    } catch (err) {
-      setError(err.message || 'Failed to register');
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const handleVerify = async (e) => {
-    e.preventDefault();
-    setError('');
-    setLoading(true);
-
-    try {
-      const { data, error: verifyError } = await insforge.auth.verifyEmail({
-        email: formData.email,
-        otp: otpCode
-      });
-
-      if (verifyError) throw verifyError;
-
-      let role = data.user.user_metadata?.role || data.user.app_metadata?.role || 'user';
-      if (data.user.email?.includes('+admin') || data.user.email?.startsWith('admin')) role = 'admin';
-      if (data.user.email?.includes('+tech') || data.user.email?.startsWith('tech')) role = 'technician';
+      let role = data.role || 'user';
       navigate(role === 'admin' ? '/admin-dashboard' : role === 'technician' ? '/technician-dashboard' : '/dashboard');
       window.location.reload();
     } catch (err) {
-      setError(err.message || 'Failed to verify email');
+      setError(err.response?.data?.message || err.message || 'Failed to register');
     } finally {
       setLoading(false);
     }
   };
 
-  if (requiresVerification) {
-    return (
-      <div className="max-w-md mx-auto mt-10 p-8 bg-white rounded-xl shadow-md border border-gray-100 mb-10">
-        <h2 className="text-3xl font-bold text-center text-gray-800 mb-6">Verify your email</h2>
-        <p className="text-center text-gray-600 mb-6">We sent a 6-digit code to <span className="font-semibold">{formData.email}</span>.</p>
-        
-        {error && (
-          <div className="bg-red-50 text-red-600 p-3 rounded-md mb-4 text-sm border border-red-200">
-            {error}
-          </div>
-        )}
-
-        <form onSubmit={handleVerify} className="space-y-4">
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Verification Code</label>
-            <input 
-              type="text" 
-              required 
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500 text-center tracking-widest text-2xl font-mono" 
-              value={otpCode} 
-              onChange={(e) => setOtpCode(e.target.value)} 
-              maxLength={6} 
-              placeholder="000000"
-            />
-          </div>
-          <button type="submit" disabled={loading} className={`w-full py-3 mt-4 rounded-lg text-white font-medium transition-colors ${loading ? 'bg-blue-400' : 'bg-blue-600 hover:bg-blue-700'}`}>
-            {loading ? 'Verifying...' : 'Verify & Complete'}
-          </button>
-        </form>
-      </div>
-    );
-  }
 
   return (
-    <div className="max-w-lg mx-auto mt-10 p-8 bg-white rounded-xl shadow-md border border-gray-100 mb-10">
-      <h2 className="text-3xl font-bold text-center text-gray-800 mb-6">Create an Account</h2>
+    <div className="relative min-h-[90vh] flex items-center justify-center p-4 overflow-hidden mb-12">
+      {/* Background Orbs */}
+      <div className="absolute top-10 right-20 w-[500px] h-[500px] bg-gradient-to-br from-indigo-500/20 to-purple-500/0 rounded-full blur-[100px] -z-10 animate-pulse" style={{ animationDuration: '8s' }}></div>
+      <div className="absolute bottom-10 left-10 w-[400px] h-[400px] bg-gradient-to-tr from-emerald-400/20 to-cyan-400/0 rounded-full blur-[100px] -z-10 animate-pulse" style={{ animationDuration: '12s' }}></div>
       
-      {error && (
-        <div className="bg-red-50 text-red-600 p-3 rounded-md mb-4 text-sm border border-red-200">
-          {error}
-        </div>
-      )}
-
-      <form onSubmit={handleSignup} className="space-y-4">
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Full Name</label>
-            <input type="text" name="name" required className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500" value={formData.name} onChange={handleChange} />
-          </div>
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Phone Number</label>
-            <input type="text" name="phone" required className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500" value={formData.phone} onChange={handleChange} />
-          </div>
-        </div>
-
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">Email Address</label>
-          <input type="email" name="email" required className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500" value={formData.email} onChange={handleChange} />
-        </div>
-
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">Password</label>
-          <input type="password" name="password" required className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500" value={formData.password} onChange={handleChange} />
-        </div>
-
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">I want to register as a:</label>
-          <select name="role" className="w-full px-4 py-2 border border-gray-300 rounded-lg bg-white focus:ring-blue-500 focus:border-blue-500" value={formData.role} onChange={handleChange}>
-            <option value="user">Customer (Need a repair)</option>
-            <option value="technician">Technician (Provide repairs)</option>
-            <option value="admin">Administrator</option>
-          </select>
-        </div>
-
-        {formData.role === 'technician' && (
-          <div className="p-4 bg-blue-50 rounded-lg space-y-4 border border-blue-100">
-            <h4 className="font-semibold text-blue-800">Technician Details</h4>
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Skills (comma separated)</label>
-              <input type="text" name="skills" placeholder="e.g. Mobile Repair, Laptops, MacBooks" className="w-full px-4 py-2 border border-blue-200 rounded-lg focus:ring-blue-500 focus:border-blue-500" value={formData.skills} onChange={handleChange} required={formData.role === 'technician'} />
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Location/City Service Area</label>
-              <input type="text" name="location" placeholder="e.g. New York, Downtown" className="w-full px-4 py-2 border border-blue-200 rounded-lg focus:ring-blue-500 focus:border-blue-500" value={formData.location} onChange={handleChange} required={formData.role === 'technician'} />
-            </div>
-          </div>
+      <div className="w-full max-w-2xl bg-white/70 backdrop-blur-2xl rounded-[2.5rem] shadow-2xl shadow-slate-300/30 border border-white p-8 sm:p-12 animate-in slide-in-from-bottom-8 duration-700">
+        <h2 className="text-4xl font-extrabold text-slate-900 tracking-tight mb-2">Create an Account</h2>
+        <p className="text-slate-500 font-medium mb-8">Join thousands of others upgrading their tech instantly.</p>
+        
+        {error && (
+           <div className="bg-rose-50 text-rose-600 p-4 rounded-xl mb-6 text-sm font-bold border border-rose-100 flex items-center gap-2 mb-8">
+             <span className="w-5 h-5 rounded-full bg-rose-200 flex items-center justify-center text-rose-700 text-xs border border-rose-300">!</span>
+             {error}
+           </div>
         )}
 
-        <button type="submit" disabled={loading} className={`w-full py-3 mt-4 rounded-lg text-white font-medium transition-colors ${loading ? 'bg-blue-400' : 'bg-blue-600 hover:bg-blue-700'}`}>
-          {loading ? 'Creating Account...' : 'Sign Up'}
-        </button>
-      </form>
-      
-      <p className="mt-6 text-center text-gray-600">
-        Already have an account?{' '}
-        <Link to="/login" className="text-blue-600 font-medium hover:underline">
-          Sign In
-        </Link>
-      </p>
+        <form onSubmit={handleSignup} className="space-y-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div className="space-y-1">
+              <label className="text-xs font-bold text-slate-500 uppercase tracking-widest ml-1">Full Name</label>
+              <div className="relative group">
+                <User className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-indigo-600 transition-colors" size={18} />
+                <input type="text" name="name" required className="w-full pl-11 pr-4 py-3.5 bg-white/80 border-2 border-slate-100 focus:border-indigo-500 rounded-2xl focus:ring-4 focus:ring-indigo-50 transition-all font-medium text-slate-800 outline-none" placeholder="John Doe" value={formData.name} onChange={handleChange} />
+              </div>
+            </div>
+            <div className="space-y-1">
+              <label className="text-xs font-bold text-slate-500 uppercase tracking-widest ml-1">Phone Number</label>
+              <div className="relative group">
+                <Phone className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-indigo-600 transition-colors" size={18} />
+                <input type="text" name="phone" required className="w-full pl-11 pr-4 py-3.5 bg-white/80 border-2 border-slate-100 focus:border-indigo-500 rounded-2xl focus:ring-4 focus:ring-indigo-50 transition-all font-medium text-slate-800 outline-none" placeholder="+1 (555) 000-0000" value={formData.phone} onChange={handleChange} />
+              </div>
+            </div>
+          </div>
+
+          <div className="space-y-1">
+            <label className="text-xs font-bold text-slate-500 uppercase tracking-widest ml-1">Email Address</label>
+            <div className="relative group">
+              <Mail className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-indigo-600 transition-colors" size={18} />
+              <input type="email" name="email" required className="w-full pl-11 pr-4 py-3.5 bg-white/80 border-2 border-slate-100 focus:border-indigo-500 rounded-2xl focus:ring-4 focus:ring-indigo-50 transition-all font-medium text-slate-800 outline-none" placeholder="hello@quickrepair.com" value={formData.email} onChange={handleChange} />
+            </div>
+          </div>
+
+          <div className="space-y-1">
+            <label className="text-xs font-bold text-slate-500 uppercase tracking-widest ml-1">Secure Password</label>
+            <div className="relative group">
+              <Lock className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-indigo-600 transition-colors" size={18} />
+              <input type="password" name="password" required className="w-full pl-11 pr-4 py-3.5 bg-white/80 border-2 border-slate-100 focus:border-indigo-500 rounded-2xl focus:ring-4 focus:ring-indigo-50 transition-all font-medium text-slate-800 outline-none" placeholder="••••••••" value={formData.password} onChange={handleChange} />
+            </div>
+          </div>
+
+          <div className="space-y-1 pt-2">
+            <label className="text-xs font-bold text-slate-500 uppercase tracking-widest ml-1 mb-2 block">Account Type</label>
+            <div className="relative">
+              <select name="role" className="w-full px-4 py-4 border-2 border-slate-100 rounded-2xl bg-slate-50/50 hover:bg-slate-100 focus:border-indigo-500 focus:ring-4 focus:ring-indigo-50 font-bold text-slate-700 outline-none transition-all cursor-pointer appearance-none" value={formData.role} onChange={handleChange}>
+                <option value="user">🛠️ Customer (I need a repair)</option>
+                <option value="technician">💼 Technician (I can fix things)</option>
+                <option value="admin">🔒 Administrator</option>
+              </select>
+              <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-5 text-slate-500">
+                <svg className="fill-current h-4 w-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20"><path d="M9.293 12.95l.707.707L15.657 8l-1.414-1.414L10 10.828 5.757 6.586 4.343 8z"/></svg>
+              </div>
+            </div>
+          </div>
+
+          {formData.role === 'technician' && (
+            <div className="p-6 bg-indigo-50/50 rounded-3xl space-y-5 border border-indigo-100/50 animate-in fade-in slide-in-from-top-4">
+              <h4 className="font-extrabold text-indigo-900 border-b border-indigo-100 pb-2">Technician Onboarding</h4>
+              <div className="space-y-4">
+                <div className="space-y-1">
+                  <label className="text-xs font-bold text-indigo-400 uppercase tracking-widest ml-1">Primary Skills</label>
+                  <div className="relative group">
+                    <Briefcase className="absolute left-4 top-1/2 -translate-y-1/2 text-indigo-300" size={18} />
+                    <input type="text" name="skills" placeholder="Mobile Repair, Laptops..." className="w-full pl-11 pr-4 py-3 bg-white border border-indigo-100 rounded-xl focus:border-indigo-500 focus:ring-2 focus:ring-indigo-100 transition-all text-sm font-medium outline-none" value={formData.skills} onChange={handleChange} required={formData.role === 'technician'} />
+                  </div>
+                </div>
+                <div className="space-y-1">
+                  <label className="text-xs font-bold text-indigo-400 uppercase tracking-widest ml-1">Service Area</label>
+                  <div className="relative group">
+                    <MapPin className="absolute left-4 top-1/2 -translate-y-1/2 text-indigo-300" size={18} />
+                    <input type="text" name="location" placeholder="e.g. San Francisco, CA" className="w-full pl-11 pr-4 py-3 bg-white border border-indigo-100 rounded-xl focus:border-indigo-500 focus:ring-2 focus:ring-indigo-100 transition-all text-sm font-medium outline-none" value={formData.location} onChange={handleChange} required={formData.role === 'technician'} />
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
+
+          <button type="submit" disabled={loading} className={`w-full py-4 mt-6 rounded-2xl text-white font-bold text-lg shadow-xl outline-none transition-all duration-300 flex items-center justify-center gap-2 group ${loading ? 'bg-slate-300 shadow-none cursor-not-allowed' : 'bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 hover:shadow-indigo-500/30 transform hover:-translate-y-1'}`}>
+            {loading ? <><Loader2 className="animate-spin" size={22} /> Setting things up...</> : <>Complete Registration <ArrowRight className="group-hover:translate-x-1" size={20}/></>}
+          </button>
+        </form>
+        
+        <p className="mt-8 text-center text-slate-500 font-medium">
+          Already have an account?{' '}
+          <Link to="/login" className="text-indigo-600 font-bold hover:text-indigo-700 hover:underline transition-colors">
+            Sign In instantly
+          </Link>
+        </p>
+      </div>
     </div>
   );
 };

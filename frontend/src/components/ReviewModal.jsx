@@ -20,9 +20,7 @@ const ReviewModal = ({ booking, onClose, onSuccess }) => {
     try {
       await api.post(`/reviews/${booking._id}`, { rating, comment });
       setSuccess(true);
-      setTimeout(() => {
-        onSuccess(booking._id);
-      }, 2000);
+      // Wait for user to interact with the success modal (Google review link or close button)
     } catch (error) {
       console.error(error);
       alert(error.response?.data?.message || "Failed to submit review.");
@@ -35,10 +33,27 @@ const ReviewModal = ({ booking, onClose, onSuccess }) => {
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 backdrop-blur-sm p-4 animate-in fade-in duration-200">
       <div className="bg-white w-full max-w-md rounded-2xl shadow-2xl border border-slate-200 overflow-hidden relative transform transition-all">
         {success ? (
-          <div className="flex flex-col items-center justify-center py-12 px-6">
+          <div className="flex flex-col items-center justify-center py-12 px-6 relative animate-in fade-in zoom-in-95 duration-300">
+            <button onClick={() => onSuccess(booking._id)} className="absolute top-4 right-4 p-2 text-slate-400 hover:text-slate-600 hover:bg-slate-100 rounded-full transition-colors">
+              <X size={20} />
+            </button>
             <CheckCircle className="text-emerald-500 w-16 h-16 mb-4 animate-[bounce_1s_ease-in-out]" />
-            <h3 className="text-2xl font-bold text-slate-800 mb-2">Review Submitted!</h3>
-            <p className="text-slate-500 text-center">Thank you for sharing your experience to help our community.</p>
+            <h3 className="text-2xl font-bold text-slate-800 mb-2">Feedback Checked In!</h3>
+            {rating <= 3 ? (
+              <div className="bg-rose-50 border border-rose-200 mt-2 p-4 rounded-xl w-full">
+                <p className="text-rose-800 text-center text-xs font-bold leading-relaxed">
+                  We take bad experiences very seriously. A senior support rep has been instantly notified and will reach out to you within 60 minutes to resolve your issue.
+                </p>
+              </div>
+            ) : (
+              <div className="text-center mt-2 w-full">
+                <p className="text-slate-500 text-sm font-medium mb-6">We're totally thrilled you loved your repair. As a growing startup, public word-of-mouth means the world to us!</p>
+                <button onClick={() => { window.open('https://google.com/search?q=quickrepair+reviews', '_blank'); onSuccess(booking._id); }} className="w-full bg-slate-900 hover:bg-slate-800 text-white font-black tracking-wide py-3.5 px-6 rounded-xl shadow-lg shadow-slate-900/20 text-sm transition-transform active:scale-95 mb-4 border border-slate-700">
+                   ⭐ Post on Google Reviews
+                </button>
+                <button onClick={() => onSuccess(booking._id)} className="text-slate-400 hover:text-slate-600 text-sm font-bold block w-full">Maybe Later</button>
+              </div>
+            )}
           </div>
         ) : (
           <>

@@ -39,6 +39,24 @@ const createReview = async (req, res) => {
       comment
     });
 
+    // Import Technician inside the function to avoid circular dependency issues if any
+    const Technician = require('../models/Technician');
+    
+    // Find technician and update rating
+    const techUserId = booking.providerId;
+    const technician = await Technician.findOne({ userId: techUserId });
+    
+    if (technician) {
+       const currentCount = technician.reviewCount || 0;
+       const currentTotalRating = (technician.rating || 5) * currentCount;
+       const newCount = currentCount + 1;
+       const newRating = (currentTotalRating + Number(rating)) / newCount;
+       
+       technician.reviewCount = newCount;
+       technician.rating = Math.round(newRating * 10) / 10; // keep one decimal
+       await technician.save();
+    }
+
     // Mark booking as reviewed
     booking.isReviewed = true;
     await booking.save();

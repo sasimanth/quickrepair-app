@@ -1,16 +1,15 @@
 import { useState, useEffect } from 'react';
+import { Link } from 'react-router-dom';
 import api from '../services/api'; 
-import { Calendar, MapPin, Smartphone, AlertCircle, Clock, CheckCircle, PackageSearch, XCircle, Plus, LayoutDashboard, Wrench, Settings, Star, User, ChevronRight, MessageSquare, Camera, UploadCloud, Loader2, Shield, HelpCircle, Truck, Home } from 'lucide-react';
+import { Calendar, MapPin, Smartphone, AlertCircle, Clock, CheckCircle, PackageSearch, XCircle, Plus, LayoutDashboard, Wrench, Settings, Star, User, ChevronRight, MessageSquare, Camera, UploadCloud, Loader2, Shield, ShieldCheck, HelpCircle, Truck, Home } from 'lucide-react';
 import ChatModal from '../components/ChatModal';
 import ReviewModal from '../components/ReviewModal';
+import PaymentModal from '../components/PaymentModal';
+import SettingsModal from '../components/SettingsModal';
+import { CreditCard, Sparkles } from 'lucide-react';
+import { socket } from '../services/socket';
+import LoadingSkeleton from '../components/LoadingSkeleton';
 
-const MOCK_TECHNICIANS = [
-  { id: 'tech-1', name: 'Alex Fixes', rating: 4.9, experience: '5 years', distance: '1.2 miles', jobsCompleted: 342, avatar: '👤' },
-  { id: 'tech-2', name: 'Sarah Tech Pro', rating: 4.8, experience: '8 years', distance: '2.1 miles', jobsCompleted: 890, avatar: '👩‍🔧' },
-  { id: 'tech-3', name: 'Mike Electronics', rating: 4.6, experience: '3 years', distance: '3.5 miles', jobsCompleted: 156, avatar: '👨‍🔧' },
-  { id: 'tech-4', name: 'James QuickRepair', rating: 4.9, experience: '12 years', distance: '0.8 miles', jobsCompleted: 1102, avatar: '👨‍🚀' },
-  { id: 'tech-5', name: 'Emma Displays', rating: 4.7, experience: '4 years', distance: '2.8 miles', jobsCompleted: 430, avatar: '👩‍🎤' }
-];
 
 const UserDashboard = () => {
   const [bookings, setBookings] = useState([]);
@@ -25,7 +24,11 @@ const UserDashboard = () => {
   const [selectedTech, setSelectedTech] = useState(null);
   const [chatBookingId, setChatBookingId] = useState(null);
   const [reviewBooking, setReviewBooking] = useState(null);
+  const [paymentBooking, setPaymentBooking] = useState(null);
   const [uploadingImage, setUploadingImage] = useState(false);
+  const [showSettings, setShowSettings] = useState(false);
+  const [liveLocations, setLiveLocations] = useState({}); // { techId: [lat, lng] }
+  const [profile, setProfile] = useState(null);
 
   const [formData, setFormData] = useState({
     serviceId: '', date: '', deviceType: '', problemDescription: '', location: '', imageUrl: '',
@@ -37,11 +40,25 @@ const UserDashboard = () => {
     isUnderWarranty: false
   });
 
-  useEffect(() => { fetchData(); }, []);
+  useEffect(() => {
+    fetchData(true);
+    const interval = setInterval(() => fetchData(false), 5000);
 
-  const fetchData = async () => {
+    // Subscribe to WebSocket location updates
+    socket.on('location_update', (data) => {
+       console.log("Receiving live location update:", data);
+       setLiveLocations(prev => ({ ...prev, [data.techId]: [data.lat, data.lng] }));
+    });
+
+    return () => {
+      clearInterval(interval);
+      socket.off('location_update');
+    };
+  }, []);
+
+  const fetchData = async (showLoading = true) => {
     try {
-      setLoading(true);
+      if (showLoading) setLoading(true);
       const bookingsRes = await api.get('/bookings');
       setBookings(bookingsRes.data);
       const servicesRes = await api.get('/services');
@@ -49,8 +66,18 @@ const UserDashboard = () => {
       if (servicesRes.data.length > 0) {
         setFormData(prev => ({ ...prev, serviceId: servicesRes.data[0]._id }));
       }
+      const profileRes = await api.get('/users/profile');
+      setProfile(profileRes.data);
+
+      // Tell WebSocket server which technicians we want to track
+      bookingsRes.data.filter(b => b.status === 'accepted' && b.providerId).forEach(b => {
+          socket.emit('track_tech', b.providerId);
+      });
+
     } catch (error) { console.error('Error fetching dashboard data:', error); } 
-    finally { setLoading(false); }
+    finally { 
+      if (showLoading) setLoading(false); 
+    }
   };
 
   const handleInitialSubmit = async (e) => {
@@ -62,13 +89,12 @@ const UserDashboard = () => {
       try {
         const query = lat && lng ? `?lat=${lat}&lng=${lng}` : '';
         const res = await api.get(`/technicians/nearby${query}`);
-        // Render real techs from DB (if any active) plus the mock list for demo saturation
+        // Use only real technicians from the database!
         const realTechs = res.data || [];
-        // Filter out any mock ones if they exist purely to avoid duplicate ID issues during UI demo
-        setTechnicians([...realTechs, ...MOCK_TECHNICIANS.filter(m => !realTechs.find(rt => rt.id === m.id))]);
+        setTechnicians(realTechs);
       } catch (err) {
         console.error('Failed to grab technicians', err);
-        setTechnicians(MOCK_TECHNICIANS);
+        setTechnicians([]);
       } finally {
         setFetchingTechs(false);
       }
@@ -107,6 +133,22 @@ const UserDashboard = () => {
     reader.readAsDataURL(file);
   };
 
+
+  const handleAutoDetectLocation = () => {
+    if (navigator.geolocation) {
+      setFormData(prev => ({ ...prev, location: "Locating precise GPS coordinate..." }));
+      navigator.geolocation.getCurrentPosition(
+        (pos) => setFormData(prev => ({ ...prev, location: "Current GPS Location Detected" })),
+        () => {
+          alert("Please allow location access in your browser.");
+          setFormData(prev => ({ ...prev, location: "" }));
+        }
+      );
+    } else {
+      alert("Geolocation is not supported by your browser.");
+    }
+  };
+
   const handleFinalSubmit = async () => {
     if (!selectedTech) {
       alert("Please select a technician first.");
@@ -136,6 +178,50 @@ const UserDashboard = () => {
     }
   };
 
+  const handleQuoteApproval = async (bookingId, approved) => {
+    try {
+      await api.put(`/bookings/${bookingId}/approve-quote`, { approved });
+      fetchData(); // Refresh UI to show accepted/rejected status
+    } catch (error) {
+       alert('Failed to update quote status.');
+       console.error(error);
+    }
+  };
+
+  const handleLightningMatch = async () => {
+    if (technicians.length === 0) return;
+    
+    // Sort logic: High rating first, then by jobs completed
+    const bestTech = [...technicians].sort((a, b) => {
+      if (b.rating !== a.rating) return b.rating - a.rating;
+      return b.jobsCompleted - a.jobsCompleted;
+    })[0];
+    
+    setSelectedTech(bestTech);
+    
+    // Auto submit after a dramatic pause
+    setTimeout(async () => {
+      try {
+        const payload = {
+          ...formData,
+          providerId: bestTech.id
+        };
+        await api.post('/bookings', payload);
+        
+        setShowForm(false);
+        setStep(1);
+        setSelectedTech(null);
+        setFormData({ 
+          serviceId: services.length > 0 ? services[0]._id : '', date: '', deviceType: '', problemDescription: '', location: '', imageUrl: '',
+          serviceOption: 'direct', unknownProblem: false, hasSpace: true, serviceLocation: 'on-site', isRestrictedArea: false, isUnderWarranty: false
+        });
+        fetchData(); 
+      } catch (error) {
+        alert('Failed to auto-dispatch. Check the console.');
+      }
+    }, 1500);
+  };
+
   const cancelRequest = () => {
     setShowForm(!showForm);
     setStep(1);
@@ -144,47 +230,59 @@ const UserDashboard = () => {
 
   const getStatusBadge = (status) => {
     const config = {
-      pending: { color: 'bg-amber-100 text-amber-700 border-amber-200', icon: Clock },
-      accepted: { color: 'bg-blue-100 text-blue-700 border-blue-200', icon: CheckCircle },
-      completed: { color: 'bg-emerald-100 text-emerald-700 border-emerald-200', icon: CheckCircle },
-      rejected: { color: 'bg-red-100 text-red-700 border-red-200', icon: XCircle }
+      pending: { color: 'bg-amber-100 text-amber-700 border-amber-200', icon: Clock, label: 'Finding Tech' },
+      assigned: { color: 'bg-blue-100 text-blue-700 border-blue-200', icon: Clock, label: 'Assigned' },
+      queued: { color: 'bg-yellow-100 text-yellow-700 border-yellow-200', icon: Clock, label: 'Tech is Busy - In Queue' },
+      accepted: { color: 'bg-indigo-100 text-indigo-700 border-indigo-200', icon: CheckCircle, label: 'Accepted by Tech' },
+      in_progress: { color: 'bg-indigo-100 text-indigo-700 border-indigo-200', icon: Truck, label: 'Tech On Way' },
+      quote_pending: { color: 'bg-purple-100 text-purple-700 border-purple-200', icon: CreditCard, label: 'Pending Quote Approval' },
+      completed: { color: 'bg-emerald-100 text-emerald-700 border-emerald-200', icon: CheckCircle, label: 'Completed' },
+      rejected: { color: 'bg-red-100 text-red-700 border-red-200', icon: XCircle, label: 'Rejected' }
     };
-    const { color, icon: Icon } = config[status] || config.pending;
+    const { color, icon: Icon, label } = config[status] || config.pending;
     return (
       <span className={`flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider border ${color}`}>
         <Icon size={14} />
-        {status}
+        {label || status}
       </span>
     );
   };
 
   return (
-    <div className="min-h-screen bg-slate-50 py-8 px-4 sm:px-6 lg:px-8">
-      <div className="max-w-6xl mx-auto space-y-8">
+    <div className="min-h-screen bg-slate-50/50 py-12 px-4 sm:px-6 lg:px-8 mt-10">
+      <div className="max-w-6xl mx-auto space-y-10">
         
         {/* Header Section */}
-        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 bg-white p-6 rounded-2xl shadow-sm border border-slate-200">
-          <div className="flex items-center gap-4">
-            <div className="p-3 bg-blue-600 rounded-xl shadow-lg shadow-blue-200 text-white">
+        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-6 bg-white p-8 rounded-[2rem] shadow-[0_2px_20px_rgb(0,0,0,0.04)] border border-slate-100/80">
+          <div className="flex items-center gap-5">
+            <div className="p-4 bg-slate-900 rounded-[1.25rem] shadow-xl shadow-slate-900/20 text-white">
               <LayoutDashboard size={28} />
             </div>
             <div>
-              <h1 className="text-3xl font-extrabold text-slate-900 tracking-tight">My Bookings</h1>
-              <p className="text-slate-500 font-medium mt-1">Manage your direct repair requests</p>
+              <h1 className="text-3xl font-extrabold text-slate-900 tracking-tight">Your Dashboard</h1>
+              <p className="text-slate-500 font-medium mt-1">Manage repairs and hardware requests</p>
             </div>
           </div>
-          <button
-            onClick={cancelRequest}
-            className={`flex items-center gap-2 px-6 py-3 rounded-xl font-bold transition-all duration-300 transform hover:scale-105 shadow-md ${showForm ? 'bg-slate-100 text-slate-700 hover:bg-slate-200' : 'bg-gradient-to-r from-blue-600 to-indigo-600 text-white hover:shadow-indigo-200'}`}
-          >
-            {showForm ? <XCircle size={20} /> : <Plus size={20} />}
-            {showForm ? 'Cancel Request' : 'Book a New Service'}
-          </button>
+          <div className="flex items-center gap-4">
+            <button
+               onClick={() => setShowSettings(true)}
+               className="flex items-center gap-2 px-5 py-3.5 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold rounded-2xl transition-all"
+            >
+              <Settings size={20} /> Settings
+            </button>
+            <button
+              onClick={cancelRequest}
+              className={`flex items-center gap-2 px-6 py-3.5 rounded-2xl font-bold transition-all duration-300 transform hover:scale-105 shadow-md ${showForm ? 'bg-white text-slate-700 border-2 border-slate-200 hover:bg-slate-50' : 'bg-indigo-600 text-white hover:bg-indigo-700 hover:shadow-indigo-500/20 shadow-xl'}`}
+            >
+              {showForm ? <XCircle size={20} /> : <Plus size={20} />}
+              {showForm ? 'Cancel Request' : 'Book a New Repair'}
+            </button>
+          </div>
         </div>
 
         {/* Workflow container */}
         <div className={`transition-all duration-500 ease-in-out overflow-hidden ${showForm ? 'max-h-[2000px] opacity-100' : 'max-h-0 opacity-0'}`}>
-          <div className="bg-white p-8 rounded-2xl shadow-xl shadow-slate-200/40 border border-slate-100 relative overflow-hidden">
+          <div className="bg-white p-8 md:p-10 rounded-[2rem] shadow-[0_8px_30px_rgb(0,0,0,0.04)] border border-slate-100/60 relative overflow-hidden">
             <div className={`absolute top-0 left-0 h-2 bg-gradient-to-r from-blue-500 via-indigo-500 to-purple-500 transition-all duration-700 ${step === 1 ? 'w-1/2' : 'w-full'}`}></div>
             
             <div className="flex items-center justify-between mb-8">
@@ -210,6 +308,14 @@ const UserDashboard = () => {
                 </div>
               ) : (
                 <form onSubmit={handleInitialSubmit} className="space-y-6 animate-in slide-in-from-left-4 fade-in duration-500">
+                  <div className="mb-2 flex flex-col sm:flex-row sm:items-center justify-between bg-amber-50 border border-amber-200 rounded-xl p-4 gap-3 shadow-inner">
+                    <div className="flex items-center gap-3">
+                      <span className="flex h-3 w-3 rounded-full bg-amber-500 animate-[ping_2s_infinite]"></span>
+                      <p className="text-amber-800 font-semibold text-sm">
+                        High Demand: Only <span className="font-extrabold text-amber-600">2 technicians</span> available near you right now. 
+                      </p>
+                    </div>
+                  </div>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <div className="space-y-2">
                       <label className="text-sm font-bold text-slate-700 flex items-center gap-2"><Settings size={16} className="text-slate-400"/> Select Service</label>
@@ -242,8 +348,11 @@ const UserDashboard = () => {
                       <input type="text" placeholder="e.g. iPhone 13, HP Pavilion" required className="w-full px-5 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:ring-4 focus:ring-blue-100 focus:border-blue-500 transition-all font-medium" value={formData.deviceType} onChange={(e) => setFormData({ ...formData, deviceType: e.target.value })} />
                     </div>
                     <div className="space-y-2">
-                      <label className="text-sm font-bold text-slate-700 flex items-center gap-2"><MapPin size={16} className="text-slate-400"/> Location</label>
-                      <input type="text" placeholder="Your address or area" required className="w-full px-5 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:ring-4 focus:ring-blue-100 focus:border-blue-500 transition-all font-medium" value={formData.location} onChange={(e) => setFormData({ ...formData, location: e.target.value })} />
+                      <div className="flex justify-between items-center">
+                        <label className="text-sm font-bold text-slate-700 flex items-center gap-2"><MapPin size={16} className="text-slate-400"/> Location</label>
+                        <button type="button" onClick={handleAutoDetectLocation} className="text-xs font-bold text-blue-600 hover:text-blue-800 flex items-center gap-1 bg-blue-50 hover:bg-blue-100 px-2.5 py-1 rounded-md transition-colors">📍 Auto-detect</button>
+                      </div>
+                      <input type="text" placeholder="Your address or area" required className="w-full px-5 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:ring-4 focus:ring-blue-100 focus:border-blue-500 transition-all font-medium text-slate-700" value={formData.location} onChange={(e) => setFormData({ ...formData, location: e.target.value })} />
                     </div>
                   </div>
 
@@ -277,6 +386,7 @@ const UserDashboard = () => {
                       )}
                     </div>
                   </div>
+                  
 
                   <div className="space-y-4 pt-4 border-t border-slate-100">
                     <div className="flex items-center justify-between">
@@ -413,38 +523,72 @@ const UserDashboard = () => {
                   <div className="space-y-6">
                     <p className="text-slate-600 font-medium pb-2 border-b border-slate-100">We found several qualified technicians nearby. Please select one for direct assignment.</p>
                     
+                    {technicians.length > 0 && (
+                      <button
+                        onClick={handleLightningMatch}
+                        className="w-full relative overflow-hidden group bg-gradient-to-r from-blue-600 via-indigo-600 to-purple-600 text-white rounded-2xl p-6 shadow-xl shadow-indigo-500/20 hover:shadow-2xl hover:shadow-indigo-500/40 transition-all duration-300 transform hover:-translate-y-1"
+                      >
+                        <div className="absolute inset-0 bg-white/20 translate-x-[-100%] group-hover:animate-[shimmer_1.5s_infinite] skew-x-[-20deg]"></div>
+                        <div className="relative z-10 flex items-center justify-between">
+                          <div className="flex items-center gap-4">
+                            <div className="p-3 bg-white/20 backdrop-blur-md rounded-xl text-white">
+                              <Sparkles size={28} />
+                            </div>
+                            <div className="text-left">
+                              <h3 className="text-xl font-black tracking-tight">⚡ Lightning Match</h3>
+                              <p className="text-indigo-100 font-medium text-sm mt-0.5">Auto-assign the highest-rated technician near you instantly</p>
+                            </div>
+                          </div>
+                          {selectedTech && selectedTech === technicians.sort((a,b) => b.rating - a.rating)[0] && (
+                            <Loader2 size={24} className="animate-spin text-white mr-4" />
+                          )}
+                        </div>
+                      </button>
+                    )}
+
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
-                      {technicians.map((tech) => (
-                         <div 
-                           key={tech.id}
-                           onClick={() => setSelectedTech(tech)}
-                           className={`cursor-pointer rounded-2xl p-5 border-2 transition-all duration-300 ${selectedTech?.id === tech.id ? 'border-indigo-500 bg-indigo-50/50 shadow-md shadow-indigo-100 transform scale-[1.02]' : 'border-slate-100 hover:border-slate-300 hover:shadow-sm bg-white'}`}
-                         >
-                           <div className="flex items-center gap-4 mb-4">
-                             <div className="w-12 h-12 bg-indigo-100 rounded-full flex items-center justify-center text-2xl shadow-inner">
-                               {tech.avatar}
+                      {technicians.length === 0 ? (
+                        <div className="col-span-full py-12 text-center bg-slate-50 border border-slate-100 rounded-2xl">
+                          <h3 className="text-xl font-bold text-slate-700 mb-2">No Technicians Available</h3>
+                          <p className="text-slate-500">We couldn't find any real verified technicians covering your exact area right now. Please try again later or expand your search location.</p>
+                        </div>
+                      ) : (
+                        technicians.map((tech) => (
+                           <div 
+                             key={tech.id}
+                             onClick={() => setSelectedTech(tech)}
+                             className={`cursor-pointer rounded-2xl p-5 border-2 transition-all duration-300 ${selectedTech?.id === tech.id ? 'border-indigo-500 bg-indigo-50/50 shadow-md shadow-indigo-100 transform scale-[1.02]' : 'border-slate-100 hover:border-slate-300 hover:shadow-sm bg-white'}`}
+                           >
+                             <div className="flex items-center gap-4 mb-4">
+                               <div className="w-12 h-12 bg-indigo-100 rounded-full flex items-center justify-center text-2xl shadow-inner">
+                                 {tech.avatar || '👨‍🔧'}
+                               </div>
+                               <div>
+                                 <h3 className="font-bold text-slate-800 flex items-center gap-1.5">
+                                    {tech.name}
+                                    <ShieldCheck size={16} className="text-emerald-500" title="Identity Verified"/>
+                                    <span className="text-[9px] bg-emerald-50 text-emerald-600 border border-emerald-100 px-1.5 rounded uppercase tracking-widest font-black ml-0.5">Verified</span>
+                                 </h3>
+                                 <div className="flex items-center text-amber-500 text-sm font-bold">
+                                   <Star size={14} className="fill-current mr-1"/>
+                                   {tech.rating} <span className="text-slate-400 font-normal ml-1 border-l border-slate-300 pl-1">{tech.jobsCompleted || 0} jobs</span>
+                                 </div>
+                               </div>
                              </div>
-                             <div>
-                               <h3 className="font-bold text-slate-800">{tech.name}</h3>
-                               <div className="flex items-center text-amber-500 text-sm font-bold">
-                                 <Star size={14} className="fill-current mr-1"/>
-                                 {tech.rating} <span className="text-slate-400 font-normal ml-1 border-l border-slate-300 pl-1">{tech.jobsCompleted} jobs</span>
+                             
+                             <div className="space-y-2 text-sm text-slate-600 pt-2 border-t border-slate-100/50">
+                               <div className="flex justify-between">
+                                 <span className="font-medium text-slate-400">Experience</span>
+                                 <span className="font-bold text-slate-700">{tech.experience || 'New'}</span>
+                               </div>
+                               <div className="flex justify-between">
+                                 <span className="font-medium text-slate-400">Distance</span>
+                                 <span className="font-bold text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded">{tech.distance || 'Nearby'}</span>
                                </div>
                              </div>
                            </div>
-                           
-                           <div className="space-y-2 text-sm text-slate-600 pt-2 border-t border-slate-100/50">
-                             <div className="flex justify-between">
-                               <span className="font-medium text-slate-400">Experience</span>
-                               <span className="font-bold text-slate-700">{tech.experience}</span>
-                             </div>
-                             <div className="flex justify-between">
-                               <span className="font-medium text-slate-400">Distance</span>
-                               <span className="font-bold text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded">{tech.distance}</span>
-                             </div>
-                           </div>
-                         </div>
-                      ))}
+                        ))
+                      )}
                     </div>
 
                     <div className="flex gap-4 pt-6 mt-4 border-t border-slate-100">
@@ -469,12 +613,11 @@ const UserDashboard = () => {
           </div>
         </div>
 
+
+
         {/* History Section */}
         {loading ? (
-          <div className="flex flex-col items-center justify-center py-20 space-y-4">
-            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
-            <p className="text-slate-500 font-medium animate-pulse">Fetching your history...</p>
-          </div>
+          <LoadingSkeleton count={2} />
         ) : bookings.length === 0 ? (
           <div className="flex flex-col items-center justify-center py-24 bg-white rounded-3xl border border-dashed border-slate-300">
             <div className="w-24 h-24 bg-blue-50 rounded-full flex items-center justify-center mb-6">
@@ -484,18 +627,21 @@ const UserDashboard = () => {
             <p className="text-slate-500 max-w-sm text-center">You haven't requested any device repairs yet. Click the button above to get started!</p>
           </div>
         ) : (
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
             {bookings.map((booking) => (
-              <div key={booking._id} className="group bg-white rounded-2xl p-6 border border-slate-100 hover:border-blue-200 hover:shadow-xl hover:shadow-blue-900/5 transition-all duration-300 flex flex-col justify-between">
-                <div>
-                  <div className="flex justify-between items-start mb-6">
-                    <div className="space-y-1">
-                      <span className="inline-block px-3 py-1 bg-slate-100 text-slate-700 text-xs font-bold rounded-lg uppercase tracking-wider">
+              <div key={booking._id} className="group bg-white rounded-[2rem] p-8 border border-slate-100/80 hover:border-indigo-200 hover:shadow-[0_8px_30px_rgb(0,0,0,0.06)] transition-all duration-500 flex flex-col justify-between overflow-hidden relative">
+                {/* Subtle corner highlight */}
+                <div className="absolute top-0 right-0 w-32 h-32 bg-indigo-50/50 rounded-bl-[100px] -z-0"></div>
+                <div className="relative z-10">
+                  <div className="flex justify-between items-start mb-8">
+                    <div className="space-y-2">
+                       <span className="inline-flex items-center gap-1.5 px-3 py-1 bg-slate-50 text-slate-600 border border-slate-200/60 text-[10px] font-black rounded uppercase tracking-widest">
                         {booking.serviceId?.name || 'Device Repair'}
                       </span>
-                      <h3 className="text-2xl font-extrabold text-slate-900">
-                        ${booking.serviceId?.price || 0}
-                        {booking.serviceOption === 'inspection' && <span className="text-sm text-slate-500 font-medium ml-2 block sm:inline">+ ${booking.inspectionFee || 15} Inspection</span>}
+                      <h3 className="text-3xl font-black text-slate-900 tracking-tight">
+                        ₹{booking.serviceId?.price || 0}
+                        <span className="text-sm text-slate-400 font-bold ml-2 tracking-normal block sm:inline">+ ₹{booking.transportCharge || 0} Trans.</span>
+                        {booking.serviceOption === 'inspection' && <span className="text-sm text-slate-400 font-bold ml-2 tracking-normal block sm:inline">+ ₹{booking.inspectionFee || 99} Insp.</span>}
                       </h3>
                     </div>
                     {getStatusBadge(booking.status)}
@@ -534,6 +680,45 @@ const UserDashboard = () => {
                           </div>
                         </div>
                       )}
+
+                      {booking.status === 'accepted' && booking.serviceLocation !== 'off-site' && (
+                        <div className="pt-2 border-t border-slate-100/80 space-y-3">
+                           <div className="flex items-center justify-between bg-indigo-50/50 p-4 rounded-xl border border-indigo-100">
+                             <p className="font-bold text-sm text-indigo-900 flex items-center gap-2">
+                               <Truck size={18} className="text-indigo-500"/> Tech Status
+                             </p>
+                             <span className="flex items-center gap-1.5 px-3 py-1 bg-white text-indigo-600 rounded-full text-xs font-bold border border-indigo-100 shadow-sm">
+                               <span className="w-2 h-2 bg-indigo-500 rounded-full animate-pulse"></span> {booking.status === 'in_progress' ? 'On the way' : 'Technician assigned'}
+                             </span>
+                           </div>
+                        </div>
+                      )}
+
+                      {/* Quote Approval UI */}
+                      {booking.status === 'quote_pending' && (
+                        <div className="mt-4 p-5 bg-[#0B0F19] rounded-xl border border-blue-500 shadow-xl shadow-blue-900/20 animate-in fade-in zoom-in">
+                          <div className="flex justify-between items-center mb-3 border-b border-white/10 pb-3">
+                            <h4 className="text-white font-bold flex items-center gap-2"><CreditCard size={18} className="text-emerald-400"/> Approval Required</h4>
+                            <span className="text-emerald-400 font-extrabold text-2xl">₹{booking.finalQuote || 120}</span>
+                          </div>
+                          <p className="text-slate-400 text-sm mb-4">Technician has diagnosed the issue and provided a final guaranteed quote to fix it. Review details and approve to start work immediately.</p>
+                          
+                          <div className="bg-white/5 p-3 rounded-lg mb-4 border border-white/10">
+                            <p className="text-slate-300 text-sm font-medium">Technician Note:</p>
+                            <p className="text-slate-400 text-sm italic mt-1">"{booking.quoteReason || 'Replaced parts and labor for fixing the root cause.'}"</p>
+                            {booking.quotePhoto && (
+                              <div className="mt-3">
+                                <img src={booking.quotePhoto} className="w-full h-24 object-cover rounded shadow-sm border border-white/10" alt="Proof" />
+                              </div>
+                            )}
+                          </div>
+
+                          <div className="flex gap-3">
+                            <button onClick={() => handleQuoteApproval(booking._id, false)} className="flex-1 bg-white/5 hover:bg-white/10 border border-white/10 text-white font-bold py-2.5 rounded-lg transition-colors">Reject Quote</button>
+                            <button onClick={() => handleQuoteApproval(booking._id, true)} className="flex-1 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white font-bold py-2.5 rounded-lg shadow-lg shadow-blue-500/30">Approve Work</button>
+                          </div>
+                        </div>
+                      )}
                     </div>
                   )}
                 </div>
@@ -558,13 +743,28 @@ const UserDashboard = () => {
                          <MessageSquare size={16} /> Open Chat
                       </button>
 
-                      {booking.status === 'completed' && !booking.isReviewed && (
+                      {booking.status === 'completed' && booking.paymentStatus !== 'completed' && (
+                        <button 
+                           onClick={() => setPaymentBooking(booking)}
+                           className="flex items-center gap-2 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white px-4 py-2 rounded-xl text-sm font-bold shadow-sm transition-all shadow-blue-200 transform hover:-translate-y-0.5"
+                        >
+                           <CreditCard size={16} /> Pay Now
+                        </button>
+                      )}
+
+                      {booking.status === 'completed' && booking.paymentStatus === 'completed' && !booking.isReviewed && (
                         <button 
                            onClick={() => setReviewBooking(booking)}
                            className="flex items-center gap-2 bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-400 hover:to-orange-400 text-white px-4 py-2 rounded-xl text-sm font-bold shadow-sm transition-all shadow-amber-200 transform hover:-translate-y-0.5"
                         >
                            <Star size={16} className="fill-current text-amber-100" /> Leave Review
                         </button>
+                      )}
+
+                      {booking.status === 'completed' && booking.paymentStatus === 'completed' && (
+                         <div className="flex items-center gap-2 bg-emerald-50 border border-emerald-100 px-3 py-2 rounded-xl text-emerald-700 text-sm font-bold shadow-sm">
+                           <CheckCircle size={16} className="text-emerald-500" /> Paid
+                         </div>
                       )}
                       
                       {booking.isReviewed && (
@@ -578,6 +778,22 @@ const UserDashboard = () => {
                     <span className="text-slate-400 text-sm font-medium italic">Unassigned...</span>
                   )}
                 </div>
+
+                {/* Refer and Earn Hook (Growth System) */}
+                {booking.status === 'completed' && booking.isReviewed && (
+                  <div className="mt-6 pt-5 bg-gradient-to-r from-blue-50/50 to-indigo-50/50 border-t border-slate-100 -mx-8 -mb-8 px-8 py-6 flex flex-col sm:flex-row items-center justify-between gap-4">
+                    <div>
+                      <h4 className="font-extrabold text-slate-800 text-sm flex items-center gap-2">🎁 Share QuickRepair, Get $20</h4>
+                      <p className="text-xs text-slate-500 mt-1 max-w-sm font-medium">Your friend gets 10% off their first repair, and you get $20 in your wallet when they book!</p>
+                    </div>
+                    <button onClick={() => {
+                      navigator.clipboard.writeText("https://quickrepair.co/invite/QCKR-" + (profile?._id?.substring(0,6).toUpperCase() || 'USER123'));
+                      alert("Referral link copied to clipboard! Share it on WhatsApp 😎");
+                    }} className="whitespace-nowrap px-5 py-2.5 bg-slate-900 border border-slate-800 text-white font-bold text-xs sm:text-sm rounded-xl hover:bg-slate-800 transition-all shadow-md focus:ring-4 focus:ring-slate-100 hover:-translate-y-0.5">
+                      Copy My Code
+                    </button>
+                  </div>
+                )}
               </div>
             ))}
           </div>
@@ -598,6 +814,29 @@ const UserDashboard = () => {
           onClose={() => setReviewBooking(null)}
           onSuccess={() => {
             setReviewBooking(null);
+            fetchData();
+          }}
+        />
+      )}
+
+      {paymentBooking && (
+        <PaymentModal 
+          booking={paymentBooking}
+          onClose={() => setPaymentBooking(null)}
+          onSuccess={() => {
+            setPaymentBooking(null);
+            fetchData();
+          }}
+        />
+      )}
+
+      {showSettings && (
+        <SettingsModal 
+          role="user"
+          currentProfile={profile}
+          onClose={() => setShowSettings(false)}
+          onSuccess={() => {
+            setShowSettings(false);
             fetchData();
           }}
         />

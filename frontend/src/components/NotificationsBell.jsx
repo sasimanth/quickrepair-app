@@ -11,17 +11,30 @@ const NotificationsBell = () => {
     try {
       const { data } = await api.get('/notifications');
       setNotifications(data);
-      setUnreadCount(data.filter(n => !n.isRead).length);
+      
+      const newUnreadCount = data.filter(n => !n.isRead).length;
+      
+      // Fire Native Browser Push if new notification arrives
+      if (newUnreadCount > unreadCount && unreadCount !== 0 && 'Notification' in window && Notification.permission === 'granted') {
+          const latest = data.find(n => !n.isRead);
+          if (latest) {
+             new Notification(latest.title, { body: latest.message, icon: '/icon.svg' });
+          }
+      }
+      setUnreadCount(newUnreadCount);
     } catch (err) {
       console.error('Failed fetching notifications', err);
     }
   };
 
   useEffect(() => {
+    if ('Notification' in window && Notification.permission === 'default') {
+      Notification.requestPermission();
+    }
     fetchNotifications();
     const interval = setInterval(fetchNotifications, 5000); // Poll every 5 seconds for MVP
     return () => clearInterval(interval);
-  }, []);
+  }, [unreadCount]);
 
   const markAsRead = async (id) => {
     try {

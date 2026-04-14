@@ -6,6 +6,18 @@ import UserDashboard from './pages/UserDashboard';
 import TechnicianDashboard from './pages/TechnicianDashboard';
 import AdminDashboard from './pages/AdminDashboard';
 import Navbar from './components/Navbar';
+import Footer from './components/Footer';
+import PWAInstallPrompt from './components/PWAInstallPrompt';
+import Terms from './pages/Terms';
+import Privacy from './pages/Privacy';
+import Refund from './pages/Refund';
+import Disclaimer from './pages/Disclaimer';
+import About from './pages/About';
+import Pricing from './pages/Pricing';
+import FAQ from './pages/FAQ';
+import Contact from './pages/Contact';
+import NotFound from './pages/NotFound';
+import BookingFlow from './pages/BookingFlow';
 import { AuthProvider, useAuth } from './contexts/AuthContext';
 
 const PrivateRoute = ({ children, allowedRoles }) => {
@@ -14,7 +26,7 @@ const PrivateRoute = ({ children, allowedRoles }) => {
     return <Navigate to="/login" replace />;
   }
   
-  let role = user.user_metadata?.role || user.app_metadata?.role || 'user';
+  let role = user.role || user.user_metadata?.role || user.app_metadata?.role || 'user';
   if (user.email?.includes('+admin') || user.email?.startsWith('admin')) role = 'admin';
   if (user.email?.includes('+tech') || user.email?.startsWith('tech')) role = 'technician';
   if (allowedRoles && !allowedRoles.includes(role)) {
@@ -27,33 +39,50 @@ function App() {
   return (
     <AuthProvider>
       <Router>
-        <div className="min-h-screen bg-gray-50 flex flex-col">
+        <div className="min-h-screen bg-gray-50 flex flex-col relative">
+          <div className="bg-gradient-to-r from-blue-600 to-indigo-600 text-white text-xs sm:text-sm font-bold text-center py-2 px-4 shadow-md relative z-[60] flex justify-center items-center gap-2">
+            <span>🔥 First repair? Use code</span><span className="bg-white/20 px-2 py-0.5 rounded font-black tracking-wider">QUICK10</span><span>for 10% off your direct repair!</span>
+          </div>
           <Navbar />
-          <main className="flex-grow container mx-auto px-4 py-8">
+          <PWAInstallPrompt />
+          <main className="flex-grow flex flex-col pt-20">
             <Routes>
               <Route path="/" element={<Home />} />
+              <Route path="/book" element={<BookingFlow />} />
               <Route path="/login" element={<Login />} />
               <Route path="/signup" element={<Signup />} />
               
               <Route path="/dashboard" element={
                 <PrivateRoute allowedRoles={['user']}>
-                  <UserDashboard />
+                  <div className="container mx-auto px-4 py-8 flex-grow"><UserDashboard /></div>
                 </PrivateRoute>
               } />
               
               <Route path="/technician-dashboard" element={
                 <PrivateRoute allowedRoles={['technician']}>
-                  <TechnicianDashboard />
+                  <div className="container mx-auto px-4 py-8 flex-grow"><TechnicianDashboard /></div>
                 </PrivateRoute>
               } />
               
               <Route path="/admin-dashboard" element={
                 <PrivateRoute allowedRoles={['admin']}>
-                  <AdminDashboard />
+                  <div className="container mx-auto px-4 py-8 flex-grow"><AdminDashboard /></div>
                 </PrivateRoute>
               } />
+              
+              {/* Legal & Static Pages */}
+              <Route path="/about" element={<About />} />
+              <Route path="/pricing" element={<Pricing />} />
+              <Route path="/faq" element={<FAQ />} />
+              <Route path="/contact" element={<Contact />} />
+              <Route path="/terms" element={<Terms />} />
+              <Route path="/privacy" element={<Privacy />} />
+              <Route path="/refund" element={<Refund />} />
+              <Route path="/disclaimer" element={<Disclaimer />} />
+              <Route path="*" element={<NotFound />} />
             </Routes>
           </main>
+          <Footer />
         </div>
       </Router>
     </AuthProvider>

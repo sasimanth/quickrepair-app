@@ -3,17 +3,23 @@ const Technician = require('../models/Technician');
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 
-const generateToken = (id, role) => {
-  return jwt.sign({ id, role }, process.env.JWT_SECRET || 'secret123', {
+const generateToken = (id, role, email) => {
+  return jwt.sign({ id, role, email }, process.env.JWT_SECRET || 'secret123', {
     expiresIn: '30d',
   });
+};
+
+const normalizePhone = (phone) => {
+  if (!phone) return null;
+  return phone.replace(/\D/g, "").slice(-10);
 };
 
 // @desc    Register new user
 // @route   POST /api/auth/signup
 // @access  Public
 const signup = async (req, res) => {
-  const { name, email, phone, password, role, skills, location } = req.body;
+  let { name, email, phone, password, role, skills, location } = req.body;
+  if (phone) phone = normalizePhone(phone);
 
   try {
     const userExists = await User.findOne({ email });
@@ -41,8 +47,10 @@ const signup = async (req, res) => {
         }
         await Technician.create({
           userId: user._id,
+          name: user.name,
+          email: user.email,
           skills: Array.isArray(skills) ? skills : skills.split(',').map(s => s.trim()),
-          location
+          address: location
         });
       }
 
@@ -50,8 +58,9 @@ const signup = async (req, res) => {
         _id: user._id,
         name: user.name,
         email: user.email,
+        phone: user.phone,
         role: user.role,
-        token: generateToken(user._id, user.role),
+        token: generateToken(user._id, user.role, user.email),
       });
     } else {
       res.status(400).json({ message: 'Invalid user data' });
@@ -76,8 +85,9 @@ const login = async (req, res) => {
         _id: user._id,
         name: user.name,
         email: user.email,
+        phone: user.phone,
         role: user.role,
-        token: generateToken(user._id, user.role),
+        token: generateToken(user._id, user.role, user.email),
       });
     } else {
       res.status(401).json({ message: 'Invalid email or password' });

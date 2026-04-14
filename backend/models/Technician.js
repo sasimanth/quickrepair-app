@@ -17,8 +17,15 @@ const technicianSchema = new mongoose.Schema({
     coordinates: { type: [Number], default: [0, 0] } // [longitude, latitude]
   },
   rating: { type: Number, default: 4.8 },
+  reviewCount: { type: Number, default: 0 },
   jobsCompleted: { type: Number, default: 0 },
-  isProfileComplete: { type: Boolean, default: false }
+  isProfileComplete: { type: Boolean, default: false },
+  isOnline: { type: Boolean, default: true },
+  isVerified: { type: Boolean, default: false },
+  backgroundCheckStatus: { type: String, enum: ['pending', 'approved', 'rejected', 'none'], default: 'none' },
+  currentStatus: { type: String, enum: ['available', 'busy', 'on_the_way', 'offline'], default: 'available' },
+  currentJobId: { type: mongoose.Schema.Types.ObjectId, ref: 'QuickBooking', default: null },
+  expectedAvailableTime: { type: Date, default: null }
 }, { timestamps: true });
 
 // Crucial: 2dsphere index for GeoSpatial search

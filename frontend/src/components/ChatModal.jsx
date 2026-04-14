@@ -2,6 +2,7 @@ import { useState, useEffect, useRef } from 'react';
 import api from '../services/api';
 import { X, Send, User, Wrench, CheckCheck } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
+import { socket } from '../services/socket';
 
 const ChatModal = ({ bookingId, onClose, currentRole }) => {
   const { user } = useAuth();
@@ -24,9 +25,21 @@ const ChatModal = ({ bookingId, onClose, currentRole }) => {
 
   useEffect(() => {
     fetchMessages();
-    // Simple HTTP polling every 3 seconds for new messages
-    const interval = setInterval(fetchMessages, 3000);
-    return () => clearInterval(interval);
+
+    // Link WebSocket real-time chat
+    socket.emit('join_chat', bookingId);
+    
+    socket.on('receive_message', (newMsg) => {
+      setMessages(prev => {
+        // Prevent duplicate messages if sender receives their own broadcast and optimistic update
+        if (prev.find(m => m._id === newMsg._id)) return prev;
+        return [...prev, newMsg];
+      });
+    });
+
+    return () => {
+      socket.off('receive_message');
+    };
   }, [bookingId]);
 
   useEffect(() => {
@@ -54,8 +67,12 @@ const ChatModal = ({ bookingId, onClose, currentRole }) => {
     setMessages(prev => [...prev, tempMsg]);
 
     try {
-      await api.post(`/messages/${bookingId}`, { text: messageText });
-      await fetchMessages(); // Fetch all messages to make sure we're perfectly synced
+      const { data } = await api.post(`/messages/${bookingId}`, { text: messageText });
+      
+      // Dispatch instantly via WebSockets instead of fetching
+      socket.emit('send_message', { bookingId, messageObj: data });
+      
+      setMessages(prev => prev.map(m => m._id === tempMsg._id ? data : m));
     } catch (error) {
       console.error('Failed to send message:', error);
       alert("Failed to send message. Please try again.");

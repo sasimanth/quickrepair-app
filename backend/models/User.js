@@ -22,6 +22,36 @@ const userSchema = new mongoose.Schema({
     type: String,
     enum: ['user', 'technician', 'admin'],
     default: 'user'
+  },
+  referralCode: {
+    type: String,
+    unique: true,
+    sparse: true
+  },
+  walletBalance: {
+    type: Number,
+    default: 0
+  },
+  // Technician specific fields
+  jobsCompleted: {
+    type: Number,
+    default: 0
+  },
+  successRate: {
+    type: Number,
+    default: 100
+  },
+  isVerified: {
+    type: Boolean,
+    default: false
+  },
+  rating: {
+    type: Number,
+    default: 5.0
+  },
+  avatar: {
+    type: String,
+    default: '👨‍🔧'
   }
 }, { timestamps: true });
 
