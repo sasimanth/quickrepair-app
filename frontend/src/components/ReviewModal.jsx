@@ -48,7 +48,7 @@ const ReviewModal = ({ booking, onClose, onSuccess }) => {
             ) : (
               <div className="text-center mt-2 w-full">
                 <p className="text-slate-500 text-sm font-medium mb-6">We're totally thrilled you loved your repair. As a growing startup, public word-of-mouth means the world to us!</p>
-                <button onClick={() => { window.open('https://google.com/search?q=quickrepair+reviews', '_blank'); onSuccess(booking._id); }} className="w-full bg-slate-900 hover:bg-slate-800 text-white font-black tracking-wide py-3.5 px-6 rounded-xl shadow-lg shadow-slate-900/20 text-sm transition-transform active:scale-95 mb-4 border border-slate-700">
+                <button onClick={() => { window.open('https://google.com/search?q=fixvo+reviews', '_blank'); onSuccess(booking._id); }} className="w-full bg-slate-900 hover:bg-slate-800 text-white font-black tracking-wide py-3.5 px-6 rounded-xl shadow-lg shadow-slate-900/20 text-sm transition-transform active:scale-95 mb-4 border border-slate-700">
                    ⭐ Post on Google Reviews
                 </button>
                 <button onClick={() => onSuccess(booking._id)} className="text-slate-400 hover:text-slate-600 text-sm font-bold block w-full">Maybe Later</button>

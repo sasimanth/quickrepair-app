@@ -1,49 +1,20 @@
-import { useState, useEffect } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
-import { Wrench, LogOut, LayoutDashboard, UserCircle2, Search, Wallet } from 'lucide-react';
+import { LogOut, LayoutDashboard, UserCircle2 } from 'lucide-react';
 import NotificationsBell from './NotificationsBell';
-import CommandPalette from './CommandPalette';
-import api from '../services/api';
-import { FaInstagram, FaLinkedin, FaXTwitter, FaWhatsapp } from 'react-icons/fa6';
+import fixvoLogo from '../assets/logos/fixvo-app-icon-dark.png';
 
 const Navbar = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const { user, logout } = useAuth();
-  const [isPaletteOpen, setIsPaletteOpen] = useState(false);
-  const [escrowBalance, setEscrowBalance] = useState(0);
   
   let role = user?.user_metadata?.role || user?.app_metadata?.role || 'user';
   if (user?.email?.includes('+admin') || user?.email?.startsWith('admin')) role = 'admin';
   if (user?.email?.includes('+tech') || user?.email?.startsWith('tech')) role = 'technician';
   const name = user?.user_metadata?.name || user?.email;
 
-  useEffect(() => {
-    if (role === 'technician') {
-      const fetchEscrow = async () => {
-        try {
-          const { data } = await api.get('/bookings');
-          const sum = data.filter(j => j.status === 'completed').reduce((acc, j) => acc + (j.serviceId?.price || 0), 0);
-          setEscrowBalance(sum);
-        } catch (error) { console.error('Failed to load escrow', error) }
-      };
-      fetchEscrow();
-      const int = setInterval(fetchEscrow, 10000);
-      return () => clearInterval(int);
-    }
-  }, [role]);
 
-  useEffect(() => {
-    const handleKeyDown = (e) => {
-      if ((e.metaKey || e.ctrlKey) && e.key === 'k') {
-        e.preventDefault();
-        setIsPaletteOpen(true);
-      }
-    };
-    document.addEventListener('keydown', handleKeyDown);
-    return () => document.removeEventListener('keydown', handleKeyDown);
-  }, []);
 
   const handleLogout = async () => {
     await logout();
@@ -71,49 +42,19 @@ const Navbar = () => {
             
             {/* Logo Section */}
             <Link to="/" className="flex items-center gap-2.5 group">
-              <div className="p-2 bg-gradient-to-br from-indigo-600 to-purple-600 rounded-[14px] shadow-lg shadow-indigo-500/30 group-hover:shadow-purple-500/40 transition-all duration-300 transform group-hover:scale-105 group-hover:rotate-3">
-                <Wrench className="w-5 h-5 text-white" />
+              <div className="w-10 h-10 group-hover:scale-105 group-hover:rotate-3 transition-all duration-300 shadow-lg shadow-blue-500/30 rounded-full overflow-hidden">
+                <img src={fixvoLogo} alt="Fixvo Logo" className="w-full h-full object-cover scale-110" />
               </div>
-              <span className="font-extrabold text-xl tracking-tight bg-clip-text text-transparent bg-gradient-to-r from-slate-900 to-slate-700">
-                QuickRepair
+              <span className="font-extrabold text-2xl tracking-tight bg-clip-text text-transparent bg-gradient-to-r from-blue-700 to-slate-900">
+                Fixvo
               </span>
             </Link>
 
-            {/* Mid Section: Search (Command K) */}
-            {user && (
-              <div className="hidden md:flex flex-1 max-w-sm mx-4">
-                <button
-                  onClick={() => setIsPaletteOpen(true)}
-                  className="w-full flex items-center justify-between px-3 py-1.5 bg-slate-50/50 hover:bg-slate-100 border border-slate-200/60 rounded-xl transition-all group"
-                >
-                  <div className="flex items-center gap-2 text-sm text-slate-400 group-hover:text-slate-600 transition-colors">
-                    <Search size={16} />
-                    <span className="font-medium">Quick search...</span>
-                  </div>
-                  <kbd className="hidden lg:flex items-center gap-1 font-sans text-[10px] font-bold text-slate-400 bg-white border border-slate-200 rounded px-1.5 py-0.5 shadow-sm">
-                    <span className="text-xs">⌘</span>K
-                  </kbd>
-                </button>
-              </div>
-            )}
+
 
             {/* Navigation Links */}
             <div className="flex items-center gap-2 sm:gap-4 transition-all">
-              {/* Social Media Icons */}
-              <div className="hidden lg:flex items-center gap-3 mr-2 border-r border-slate-200/50 pr-4">
-                <a href="https://www.instagram.com/sasimanth_9515?igsh=NXZ5amZxaDlkeGxy" target="_blank" rel="noopener noreferrer" className="text-slate-400 hover:text-pink-600 transition-colors transform hover:scale-110">
-                  <FaInstagram size={18} />
-                </a>
-                <a href="https://www.linkedin.com/in/gsasimanthreddy" target="_blank" rel="noopener noreferrer" className="text-slate-400 hover:text-blue-600 transition-colors transform hover:scale-110">
-                  <FaLinkedin size={18} />
-                </a>
-                <a href="https://x.com/sasimanth_9515" target="_blank" rel="noopener noreferrer" className="text-slate-400 hover:text-slate-900 transition-colors transform hover:scale-110">
-                  <FaXTwitter size={18} />
-                </a>
-                <a href="https://wa.me/9515980170" target="_blank" rel="noopener noreferrer" className="text-slate-400 hover:text-emerald-500 transition-colors transform hover:scale-110">
-                  <FaWhatsapp size={18} />
-                </a>
-              </div>
+              {/* Social Media removed */}
               {user ? (
                 <>
                   <NotificationsBell />
@@ -126,19 +67,8 @@ const Navbar = () => {
                     <span className="hidden sm:block">Dashboard</span>
                   </Link>
                   
-                  {role === 'technician' && (
-                    <div className="hidden lg:flex items-center gap-2 pl-3 pr-4 py-1.5 bg-emerald-50/80 border border-emerald-200/60 rounded-full shadow-inner">
-                      <div className="w-6 h-6 rounded-full bg-emerald-100 flex items-center justify-center text-emerald-600">
-                        <Wallet size={14} />
-                      </div>
-                      <div className="flex flex-col">
-                        <span className="text-[9px] font-black uppercase text-emerald-600 leading-none">Escrow Balance</span>
-                        <span className="text-sm font-bold text-emerald-800 leading-tight">${escrowBalance.toFixed(2)}</span>
-                      </div>
-                    </div>
-                  )}
-
-                  <div className="hidden md:flex items-center gap-2 pl-3 pr-4 py-1.5 bg-slate-50/80 border border-slate-200/60 rounded-full shadow-inner cursor-pointer hover:bg-slate-100 transition-colors">
+                  
+                  <Link to={getDashboardLink()} className="hidden md:flex items-center gap-2 pl-3 pr-4 py-1.5 bg-slate-50/80 border border-slate-200/60 rounded-full shadow-inner hover:bg-slate-100 transition-colors">
                     <div className="w-6 h-6 rounded-full bg-indigo-100 flex items-center justify-center text-indigo-600">
                       <UserCircle2 size={14} />
                     </div>
@@ -146,7 +76,7 @@ const Navbar = () => {
                     <span className="px-1.5 py-0.5 bg-indigo-50 border border-indigo-100 text-indigo-700 text-[10px] font-black rounded uppercase tracking-wider ml-1">
                       {role}
                     </span>
-                  </div>
+                  </Link>
 
                   <button
                     onClick={handleLogout}
@@ -175,7 +105,6 @@ const Navbar = () => {
           </div>
         </div>
       </nav>
-      {user && <CommandPalette isOpen={isPaletteOpen} onClose={() => setIsPaletteOpen(false)} role={role} />}
     </div>
   );
 };

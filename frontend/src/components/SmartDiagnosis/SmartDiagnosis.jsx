@@ -1,13 +1,15 @@
 import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Snowflake, Droplet, Zap, ArrowRight, ArrowLeft, CheckCircle2, ChevronRight, HelpCircle } from 'lucide-react';
+import { Hammer, Wrench, Sparkles, PlusCircle, ArrowRight, ArrowLeft, CheckCircle2, ChevronRight, HelpCircle, Zap } from 'lucide-react';
 import { diagnosisDataBase } from './rules';
 import { useNavigate } from 'react-router-dom';
+import { useAuth } from '../../contexts/AuthContext';
 
 const iconMap = {
-  Snowflake: <Snowflake className="w-8 h-8" />,
-  Droplet: <Droplet className="w-8 h-8" />,
-  Zap: <Zap className="w-8 h-8" />
+  Hammer: <Hammer className="w-8 h-8" />,
+  Wrench: <Wrench className="w-8 h-8" />,
+  Sparkles: <Sparkles className="w-8 h-8" />,
+  PlusCircle: <PlusCircle className="w-8 h-8" />
 };
 
 const SmartDiagnosis = () => {
@@ -16,6 +18,7 @@ const SmartDiagnosis = () => {
   const [answers, setAnswers] = useState({});
   const [diagnosisResult, setDiagnosisResult] = useState(null);
   const navigate = useNavigate();
+  const { user } = useAuth();
 
   const handleServiceSelect = (serviceId) => {
     setSelectedService(diagnosisDataBase[serviceId]);
@@ -56,8 +59,7 @@ const SmartDiagnosis = () => {
   };
 
   const handleBookNow = () => {
-    // Navigate to booking page with pre-filled service if possible
-    navigate('/booking');
+    navigate('/book');
   };
 
   // Variants for framer-motion animations
@@ -112,7 +114,7 @@ const SmartDiagnosis = () => {
                 >
                   <div className="absolute inset-0 bg-gradient-to-t from-blue-500/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
                   <div className="bg-[#0B0F19] p-4 rounded-full shadow-inner text-blue-400 group-hover:scale-110 transition-transform mb-4 border border-white/5 relative z-10">
-                    {iconMap[srv.icon]}
+                    {iconMap[srv.icon] || <HelpCircle className="w-8 h-8" />}
                   </div>
                   <span className="font-semibold text-white relative z-10">{srv.title}</span>
                 </button>

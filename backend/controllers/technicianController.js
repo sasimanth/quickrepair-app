@@ -68,54 +68,57 @@ const updateProfile = async (req, res) => {
   }
 };
 
-// @desc    Find nearby technicians (GeoSpatial Query)
+// @desc    Find nearby technicians (GeoSpatial Query / Area-based)
 // @route   GET /api/technicians/nearby
 const getNearbyTechnicians = async (req, res) => {
-  const { lat, lng, maxDistance = 50000 } = req.query; // maxDistance in meters (default 50km)
+  const { area, serviceId } = req.query;
 
   try {
-    if (!lat || !lng) {
-      // Fallback: Just return 5 random completed profiles if no location provided
-      const genericTechs = await Technician.find({ isProfileComplete: true }).limit(5);
-      const formattedGeneric = genericTechs.map((tech, i) => ({
-        id: tech.userId,
-        name: tech.name,
-        rating: tech.rating.toFixed(1),
-        experience: tech.experience,
-        distance: `${(i * 1.5 + 2.0).toFixed(1)} miles`,
-        jobsCompleted: tech.jobsCompleted,
-        avatar: tech.avatar,
-        skills: tech.skills
-      }));
-      return res.json(formattedGeneric);
-    }
-
-    const nearbyTechs = await Technician.find({
-      location: {
-        $near: {
-          $geometry: {
-             type: "Point",
-             coordinates: [parseFloat(lng), parseFloat(lat)]
-          },
-          $maxDistance: parseInt(maxDistance)
-        }
-      },
+    let query = {
       isProfileComplete: true,
       isOnline: true
-    }).limit(10);
+    };
 
-    // Map distance property loosely based on index position for the MVP UI
-    // (A real robust implementation would use MongoDB's aggregation pipeline $geoNear to extract exact distance)
-    const formattedTechs = nearbyTechs.map((tech, i) => ({
-      id: tech.userId, // Expose the InsForge ID so bookings work natively
+    if (area) {
+      // Area match (case-insensitive)
+      query.area = { $regex: new RegExp(area, 'i') };
+    }
+
+    let techs = await Technician.find(query).limit(30);
+    
+    // Sort and filter by service
+    if (serviceId) {
+      const searchTerm = serviceId.toLowerCase().replace(/_/g, ' ');
+      const categoryTerm = serviceId.split('_')[1] || ''; // e.g. repair, install, clean
+      
+      // Filter out techs that don't match the service if required (or just sort them to the top)
+      // The prompt asks to "Show ONLY technicians... Matching the requested service category"
+      techs = techs.filter(tech => {
+        if (tech.services && tech.services.some(s => s.toLowerCase() === serviceId.toLowerCase())) {
+           return true;
+        }
+        if (!tech.skills) return false;
+        const skillsString = tech.skills.join(' ').toLowerCase();
+        return skillsString.includes('all devices') || skillsString.includes(searchTerm) || (categoryTerm && skillsString.includes(categoryTerm));
+      });
+      
+      techs.sort((a, b) => {
+        return b.rating - a.rating;
+      });
+    }
+
+    const formattedTechs = techs.slice(0, 10).map((tech, i) => ({
+      id: tech.userId,
       name: tech.name,
       rating: tech.rating.toFixed(1),
       experience: tech.experience,
-      distance: `${(i * 0.5 + 0.8).toFixed(1)} miles`, // Simulated distance string for MVP UI based on proximity sorting
+      distance: tech.area || (area ? 'In your area' : 'Nearby'),
       jobsCompleted: tech.jobsCompleted,
       isVerified: tech.isVerified,
       avatar: tech.avatar,
-      skills: tech.skills
+      skills: tech.skills,
+      area: tech.area,
+      services: tech.services
     }));
 
     res.json(formattedTechs);
@@ -203,4 +206,43 @@ const updateJobStatus = async (req, res) => {
   }
 };
 
-module.exports = { getProfile, updateProfile, getNearbyTechnicians, submitVerification, updateJobStatus };
+// @desc    Request withdrawal of earnings
+// @route   POST /api/technicians/withdraw
+const requestWithdrawal = async (req, res) => {
+  const { amount } = req.body;
+  try {
+    const tech = await Technician.findOne({ userId: req.user.id });
+    if (!tech) return res.status(404).json({ message: 'Technician not found' });
+
+    const numAmount = Number(amount);
+    if (!numAmount || numAmount <= 0) {
+       return res.status(400).json({ message: 'Invalid amount' });
+    }
+
+    tech.pendingWithdrawal = (tech.pendingWithdrawal || 0) + numAmount;
+    await tech.save();
+    
+    res.json({ message: 'Withdrawal requested successfully', tech });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
+// @desc    Submit KYC details
+// @route   POST /api/technicians/kyc
+const submitKyc = async (req, res) => {
+  const { accountName, accountNumber, ifscCode, idProofUrl } = req.body;
+  try {
+    const tech = await Technician.findOne({ userId: req.user.id });
+    if (!tech) return res.status(404).json({ message: 'Technician not found' });
+    
+    tech.bankDetails = { accountName, accountNumber, ifscCode, idProofUrl };
+    tech.kycCompleted = true;
+    await tech.save();
+    res.json({ message: 'KYC submitted successfully', tech });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
+module.exports = { getProfile, updateProfile, getNearbyTechnicians, submitVerification, updateJobStatus, requestWithdrawal, submitKyc };

@@ -3,13 +3,36 @@ import React, { useState } from 'react';
 const Contact = () => {
   const [submitted, setSubmitted] = useState(false);
 
-  const handleSubmit = (e) => {
+  const [loading, setLoading] = useState(false);
+  const [errorMsg, setErrorMsg] = useState('');
+
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    // Simulate API call
-    setTimeout(() => {
+    setLoading(true);
+    setErrorMsg('');
+    const formData = new FormData(e.target);
+    const data = {
+      firstName: formData.get('firstName'),
+      lastName: formData.get('lastName'),
+      email: formData.get('email'),
+      message: formData.get('message'),
+    };
+    try {
+      // Use full URL or proxy handled by vite/create-react-app
+      const response = await fetch('http://localhost:5000/api/contact', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(data),
+      });
+      const resData = await response.json();
+      if (!response.ok) throw new Error(resData.message || 'Failed to send message');
       setSubmitted(true);
       e.target.reset();
-    }, 500);
+    } catch (error) {
+      setErrorMsg(error.message);
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -33,7 +56,9 @@ const Contact = () => {
                 </div>
                 <div>
                   <p className="text-blue-200 text-sm">Phone Support (24/7)</p>
-                  <p className="font-semibold text-lg">1-800-QUICKFIX</p>
+                  <p className="font-semibold text-lg">
+                    <a href="tel:9515980170" className="hover:underline">+91 95159 80170</a>
+                  </p>
                 </div>
               </div>
               <div className="flex items-center gap-4">
@@ -42,7 +67,7 @@ const Contact = () => {
                 </div>
                 <div>
                   <p className="text-blue-200 text-sm">Email Inquiries</p>
-                  <p className="font-semibold text-lg">support@quickrepair.com</p>
+                  <p className="font-semibold text-lg">support@fixvo.com</p>
                 </div>
               </div>
             </div>
@@ -71,26 +96,27 @@ const Contact = () => {
             </div>
           ) : (
             <form onSubmit={handleSubmit} className="space-y-6">
+              {errorMsg && <div className="text-red-500 bg-red-100 p-3 rounded-lg text-sm">{errorMsg}</div>}
               <div className="grid grid-cols-2 gap-4">
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">First Name</label>
-                  <input required type="text" className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none" placeholder="John" />
+                  <input name="firstName" required type="text" className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none" placeholder="John" />
                 </div>
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">Last Name</label>
-                  <input required type="text" className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none" placeholder="Doe" />
+                  <input name="lastName" required type="text" className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none" placeholder="Doe" />
                 </div>
               </div>
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">Email Address</label>
-                <input required type="email" className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none" placeholder="john@example.com" />
+                <input name="email" required type="email" className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none" placeholder="john@example.com" />
               </div>
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">How can we help?</label>
-                <textarea required rows="4" className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none" placeholder="Describe your issue or inquiry..."></textarea>
+                <textarea name="message" required rows="4" className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none" placeholder="Describe your issue or inquiry..."></textarea>
               </div>
-              <button type="submit" className="w-full bg-blue-600 text-white font-bold py-3 rounded-lg hover:bg-blue-700 transition shadow-md">
-                Send Message
+              <button disabled={loading} type="submit" className="w-full bg-blue-600 text-white font-bold py-3 rounded-lg hover:bg-blue-700 transition shadow-md disabled:bg-blue-300">
+                {loading ? 'Sending...' : 'Send Message'}
               </button>
             </form>
           )}

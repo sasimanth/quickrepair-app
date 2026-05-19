@@ -13,9 +13,13 @@ const SettingsModal = ({ role, currentProfile, onClose, onSuccess }) => {
   });
   
   const [isSaving, setIsSaving] = useState(false);
+  const [successMsg, setSuccessMsg] = useState('');
+  const [errorMsg, setErrorMsg] = useState('');
   
+  const [initialLoaded, setInitialLoaded] = useState(false);
+
   useEffect(() => {
-    if (currentProfile) {
+    if (currentProfile && !initialLoaded) {
       setFormData({
         name: currentProfile.name || '',
         phone: currentProfile.phone || '',
@@ -24,8 +28,9 @@ const SettingsModal = ({ role, currentProfile, onClose, onSuccess }) => {
         skills: currentProfile.skills ? currentProfile.skills.join(', ') : '',
         experience: currentProfile.experience || ''
       });
+      setInitialLoaded(true);
     }
-  }, [currentProfile]);
+  }, [currentProfile, initialLoaded]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -40,10 +45,13 @@ const SettingsModal = ({ role, currentProfile, onClose, onSuccess }) => {
       }
       
       await api.put(endpoint, payload);
-      onSuccess(); // Close and refresh!
+      setSuccessMsg('Profile updated successfully!');
+      setTimeout(() => {
+        onSuccess(); // Close and refresh!
+      }, 1500);
     } catch (error) {
       console.error(error);
-      alert('Failed to save profile settings');
+      setErrorMsg('Failed to save profile settings');
     } finally {
       setIsSaving(false);
     }
@@ -76,6 +84,18 @@ const SettingsModal = ({ role, currentProfile, onClose, onSuccess }) => {
 
         {/* Body */}
         <div className="p-8 overflow-y-auto">
+          {successMsg && (
+            <div className="mb-6 p-4 bg-emerald-50 text-emerald-700 border border-emerald-200 rounded-xl flex items-center gap-2 font-medium">
+              <CheckCircle size={20} className="text-emerald-500" />
+              {successMsg}
+            </div>
+          )}
+          {errorMsg && (
+            <div className="mb-6 p-4 bg-rose-50 text-rose-700 border border-rose-200 rounded-xl flex items-center gap-2 font-medium">
+              <X size={20} className="text-rose-500" />
+              {errorMsg}
+            </div>
+          )}
           <form id="settingsForm" onSubmit={handleSubmit} className="space-y-6">
             
             <div className="flex items-center gap-6">

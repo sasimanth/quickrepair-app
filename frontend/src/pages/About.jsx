@@ -12,7 +12,7 @@ const About = () => {
         <div>
           <h2 className="text-3xl font-semibold mb-6">Our Story</h2>
           <p className="text-gray-700 mb-4 leading-relaxed">
-            QuickRepair started with a simple, universal frustration: waiting days for a mechanic who never shows up, only to be hit with hidden charges when they finally do.
+            Fixvo started with a simple, universal frustration: waiting days for a mechanic who never shows up, only to be hit with hidden charges when they finally do.
           </p>
           <p className="text-gray-700 leading-relaxed">
             We built this platform to bring transparency, speed, and trust to the home repair industry. By connecting users directly with vetted, professional technicians via smart matching algorithms, we ensure your home gets the fastest, most reliable fix possible.

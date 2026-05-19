@@ -14,7 +14,7 @@ const FAQ = () => {
     },
     {
       question: "Is there a guarantee on the repair?",
-      answer: "Absolutely. Every QuickRepair service comes with a 7-day workmanship guarantee. If the same issue returns within a week, we fix it for free."
+      answer: "Absolutely. Every Fixvo service comes with a 7-day workmanship guarantee. If the same issue returns within a week, we fix it for free."
     },
     {
       question: "How do I pay?",
@@ -29,7 +29,7 @@ const FAQ = () => {
   return (
     <div className="container mx-auto px-4 py-16 max-w-4xl flex-grow">
       <h1 className="text-4xl font-bold font-heading mb-4 text-center">Frequently Asked Questions</h1>
-      <p className="text-gray-600 text-center mb-12">Everything you need to know about QuickRepair.</p>
+      <p className="text-gray-600 text-center mb-12">Everything you need to know about Fixvo.</p>
 
       <div className="space-y-4">
         {faqs.map((faq, index) => (

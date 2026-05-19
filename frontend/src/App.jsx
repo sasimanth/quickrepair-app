@@ -7,7 +7,6 @@ import TechnicianDashboard from './pages/TechnicianDashboard';
 import AdminDashboard from './pages/AdminDashboard';
 import Navbar from './components/Navbar';
 import Footer from './components/Footer';
-import PWAInstallPrompt from './components/PWAInstallPrompt';
 import Terms from './pages/Terms';
 import Privacy from './pages/Privacy';
 import Refund from './pages/Refund';
@@ -17,7 +16,8 @@ import Pricing from './pages/Pricing';
 import FAQ from './pages/FAQ';
 import Contact from './pages/Contact';
 import NotFound from './pages/NotFound';
-import BookingFlow from './pages/BookingFlow';
+import Cancellation from './pages/Cancellation';
+import Referrals from './pages/Referrals';
 import { AuthProvider, useAuth } from './contexts/AuthContext';
 
 const PrivateRoute = ({ children, allowedRoles }) => {
@@ -27,12 +27,22 @@ const PrivateRoute = ({ children, allowedRoles }) => {
   }
   
   let role = user.role || user.user_metadata?.role || user.app_metadata?.role || 'user';
-  if (user.email?.includes('+admin') || user.email?.startsWith('admin')) role = 'admin';
-  if (user.email?.includes('+tech') || user.email?.startsWith('tech')) role = 'technician';
+  
   if (allowedRoles && !allowedRoles.includes(role)) {
     return <Navigate to="/" replace />;
   }
   return children;
+};
+
+const BookRedirect = () => {
+  const { user } = useAuth();
+  const search = document.location.search;
+  if (user) {
+    const separator = search ? '&' : '?';
+    return <Navigate to={`/dashboard${search}${separator}action=book`} replace />;
+  } else {
+    return <Navigate to={`/login${search}`} replace />;
+  }
 };
 
 function App() {
@@ -41,14 +51,15 @@ function App() {
       <Router>
         <div className="min-h-screen bg-gray-50 flex flex-col relative">
           <div className="bg-gradient-to-r from-blue-600 to-indigo-600 text-white text-xs sm:text-sm font-bold text-center py-2 px-4 shadow-md relative z-[60] flex justify-center items-center gap-2">
-            <span>🔥 First repair? Use code</span><span className="bg-white/20 px-2 py-0.5 rounded font-black tracking-wider">QUICK10</span><span>for 10% off your direct repair!</span>
+            <span>🔥 First repair? Use code</span><span className="bg-white/20 px-2 py-0.5 rounded font-black tracking-wider">FIXVO10</span><span>for 10% off your direct repair!</span>
           </div>
           <Navbar />
-          <PWAInstallPrompt />
           <main className="flex-grow flex flex-col pt-20">
             <Routes>
               <Route path="/" element={<Home />} />
-              <Route path="/book" element={<BookingFlow />} />
+              <Route path="/book" element={
+                <BookRedirect />
+              } />
               <Route path="/login" element={<Login />} />
               <Route path="/signup" element={<Signup />} />
               
@@ -78,7 +89,9 @@ function App() {
               <Route path="/terms" element={<Terms />} />
               <Route path="/privacy" element={<Privacy />} />
               <Route path="/refund" element={<Refund />} />
+              <Route path="/cancellation" element={<Cancellation />} />
               <Route path="/disclaimer" element={<Disclaimer />} />
+              <Route path="/referrals" element={<Referrals />} />
               <Route path="*" element={<NotFound />} />
             </Routes>
           </main>

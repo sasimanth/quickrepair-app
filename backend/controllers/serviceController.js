@@ -16,9 +16,9 @@ const getServices = async (req, res) => {
 // @route   POST /api/services
 // @access  Private/Admin
 const createService = async (req, res) => {
-  const { name, price, description } = req.body;
+  const { id, name, categoryId, image, description, color, bg } = req.body;
   try {
-    const service = new Service({ name, price, description });
+    const service = new Service({ id, name, categoryId, image, description, color, bg });
     const createdService = await service.save();
     res.status(201).json(createdService);
   } catch (error) {
@@ -30,7 +30,7 @@ const createService = async (req, res) => {
 // @route   PUT /api/services/:id
 // @access  Private/Admin
 const updateService = async (req, res) => {
-  const { name, price, description } = req.body;
+  const { name, categoryId, image, description, color, bg } = req.body;
   try {
     const service = await Service.findById(req.params.id);
     if (!service) {
@@ -38,8 +38,11 @@ const updateService = async (req, res) => {
     }
     
     if (name) service.name = name;
-    if (price) service.price = price;
+    if (categoryId) service.categoryId = categoryId;
+    if (image) service.image = image;
     if (description) service.description = description;
+    if (color) service.color = color;
+    if (bg) service.bg = bg;
 
     const updatedService = await service.save();
     res.json(updatedService);

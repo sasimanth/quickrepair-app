@@ -21,7 +21,7 @@ const handleIncomingWhatsAppMessage = async (req, res) => {
   try {
     if (incomingMsg === 'hi' || incomingMsg === 'hello' || incomingMsg === 'book') {
        session.step = 1;
-       twiml.message(`Welcome to QuickRepair by Startup HQ! 🛠️\n\nWhat do you need help with today?\nReply with a number:\n1. AC Repair\n2. Electrician\n3. Plumber\n4. Other / Help`);
+       twiml.message(`Welcome to Fixvo by Startup HQ! 🛠️\n\nWhat do you need help with today?\nReply with a number:\n1. AC Repair\n2. Electrician\n3. Plumber\n4. Other / Help`);
     } 
     else if (session.step === 1) {
        const serviceMap = { '1': 'AC Repair', '2': 'Electrician', '3': 'Plumber' };
@@ -31,7 +31,7 @@ const handleIncomingWhatsAppMessage = async (req, res) => {
           twiml.message(`Great, you chose ${session.serviceName}. \n\nCould you briefly describe the problem? (e.g., "AC not cooling", "Switch sparking")`);
        } else if (incomingMsg === '4') {
           session.step = 0;
-          twiml.message("Please visit our app https://quickrepair.co or call customer service at 1-800-REPAIR.");
+          twiml.message("Please visit our app https://fixvo.co or call customer service at 1-800-REPAIR.");
        } else {
           twiml.message("Invalid choice. Please reply '1', '2', '3', or '4'.");
        }

@@ -15,7 +15,7 @@ const connectDB = async () => {
     }
 
     // Atlas connections require strict stability checks for AWS/GCP drops
-    const conn = await mongoose.connect(uri || 'mongodb://127.0.0.1:27017/quickrepair', {
+    const conn = await mongoose.connect(uri || 'mongodb://127.0.0.1:27017/fixvo', {
       serverSelectionTimeoutMS: 5000, // Keep trying to send operations for 5 seconds
       socketTimeoutMS: 45000,         // Close sockets after 45 seconds of inactivity
     });

@@ -29,7 +29,8 @@ const Login = () => {
       });
 
       let role = data.role || 'user';
-      navigate(role === 'admin' ? '/admin-dashboard' : role === 'technician' ? '/technician-dashboard' : '/dashboard');
+      const search = document.location.search;
+      navigate(role === 'admin' ? `/admin-dashboard${search}` : role === 'technician' ? `/technician-dashboard${search}` : `/dashboard${search}`);
       window.location.reload();
     } catch (err) {
       if (err.status === 403) {
@@ -76,7 +77,7 @@ const Login = () => {
                 name="email"
                 required
                 className="w-full pl-12 pr-4 py-3.5 bg-white/80 border-2 border-slate-100 focus:border-blue-500 rounded-2xl focus:ring-4 focus:ring-blue-50 transition-all font-medium text-slate-800 outline-none"
-                placeholder="hello@quickrepair.com"
+                placeholder="hello@fixvo.com"
                 value={formData.email}
                 onChange={handleChange}
               />
@@ -94,6 +95,7 @@ const Login = () => {
                 type="password"
                 name="password"
                 required
+                autoComplete="current-password"
                 className="w-full pl-12 pr-4 py-3.5 bg-white/80 border-2 border-slate-100 focus:border-blue-500 rounded-2xl focus:ring-4 focus:ring-blue-50 transition-all font-medium text-slate-800 outline-none"
                 placeholder="••••••••"
                 value={formData.password}
@@ -119,7 +121,7 @@ const Login = () => {
         
 
         <p className="mt-10 text-center text-slate-500 font-medium">
-          New to QuickRepair?{' '}
+          New to Fixvo?{' '}
           <Link to="/signup" className="text-blue-600 font-bold hover:text-blue-700 hover:underline transition-colors">
             Create an account
           </Link>

@@ -18,9 +18,8 @@ const bookingSchema = new mongoose.Schema({
     required: true,
   },
   serviceId: {
-    type: mongoose.Schema.Types.ObjectId,
-    ref: 'Service',
-    default: null, // Allow null if using string-based service matching
+    type: String,
+    default: null,
   },
   serviceName: {
     type: String,
@@ -36,7 +35,7 @@ const bookingSchema = new mongoose.Schema({
   },
   status: {
     type: String,
-    enum: ['pending', 'queued', 'assigned', 'accepted', 'in_progress', 'quote_pending', 'completed', 'rejected'],
+    enum: ['pending', 'queued', 'assigned', 'accepted', 'on_the_way', 'arrived', 'quote_pending', 'quote_approved', 'in_progress', 'completed', 'rejected'],
     default: 'pending',
   },
   date: {
@@ -55,9 +54,29 @@ const bookingSchema = new mongoose.Schema({
     type: String,
     default: null,
   },
+  problemIds: {
+    type: [String],
+    default: []
+  },
   location: {
     type: String,
     required: true, // Will map to 'address' from BookingFlow
+  },
+  landmark: {
+    type: String,
+    default: null
+  },
+  latitude: {
+    type: Number,
+    default: null
+  },
+  longitude: {
+    type: Number,
+    default: null
+  },
+  mapsLink: {
+    type: String,
+    default: ""
   },
   timeSlot: {
     type: String,
@@ -75,6 +94,14 @@ const bookingSchema = new mongoose.Schema({
     type: String,
     default: '',
   },
+  mediaUrl: {
+    type: String,
+    default: ''
+  },
+  mediaType: {
+    type: String,
+    default: ''
+  },
   isReviewed: {
     type: Boolean,
     default: false
@@ -84,6 +111,10 @@ const bookingSchema = new mongoose.Schema({
     default: null
   },
   quoteReason: {
+    type: String,
+    default: null
+  },
+  detectedIssues: {
     type: String,
     default: null
   },
@@ -136,14 +167,22 @@ const bookingSchema = new mongoose.Schema({
   },
   paymentMethod: {
     type: String,
-    enum: ['card', 'cash', 'upi', 'mock'],
-    default: 'mock'
+    enum: ['card', 'cash', 'upi', 'mock', 'razorpay'],
+    default: 'cash'
   },
   transactionId: {
     type: String,
     default: null
   },
   amount: {
+    type: Number,
+    default: 0
+  },
+  promoCode: {
+    type: String,
+    default: null
+  },
+  discountPercentage: {
     type: Number,
     default: 0
   },
@@ -162,5 +201,10 @@ const bookingSchema = new mongoose.Schema({
     default: 'doorstep'
   }
 }, { timestamps: true });
+
+bookingSchema.index({ userId: 1 });
+bookingSchema.index({ providerId: 1 });
+bookingSchema.index({ serviceId: 1 });
+bookingSchema.index({ status: 1 });
 
 module.exports = mongoose.model('Booking', bookingSchema);

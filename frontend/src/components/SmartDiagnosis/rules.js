@@ -1,202 +1,164 @@
 export const diagnosisDataBase = {
-  ac: {
-    id: 'ac',
-    title: 'AC Repair',
-    icon: 'Snowflake',
+  repair: {
+    id: 'repair',
+    title: 'Repair',
+    icon: 'Hammer',
     questions: [
       {
-        id: 'power',
-        question: 'Is the AC turning ON?',
+        id: 'deviceType',
+        question: 'What needs to be repaired?',
         options: [
-          { label: 'Yes, it turns on', value: 'yes' },
-          { label: 'No, completely dead', value: 'no' }
+          { label: 'Electronic/Appliance (AC, TV, Fridge)', value: 'appliance' },
+          { label: 'Plumbing (Pipes, Taps, Leak)', value: 'plumbing' },
+          { label: 'Electrical (Wiring, DB board)', value: 'electrical' },
+          { label: 'Other/Not sure', value: 'other' }
         ]
       },
       {
-        id: 'cooling',
-        question: 'How is the cooling?',
+        id: 'issueLevel',
+        question: 'How severe is the problem?',
         options: [
-          { label: 'Not cooling at all', value: 'none' },
-          { label: 'Cooling is weak', value: 'weak' },
-          { label: 'Cooling is fine', value: 'fine' }
-        ]
-      },
-      {
-        id: 'issue',
-        question: 'Any other noticeable issues?',
-        options: [
-          { label: 'Unusual loud noise', value: 'noise' },
-          { label: 'Water leaking inside', value: 'leak' },
-          { label: 'Foul smell', value: 'smell' },
-          { label: 'None of the above', value: 'none' }
+          { label: 'Completely dead/Not working at all', value: 'dead' },
+          { label: 'Working partially but faulty', value: 'partial' },
+          { label: 'Making noise/Smell/Leak', value: 'symptoms' }
         ]
       }
     ],
     evaluate: (answers) => {
-      const { power, cooling, issue } = answers;
-      
-      if (power === 'no') {
+      const { issueLevel } = answers;
+      if (issueLevel === 'dead') {
         return {
-          problem: 'Compressor PCB Failure or Power Supply Issue',
-          priceRange: '₹500 - ₹3000',
-          recommendation: 'Requires detailed electrical inspection. Do not try to turn it on repeatedly.'
+          problem: 'Major Component Failure',
+          priceRange: '₹500 - ₹3000+',
+          recommendation: 'Needs immediate inspection to identify the dead component. Best to keep the main power off.'
         };
       }
-
-      if (cooling === 'none' && power === 'yes') {
-        return {
-          problem: 'Gas Leakage or Compressor Tripping',
-          priceRange: '₹1500 - ₹2500',
-          recommendation: 'Likely needs AC gas refill and professional leak testing.'
-        };
-      }
-
-      if (cooling === 'weak') {
-        if (issue === 'leak') {
-          return {
-            problem: 'Blocked Drain Pipe & Dirty Filters',
-            priceRange: '₹400 - ₹900',
-            recommendation: 'Deep cleaning and unblocking water drainage required.'
-          };
-        }
-        return {
-          problem: 'Clogged Condenser or Low Refrigerant',
-          priceRange: '₹500 - ₹1500',
-          recommendation: 'AC Servicing/Jet Cleaning or minor gas top-up needed.'
-        };
-      }
-
-      if (issue === 'noise') {
-        return {
-          problem: 'Blower Motor Issue or Loose Parts',
-          priceRange: '₹800 - ₹2000',
-          recommendation: 'Requires motor bearing check or fan blade realignment.'
-        };
-      }
-
       return {
-        problem: 'General Maintenance Required',
-        priceRange: '₹400 - ₹800',
-        recommendation: 'Standard wet servicing should resolve minor performance issues.'
+        problem: 'Faulty Operation / Partial Failure',
+        priceRange: '₹300 - ₹1500',
+        recommendation: 'A technician will diagnose the symptom and replace minor parts if needed.'
       };
     }
   },
-  plumbing: {
-    id: 'plumbing',
-    title: 'Plumbing',
-    icon: 'Droplet',
+  installation: {
+    id: 'installation',
+    title: 'Installation',
+    icon: 'Wrench',
     questions: [
       {
-        id: 'type',
-        question: 'What type of plumbing issue is it?',
+        id: 'installType',
+        question: 'What do you need installed?',
         options: [
-          { label: 'Leaking pipe or tap', value: 'leak' },
-          { label: 'Blocked drain/toilet', value: 'blockage' },
-          { label: 'No water supply', value: 'no_water' },
-          { label: 'Installation (Geyser, motor, etc.)', value: 'install' }
+          { label: 'Large Appliance (AC, TV, Geyser)', value: 'large_appliance' },
+          { label: 'Electrical Fixtures (Fans, Lights)', value: 'electrical' },
+          { label: 'Plumbing Fixtures (Taps, Sinks, Showers)', value: 'plumbing' },
+          { label: 'Furniture / Carpentry Assembly', value: 'carpentry' }
         ]
       },
       {
-        id: 'intensity',
-        question: 'How severe is the issue?',
+        id: 'readiness',
+        question: 'Do you have the product ready?',
         options: [
-          { label: 'Emergency (Flood/continuous leak)', value: 'high' },
-          { label: 'Moderate (Slow leak/clog)', value: 'medium' },
-          { label: 'Routine/Minor', value: 'low' }
+          { label: 'Yes, just need installation', value: 'yes' },
+          { label: 'No, need technician to bring items/spares', value: 'no' }
         ]
       }
     ],
     evaluate: (answers) => {
-      const { type, intensity } = answers;
+      const { readiness, installType } = answers;
       
-      if (type === 'leak') {
+      if (readiness === 'no') {
         return {
-          problem: intensity === 'high' ? 'Major Pipe Burst or Valve Failure' : 'Tap Spindle/Washer Depleted',
-          priceRange: intensity === 'high' ? '₹800 - ₹2500' : '₹150 - ₹500',
-          recommendation: 'Turn off the main water valve immediately to prevent water damage.'
-        };
-      }
-      
-      if (type === 'blockage') {
-        return {
-          problem: intensity === 'high' ? 'Severe Main Line Blockage' : 'Minor Trap Blockage',
-          priceRange: '₹300 - ₹1200',
-          recommendation: 'Needs mechanical rodding or plunger. Avoid using chemical drain cleaners without caution.'
-        };
-      }
-      
-      if (type === 'install') {
-        return {
-          problem: 'New Fixture Installation',
-          priceRange: '₹250 - ₹800',
-          recommendation: 'Ensure you have the required fixtures ready before the technician arrives.'
+          problem: 'Supply & Installation Required',
+          priceRange: '₹500 - ₹2000 + Material Cost',
+          recommendation: 'Technician will give you a quote for both materials and labor charges.'
         };
       }
       
       return {
-        problem: 'General Plumbing Inspection',
-        priceRange: '₹150 - ₹400',
-        recommendation: 'Technician needs to assess the water line.'
+        problem: 'Standard Installation Request',
+        priceRange: installType === 'large_appliance' ? '₹800 - ₹1500' : '₹200 - ₹600',
+        recommendation: 'Ensure the mounting area is clear before the technician arrives.'
       };
     }
   },
-  electrical: {
-    id: 'electrical',
-    title: 'Electrician',
-    icon: 'Zap',
+  cleaning: {
+    id: 'cleaning',
+    title: 'Cleaning',
+    icon: 'Sparkles',
     questions: [
       {
-        id: 'issue',
-        question: 'What seems to be the electrical problem?',
+        id: 'cleanType',
+        question: 'What kind of cleaning service do you need?',
         options: [
-          { label: 'Power trip/Short circuit', value: 'short' },
-          { label: 'Appliance not working', value: 'appliance' },
-          { label: 'Wiring/Switchbox issue', value: 'wiring' },
-          { label: 'Installation (Fan, Lights)', value: 'install' }
+          { label: 'Deep Home Cleaning', value: 'home' },
+          { label: 'Sofa / Carpet Cleaning', value: 'furniture' },
+          { label: 'Bathroom / Kitchen Deep Clean', value: 'room' },
+          { label: 'Water Tank Cleaning', value: 'tank' }
         ]
       },
       {
-        id: 'scope',
-        question: 'Does this affect the whole house or a specific area?',
+        id: 'size',
+        question: 'What is the scale of the job?',
         options: [
-          { label: 'Entire House', value: 'all' },
-          { label: 'Specific Room/Board', value: 'room' },
-          { label: 'Just one appliance/socket', value: 'one' }
+          { label: 'Small (1BHK/Single Item)', value: 'small' },
+          { label: 'Medium (2BHK-3BHK)', value: 'medium' },
+          { label: 'Large (Villa/Full House)', value: 'large' }
         ]
       }
     ],
     evaluate: (answers) => {
-      const { issue, scope } = answers;
-      
-      if (issue === 'short') {
-        return {
-          problem: scope === 'all' ? 'Main MCB Failure or Phase Issue' : 'Localized Short Circuit in Wiring',
-          priceRange: scope === 'all' ? '₹500 - ₹1500' : '₹200 - ₹800',
-          recommendation: 'Do NOT try to reset MCB continuously if it trips. Keep main power off.'
-        };
-      }
-      
-      if (issue === 'wiring') {
-        return {
-          problem: 'Burnt Wiring or Faulty Socket/Switch',
-          priceRange: '₹150 - ₹600',
-          recommendation: 'Material costs (new switch/socket/wires) will be extra based on actual usage.'
-        };
-      }
-      
-      if (issue === 'install') {
-        return {
-          problem: 'Fixture Installation',
-          priceRange: '₹100 - ₹400',
-          recommendation: 'Standard installation charges per unit.'
-        };
+      const { cleanType, size } = answers;
+      if (cleanType === 'home' || cleanType === 'room') {
+         if (size === 'large') {
+           return {
+             problem: 'Large Scale Deep Cleaning',
+             priceRange: '₹3000 - ₹6000',
+             recommendation: 'A team of 2-3 cleaners will bring professional equipment.'
+           };
+         }
+         return {
+             problem: 'Standard Deep Cleaning',
+             priceRange: '₹1000 - ₹2500',
+             recommendation: 'Includes chemical wash, scrubbing, and sanitization.'
+         };
       }
       
       return {
-        problem: 'Electrical Fault Diagnosis',
-        priceRange: '₹200 - ₹500',
-        recommendation: 'An electrician needs to trace the fault using an electrical tester/multimeter.'
+        problem: 'Specialized Cleaning Service',
+        priceRange: '₹500 - ₹1500',
+        recommendation: 'Using specialized vacuum and shampooing machines.'
       };
+    }
+  },
+  other: {
+    id: 'other',
+    title: 'Other',
+    icon: 'PlusCircle',
+    questions: [
+      {
+        id: 'otherDesc',
+        question: 'Is this an emergency request?',
+        options: [
+          { label: 'Yes, need someone ASAP', value: 'yes' },
+          { label: 'No, regular checkup/query', value: 'no' }
+        ]
+      }
+    ],
+    evaluate: (answers) => {
+       const { otherDesc } = answers;
+       if (otherDesc === 'yes') {
+         return {
+           problem: 'Emergency Custom Service',
+           priceRange: 'Inspection Fee First',
+           recommendation: 'We prioritize emergency requests. A technician will evaluate the issue directly.'
+         };
+       }
+       return {
+         problem: 'Custom Service Request',
+         priceRange: 'Varies',
+         recommendation: 'Technician will visit and provide a firm quote based on your exact requirement.'
+       };
     }
   }
 };

@@ -50,7 +50,7 @@ const dispatchExternal = async (email, phone, type, subject, message) => {
   // Real or Simulated Email using Resend
   if (type === 'email' || type === 'both') {
     const resendApiKey = process.env.RESEND_API_KEY;
-    const targetEmail = email || 'customer@quickrepair.com';
+    const targetEmail = email || 'customer@fixvo.com';
     
     if (resendApiKey) {
       console.log(`🚀 Dispatching LIVE Email via Resend to: ${targetEmail}`);
@@ -62,11 +62,11 @@ const dispatchExternal = async (email, phone, type, subject, message) => {
             'Content-Type': 'application/json'
           },
           body: JSON.stringify({
-            from: 'QuickRepair <onboarding@resend.dev>',
+            from: 'Fixvo <onboarding@resend.dev>',
             to: [targetEmail],
             subject: subject,
             html: `<div style="font-family: sans-serif; padding: 20px; border: 1px solid #eee; border-radius: 8px;">
-                     <h2 style="color: #4f46e5;">QuickRepair Notification</h2>
+                     <h2 style="color: #4f46e5;">Fixvo Notification</h2>
                      <p style="font-size: 16px; color: #333;">${message}</p>
                      <p style="font-size: 14px; color: #666; margin-top: 20px;">Open your dashboard to view details.</p>
                    </div>`

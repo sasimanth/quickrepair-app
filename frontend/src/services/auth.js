@@ -10,6 +10,11 @@ export const login = async (credentials) => {
   return response.data;
 };
 
+export const sendOtp = async (data) => {
+  const response = await api.post('/auth/send-otp', data);
+  return response.data;
+};
+
 export const register = async (userData) => {
   const response = await api.post('/auth/signup', userData);
   if (response.data.token) {

@@ -1,6 +1,6 @@
 import React from 'react';
 
-const LoadingSpinner = ({ text = "Loading QuickRepair..." }) => {
+const LoadingSpinner = ({ text = "Loading Fixvo..." }) => {
   return (
     <div className="flex flex-col items-center justify-center p-12 space-y-4">
       <div className="relative w-16 h-16">

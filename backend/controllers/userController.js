@@ -44,4 +44,31 @@ const updateProfile = async (req, res) => {
   }
 };
 
-module.exports = { getProfile, updateProfile };
+const upgradePremium = async (req, res) => {
+  try {
+    const user = await User.findById(req.user.id);
+    if (!user) {
+      return res.status(404).json({ message: 'User not found' });
+    }
+
+    user.isPremium = true;
+    user.membershipType = req.body.plan === 'monthly' ? 'monthly' : 'yearly';
+    
+    // Set expiry based on plan
+    const expiry = new Date();
+    if (user.membershipType === 'monthly') {
+      expiry.setMonth(expiry.getMonth() + 1);
+    } else {
+      expiry.setFullYear(expiry.getFullYear() + 1);
+    }
+    user.membershipExpiry = expiry;
+
+    await user.save();
+
+    res.json({ message: 'Successfully upgraded to premium', isPremium: user.isPremium, membershipType: user.membershipType, membershipExpiry: user.membershipExpiry });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
+module.exports = { getProfile, updateProfile, upgradePremium };

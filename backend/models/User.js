@@ -32,6 +32,19 @@ const userSchema = new mongoose.Schema({
     type: Number,
     default: 0
   },
+  isPremium: {
+    type: Boolean,
+    default: false
+  },
+  membershipType: {
+    type: String,
+    enum: ['none', 'monthly', 'yearly'],
+    default: 'none'
+  },
+  membershipExpiry: {
+    type: Date,
+    default: null
+  },
   // Technician specific fields
   jobsCompleted: {
     type: Number,

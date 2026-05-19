@@ -10,7 +10,7 @@ const Refund = () => {
         <h2 className="text-2xl font-semibold mt-8 mb-4">Cancellations</h2>
         <p className="mb-4">You may cancel a booking free of charge up to 2 hours before the technician arrives. Late cancellations or cancellations when the technician is already en-route will incur a $15 cancellation fee to compensate the technician for their time.</p>
         
-        <h2 className="text-2xl font-semibold mt-8 mb-4">The QuickRepair Guarantee</h2>
+        <h2 className="text-2xl font-semibold mt-8 mb-4">The Fixvo Guarantee</h2>
         <p className="mb-4">We stand by our professionals. If the original issue persists within 7 days of the repair, we will send a technician back to fix it for free. This guarantee applies to the specific workmanship performed and not to separate or new issues.</p>
         
         <h2 className="text-2xl font-semibold mt-8 mb-4">Refunds</h2>

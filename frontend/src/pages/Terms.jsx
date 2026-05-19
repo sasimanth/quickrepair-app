@@ -7,10 +7,10 @@ const Terms = () => {
       <p className="text-gray-500 mb-8 italic">Last Updated: April 2026</p>
       
       <div className="prose max-w-none text-gray-700">
-        <p className="mb-4">Welcome to QuickRepair. By using our platform, you agree to these terms:</p>
+        <p className="mb-4">Welcome to Fixvo. By using our platform, you agree to these terms:</p>
         
         <h2 className="text-2xl font-semibold mt-8 mb-4">1. Service Provision</h2>
-        <p className="mb-4">QuickRepair connects you with verified professional technicians. We are a marketplace, not a direct employer of the technicians.</p>
+        <p className="mb-4">Fixvo connects you with verified professional technicians. We are a marketplace, not a direct employer of the technicians.</p>
         
         <h2 className="text-2xl font-semibold mt-8 mb-4">2. Booking &amp; Accuracy</h2>
         <p className="mb-4">You must provide accurate item details and locations to ensure correct estimates. If the issue differs from the description, the technician reserves the right to adjust the estimate before commencing work.</p>

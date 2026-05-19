@@ -7,10 +7,6 @@ export const socket = io(SOCKET_URL, {
   reconnection: true
 });
 
-socket.on('connect', () => {
-  console.log('Connected to Real-time WebSockets:', socket.id);
-});
+socket.on('connect', () => {});
 
-socket.on('disconnect', () => {
-  console.log('Disconnected from WebSockets');
-});
+socket.on('disconnect', () => {});

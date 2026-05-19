@@ -41,9 +41,11 @@ app.use('/api/notifications', require('./routes/notificationRoutes'));
 app.use('/api/reviews', require('./routes/reviewRoutes'));
 app.use('/api/whatsapp', require('./routes/whatsappRoutes'));
 app.use('/api/book-service', require('./routes/quickBookingRoutes'));
+app.use('/api/payment', require('./routes/payment'));
+app.use('/api/contact', require('./routes/contactRoutes'));
 
 app.get('/api/health', (req, res) => {
-  res.json({ status: 'ok', message: 'QuickRepair API is running' });
+  res.json({ status: 'ok', message: 'Fixvo API is running' });
 });
 
 const PORT = process.env.PORT || 5000;
@@ -64,10 +66,24 @@ io.on('connection', (socket) => {
     console.log(`👁️ Client tracking technician ${techId}`);
   });
 
+  const Technician = require('./models/Technician');
+
   // Technician emits their location continuous update
-  socket.on('update_location', (data) => {
+  socket.on('update_location', async (data) => {
     // data: { techId, lat, lng }
     io.to(`track_${data.techId}`).emit('location_update', { lat: data.lat, lng: data.lng });
+    
+    try {
+      await Technician.updateOne(
+        { userId: data.techId },
+        { 
+           location: { type: 'Point', coordinates: [data.lng, data.lat] },
+           // Depending on schema, we could store lastUpdated or timestamps handles it
+        }
+      );
+    } catch (e) {
+      console.log('Location update DB error', e);
+    }
   });
 
   // Chat logic

@@ -12,9 +12,10 @@ const normalizePhone = (phone) => {
 // @route   POST /api/bookings
 const createBooking = async (req, res) => {
   const { 
-    serviceId, date, deviceType, problemDescription, problemId, location, imageUrl, providerId,
+    serviceId, date, deviceType, problemDescription, problemId, problemIds, location, detailedAddress, landmark, gpsLocation, imageUrl, mediaUrl, mediaType, providerId,
     unknownProblem, serviceOption, hasSpace, serviceLocation, isRestrictedArea, isUnderWarranty,
-    name, phone, service, problem, address, timeSlot, areaType, transportCharge, transportOption
+    name, phone, service, problem, address, timeSlot, areaType, transportCharge, transportOption,
+    promoCode, discountPercentage
   } = req.body;
   
   try {
@@ -39,7 +40,7 @@ const createBooking = async (req, res) => {
     const Technician = require('../models/Technician');
     let finalProviderId = providerId || null;
     let bStatus = 'pending';
-    let assignedTechEmail = 'technician@quickrepair.com';
+    let assignedTechEmail = 'technician@fixvo.com';
     let assignedTechPhone = '+15551234567';
 
     let reqTimeSlot = timeSlot || 'ASAP';
@@ -71,13 +72,20 @@ const createBooking = async (req, res) => {
       bStatus = 'assigned'; // Manually assigned -> pending acceptance
     }
 
-    // Determine user details based on optionalAuth
+    if (!location && !address) {
+       return res.status(400).json({ message: "Area or Town is required." });
+    }
+
     const bookingUserId = req.user ? req.user.id : null;
     const bookingUserEmail = req.user ? req.user.email : null;
     const finalName = name || (req.user ? req.user.name || req.user.email.split('@')[0] : null) || 'Guest User';
     let userPhoneNorm = null;
     if (req.user) userPhoneNorm = normalizePhone(req.user.phone);
     const finalPhone = normalizePhone(phone) || userPhoneNorm || '0000000000';
+
+    let finalAddress = location || address || 'Not Specified';
+    
+    let mapsLink = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(finalAddress)}`;
 
     const booking = new Booking({
       userId: bookingUserId,
@@ -91,9 +99,16 @@ const createBooking = async (req, res) => {
       deviceType: deviceType || service || 'Unknown Device',
       problemDescription: problemDescription || problem || 'Not Specified',
       problemId: problemId || null,
-      location: location || address || 'Not Specified',
+      problemIds: problemIds || [],
+      location: finalAddress,
+      landmark: null,
+      latitude: null,
+      longitude: null,
+      mapsLink: mapsLink,
       timeSlot: reqTimeSlot,
       imageUrl: imageUrl || '',
+      mediaUrl: mediaUrl || '',
+      mediaType: mediaType || '',
       status: bStatus,
       unknownProblem: unknownProblem || false,
       serviceOption: serviceOption || 'direct',
@@ -105,9 +120,14 @@ const createBooking = async (req, res) => {
       suggestedTools,
       areaType: areaType || 'nearby',
       transportCharge: transportCharge || 50,
-      transportOption: transportOption || 'doorstep'
+      transportOption: transportOption || 'doorstep',
+      promoCode: promoCode || null,
+      discountPercentage: discountPercentage || 0
     });
     const createdBooking = await booking.save();
+
+    // Notification: Simulate WhatsApp message logic to Technician as requested
+    const whatsappMessage = `New Job Assigned:\nCustomer: ${finalName}\nPhone: ${finalPhone}\nService: ${booking.serviceName}\nAddress: ${finalAddress}\nNavigate: ${mapsLink}`;
 
     if (finalProviderId && !finalProviderId.startsWith('tech-')) {
       notifyUser({
@@ -141,7 +161,7 @@ const createBooking = async (req, res) => {
       }
     }
 
-    res.status(201).json({ success: true, booking: createdBooking });
+    res.status(201).json({ success: true, message: 'Booking created successfully', booking: createdBooking });
   } catch (error) {
     res.status(400).json({ message: error.message });
   }
@@ -174,10 +194,12 @@ const getBookings = async (req, res) => {
       const originalPhone = userDoc ? userDoc.phone : null;
       
       const query = { $or: [{ userId: req.user.id }] };
-      if (originalPhone) {
+      const isDummyPhone = (p) => !p || p === '0000000000' || p === '1234567890' || p.length < 10;
+      
+      if (originalPhone && !isDummyPhone(originalPhone)) {
         query.$or.push({ phone: originalPhone });
       }
-      if (userPhoneNorm && userPhoneNorm !== '0000000000') {
+      if (userPhoneNorm && !isDummyPhone(userPhoneNorm)) {
         query.$or.push({ phone: userPhoneNorm });
         query.$or.push({ phone: new RegExp(userPhoneNorm, 'i') });
       }
@@ -291,9 +313,18 @@ const processPayment = async (req, res) => {
       return res.status(404).json({ message: 'Booking not found' });
     }
     
+    const User = require('../models/User');
+    const userDoc = await User.findById(req.user.id);
+    const pPhone = userDoc && userDoc.phone ? normalizePhone(userDoc.phone) : null;
+    const bPhone = booking.phone ? normalizePhone(booking.phone) : null;
+    
     // To only allow paying if it's their booking or they are admin
-    if (req.user.role === 'user' && booking.userId.toString() !== req.user.id.toString()) {
-       return res.status(403).json({ message: 'Not authorized to pay for this booking' });
+    if (req.user.role === 'user') {
+      const isOwnerById = booking.userId && booking.userId.toString() === req.user.id.toString();
+      const isOwnerByPhone = pPhone && bPhone && pPhone === bPhone;
+      if (!isOwnerById && !isOwnerByPhone) {
+         return res.status(403).json({ message: 'Not authorized to pay for this booking' });
+      }
     }
 
     booking.paymentStatus = 'completed';
@@ -347,7 +378,7 @@ const createPaymentIntent = async (req, res) => {
 // @desc    Submit a quote (Technician)
 // @route   PUT /api/bookings/:id/quote
 const submitQuote = async (req, res) => {
-  const { finalQuote, quoteReason, quotePhoto } = req.body;
+  const { finalQuote, quoteReason, quotePhoto, detectedIssues } = req.body;
   try {
     const booking = await Booking.findById(req.params.id);
     if (!booking) return res.status(404).json({ message: 'Booking not found' });
@@ -359,6 +390,7 @@ const submitQuote = async (req, res) => {
 
     booking.finalQuote = finalQuote;
     booking.quoteReason = quoteReason;
+    booking.detectedIssues = detectedIssues;
     booking.quotePhoto = quotePhoto;
     booking.status = 'quote_pending';
     booking.quoteApproved = false;
@@ -387,13 +419,21 @@ const approveQuote = async (req, res) => {
     const booking = await Booking.findById(req.params.id);
     if (!booking) return res.status(404).json({ message: 'Booking not found' });
     
-    if (booking.userId.toString() !== req.user.id.toString()) {
+    const User = require('../models/User');
+    const userDoc = await User.findById(req.user.id);
+    const pPhone = userDoc && userDoc.phone ? normalizePhone(userDoc.phone) : null;
+    const bPhone = booking.phone ? normalizePhone(booking.phone) : null;
+    
+    const isOwnerById = booking.userId && booking.userId.toString() === req.user.id.toString();
+    const isOwnerByPhone = pPhone && bPhone && pPhone === bPhone;
+    
+    if (!isOwnerById && !isOwnerByPhone) {
        return res.status(403).json({ message: 'Not authorized to approve quote' });
     }
 
     if (approved) {
       booking.quoteApproved = true;
-      booking.status = 'accepted'; // Return back to indicating work is in progress / accepted
+      booking.status = 'quote_approved'; // Fix Workflow Logic
     } else {
       booking.quoteApproved = false;
       booking.status = 'rejected';

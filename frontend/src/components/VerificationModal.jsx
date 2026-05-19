@@ -25,7 +25,13 @@ const VerificationModal = ({ currentStatus, onClose, onSuccess }) => {
     <div className="fixed inset-0 z-[110] flex items-center justify-center bg-slate-900/60 backdrop-blur-sm p-4 animate-in fade-in duration-300">
       <div className="bg-white max-w-md w-full rounded-3xl shadow-2xl overflow-hidden relative transform transition-all animate-in zoom-in-95 duration-300">
         
-        <button onClick={onClose} className="absolute top-4 right-4 p-2 text-slate-400 hover:text-slate-600 bg-slate-50 hover:bg-slate-100 rounded-full z-10 transition-colors">
+        <button onClick={() => {
+            if (window.stream) {
+              window.stream.getTracks().forEach(t => t.stop());
+              window.stream = null;
+            }
+            onClose();
+          }} className="absolute top-4 right-4 p-2 text-slate-400 hover:text-slate-600 bg-slate-50 hover:bg-slate-100 rounded-full z-10 transition-colors">
           <X size={20} />
         </button>
 
@@ -38,7 +44,7 @@ const VerificationModal = ({ currentStatus, onClose, onSuccess }) => {
             
             <h2 className="text-2xl font-black text-slate-800 mb-2">Identity Verification</h2>
             <p className="text-slate-500 font-medium text-sm leading-relaxed mb-8">
-              To build trust and perform jobs on QuickRepair, you must verify your identity. This requires a quick scan of your Government ID and Face.
+              To build trust and perform jobs on Fixvo, you must verify your identity. This requires a quick scan of your Government ID and Face.
             </p>
 
             <div className="space-y-3 mt-4">
@@ -57,27 +63,43 @@ const VerificationModal = ({ currentStatus, onClose, onSuccess }) => {
 
         {step === 2 && (
           <div className="p-8 text-center">
-            <div className="relative w-40 h-40 mx-auto mb-6">
-              {/* Scan box animation */}
-              <div className="absolute inset-0 rounded-3xl border-4 border-indigo-100 overflow-hidden">
-                 <div className="w-full h-1 bg-indigo-500 animate-[bounce_2s_infinite]"></div>
-              </div>
-              <div className="absolute inset-0 flex items-center justify-center text-slate-300">
-                 <ScanFace size={60} strokeWidth={1} />
-              </div>
+            <div className="relative w-48 h-48 mx-auto mb-6 rounded-3xl overflow-hidden bg-slate-900 border-4 border-indigo-100 flex items-center justify-center">
+              {!loading ? (
+                <>
+                  <video id="webcam" autoPlay playsInline muted className="w-full h-full object-cover"></video>
+                  {/* Scan box animation */}
+                  <div className="absolute inset-0 border-4 border-indigo-500/50 pointer-events-none">
+                     <div className="w-full h-1 bg-indigo-500 animate-[pulse_2s_infinite]"></div>
+                  </div>
+                </>
+              ) : (
+                 <Loader2 size={40} className="animate-spin text-white" />
+              )}
             </div>
             
             <h2 className="text-xl font-bold text-slate-800 mb-2">{loading ? "Scanning Identity..." : "Align face in frame"}</h2>
             <p className="text-slate-500 text-sm font-medium mb-8">
-              Powered securely by Stripe Identity Mock
+              Powered securely by Stripe Identity
             </p>
 
             <button 
-                onClick={handleVerify}
+                onClick={async () => {
+                   if (!window.stream) {
+                      try {
+                         const stream = await navigator.mediaDevices.getUserMedia({ video: true });
+                         window.stream = stream;
+                         document.getElementById('webcam').srcObject = stream;
+                      } catch (e) {
+                         alert('Camera access denied or unavailable.');
+                      }
+                      return;
+                   }
+                   handleVerify();
+                }}
                 disabled={loading}
                 className="w-full bg-slate-900 hover:bg-slate-800 text-white font-bold py-4 rounded-2xl flex items-center justify-center transition-all disabled:opacity-50"
               >
-                {loading ? <Loader2 size={20} className="animate-spin text-white" /> : <><ScanFace size={20} className="mr-2" /> Start Scan</>}
+                {loading ? <Loader2 size={20} className="animate-spin text-white" /> : <><ScanFace size={20} className="mr-2" /> Start/Capture Scan</>}
             </button>
           </div>
         )}

@@ -7,7 +7,7 @@ const Privacy = () => {
       <p className="text-gray-500 mb-8 italic">Last Updated: April 2026</p>
       
       <div className="prose max-w-none text-gray-700">
-        <p className="mb-4">Your privacy is our priority at QuickRepair. We handle your data carefully and securely.</p>
+        <p className="mb-4">Your privacy is our priority at Fixvo. We handle your data carefully and securely.</p>
         
         <h2 className="text-2xl font-semibold mt-8 mb-4">Data Collection</h2>
         <p className="mb-4">We collect your contact info, location for service delivery, and payment details securely via our payment partner. We also collect the details of the service requests you make to match you with the right technician.</p>

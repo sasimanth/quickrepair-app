@@ -1,31 +1,49 @@
 import { 
   Wrench, Hammer, Sparkles, MoreHorizontal,
-  Wind, Zap, Droplets, Snowflake, Disc,
+  Wind, Zap, Droplets, Snowflake, Disc, Smartphone,
   Tv, Bath, Utensils, Home
 } from 'lucide-react';
 
 export const globalCategories = [
   { id: 'repair', name: 'Repair Services', icon: Wrench, desc: 'Fix broken appliances and systems' },
-  { id: 'installation', name: 'Installation', icon: Hammer, desc: 'Setup and mounting services' },
-  { id: 'cleaning', name: 'Cleaning', icon: Sparkles, desc: 'Deep cleaning and sanitization' },
+  { id: 'installation', name: 'Installation Services', icon: Hammer, desc: 'Setup and mounting services' },
+  { id: 'cleaning', name: 'Cleaning Services', icon: Sparkles, desc: 'Deep cleaning and sanitization' },
   { id: 'other', name: 'Other Services', icon: MoreHorizontal, desc: 'Pest control, painting, etc.' },
 ];
 
 export const globalServices = [
-  { id: 'ac_repair', categoryId: 'repair', name: 'AC Repair', icon: Wind, color: 'text-sky-500', bg: 'bg-sky-500/20', img: 'https://images.unsplash.com/photo-1621245645300-305f69e96f13?q=80&w=600&auto=format&fit=crop' },
-  { id: 'electrician', categoryId: 'repair', name: 'Electrician', icon: Zap, color: 'text-amber-500', bg: 'bg-amber-500/20', img: 'https://images.unsplash.com/photo-1621905251189-08b45d6a269e?q=80&w=600&auto=format&fit=crop' },
-  { id: 'plumber', categoryId: 'repair', name: 'Plumber', icon: Droplets, color: 'text-blue-500', bg: 'bg-blue-500/20', img: 'https://images.unsplash.com/photo-1585704032915-c3400ca199e7?q=80&w=600&auto=format&fit=crop' },
-  { id: 'refrigerator', categoryId: 'repair', name: 'Refrigerator', icon: Snowflake, color: 'text-teal-500', bg: 'bg-teal-500/20', img: 'https://images.unsplash.com/photo-1584622650111-993a426fbf0a?q=80&w=600&auto=format&fit=crop' },
-  { id: 'washing_machine', categoryId: 'repair', name: 'Washing Machine', icon: Disc, color: 'text-indigo-500', bg: 'bg-indigo-500/20', img: 'https://images.unsplash.com/photo-1626806787461-102c1bfaaea1?q=80&w=600&auto=format&fit=crop' },
+  // Repair
+  { id: 'ac_repair', categoryId: 'repair', name: 'AC Repair', icon: Wind, color: 'text-sky-500', bg: 'bg-sky-500/20', img: 'https://images.unsplash.com/photo-1621905251189-08b45d6a269e?q=80&w=600&auto=format&fit=crop' },
+  { id: 'washing_machine', categoryId: 'repair', name: 'Washing Machine Repair', icon: Disc, color: 'text-indigo-500', bg: 'bg-indigo-500/20', img: 'https://images.unsplash.com/photo-1626806787461-102c1bfaaea1?q=80&w=600&auto=format&fit=crop' },
+  { id: 'refrigerator', categoryId: 'repair', name: 'Refrigerator Repair', icon: Snowflake, color: 'text-teal-500', bg: 'bg-teal-500/20', img: 'https://images.unsplash.com/photo-1584622650111-993a426fbf0a?q=80&w=600&auto=format&fit=crop' },
+  { id: 'microwave', categoryId: 'repair', name: 'Microwave Repair', icon: Sparkles, color: 'text-orange-500', bg: 'bg-orange-500/20', img: 'https://images.unsplash.com/photo-1574269909862-7e1d70bb8078?q=80&w=600&auto=format&fit=crop' },
+  { id: 'tv_repair', categoryId: 'repair', name: 'TV Repair', icon: Tv, color: 'text-purple-500', bg: 'bg-purple-500/20', img: 'https://images.unsplash.com/photo-1593359677879-a4bb92f829d1?q=80&w=600&auto=format&fit=crop' },
+  { id: 'laptop_repair', categoryId: 'repair', name: 'Laptop Repair', icon: Smartphone, color: 'text-slate-500', bg: 'bg-slate-500/20', img: 'https://images.unsplash.com/photo-1597872200969-2b65d56bd16b?q=80&w=600&auto=format&fit=crop' },
+  { id: 'mobile_repair', categoryId: 'repair', name: 'Mobile Repair', icon: Smartphone, color: 'text-rose-500', bg: 'bg-rose-500/20', img: 'https://images.unsplash.com/photo-1597740985671-2a8a3b80502e?q=80&w=600&auto=format&fit=crop' },
   
-  { id: 'ac_install', categoryId: 'installation', name: 'AC Installation', icon: Wind, color: 'text-sky-500', bg: 'bg-sky-500/20', img: 'https://images.unsplash.com/photo-1621245645300-305f69e96f13?q=80&w=600&auto=format&fit=crop' },
-  { id: 'tv_install', categoryId: 'installation', name: 'TV Mounting', icon: Tv, color: 'text-purple-500', bg: 'bg-purple-500/20', img: 'https://images.unsplash.com/photo-1593359677879-a4bb92f829d1?q=80&w=600&auto=format&fit=crop' },
-  { id: 'ro_install', categoryId: 'installation', name: 'RO Installation', icon: Droplets, color: 'text-blue-500', bg: 'bg-blue-500/20', img: 'https://images.unsplash.com/photo-1574620021381-8972bedbe2b8?q=80&w=600&auto=format&fit=crop' },
-  { id: 'furniture', categoryId: 'installation', name: 'Furniture Assembly', icon: Hammer, color: 'text-orange-500', bg: 'bg-orange-500/20', img: 'https://images.unsplash.com/photo-1622372728956-6218fdcbfa87?q=80&w=600&auto=format&fit=crop' },
+  // Installation
+  { id: 'ac_install', categoryId: 'installation', name: 'AC Installation', icon: Wind, color: 'text-sky-500', bg: 'bg-sky-500/20', img: 'https://images.unsplash.com/photo-1621905251189-08b45d6a269e?q=80&w=600&auto=format&fit=crop' },
+  { id: 'cctv_install', categoryId: 'installation', name: 'CCTV Installation', icon: Hammer, color: 'text-zinc-500', bg: 'bg-zinc-500/20', img: 'https://images.unsplash.com/photo-1557200134-90327ee9fafa?q=80&w=600&auto=format&fit=crop' },
+  { id: 'ro_install', categoryId: 'installation', name: 'RO Installation', icon: Droplets, color: 'text-blue-500', bg: 'bg-blue-500/20', img: 'https://images.unsplash.com/photo-1584622781564-1d987f7333c1?q=80&w=600&auto=format&fit=crop' },
+  { id: 'inverter_install', categoryId: 'installation', name: 'Inverter Installation', icon: Zap, color: 'text-amber-500', bg: 'bg-amber-500/20', img: 'https://images.unsplash.com/photo-1498084393753-b411b2d26b34?q=80&w=600&auto=format&fit=crop' },
+  { id: 'fan_install', categoryId: 'installation', name: 'Ceiling Fan Installation', icon: Wind, color: 'text-slate-500', bg: 'bg-slate-500/20', img: 'https://images.unsplash.com/photo-1582213782179-e0d53f98f2ca?q=80&w=600&auto=format&fit=crop' },
+  { id: 'lock_install', categoryId: 'installation', name: 'Door Lock Installation', icon: Hammer, color: 'text-yellow-600', bg: 'bg-yellow-600/20', img: 'https://images.unsplash.com/photo-1522708323590-d24dbb6b0267?q=80&w=600&auto=format&fit=crop' },
+  { id: 'furniture', categoryId: 'installation', name: 'Furniture Assembly', icon: Hammer, color: 'text-orange-500', bg: 'bg-orange-500/20', img: 'https://images.unsplash.com/photo-1581539250439-c96689b516dd?q=80&w=600&auto=format&fit=crop' },
 
-  { id: 'bathroom_clean', categoryId: 'cleaning', name: 'Bathroom Cleaning', icon: Bath, color: 'text-cyan-500', bg: 'bg-cyan-500/20', img: 'https://images.unsplash.com/photo-1584622781564-1d987f7333c1?q=80&w=600&auto=format&fit=crop' },
-  { id: 'kitchen_clean', categoryId: 'cleaning', name: 'Kitchen Cleaning', icon: Utensils, color: 'text-yellow-500', bg: 'bg-yellow-500/20', img: 'https://images.unsplash.com/photo-1556910103-1c02745a5538?q=80&w=600&auto=format&fit=crop' },
-  { id: 'home_clean', categoryId: 'cleaning', name: 'Full Home Clean', icon: Home, color: 'text-emerald-500', bg: 'bg-emerald-500/20', img: 'https://images.unsplash.com/photo-1527515637462-cff94eecc1ac?q=80&w=600&auto=format&fit=crop' },
+  // Cleaning
+  { id: 'sofa_clean', categoryId: 'cleaning', name: 'Sofa Cleaning', icon: Sparkles, color: 'text-rose-500', bg: 'bg-rose-500/20', img: 'https://images.unsplash.com/photo-1493663284031-b7e3aefcae8e?q=80&w=600&auto=format&fit=crop' },
+  { id: 'bathroom_clean', categoryId: 'cleaning', name: 'Bathroom Deep Cleaning', icon: Bath, color: 'text-cyan-500', bg: 'bg-cyan-500/20', img: 'https://images.unsplash.com/photo-1584622781564-1d987f7333c1?q=80&w=600&auto=format&fit=crop' },
+  { id: 'water_tank_clean', categoryId: 'cleaning', name: 'Water Tank Cleaning', icon: Droplets, color: 'text-blue-600', bg: 'bg-blue-600/20', img: 'https://images.unsplash.com/photo-1584622650111-993a426fbf0a?q=80&w=600&auto=format&fit=crop' },
+  { id: 'carpet_clean', categoryId: 'cleaning', name: 'Carpet Cleaning', icon: Sparkles, color: 'text-indigo-400', bg: 'bg-indigo-400/20', img: 'https://images.unsplash.com/photo-1600585154340-be6161a56a0c?q=80&w=600&auto=format&fit=crop' },
+  { id: 'kitchen_clean', categoryId: 'cleaning', name: 'Kitchen Cleaning', icon: Utensils, color: 'text-yellow-500', bg: 'bg-yellow-500/20', img: 'https://images.unsplash.com/photo-1556911220-e15b29be8c8f?q=80&w=600&auto=format&fit=crop' },
+  { id: 'home_clean', categoryId: 'cleaning', name: 'Full Home Cleaning', icon: Home, color: 'text-emerald-500', bg: 'bg-emerald-500/20', img: 'https://images.unsplash.com/photo-1527515637462-cff94eecc1ac?q=80&w=600&auto=format&fit=crop' },
+
+  // Other Services
+  { id: 'pest_control', categoryId: 'other', name: 'Pest Control', icon: MoreHorizontal, color: 'text-zinc-500', bg: 'bg-zinc-500/20', img: 'https://images.unsplash.com/photo-1504328345606-18bbc8c9d7d1?q=80&w=600&auto=format&fit=crop' },
+  { id: 'electric_wiring', categoryId: 'other', name: 'Electric Wiring', icon: Zap, color: 'text-amber-500', bg: 'bg-amber-500/20', img: 'https://images.unsplash.com/photo-1621905251189-08b45d6a269e?q=80&w=600&auto=format&fit=crop' },
+  { id: 'plumbing_work', categoryId: 'other', name: 'Plumbing Work', icon: Wrench, color: 'text-blue-500', bg: 'bg-blue-500/20', img: 'https://images.unsplash.com/photo-1585704032915-c3400ca199e7?q=80&w=600&auto=format&fit=crop' },
+  { id: 'furniture_repair', categoryId: 'other', name: 'Furniture Repair', icon: Hammer, color: 'text-orange-600', bg: 'bg-orange-600/20', img: 'https://images.unsplash.com/photo-1581539250439-c96689b516dd?q=80&w=600&auto=format&fit=crop' },
+  { id: 'painting', categoryId: 'other', name: 'Painting', icon: MoreHorizontal, color: 'text-pink-500', bg: 'bg-pink-500/20', img: 'https://images.unsplash.com/photo-1589939705384-5185137a7f0f?q=80&w=600&auto=format&fit=crop' },
 ];
 
 export const globalProblems = {
@@ -60,6 +78,12 @@ export const globalProblems = {
     { id: 'wm_water', label: 'Water Not Draining/Filling', minPrice: 400, maxPrice: 1500 },
     { id: 'wm_spin', label: 'Drum Not Spinning', minPrice: 600, maxPrice: 2500 },
     { id: 'wm_other', label: 'Other Issue', minPrice: 300, maxPrice: 2000 },
+  ],
+  mobile_repair: [
+    { id: 'mob_screen', label: 'Screen Replacement', minPrice: 1500, maxPrice: 8000 },
+    { id: 'mob_battery', label: 'Battery Replacement', minPrice: 800, maxPrice: 2500 },
+    { id: 'mob_port', label: 'Charging Port Issue', minPrice: 400, maxPrice: 1200 },
+    { id: 'mob_other', label: 'Other/Software Issue', minPrice: 300, maxPrice: 2000 },
   ],
   ac_install: [
     { id: 'aci_split', label: 'Split AC Installation' },
@@ -97,4 +121,23 @@ export const globalProblems = {
     { id: 'hc_2bhk', label: '2 BHK Full Home Clean' },
     { id: 'hc_3bhk', label: '3 BHK+ Full Home Clean' },
   ],
+};
+
+import api from '../services/api';
+
+export const getDbServices = async () => {
+  try {
+    const { data } = await api.get('/services');
+    return data.map(dbSvc => {
+      const staticSvc = globalServices.find(s => s.id === dbSvc.id) || {};
+      // Wrench imported at top
+      return {
+        ...dbSvc,
+        img: dbSvc.image || staticSvc.img,
+        icon: staticSvc.icon
+      };
+    });
+  } catch (err) {
+    return globalServices;
+  }
 };

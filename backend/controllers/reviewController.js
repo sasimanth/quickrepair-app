@@ -15,8 +15,22 @@ const createReview = async (req, res) => {
       return res.status(404).json({ message: 'Booking not found' });
     }
 
+    const User = require('../models/User');
+    const userDoc = await User.findById(req.user.id);
+    
+    const normalizePhone = (phone) => {
+      if (!phone) return null;
+      return phone.replace(/\D/g, "").slice(-10);
+    };
+
+    const pPhone = userDoc && userDoc.phone ? normalizePhone(userDoc.phone) : null;
+    const bPhone = booking.phone ? normalizePhone(booking.phone) : null;
+    
+    const isOwnerById = booking.userId && booking.userId.toString() === req.user.id.toString();
+    const isOwnerByPhone = pPhone && bPhone && pPhone === bPhone;
+
     // Ensure only the user of the booking can leave a review
-    if (booking.userId !== req.user.id) {
+    if (!isOwnerById && !isOwnerByPhone) {
       return res.status(403).json({ message: 'Not authorized to review this booking' });
     }
 
@@ -26,7 +40,7 @@ const createReview = async (req, res) => {
     }
 
     // Check if review already exists
-    const existingReview = await Review.findOne({ bookingId });
+    const existingReview = await Review.findOne({ bookingId: booking._id });
     if (existingReview) {
       return res.status(400).json({ message: 'Review already submitted for this job' });
     }

@@ -65,7 +65,7 @@ const Pricing = () => {
           <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-indigo-500/20 text-indigo-300 font-bold text-xs uppercase tracking-widest mb-4 border border-indigo-500/30">
             <span className="w-1.5 h-1.5 rounded-full bg-indigo-400 animate-pulse"></span> Subscription Tier
           </div>
-          <h3 className="text-3xl font-extrabold text-white mb-2">QuickRepair <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-indigo-400">Prime</span></h3>
+          <h3 className="text-3xl font-extrabold text-white mb-2">Fixvo <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-indigo-400">Prime</span></h3>
           <p className="text-slate-400 font-medium">Protect your home year-round. Get VIP matching and completely waived inspection fees.</p>
         </div>
         

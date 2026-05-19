@@ -11,8 +11,8 @@ export default defineConfig({
       injectRegister: 'auto',
       includeAssets: ['favicon.ico', 'apple-touch-icon.png', 'masked-icon.svg'],
       manifest: {
-        name: 'QuickRepair Platform',
-        short_name: 'QuickRepair',
+        name: 'Fixvo Platform',
+        short_name: 'Fixvo',
         description: 'On-demand device repair services at your doorstep',
         theme_color: '#4f46e5',
         background_color: '#ffffff',

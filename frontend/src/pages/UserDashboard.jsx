@@ -1,27 +1,37 @@
 import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import api from '../services/api'; 
-import { Calendar, MapPin, Smartphone, AlertCircle, Clock, CheckCircle, PackageSearch, XCircle, Plus, LayoutDashboard, Wrench, Settings, Star, User, ChevronRight, MessageSquare, Camera, UploadCloud, Loader2, Shield, ShieldCheck, HelpCircle, Truck, Home } from 'lucide-react';
+import { globalCategories, globalServices, getDbServices } from '../data/services';
+import { Calendar, MapPin, Smartphone, AlertCircle, Clock, CheckCircle, PackageSearch, XCircle, Plus, LayoutDashboard, Wrench, Settings, Star, User, ChevronRight, MessageSquare, Camera, UploadCloud, Loader2, Shield, ShieldCheck, HelpCircle, Truck, Home, Search } from 'lucide-react';
 import ChatModal from '../components/ChatModal';
 import ReviewModal from '../components/ReviewModal';
 import PaymentModal from '../components/PaymentModal';
 import SettingsModal from '../components/SettingsModal';
-import { CreditCard, Sparkles } from 'lucide-react';
+import PremiumModal from '../components/PremiumModal';
+import { CreditCard, Sparkles, PhoneCall } from 'lucide-react';
 import { socket } from '../services/socket';
 import LoadingSkeleton from '../components/LoadingSkeleton';
 
 
 const UserDashboard = () => {
   const [bookings, setBookings] = useState([]);
-  const [services, setServices] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [showForm, setShowForm] = useState(false);
+  const queryParams = new URLSearchParams(document.location.search);
+  const initialShowForm = queryParams.get('action') === 'book';
+  const initialShowPremium = queryParams.get('action') === 'premium';
+  const initialService = queryParams.get('service');
+  const [showForm, setShowForm] = useState(initialShowForm);
+  const [showPremiumModal, setShowPremiumModal] = useState(initialShowPremium);
+  const [services, setServices] = useState(globalServices);
+  const [searchQuery, setSearchQuery] = useState('');
   
   // Step 1: Form, Step 2: Technician Selection
   const [step, setStep] = useState(1);
   const [fetchingTechs, setFetchingTechs] = useState(false);
   const [technicians, setTechnicians] = useState([]);
   const [selectedTech, setSelectedTech] = useState(null);
+  const [promoCode, setPromoCode] = useState('');
+  const [discountAmount, setDiscountAmount] = useState(0);
   const [chatBookingId, setChatBookingId] = useState(null);
   const [reviewBooking, setReviewBooking] = useState(null);
   const [paymentBooking, setPaymentBooking] = useState(null);
@@ -31,22 +41,18 @@ const UserDashboard = () => {
   const [profile, setProfile] = useState(null);
 
   const [formData, setFormData] = useState({
-    serviceId: '', date: '', deviceType: '', problemDescription: '', location: '', imageUrl: '',
+    serviceId: initialService || '', date: '', deviceType: '', problemDescription: '', location: '', detailedAddress: '', landmark: '', gpsLocation: null, imageUrl: '',
     serviceOption: 'direct',
-    unknownProblem: false,
-    hasSpace: true,
-    serviceLocation: 'on-site',
-    isRestrictedArea: false,
-    isUnderWarranty: false
+    unknownProblem: false
   });
 
   useEffect(() => {
+    getDbServices().then(setServices);
     fetchData(true);
     const interval = setInterval(() => fetchData(false), 5000);
 
     // Subscribe to WebSocket location updates
     socket.on('location_update', (data) => {
-       console.log("Receiving live location update:", data);
        setLiveLocations(prev => ({ ...prev, [data.techId]: [data.lat, data.lng] }));
     });
 
@@ -61,10 +67,12 @@ const UserDashboard = () => {
       if (showLoading) setLoading(true);
       const bookingsRes = await api.get('/bookings');
       setBookings(bookingsRes.data);
-      const servicesRes = await api.get('/services');
-      setServices(servicesRes.data);
-      if (servicesRes.data.length > 0) {
-        setFormData(prev => ({ ...prev, serviceId: servicesRes.data[0]._id }));
+      if (globalServices.length > 0 && !formData.serviceId && document.location.pathname !== '/book') {
+        const foundStr = localStorage.getItem('lastSelectedService');
+        if (!foundStr) {
+           // Do not default aggressively, let user select
+           // setFormData(prev => ({ ...prev, serviceId: globalServices[0].id }));
+        }
       }
       const profileRes = await api.get('/users/profile');
       setProfile(profileRes.data);
@@ -85,11 +93,17 @@ const UserDashboard = () => {
     setStep(2);
     setFetchingTechs(true);
     
-    const fetchTechnicians = async (lat, lng) => {
+    const fetchTechnicians = async () => {
       try {
-        const query = lat && lng ? `?lat=${lat}&lng=${lng}` : '';
-        const res = await api.get(`/technicians/nearby${query}`);
-        // Use only real technicians from the database!
+        const queryParams = new URLSearchParams();
+        if (formData.location) {
+          queryParams.append('area', formData.location);
+        }
+        if (formData.serviceId) {
+          queryParams.append('serviceId', formData.serviceId);
+        }
+        const queryString = queryParams.toString() ? `?${queryParams.toString()}` : '';
+        const res = await api.get(`/technicians/nearby${queryString}`);
         const realTechs = res.data || [];
         setTechnicians(realTechs);
       } catch (err) {
@@ -100,14 +114,7 @@ const UserDashboard = () => {
       }
     };
 
-    if (navigator.geolocation) {
-      navigator.geolocation.getCurrentPosition(
-        (pos) => fetchTechnicians(pos.coords.latitude, pos.coords.longitude),
-        () => fetchTechnicians() // fallback
-      );
-    } else {
-      fetchTechnicians();
-    }
+    fetchTechnicians();
   };
 
   const handleImageUpload = (e) => {
@@ -123,7 +130,7 @@ const UserDashboard = () => {
     
     const reader = new FileReader();
     reader.onloadend = () => {
-      setFormData(prev => ({ ...prev, imageUrl: reader.result }));
+      setFormData(prev => ({ ...prev, mediaUrl: reader.result, mediaType: file.type }));
       setUploadingImage(false);
     };
     reader.onerror = () => {
@@ -136,12 +143,15 @@ const UserDashboard = () => {
 
   const handleAutoDetectLocation = () => {
     if (navigator.geolocation) {
-      setFormData(prev => ({ ...prev, location: "Locating precise GPS coordinate..." }));
       navigator.geolocation.getCurrentPosition(
-        (pos) => setFormData(prev => ({ ...prev, location: "Current GPS Location Detected" })),
+        (pos) => {
+          setFormData(prev => ({ 
+            ...prev, 
+            gpsLocation: { lat: pos.coords.latitude, lng: pos.coords.longitude } 
+          }));
+        },
         () => {
-          alert("Please allow location access in your browser.");
-          setFormData(prev => ({ ...prev, location: "" }));
+          alert("Please allow location access in your browser to share live GPS.");
         }
       );
     } else {
@@ -156,9 +166,13 @@ const UserDashboard = () => {
     }
     
     try {
+      const selectedServiceName = globalServices.find(s => s.id === formData.serviceId)?.name || 'Unknown Service';
       const payload = {
         ...formData,
-        providerId: selectedTech.id // explicit specific assignment
+        service: selectedServiceName, // explicit specific service name
+        providerId: selectedTech.id, // explicit specific assignment
+        promoCode: promoCode,
+        discountPercentage: discountAmount
       };
       
       await api.post('/bookings', payload);
@@ -168,8 +182,12 @@ const UserDashboard = () => {
       setStep(1);
       setSelectedTech(null);
       setFormData({ 
-        serviceId: services.length > 0 ? services[0]._id : '', date: '', deviceType: '', problemDescription: '', location: '', imageUrl: '',
-        serviceOption: 'direct', unknownProblem: false, hasSpace: true, serviceLocation: 'on-site', isRestrictedArea: false, isUnderWarranty: false
+        serviceId: globalServices.length > 0 ? globalServices[0].id : '',
+        date: new Date().toISOString().split('T')[0],
+        time: '',
+        deviceType: '',
+        issue: '',
+        photo: null
       });
       fetchData(); 
     } catch (error) {
@@ -183,10 +201,13 @@ const UserDashboard = () => {
       await api.put(`/bookings/${bookingId}/approve-quote`, { approved });
       fetchData(); // Refresh UI to show accepted/rejected status
     } catch (error) {
-       alert('Failed to update quote status.');
+       const errorMsg = error.response?.data?.message || error.message || 'Unknown error';
+       alert(`Failed to update quote status: ${errorMsg}`);
        console.error(error);
     }
   };
+
+
 
   const handleLightningMatch = async () => {
     if (technicians.length === 0) return;
@@ -202,8 +223,10 @@ const UserDashboard = () => {
     // Auto submit after a dramatic pause
     setTimeout(async () => {
       try {
+        const selectedServiceName = globalServices.find(s => s.id === formData.serviceId)?.name || 'Unknown Service';
         const payload = {
           ...formData,
+          service: selectedServiceName,
           providerId: bestTech.id
         };
         await api.post('/bookings', payload);
@@ -212,8 +235,8 @@ const UserDashboard = () => {
         setStep(1);
         setSelectedTech(null);
         setFormData({ 
-          serviceId: services.length > 0 ? services[0]._id : '', date: '', deviceType: '', problemDescription: '', location: '', imageUrl: '',
-          serviceOption: 'direct', unknownProblem: false, hasSpace: true, serviceLocation: 'on-site', isRestrictedArea: false, isUnderWarranty: false
+          serviceId: globalServices.length > 0 ? globalServices[0].id : '', date: '', deviceType: '', problemDescription: '', location: '', detailedAddress: '', landmark: '', gpsLocation: null, imageUrl: '',
+          serviceOption: 'direct', unknownProblem: false
         });
         fetchData(); 
       } catch (error) {
@@ -234,7 +257,9 @@ const UserDashboard = () => {
       assigned: { color: 'bg-blue-100 text-blue-700 border-blue-200', icon: Clock, label: 'Assigned' },
       queued: { color: 'bg-yellow-100 text-yellow-700 border-yellow-200', icon: Clock, label: 'Tech is Busy - In Queue' },
       accepted: { color: 'bg-indigo-100 text-indigo-700 border-indigo-200', icon: CheckCircle, label: 'Accepted by Tech' },
-      in_progress: { color: 'bg-indigo-100 text-indigo-700 border-indigo-200', icon: Truck, label: 'Tech On Way' },
+      on_the_way: { color: 'bg-orange-100 text-orange-700 border-orange-200', icon: Truck, label: 'Tech On Way' },
+      arrived: { color: 'bg-blue-100 text-blue-700 border-blue-200', icon: MapPin, label: 'Tech Arrived' },
+      in_progress: { color: 'bg-indigo-100 text-indigo-700 border-indigo-200', icon: Wrench, label: 'Work In Progress' },
       quote_pending: { color: 'bg-purple-100 text-purple-700 border-purple-200', icon: CreditCard, label: 'Pending Quote Approval' },
       completed: { color: 'bg-emerald-100 text-emerald-700 border-emerald-200', icon: CheckCircle, label: 'Completed' },
       rejected: { color: 'bg-red-100 text-red-700 border-red-200', icon: XCircle, label: 'Rejected' }
@@ -248,6 +273,14 @@ const UserDashboard = () => {
     );
   };
 
+  const filteredBookings = bookings.filter(b => {
+    const query = searchQuery.toLowerCase();
+    const matchesService = (b.serviceId?.name || b.serviceName || '').toLowerCase().includes(query);
+    const matchesId = b._id.toLowerCase().includes(query);
+    const matchesStatus = b.status.toLowerCase().includes(query);
+    return matchesService || matchesId || matchesStatus;
+  });
+
   return (
     <div className="min-h-screen bg-slate-50/50 py-12 px-4 sm:px-6 lg:px-8 mt-10">
       <div className="max-w-6xl mx-auto space-y-10">
@@ -259,7 +292,14 @@ const UserDashboard = () => {
               <LayoutDashboard size={28} />
             </div>
             <div>
-              <h1 className="text-3xl font-extrabold text-slate-900 tracking-tight">Your Dashboard</h1>
+              <div className="flex items-center gap-3">
+                <h1 className="text-3xl font-extrabold text-slate-900 tracking-tight">Your Dashboard</h1>
+                {profile?.isPremium && (
+                  <span className="flex items-center gap-1 bg-amber-100 text-amber-700 border border-amber-200 px-3 py-1 rounded-full text-xs font-black uppercase tracking-widest shadow-sm">
+                    <Sparkles size={14} className="text-amber-500" /> Fixvo Plus
+                  </span>
+                )}
+              </div>
               <p className="text-slate-500 font-medium mt-1">Manage repairs and hardware requests</p>
             </div>
           </div>
@@ -270,6 +310,16 @@ const UserDashboard = () => {
             >
               <Settings size={20} /> Settings
             </button>
+            <div className="relative hidden md:block w-72">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={18} />
+              <input 
+                type="text" 
+                placeholder="Search by ID, Status, or Service..." 
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="w-full pl-10 pr-4 py-3 bg-slate-50 border border-slate-200 rounded-2xl focus:ring-2 focus:ring-indigo-100 focus:border-indigo-500 transition-all text-sm font-medium text-slate-700"
+              />
+            </div>
             <button
               onClick={cancelRequest}
               className={`flex items-center gap-2 px-6 py-3.5 rounded-2xl font-bold transition-all duration-300 transform hover:scale-105 shadow-md ${showForm ? 'bg-white text-slate-700 border-2 border-slate-200 hover:bg-slate-50' : 'bg-indigo-600 text-white hover:bg-indigo-700 hover:shadow-indigo-500/20 shadow-xl'}`}
@@ -325,8 +375,12 @@ const UserDashboard = () => {
                         className="w-full px-5 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:ring-4 focus:ring-blue-100 focus:border-blue-500 transition-all font-medium text-slate-700"
                         required
                       >
-                        {services.map(service => (
-                          <option key={service._id} value={service._id}>{service.name} - ${service.price}</option>
+                        {globalCategories.map(cat => (
+                          <optgroup key={cat.id} label={cat.name}>
+                            {globalServices.filter(s => s.categoryId === cat.id).map(service => (
+                              <option key={service.id} value={service.id}>{service.name}</option>
+                            ))}
+                          </optgroup>
                         ))}
                       </select>
                     </div>
@@ -349,10 +403,20 @@ const UserDashboard = () => {
                     </div>
                     <div className="space-y-2">
                       <div className="flex justify-between items-center">
-                        <label className="text-sm font-bold text-slate-700 flex items-center gap-2"><MapPin size={16} className="text-slate-400"/> Location</label>
-                        <button type="button" onClick={handleAutoDetectLocation} className="text-xs font-bold text-blue-600 hover:text-blue-800 flex items-center gap-1 bg-blue-50 hover:bg-blue-100 px-2.5 py-1 rounded-md transition-colors">📍 Auto-detect</button>
+                        <label className="text-sm font-bold text-slate-700 flex items-center gap-2"><MapPin size={16} className="text-slate-400"/> Town / Area</label>
                       </div>
-                      <input type="text" placeholder="Your address or area" required className="w-full px-5 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:ring-4 focus:ring-blue-100 focus:border-blue-500 transition-all font-medium text-slate-700" value={formData.location} onChange={(e) => setFormData({ ...formData, location: e.target.value })} />
+                      <select 
+                        required 
+                        className="w-full px-5 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:ring-4 focus:ring-blue-100 focus:border-blue-500 transition-all font-medium text-slate-700" 
+                        value={formData.location} 
+                        onChange={(e) => setFormData({ ...formData, location: e.target.value })}
+                      >
+                        <option value="">Select your area</option>
+                        <option value="Tirupati">Tirupati</option>
+                        <option value="Hyderabad">Hyderabad</option>
+                        <option value="Bangalore">Bangalore</option>
+                        <option value="Chennai">Chennai</option>
+                      </select>
                     </div>
                   </div>
 
@@ -361,7 +425,7 @@ const UserDashboard = () => {
                     <div className="relative group border-2 border-dashed border-slate-300 rounded-xl p-4 transition-all hover:border-blue-400 hover:bg-blue-50/50 flex flex-col items-center justify-center min-h-[100px] bg-slate-50 cursor-pointer overflow-hidden">
                       <input 
                         type="file" 
-                        accept="image/*" 
+                        accept="image/*,video/mp4,video/quicktime" 
                         onChange={handleImageUpload} 
                         disabled={uploadingImage}
                         className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10" 
@@ -371,44 +435,26 @@ const UserDashboard = () => {
                           <Loader2 className="animate-spin mb-2" size={24} />
                           <span className="text-sm font-bold">Uploading...</span>
                         </div>
-                      ) : formData.imageUrl ? (
+                      ) : formData.mediaUrl ? (
                         <div className="flex flex-col items-center text-emerald-600">
                           <CheckCircle className="mb-2" size={28} />
-                          <span className="text-sm font-bold">Photo Uploaded Successfully!</span>
-                          <img src={formData.imageUrl} alt="Preview" className="mt-3 w-16 h-16 object-cover rounded-lg border border-emerald-200 shadow-sm" />
+                          <span className="text-sm font-bold">Media Uploaded Successfully!</span>
+                          {formData.mediaType?.startsWith('video') ? (
+                            <video src={formData.mediaUrl} className="mt-3 w-16 h-16 object-cover rounded-lg border border-emerald-200 shadow-sm" />
+                          ) : (
+                            <img src={formData.mediaUrl} alt="Preview" className="mt-3 w-16 h-16 object-cover rounded-lg border border-emerald-200 shadow-sm" />
+                          )}
                         </div>
                       ) : (
                         <div className="flex flex-col items-center text-slate-500 group-hover:text-blue-600 transition-colors">
                           <UploadCloud className="mb-2" size={28} />
                           <span className="text-sm font-bold">Click or drag a photo here</span>
-                          <span className="text-xs mt-1 text-slate-400">JPG, PNG under 5MB</span>
+                          <span className="text-xs mt-1 text-slate-400">JPG, PNG, MP4 up to 20MB</span>
                         </div>
                       )}
                     </div>
                   </div>
                   
-
-                  <div className="space-y-4 pt-4 border-t border-slate-100">
-                    <div className="flex items-center justify-between">
-                      <label className="text-sm font-bold text-slate-700 flex items-center gap-2"><Shield size={16} className="text-slate-400"/> Is your product under warranty?</label>
-                      <div className="flex items-center gap-4">
-                        <label className="flex items-center gap-2 cursor-pointer">
-                          <input type="radio" name="warranty" checked={formData.isUnderWarranty} onChange={() => setFormData({...formData, isUnderWarranty: true})} className="w-4 h-4 text-blue-600 focus:ring-blue-500" />
-                          <span className="text-sm font-medium">Yes</span>
-                        </label>
-                        <label className="flex items-center gap-2 cursor-pointer">
-                          <input type="radio" name="warranty" checked={!formData.isUnderWarranty} onChange={() => setFormData({...formData, isUnderWarranty: false})} className="w-4 h-4 text-blue-600 focus:ring-blue-500" />
-                          <span className="text-sm font-medium">No</span>
-                        </label>
-                      </div>
-                    </div>
-                    {formData.isUnderWarranty && (
-                      <div className="p-4 bg-amber-50 rounded-xl border border-amber-200 flex gap-3 animate-in fade-in slide-in-from-top-2">
-                        <AlertCircle className="text-amber-500 shrink-0 mt-0.5" size={20} />
-                        <p className="text-sm text-amber-800 font-medium">We recommend using the official brand service center to avoid voiding your warranty. You can still continue to book with us if you prefer.</p>
-                      </div>
-                    )}
-                  </div>
 
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-6 pt-4 border-t border-slate-100">
                     <div className="space-y-3">
@@ -427,8 +473,8 @@ const UserDashboard = () => {
                            <div className="flex items-center gap-3">
                              <input type="radio" name="serviceOption" checked={formData.serviceOption === 'inspection'} onChange={() => setFormData({...formData, serviceOption: 'inspection'})} className="w-4 h-4 text-blue-600 focus:ring-blue-500" />
                              <div>
-                               <span className="block font-bold text-slate-800">Inspection Visit ($15)</span>
-                               <span className="block text-xs text-slate-500 mt-1">Tech diagnoses problem & gives final cost. Fee adjusted in final bill.</span>
+                               <span className="block font-bold text-slate-800">Inspection Visit</span>
+                               <span className="block text-xs text-slate-500 mt-1">Final price will be provided after inspection and approval</span>
                              </div>
                            </div>
                         </label>
@@ -442,65 +488,6 @@ const UserDashboard = () => {
                            </div>
                         </label>
                       </div>
-                    </div>
-                  </div>
-
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6 pt-4 border-t border-slate-100">
-                    <div className="space-y-4">
-                      <div className="space-y-2">
-                        <label className="text-sm font-bold text-slate-700 flex items-center gap-2"><Home size={16} className="text-slate-400"/> Do you have space for repair work?</label>
-                        <div className="flex gap-4">
-                          <label className="flex items-center gap-2 cursor-pointer">
-                            <input type="radio" name="hasSpace" checked={formData.hasSpace} onChange={() => setFormData({...formData, hasSpace: true, serviceLocation: 'on-site'})} className="w-4 h-4 text-blue-600 focus:ring-blue-500" />
-                            <span className="text-sm font-medium">Yes</span>
-                          </label>
-                          <label className="flex items-center gap-2 cursor-pointer">
-                            <input type="radio" name="hasSpace" checked={!formData.hasSpace} onChange={() => setFormData({...formData, hasSpace: false, serviceLocation: 'off-site'})} className="w-4 h-4 text-blue-600 focus:ring-blue-500" />
-                            <span className="text-sm font-medium">No</span>
-                          </label>
-                        </div>
-                      </div>
-                      
-                      {!formData.hasSpace && (
-                         <div className="p-3 bg-blue-50 rounded-xl border border-blue-200">
-                           <p className="text-sm text-blue-800 font-medium flex items-center gap-2"><Truck size={16}/> Off-site pickup & return suggested.</p>
-                         </div>
-                      )}
-
-                      <div className="space-y-2 mt-4">
-                        <label className="text-sm font-bold text-slate-700 flex items-center gap-2"><MapPin size={16} className="text-slate-400"/> Preferred Service Location</label>
-                        <select
-                          value={formData.serviceLocation}
-                          onChange={(e) => setFormData({ ...formData, serviceLocation: e.target.value })}
-                          className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-100 focus:border-blue-500 transition-all font-medium text-slate-700"
-                        >
-                          <option value="on-site">On-site Repair (At your location)</option>
-                          <option value="off-site">Off-site Repair (Pickup & Return)</option>
-                          {formData.isRestrictedArea && <option value="gate">Meet at Gate</option>}
-                        </select>
-                      </div>
-                    </div>
-
-                    <div className="space-y-4">
-                      <div className="space-y-2">
-                        <label className="text-sm font-bold text-slate-700 flex items-center gap-2"><Shield size={16} className="text-slate-400"/> Is your location restricted (Hostel/Campus)?</label>
-                        <div className="flex gap-4">
-                          <label className="flex items-center gap-2 cursor-pointer">
-                            <input type="radio" name="restricted" checked={formData.isRestrictedArea} onChange={() => setFormData({...formData, isRestrictedArea: true, serviceLocation: 'gate'})} className="w-4 h-4 text-blue-600 focus:ring-blue-500" />
-                            <span className="text-sm font-medium">Yes</span>
-                          </label>
-                          <label className="flex items-center gap-2 cursor-pointer">
-                            <input type="radio" name="restricted" checked={!formData.isRestrictedArea} onChange={() => setFormData({...formData, isRestrictedArea: false, serviceLocation: formData.hasSpace ? 'on-site' : 'off-site'})} className="w-4 h-4 text-blue-600 focus:ring-blue-500" />
-                            <span className="text-sm font-medium">No</span>
-                          </label>
-                        </div>
-                      </div>
-                      
-                      {formData.isRestrictedArea && (
-                         <div className="p-3 bg-indigo-50 rounded-xl border border-indigo-200">
-                           <p className="text-sm text-indigo-800 font-medium">For restricted areas, please select "Meet at Gate" or "Off-site Repair". The tech will contact you via app chat to coordinate.</p>
-                         </div>
-                      )}
                     </div>
                   </div>
 
@@ -529,6 +516,14 @@ const UserDashboard = () => {
                         className="w-full relative overflow-hidden group bg-gradient-to-r from-blue-600 via-indigo-600 to-purple-600 text-white rounded-2xl p-6 shadow-xl shadow-indigo-500/20 hover:shadow-2xl hover:shadow-indigo-500/40 transition-all duration-300 transform hover:-translate-y-1"
                       >
                         <div className="absolute inset-0 bg-white/20 translate-x-[-100%] group-hover:animate-[shimmer_1.5s_infinite] skew-x-[-20deg]"></div>
+                        <div className="mb-6 p-4 bg-emerald-50 border border-emerald-200 rounded-xl flex gap-3 shadow-inner">
+                          <ShieldCheck size={24} className="text-emerald-600 flex-shrink-0" />
+                          <div>
+                            <p className="font-extrabold text-emerald-800">100% Free Booking</p>
+                            <p className="text-sm text-emerald-700 mt-1 font-medium">Final pricing will be provided after the technician inspects the issue. You only pay after approving the final quote.</p>
+                          </div>
+                        </div>
+
                         <div className="relative z-10 flex items-center justify-between">
                           <div className="flex items-center gap-4">
                             <div className="p-3 bg-white/20 backdrop-blur-md rounded-xl text-white">
@@ -591,6 +586,39 @@ const UserDashboard = () => {
                       )}
                     </div>
 
+                    <div className="mt-4 p-4 bg-slate-50 border border-slate-200 rounded-xl">
+                      <div className="flex flex-col sm:flex-row gap-2">
+                        <input 
+                          type="text" 
+                          placeholder="Promo Code (e.g. FIXVO10)" 
+                          value={promoCode}
+                          onChange={(e) => setPromoCode(e.target.value.toUpperCase())}
+                          className="flex-1 px-4 py-2 bg-white border border-slate-300 rounded-xl focus:border-indigo-500 outline-none uppercase font-medium text-slate-700"
+                        />
+                        <button 
+                          onClick={(e) => {
+                             e.preventDefault();
+                             if (promoCode === 'FIXVO10') {
+                               if (bookings.length === 0) {
+                                 setDiscountAmount(10);
+                                 alert('Promo code applied! 10% discount will be applied to final quote.');
+                               } else {
+                                 setDiscountAmount(0);
+                                 alert('FIXVO10 promo code is only valid for your first booking.');
+                               }
+                             } else {
+                               setDiscountAmount(0);
+                               alert('Invalid promo code');
+                             }
+                          }}
+                          className="px-6 py-2 bg-slate-800 text-white font-bold rounded-xl hover:bg-slate-700"
+                        >
+                          Apply
+                        </button>
+                      </div>
+                      {discountAmount > 0 && <p className="text-emerald-600 text-sm font-bold mt-2">✓ 10% Discount Applied to Final Bill</p>}
+                    </div>
+
                     <div className="flex gap-4 pt-6 mt-4 border-t border-slate-100">
                       <button 
                         onClick={() => setStep(1)} 
@@ -616,19 +644,34 @@ const UserDashboard = () => {
 
 
         {/* History Section */}
+        <div className="flex flex-col sm:flex-row justify-between items-center gap-4 mb-6 pt-4">
+          <h2 className="text-2xl font-bold text-slate-800">Your Bookings</h2>
+          {/* Mobile search bar if needed, otherwise removed to avoid duplicate */}
+          <div className="relative md:hidden w-full sm:w-72">
+             <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={18} />
+             <input 
+               type="text" 
+               placeholder="Search bookings..." 
+               value={searchQuery}
+               onChange={(e) => setSearchQuery(e.target.value)}
+               className="w-full pl-10 pr-4 py-2.5 bg-white border border-slate-200 rounded-xl focus:ring-2 focus:ring-indigo-100 focus:border-indigo-500 transition-all text-sm font-medium text-slate-700"
+             />
+          </div>
+        </div>
+
         {loading ? (
           <LoadingSkeleton count={2} />
-        ) : bookings.length === 0 ? (
+        ) : filteredBookings.length === 0 ? (
           <div className="flex flex-col items-center justify-center py-24 bg-white rounded-3xl border border-dashed border-slate-300">
             <div className="w-24 h-24 bg-blue-50 rounded-full flex items-center justify-center mb-6">
               <PackageSearch className="text-blue-500" size={48} />
             </div>
-            <h3 className="text-2xl font-bold text-slate-800 mb-2">No Bookings Yet</h3>
-            <p className="text-slate-500 max-w-sm text-center">You haven't requested any device repairs yet. Click the button above to get started!</p>
+            <h3 className="text-2xl font-bold text-slate-800 mb-2">No Bookings Found</h3>
+            <p className="text-slate-500 max-w-sm text-center">We couldn't find any bookings matching your search.</p>
           </div>
         ) : (
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-            {bookings.map((booking) => (
+            {filteredBookings.map((booking) => (
               <div key={booking._id} className="group bg-white rounded-[2rem] p-8 border border-slate-100/80 hover:border-indigo-200 hover:shadow-[0_8px_30px_rgb(0,0,0,0.06)] transition-all duration-500 flex flex-col justify-between overflow-hidden relative">
                 {/* Subtle corner highlight */}
                 <div className="absolute top-0 right-0 w-32 h-32 bg-indigo-50/50 rounded-bl-[100px] -z-0"></div>
@@ -636,12 +679,12 @@ const UserDashboard = () => {
                   <div className="flex justify-between items-start mb-8">
                     <div className="space-y-2">
                        <span className="inline-flex items-center gap-1.5 px-3 py-1 bg-slate-50 text-slate-600 border border-slate-200/60 text-[10px] font-black rounded uppercase tracking-widest">
-                        {booking.serviceId?.name || 'Device Repair'}
+                        {booking.serviceId?.name || booking.serviceName || 'Device Repair'}
                       </span>
                       <h3 className="text-3xl font-black text-slate-900 tracking-tight">
-                        ₹{booking.serviceId?.price || 0}
-                        <span className="text-sm text-slate-400 font-bold ml-2 tracking-normal block sm:inline">+ ₹{booking.transportCharge || 0} Trans.</span>
-                        {booking.serviceOption === 'inspection' && <span className="text-sm text-slate-400 font-bold ml-2 tracking-normal block sm:inline">+ ₹{booking.inspectionFee || 99} Insp.</span>}
+                        ₹{booking.finalQuote ? booking.finalQuote : (booking.serviceId?.price || 0)}
+                        {!booking.finalQuote && <span className="text-sm text-slate-400 font-bold ml-2 tracking-normal block sm:inline">+ ₹{booking.transportCharge || 0} Trans.</span>}
+                        {!booking.finalQuote && booking.serviceOption === 'inspection' && <span className="text-sm text-slate-400 font-bold ml-2 tracking-normal block sm:inline">+ ₹{booking.inspectionFee || 99} Insp.</span>}
                       </h3>
                     </div>
                     {getStatusBadge(booking.status)}
@@ -672,11 +715,15 @@ const UserDashboard = () => {
                           <p className="text-slate-600">{booking.location}</p>
                         </div>
                       </div>
-                      {booking.imageUrl && (
+                      {(booking.imageUrl || booking.mediaUrl) && (
                         <div className="flex items-start gap-3 text-slate-700 pt-2 border-t border-slate-100/80">
                           <Camera className="w-5 h-5 text-indigo-500 shrink-0 mt-0.5" />
-                          <div className="overflow-hidden rounded-xl border border-slate-200 shadow-sm">
-                            <img src={booking.imageUrl} alt="Device Damage" className="w-full h-auto max-h-32 object-cover hover:scale-105 transition-transform" />
+                          <div className="overflow-hidden rounded-xl border border-slate-200 shadow-sm w-full max-w-sm">
+                            {booking.mediaType?.startsWith('video') ? (
+                              <video src={booking.mediaUrl} controls className="w-full h-auto max-h-32 object-cover hover:scale-105 transition-transform" />
+                            ) : (
+                              <img src={booking.mediaUrl || booking.imageUrl} alt="Device Damage" className="w-full h-auto max-h-32 object-cover hover:scale-105 transition-transform" />
+                            )}
                           </div>
                         </div>
                       )}
@@ -704,7 +751,13 @@ const UserDashboard = () => {
                           <p className="text-slate-400 text-sm mb-4">Technician has diagnosed the issue and provided a final guaranteed quote to fix it. Review details and approve to start work immediately.</p>
                           
                           <div className="bg-white/5 p-3 rounded-lg mb-4 border border-white/10">
-                            <p className="text-slate-300 text-sm font-medium">Technician Note:</p>
+                            {booking.detectedIssues && (
+                              <div className="mb-2">
+                                <p className="text-amber-400 text-sm font-medium">Detected Issues:</p>
+                                <p className="text-amber-100/70 text-sm italic mt-1">"{booking.detectedIssues}"</p>
+                              </div>
+                            )}
+                            <p className="text-slate-300 text-sm font-medium mt-2">Technician Note:</p>
                             <p className="text-slate-400 text-sm italic mt-1">"{booking.quoteReason || 'Replaced parts and labor for fixing the root cause.'}"</p>
                             {booking.quotePhoto && (
                               <div className="mt-3">
@@ -736,6 +789,18 @@ const UserDashboard = () => {
                         <User size={16} className="text-indigo-500"/>
                         Technician Assigned
                       </div>
+
+                      {['accepted', 'on_the_way', 'arrived'].includes(booking.status) && booking.providerId?.phone && (
+                        <>
+                          <a href={`tel:${booking.providerId.phone}`} className="flex items-center gap-2 bg-gradient-to-r from-emerald-500 to-emerald-600 hover:from-emerald-400 hover:to-emerald-500 text-white px-4 py-2 rounded-xl text-sm font-bold shadow-sm transition-all shadow-emerald-200 transform hover:-translate-y-0.5">
+                            <PhoneCall size={16} /> Call Technician
+                          </a>
+                          <a href={`https://wa.me/${booking.providerId.phone.replace(/\D/g, '')}?text=Hi, this is regarding my Fixvo booking. My exact location is: `} target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 bg-[#25D366] hover:bg-[#1ebd5a] text-white px-4 py-2 rounded-xl text-sm font-bold shadow-sm transition-all shadow-emerald-200 transform hover:-translate-y-0.5">
+                            <MapPin size={16} /> Share WhatsApp Location
+                          </a>
+                        </>
+                      )}
+
                       <button 
                          onClick={() => setChatBookingId(booking._id)}
                          className="flex items-center gap-2 bg-white border border-slate-200 hover:border-indigo-300 hover:bg-indigo-50 text-indigo-600 px-4 py-2 rounded-xl text-sm font-bold shadow-sm transition-all shadow-indigo-100 transform hover:-translate-y-0.5"
@@ -743,27 +808,27 @@ const UserDashboard = () => {
                          <MessageSquare size={16} /> Open Chat
                       </button>
 
+                      {booking.status === 'completed' && (
+                        <button 
+                           onClick={() => !booking.isReviewed && setReviewBooking(booking)}
+                           className={`flex items-center gap-2 px-4 py-2 ${booking.isReviewed ? 'bg-slate-100 text-slate-500 cursor-not-allowed border border-slate-200 shadow-none' : 'bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-400 hover:to-orange-400 text-white shadow-amber-200 transition-all hover:-translate-y-0.5'} rounded-xl text-sm font-bold shadow-sm`}
+                        >
+                           <Star size={16} className={`fill-current ${booking.isReviewed ? 'text-slate-400' : 'text-amber-100'}`} /> {booking.isReviewed ? 'Reviewed' : 'Leave Review'}
+                        </button>
+                      )}
+
                       {booking.status === 'completed' && booking.paymentStatus !== 'completed' && (
                         <button 
                            onClick={() => setPaymentBooking(booking)}
-                           className="flex items-center gap-2 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white px-4 py-2 rounded-xl text-sm font-bold shadow-sm transition-all shadow-blue-200 transform hover:-translate-y-0.5"
+                           className="flex items-center gap-2 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white px-5 py-2.5 rounded-xl text-sm font-bold shadow-lg transition-all shadow-blue-500/30 transform hover:-translate-y-0.5"
                         >
                            <CreditCard size={16} /> Pay Now
                         </button>
                       )}
 
-                      {booking.status === 'completed' && booking.paymentStatus === 'completed' && !booking.isReviewed && (
-                        <button 
-                           onClick={() => setReviewBooking(booking)}
-                           className="flex items-center gap-2 bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-400 hover:to-orange-400 text-white px-4 py-2 rounded-xl text-sm font-bold shadow-sm transition-all shadow-amber-200 transform hover:-translate-y-0.5"
-                        >
-                           <Star size={16} className="fill-current text-amber-100" /> Leave Review
-                        </button>
-                      )}
-
                       {booking.status === 'completed' && booking.paymentStatus === 'completed' && (
                          <div className="flex items-center gap-2 bg-emerald-50 border border-emerald-100 px-3 py-2 rounded-xl text-emerald-700 text-sm font-bold shadow-sm">
-                           <CheckCircle size={16} className="text-emerald-500" /> Paid
+                           <CheckCircle size={16} className="text-emerald-500" /> Payment & Service Completed
                          </div>
                       )}
                       
@@ -779,21 +844,7 @@ const UserDashboard = () => {
                   )}
                 </div>
 
-                {/* Refer and Earn Hook (Growth System) */}
-                {booking.status === 'completed' && booking.isReviewed && (
-                  <div className="mt-6 pt-5 bg-gradient-to-r from-blue-50/50 to-indigo-50/50 border-t border-slate-100 -mx-8 -mb-8 px-8 py-6 flex flex-col sm:flex-row items-center justify-between gap-4">
-                    <div>
-                      <h4 className="font-extrabold text-slate-800 text-sm flex items-center gap-2">🎁 Share QuickRepair, Get $20</h4>
-                      <p className="text-xs text-slate-500 mt-1 max-w-sm font-medium">Your friend gets 10% off their first repair, and you get $20 in your wallet when they book!</p>
-                    </div>
-                    <button onClick={() => {
-                      navigator.clipboard.writeText("https://quickrepair.co/invite/QCKR-" + (profile?._id?.substring(0,6).toUpperCase() || 'USER123'));
-                      alert("Referral link copied to clipboard! Share it on WhatsApp 😎");
-                    }} className="whitespace-nowrap px-5 py-2.5 bg-slate-900 border border-slate-800 text-white font-bold text-xs sm:text-sm rounded-xl hover:bg-slate-800 transition-all shadow-md focus:ring-4 focus:ring-slate-100 hover:-translate-y-0.5">
-                      Copy My Code
-                    </button>
-                  </div>
-                )}
+
               </div>
             ))}
           </div>
@@ -826,6 +877,17 @@ const UserDashboard = () => {
           onSuccess={() => {
             setPaymentBooking(null);
             fetchData();
+          }}
+        />
+      )}
+
+      {showPremiumModal && (
+        <PremiumModal 
+          onClose={() => setShowPremiumModal(false)}
+          onSuccess={(data) => {
+            setShowPremiumModal(false);
+            setProfile(prev => ({ ...prev, isPremium: data.isPremium }));
+            alert(data.message || 'Upgraded to Fixvo Plus successfully!');
           }}
         />
       )}

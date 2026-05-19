@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { globalCategories, globalServices } from '../data/services';
+import { globalCategories, globalServices, getDbServices } from '../data/services';
 import SmartDiagnosis from '../components/SmartDiagnosis/SmartDiagnosis';
 import { motion } from 'framer-motion';
 import { 
@@ -17,19 +17,22 @@ import {
   Camera,
   Banknote,
   Search,
-  X
+  X,
+  Sparkles
 } from 'lucide-react';
 import { FaInstagram, FaLinkedin, FaXTwitter, FaWhatsapp } from 'react-icons/fa6';
-import founderImg from '../assets/founder.jpeg';
+import founderImg from '../assets/sasi_founder.jpeg';
 
 const Home = () => {
   const navigate = useNavigate();
   const [activeCategory, setActiveCategory] = useState(globalCategories[0].id);
   const [searchQuery, setSearchQuery] = useState('');
   const [showSuggestions, setShowSuggestions] = useState(false);
+  const [services, setServices] = useState(globalServices);
   const searchRef = useRef(null);
 
   useEffect(() => {
+    getDbServices().then(setServices);
     const handleClickOutside = (event) => {
       if (searchRef.current && !searchRef.current.contains(event.target)) {
         setShowSuggestions(false);
@@ -39,7 +42,7 @@ const Home = () => {
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
 
-  const filteredServices = globalServices.filter(s => 
+  const filteredServices = services.filter(s => 
     s.name.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
@@ -66,14 +69,14 @@ const Home = () => {
             </div>
             
             <h1 className="text-5xl sm:text-6xl lg:text-7xl font-extrabold text-white tracking-tight leading-[1.1]">
-              Trusted Home Repairs.<br className="hidden sm:block"/>
+              Premium Home Services.<br className="hidden sm:block"/>
               <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-400 via-indigo-400 to-purple-400">
-                Instantly.
+                On-Demand.
               </span>
             </h1>
             
             <p className="text-xl text-slate-400 max-w-lg leading-relaxed font-medium">
-              Don't know the exact problem? No worries. Book top-rated professionals for AC, Plumbing, and Electrical work. No hidden fees. Approve pricing before work begins.
+              Experience hassle-free repairs, expert installations, and deep cleaning. Verified technicians, transparent upfront pricing, and a 60-minute arrival guarantee for emergencies.
             </p>
             
             <div className="flex flex-col sm:flex-row gap-4 pt-4">
@@ -84,12 +87,12 @@ const Home = () => {
                 <span className="relative z-10 text-lg">Book Service Now</span>
                 <ChevronRight className="relative z-10 w-5 h-5 group-hover:translate-x-1 transition-transform" />
               </Link>
-              <Link
-                to="/book"
+              <a
+                href="tel:9515980170"
                 className="px-8 py-4 bg-white/5 backdrop-blur-md text-white font-bold rounded-2xl border border-white/10 shadow-sm hover:bg-white/10 transition-all duration-300 flex items-center justify-center gap-2 transform hover:-translate-y-1"
               >
-                <span>Start Booking</span>
-              </Link>
+                <span>📞 Call Now</span>
+              </a>
             </div>
             
             <div className="flex items-center gap-6 pt-8 border-t border-white/10">
@@ -165,58 +168,10 @@ const Home = () => {
         {/* Quick Service Selection */}
         <div className="mt-32 relative z-10" id="services">
           <div className="text-center mb-12">
-            <h2 className="text-3xl md:text-5xl font-extrabold text-white mb-4">What service do you need?</h2>
-            <p className="text-slate-400 mb-8">Search or select a category below to get started in 3 easy steps.</p>
+            <h2 className="text-3xl md:text-5xl font-extrabold text-white mb-4">Explore Our Premium Services</h2>
+            <p className="text-slate-400 mb-8">Select a category below to book a verified professional in 60 seconds.</p>
             
-            {/* Search Bar */}
-            <div className="max-w-2xl mx-auto relative" ref={searchRef}>
-              <div className="relative flex items-center">
-                <Search className="absolute left-4 text-slate-400" size={24} />
-                <input 
-                  type="text"
-                  placeholder="e.g. AC Repair, TV Mounting, Full Home Cleaning..."
-                  value={searchQuery}
-                  onChange={(e) => {
-                    setSearchQuery(e.target.value);
-                    setShowSuggestions(true);
-                  }}
-                  onFocus={() => setShowSuggestions(true)}
-                  className="w-full bg-[#1A2235]/80 backdrop-blur-md border border-white/10 rounded-2xl py-4 pl-12 pr-12 text-white placeholder-slate-500 focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition-all text-lg shadow-2xl"
-                />
-                {searchQuery && (
-                  <button onClick={() => setSearchQuery('')} className="absolute right-4 text-slate-400 hover:text-white">
-                    <X size={20} />
-                  </button>
-                )}
-              </div>
-              
-              {/* Dynamic Suggestions */}
-              {showSuggestions && searchQuery && (
-                <div className="absolute top-full left-0 w-full mt-2 bg-[#1A2235] border border-white/10 rounded-xl shadow-2xl overflow-hidden z-50 max-h-64 overflow-y-auto">
-                  {filteredServices.length > 0 ? (
-                    filteredServices.map(service => (
-                      <button
-                        key={service.id}
-                        onClick={() => navigate(`/book?service=${service.id}`)}
-                        className="w-full text-left px-4 py-3 hover:bg-white/5 border-b border-white/5 last:border-0 flex items-center gap-3 transition-colors"
-                      >
-                        <div className={`w-10 h-10 rounded-lg ${service.bg} flex items-center justify-center text-white shrink-0`}>
-                          <service.icon size={20} />
-                        </div>
-                        <div>
-                          <p className="font-bold text-white">{service.name}</p>
-                          <p className="text-xs text-slate-400 uppercase tracking-wider">{globalCategories.find(c => c.id === service.categoryId)?.name}</p>
-                        </div>
-                      </button>
-                    ))
-                  ) : (
-                    <div className="p-4 text-center text-slate-400">
-                      No services found for "{searchQuery}".
-                    </div>
-                  )}
-                </div>
-              )}
-            </div>
+            {/* Search Bar Removed as per premium layout request */}
           </div>
           
           {/* Categories Tabs */}
@@ -245,7 +200,7 @@ const Home = () => {
             transition={{ duration: 0.4 }}
             className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6"
           >
-            {globalServices.filter(s => s.categoryId === activeCategory).map((service, idx) => (
+            {services.filter(s => s.categoryId === activeCategory).map((service, idx) => (
               <motion.div 
                 key={service.id}
                 initial={{ opacity: 0, scale: 0.95 }}
@@ -277,18 +232,27 @@ const Home = () => {
         {/* AI Diagnosis Section */}
         <div className="mt-32 relative z-10">
           <div className="text-center mb-12">
-            <h2 className="text-3xl md:text-5xl font-extrabold text-white mb-4">Not Sure What's Wrong?</h2>
-            <p className="text-slate-400">Use our Smart AI-like Diagnosis to find the problem & estimated cost.</p>
+            <h2 className="text-3xl md:text-5xl font-extrabold text-white mb-4">AI Smart Diagnosis</h2>
+            <p className="text-slate-400 max-w-2xl mx-auto">Not sure what the exact problem is? Answer a few quick questions to identify the issue and get an estimated cost instantly.</p>
           </div>
-          
           <SmartDiagnosis />
+        </div>
+
+        {/* Urgent Repair Needed */}
+        <div className="mt-32 relative z-10 bg-white/5 rounded-[2rem] p-8 border border-white/10 text-center">
+            <h2 className="text-3xl md:text-5xl font-extrabold text-white mb-4">Urgent Repair Needed?</h2>
+            <p className="text-slate-400 mb-8 max-w-2xl mx-auto">Skip the booking form and call us directly for an instant technician dispatch.</p>
+            <a href="tel:9515980170" className="inline-flex items-center gap-3 px-10 py-5 bg-gradient-to-r from-emerald-500 to-emerald-600 text-white font-extrabold text-xl rounded-2xl shadow-xl shadow-emerald-500/30 hover:scale-105 transition-transform">
+              <MessageCircle /> 
+              Call Now: +91 95159 80170
+            </a>
         </div>
 
         {/* Trust & Transparency Section */}
         <div className="mt-32 border-t border-white/5 pt-32">
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-16 items-center">
             <div>
-              <h2 className="text-3xl md:text-5xl font-extrabold text-white mb-6 leading-tight">We fixed the broken repair industry.</h2>
+              <h2 className="text-3xl md:text-5xl font-extrabold text-white mb-6 leading-tight">Elevating the home service industry.</h2>
               <div className="space-y-8 mt-10">
                 <div className="flex gap-4">
                   <div className="shrink-0 w-12 h-12 rounded-full bg-blue-500/20 flex items-center justify-center text-blue-400">
@@ -361,6 +325,57 @@ const Home = () => {
             </div>
           </div>
         </div>
+
+        {/* Fixvo Plus Section */}
+        <div className="mt-32 border-t border-white/5 pt-32">
+          <div className="text-center mb-16">
+            <h2 className="text-4xl md:text-5xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-amber-200 via-amber-400 to-yellow-500 mb-4 inline-flex items-center gap-3"><Sparkles className="text-amber-400"/> Fixvo Plus</h2>
+            <p className="text-slate-400 max-w-2xl mx-auto text-lg">Upgrade to our premium membership for an unparalleled home service experience.</p>
+          </div>
+          
+          <div className="max-w-4xl mx-auto bg-gradient-to-br from-[#1A2235] to-[#0B0F19] border-2 border-amber-500/30 rounded-[2.5rem] p-10 md:p-14 shadow-[0_0_50px_rgba(245,158,11,0.1)] relative overflow-hidden group">
+            <div className="absolute top-[-20%] right-[-10%] w-[50%] h-[50%] bg-amber-500/10 rounded-full blur-[80px] pointer-events-none group-hover:bg-amber-500/20 transition-all duration-700"></div>
+            
+            <div className="flex flex-col md:flex-row justify-between items-center gap-12">
+               <div className="flex-1 space-y-8 relative z-10">
+                 <div className="flex items-start gap-4">
+                   <div className="mt-1 w-10 h-10 rounded-full bg-amber-500/20 flex items-center justify-center text-amber-400 shrink-0 border border-amber-500/30"><Clock size={20}/></div>
+                   <div>
+                     <h4 className="text-xl font-bold text-white mb-1">Priority Technician Dispatch</h4>
+                     <p className="text-slate-400">Skip the queue. Your bookings are instantly routed to the highest-rated technicians nearby.</p>
+                   </div>
+                 </div>
+                 <div className="flex items-start gap-4">
+                   <div className="mt-1 w-10 h-10 rounded-full bg-amber-500/20 flex items-center justify-center text-amber-400 shrink-0 border border-amber-500/30"><Banknote size={20}/></div>
+                   <div>
+                     <h4 className="text-xl font-bold text-white mb-1">Zero Inspection Fees</h4>
+                     <p className="text-slate-400">Never pay the standard ₹99 inspection fee. Diagnosis is completely free for members.</p>
+                   </div>
+                 </div>
+                 <div className="flex items-start gap-4">
+                   <div className="mt-1 w-10 h-10 rounded-full bg-amber-500/20 flex items-center justify-center text-amber-400 shrink-0 border border-amber-500/30"><CheckCircle2 size={20}/></div>
+                   <div>
+                     <h4 className="text-xl font-bold text-white mb-1">Exclusive 15% Discount</h4>
+                     <p className="text-slate-400">Automatically save 15% on all repair quotes, parts, and maintenance services.</p>
+                   </div>
+                 </div>
+               </div>
+               
+               <div className="w-full md:w-[320px] shrink-0 bg-[#0B0F19]/80 backdrop-blur-xl border border-white/10 rounded-3xl p-8 text-center relative z-10 shadow-2xl">
+                 <div className="inline-flex items-center justify-center px-4 py-1.5 bg-amber-500/20 text-amber-400 border border-amber-500/30 rounded-full text-xs font-bold uppercase tracking-widest mb-6">Premium Tier</div>
+                 <h3 className="text-5xl font-black text-white mb-2 tracking-tight">₹499<span className="text-lg text-slate-500 font-medium tracking-normal">/yr</span></h3>
+                 <p className="text-sm text-slate-400 mb-8 font-medium">Billed annually. Cancel anytime.</p>
+                 <button 
+                   onClick={() => navigate('/dashboard?action=premium')}
+                   className="w-full bg-gradient-to-r from-amber-500 to-yellow-600 hover:from-amber-400 hover:to-yellow-500 text-[#0B0F19] font-black py-4 rounded-xl shadow-[0_0_20px_rgba(245,158,11,0.3)] hover:shadow-[0_0_30px_rgba(245,158,11,0.5)] transition-all duration-300 transform hover:-translate-y-1"
+                 >
+                   Get Fixvo Plus
+                 </button>
+               </div>
+            </div>
+          </div>
+        </div>
+        
         
         {/* Meet the Founder Section */}
         <div className="mt-32 border-t border-white/5 pt-32">
@@ -404,7 +419,7 @@ const Home = () => {
               <div className="relative mb-10">
                 <span className="absolute -top-6 -left-6 text-7xl text-white/5 font-serif select-none pointer-events-none">"</span>
                 <p className="text-lg md:text-xl text-slate-300 leading-relaxed relative z-10 font-medium">
-                  G. Sasimanth Reddy is the Founder & CEO of QuickRepair, focused on building a reliable and transparent platform that connects customers with verified service professionals. With a vision to simplify everyday service needs, QuickRepair aims to deliver fast, trustworthy, and hassle-free solutions for modern households.
+                  G. Sasimanth Reddy is the Founder & CEO of Fixvo, focused on building a reliable and transparent platform that connects customers with verified service professionals. With a vision to simplify everyday service needs, Fixvo aims to deliver fast, trustworthy, and hassle-free solutions for modern households.
                 </p>
               </div>
               
@@ -424,6 +439,43 @@ const Home = () => {
               </div>
             </div>
           </motion.div>
+        </div>
+
+        {/* Customer Testimonials Section */}
+        <div className="mt-32 border-t border-white/5 pt-32">
+          <div className="text-center mb-16">
+            <h2 className="text-4xl md:text-5xl font-extrabold text-white mb-4">What Our Users Say</h2>
+            <p className="text-slate-400">Real feedback from thousands of satisfied customers across the city.</p>
+          </div>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+            {[
+              { name: "Priya S.", service: "AC Repair", text: "The technician arrived exactly on time. Fixed my AC cooling issue within an hour and the price was upfront. Truly a lifesaver in this heat!", rating: 5, bg: "from-blue-500/10 to-transparent" },
+              { name: "Rahul M.", service: "Electrical Wiring", text: "I had a sudden short circuit at night. Fixvo's emergency service had a verified electrician at my door in 30 mins. Extremely professional.", rating: 5, bg: "from-amber-500/10 to-transparent" },
+              { name: "Anita K.", service: "Plumbing Deep Clean", text: "Very transparent pricing. The diagnosis was accurate and I was only charged for the exact work done. Will strictly use Fixvo going forward.", rating: 5, bg: "from-emerald-500/10 to-transparent" }
+            ].map((testimonial, idx) => (
+               <motion.div 
+                 key={idx}
+                 initial={{ opacity: 0, y: 30 }}
+                 whileInView={{ opacity: 1, y: 0 }}
+                 viewport={{ once: true }}
+                 transition={{ delay: idx * 0.1 }}
+                 className={`p-8 rounded-[2rem] border border-white/10 bg-gradient-to-b ${testimonial.bg} shadow-lg backdrop-blur-sm relative`}
+               >
+                 <div className="absolute top-6 right-6 text-white/5 font-serif text-6xl">"</div>
+                 <div className="flex items-center gap-1 text-amber-400 mb-4">
+                    {[...Array(testimonial.rating)].map((_, i) => <Star key={i} size={16} className="fill-current" />)}
+                 </div>
+                 <p className="text-slate-300 italic mb-6 relative z-10 font-medium">"{testimonial.text}"</p>
+                 <div className="flex justify-between items-end border-t border-white/10 pt-4 mt-auto">
+                    <div>
+                      <p className="font-bold text-white">{testimonial.name}</p>
+                      <p className="text-xs text-slate-500 flex items-center gap-1 mt-1"><CheckCircle2 size={12} className="text-emerald-400"/> Verified Booking</p>
+                    </div>
+                    <span className="text-xs font-bold text-slate-400 bg-white/5 px-3 py-1 rounded-full">{testimonial.service}</span>
+                 </div>
+               </motion.div>
+            ))}
+          </div>
         </div>
         
         {/* CTA Section */}

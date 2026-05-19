@@ -1,6 +1,7 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
 import { FaInstagram, FaLinkedin, FaXTwitter, FaWhatsapp } from 'react-icons/fa6';
+import fixvoLogo from '../assets/logos/fixvo-app-icon-dark.png';
 
 const Footer = () => {
   return (
@@ -9,8 +10,13 @@ const Footer = () => {
         <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
           {/* Column 1: Brand */}
           <div>
-            <h3 className="text-2xl font-bold font-heading text-white mb-4">Quick<span className="text-blue-500">Repair</span></h3>
-            <p className="text-sm text-gray-400 mb-6">Fix Anything, Anytime.</p>
+            <div className="flex items-center gap-2 mb-4">
+               <div className="w-8 h-8 rounded-full shadow-sm overflow-hidden">
+                 <img src={fixvoLogo} alt="Fixvo Logo" className="w-full h-full object-cover scale-110" />
+               </div>
+               <h3 className="text-2xl font-bold font-heading text-white">Fix<span className="text-blue-500">vo</span></h3>
+            </div>
+            <p className="text-sm text-gray-400 mb-6">Fast. Trusted. Done.</p>
             <div className="flex space-x-4 mb-6">
               <span className="text-xs bg-gray-800 px-3 py-1 rounded-full border border-gray-700 flex items-center gap-2">
                 <span className="w-2 h-2 rounded-full bg-green-500"></span> 24/7 Support
@@ -39,6 +45,8 @@ const Footer = () => {
             <h4 className="text-white font-semibold mb-4 border-b border-gray-800 pb-2">Quick Links</h4>
             <ul className="space-y-2 text-sm">
               <li><Link to="/" className="hover:text-blue-400 transition-colors">Home</Link></li>
+              <li><a href="/#services" className="hover:text-blue-400 transition-colors">Services</a></li>
+              <li><Link to="/book" className="hover:text-blue-400 transition-colors">Book Service</Link></li>
               <li><Link to="/about" className="hover:text-blue-400 transition-colors">About Us</Link></li>
               <li><Link to="/pricing" className="hover:text-blue-400 transition-colors">Pricing</Link></li>
               <li><Link to="/faq" className="hover:text-blue-400 transition-colors">FAQ</Link></li>
@@ -53,6 +61,7 @@ const Footer = () => {
               <li><Link to="/terms" className="hover:text-blue-400 transition-colors">Terms &amp; Conditions</Link></li>
               <li><Link to="/privacy" className="hover:text-blue-400 transition-colors">Privacy Policy</Link></li>
               <li><Link to="/refund" className="hover:text-blue-400 transition-colors">Refund Policy</Link></li>
+              <li><Link to="/cancellation" className="hover:text-blue-400 transition-colors">Cancellation Policy</Link></li>
               <li><Link to="/disclaimer" className="hover:text-blue-400 transition-colors">Disclaimer</Link></li>
             </ul>
           </div>
@@ -74,11 +83,24 @@ const Footer = () => {
                 <span className="text-sm">256-bit Secure Booking</span>
               </div>
             </div>
+            
+            <div className="mt-8 bg-gray-800/50 p-4 rounded-xl border border-gray-700">
+              <div className="flex items-start gap-3">
+                <div className="text-2xl">🎁</div>
+                <div>
+                  <h4 className="text-white font-bold text-sm">Refer & Earn ₹20</h4>
+                  <p className="text-xs text-gray-400 mt-1 mb-3">Invite friends to Fixvo and earn ₹20 reward.</p>
+                  <Link to="/referrals" className="inline-block bg-blue-600 hover:bg-blue-500 text-white text-xs font-bold py-2 px-4 rounded-lg transition-colors">
+                    Share Link
+                  </Link>
+                </div>
+              </div>
+            </div>
           </div>
         </div>
 
         <div className="border-t border-gray-800 mt-12 pt-8 flex flex-col md:flex-row items-center justify-between">
-          <p className="text-sm text-gray-500">© 2026 QuickRepair. All rights reserved.</p>
+          <p className="text-sm text-gray-500">© 2026 Fixvo. All rights reserved.</p>
           <div className="flex space-x-4 mt-4 md:mt-0 text-sm text-gray-500">
              <span>Crafted with passion for fast service.</span>
           </div>

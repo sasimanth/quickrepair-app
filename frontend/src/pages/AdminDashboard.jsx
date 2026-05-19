@@ -55,6 +55,12 @@ const AdminDashboard = () => {
               <p className="text-slate-500 font-medium mt-1">Platform overview and management</p>
             </div>
           </div>
+          <button 
+             onClick={() => window.location.href = '/book'}
+             className="px-6 py-3 bg-indigo-600 hover:bg-indigo-700 text-white font-bold rounded-xl shadow-lg hover:shadow-xl transition-all"
+          >
+             + Create Manual Booking
+          </button>
         </div>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
