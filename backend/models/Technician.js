@@ -8,6 +8,7 @@ const technicianSchema = new mongoose.Schema({
   },
   name: { type: String, required: true },
   email: { type: String, required: true },
+  phone: { type: String, default: '' },
   experience: { type: String, default: '1 year' },
   avatar: { type: String, default: '👨‍🔧' },
   skills: { type: [String], default: [] },

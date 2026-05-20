@@ -515,28 +515,6 @@ const TechnicianDashboard = () => {
                             </div>
                           </div>
                         )}
-
-                        {['accepted', 'quote_approved', 'on_the_way', 'in_progress'].includes(job.status) && (
-                           <div className="pt-3 mt-3 bg-indigo-50/50 p-4 rounded-xl border border-indigo-100 flex flex-col gap-3">
-                             <p className="font-bold text-sm text-indigo-900 flex items-center justify-between">
-                               <span className="flex items-center gap-2"><Truck size={18} className="text-indigo-500"/> Navigation & Contact</span>
-                             </p>
-                             <div className="grid grid-cols-2 lg:grid-cols-4 gap-2">
-                               <a href={job.mapsLink || `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(job.location)}`} target="_blank" rel="noopener noreferrer" className="bg-indigo-600 hover:bg-indigo-700 text-white px-3 py-2.5 rounded-lg text-sm font-bold shadow-sm border border-indigo-100 transition-all flex items-center justify-center gap-2 overflow-hidden text-ellipsis whitespace-nowrap">
-                                 <Navigation size={16} className="shrink-0" /> <span className="truncate">Open Maps</span>
-                               </a>
-                               <a href={`tel:${formatPhoneLink(job.phone)}`} className="bg-white hover:bg-slate-50 text-indigo-700 px-3 py-2.5 rounded-lg text-sm font-bold shadow-sm border border-indigo-200 transition-all flex items-center justify-center gap-2 overflow-hidden text-ellipsis whitespace-nowrap">
-                                 <Smartphone size={16} className="shrink-0" /> <span className="truncate">Call Customer</span>
-                               </a>
-                               <button onClick={() => { navigator.clipboard.writeText(job.location); alert('Address copied to clipboard!'); }} className="bg-white hover:bg-slate-50 text-slate-700 px-3 py-2.5 rounded-lg text-sm font-bold shadow-sm border border-slate-200 transition-all flex items-center justify-center gap-2 overflow-hidden text-ellipsis whitespace-nowrap">
-                                 <MapPin size={16} className="shrink-0" /> <span className="truncate">Copy Address</span>
-                               </button>
-                               <button onClick={() => { navigator.clipboard.writeText(job.mapsLink || `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(job.location)}`); alert('Map link copied to clipboard!'); }} className="bg-white hover:bg-slate-50 text-slate-700 px-3 py-2.5 rounded-lg text-sm font-bold shadow-sm border border-slate-200 transition-all flex items-center justify-center gap-2 overflow-hidden text-ellipsis whitespace-nowrap">
-                                 <Copy size={16} className="shrink-0" /> <span className="truncate">Copy Map Link</span>
-                               </button>
-                             </div>
-                           </div>
-                        )}
                         
                         <div className="flex items-center gap-2 text-slate-500 bg-white border border-slate-100 rounded-full px-4 py-2 w-max shadow-sm mt-4">
                           <User size={16} />

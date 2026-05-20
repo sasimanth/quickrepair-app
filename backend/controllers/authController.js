@@ -41,31 +41,53 @@ const signup = async (req, res) => {
     if (user) {
       // If role is technician, create a technician profile
       if (user.role === 'technician') {
-        if (!skills || !location) {
+        if (!skills || skills.length === 0 || !location) {
           await User.findByIdAndDelete(user._id);
-          return res.status(400).json({ message: 'Technician must provide skills and location' });
+          return res.status(400).json({ message: 'Technician must provide at least one service and location' });
         }
-        // Map skill to corresponding service ID for better filtering
-        const skillToService = {
-          'AC Repair': 'ac_repair',
-          'Electrical': 'electric_wiring',
-          'Plumbing': 'plumbing_work',
-          'Mobile Repair': 'mobile_repair',
-          'CCTV Installation': 'cctv_install',
-          'Cleaning': 'home_clean'
+
+        // Map service IDs to readable skill names
+        const serviceIdToName = {
+          'ac_repair': 'AC Repair',
+          'washing_machine': 'Washing Machine Repair',
+          'refrigerator': 'Refrigerator Repair',
+          'microwave': 'Microwave Repair',
+          'tv_repair': 'TV Repair',
+          'laptop_repair': 'Laptop Repair',
+          'mobile_repair': 'Mobile Repair',
+          'ac_install': 'AC Installation',
+          'cctv_install': 'CCTV Installation',
+          'ro_install': 'RO Installation',
+          'inverter_install': 'Inverter Installation',
+          'fan_install': 'Ceiling Fan Installation',
+          'lock_install': 'Door Lock Installation',
+          'furniture': 'Furniture Assembly',
+          'sofa_clean': 'Sofa Cleaning',
+          'bathroom_clean': 'Bathroom Deep Cleaning',
+          'water_tank_clean': 'Water Tank Cleaning',
+          'carpet_clean': 'Carpet Cleaning',
+          'kitchen_clean': 'Kitchen Cleaning',
+          'home_clean': 'Full Home Cleaning',
+          'pest_control': 'Pest Control',
+          'electric_wiring': 'Electric Wiring',
+          'plumbing_work': 'Plumbing Work',
+          'furniture_repair': 'Furniture Repair',
+          'painting': 'Painting'
         };
-        const selectedSkills = Array.isArray(skills) ? skills : skills.split(',').map(s => s.trim());
-        const mappedServices = selectedSkills.map(s => skillToService[s] || s);
+
+        const selectedSkills = Array.isArray(skills) ? skills : [skills];
+        const skillNames = selectedSkills.map(s => serviceIdToName[s] || s);
 
         await Technician.create({
           userId: user._id,
           name: user.name,
           email: user.email,
-          skills: selectedSkills,
-          services: mappedServices,
-          area: location, // Location dropdown goes to area field for accurate filtering
+          phone: phone,
+          skills: skillNames,
+          services: selectedSkills,
+          area: location,
           address: location,
-          isProfileComplete: true, // Auto-approve for MVP testing
+          isProfileComplete: true,
           isOnline: true,
           isVerified: true
         });
