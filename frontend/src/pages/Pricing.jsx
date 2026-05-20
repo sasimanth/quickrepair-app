@@ -3,85 +3,46 @@ import { Check } from 'lucide-react';
 
 const Pricing = () => {
   return (
-    <div className="container mx-auto px-4 py-20 max-w-6xl flex-grow">
-      <div className="text-center mb-16">
-        <h1 className="text-5xl font-extrabold text-slate-900 tracking-tight mb-4">Transparent Pricing, Zero Surprises</h1>
-        <p className="text-xl text-slate-500 font-medium max-w-2xl mx-auto">
-          We believe in upfront costs. Choose the service model that fits your urgent needs.
-        </p>
-      </div>
-
-      <div className="grid md:grid-cols-2 gap-8 max-w-4xl mx-auto mb-16">
-        {/* Standard Inspection */}
-        <div className="bg-white rounded-[2rem] p-8 border border-slate-200 shadow-lg relative flex flex-col transition-transform hover:-translate-y-1">
-          <div className="mb-8">
-            <h3 className="text-2xl font-bold text-slate-800 mb-2">Standard Inspection</h3>
-            <p className="text-slate-500 font-medium">Perfect when you don't know what's broken.</p>
+    <div className="min-h-screen bg-slate-50 py-20 px-4 flex items-center justify-center">
+      <div className="w-full max-w-4xl mx-auto">
+        <div className="text-center mb-12">
+          <div className="inline-flex items-center justify-center gap-2 px-4 py-1.5 rounded-full bg-indigo-100 text-indigo-700 font-bold text-sm uppercase tracking-widest mb-6 border border-indigo-200">
+            <span className="w-2 h-2 rounded-full bg-indigo-600 animate-pulse"></span> Fixvo Plus Membership
           </div>
-          <div className="mb-8">
-            <span className="text-5xl font-extrabold text-slate-900">$15</span>
-            <span className="text-slate-500 font-medium ml-2">base fee</span>
-          </div>
-          <ul className="space-y-4 mb-8 flex-grow text-slate-600 font-medium">
-            <li className="flex items-start gap-3"><Check className="text-emerald-500 mt-1 shrink-0" size={20} /> <span>Professional Diagnosis and fault detection</span></li>
-            <li className="flex items-start gap-3"><Check className="text-emerald-500 mt-1 shrink-0" size={20} /> <span>Guaranteed Arrival under 2 hours</span></li>
-            <li className="flex items-start gap-3"><Check className="text-emerald-500 mt-1 shrink-0" size={20} /> <span>Detailed Repair Estimate provided on-site</span></li>
-            <li className="flex items-start gap-3 text-slate-400 italic"><span>Parts &amp; Labor for the actual fix are billed separately after quote approval</span></li>
-          </ul>
-          <button className="w-full py-4 rounded-xl font-bold border-2 border-slate-200 text-slate-700 hover:border-slate-300 hover:bg-slate-50 transition-all">
-            Start with Inspection
-          </button>
+          <h1 className="text-4xl md:text-5xl font-extrabold text-slate-900 tracking-tight mb-4">Never pay inspection fees again.</h1>
+          <p className="text-lg text-slate-500 font-medium max-w-xl mx-auto">
+            Get year-round protection, priority support, and VIP technician matching for your home.
+          </p>
         </div>
 
-        {/* Direct Repair */}
-        <div className="bg-slate-900 rounded-[2rem] p-8 border border-slate-800 shadow-2xl relative flex flex-col transform md:-translate-y-4 hover:-translate-y-5 transition-transform">
-          <div className="absolute top-0 right-8 transform -translate-y-1/2">
-            <span className="bg-gradient-to-r from-blue-500 to-indigo-500 text-white font-black text-xs uppercase tracking-widest px-4 py-1.5 rounded-full shadow-lg">Most Popular</span>
+        <div className="bg-white rounded-[2.5rem] p-8 md:p-12 shadow-[0_20px_60px_-15px_rgba(0,0,0,0.1)] border border-slate-100 relative overflow-hidden flex flex-col md:flex-row items-center gap-12">
+          {/* Decorative background blur */}
+          <div className="absolute -top-32 -right-32 w-96 h-96 bg-gradient-to-br from-indigo-500/10 to-purple-500/10 rounded-full blur-3xl pointer-events-none"></div>
+          
+          <div className="flex-1 w-full relative z-10">
+            <h3 className="text-2xl font-bold text-slate-800 mb-6 border-b border-slate-100 pb-4">Membership Benefits</h3>
+            <ul className="space-y-5 text-slate-600 font-medium">
+              <li className="flex items-start gap-4"><div className="p-1 rounded-full bg-emerald-100 text-emerald-600 mt-0.5"><Check size={16} /></div> <span><strong className="text-slate-900">100% Waived</strong> Inspection Fees on all bookings</span></li>
+              <li className="flex items-start gap-4"><div className="p-1 rounded-full bg-emerald-100 text-emerald-600 mt-0.5"><Check size={16} /></div> <span><strong className="text-slate-900">Priority matching</strong> with top-rated technicians</span></li>
+              <li className="flex items-start gap-4"><div className="p-1 rounded-full bg-emerald-100 text-emerald-600 mt-0.5"><Check size={16} /></div> <span><strong className="text-slate-900">1 Free Annual</strong> AC or Water Purifier Servicing</span></li>
+              <li className="flex items-start gap-4"><div className="p-1 rounded-full bg-emerald-100 text-emerald-600 mt-0.5"><Check size={16} /></div> <span><strong className="text-slate-900">Extended 90-Day</strong> Workmanship Warranty</span></li>
+            </ul>
           </div>
-          <div className="mb-8">
-            <h3 className="text-2xl font-bold text-white mb-2">Direct Repair</h3>
-            <p className="text-slate-400 font-medium">You know the issue, we just fix it instantly.</p>
+          
+          <div className="w-full md:w-80 bg-slate-900 rounded-[2rem] p-8 border border-slate-800 shadow-2xl relative z-10 text-center transform md:scale-105 transition-transform hover:scale-110 duration-300">
+            <div className="mb-2">
+              <span className="text-5xl font-black text-white">₹999</span>
+            </div>
+            <p className="text-slate-400 font-medium mb-8 text-sm uppercase tracking-widest">Billed Annually</p>
+            
+            <button 
+              onClick={() => alert('Razorpay payment gateway integration will trigger here.')}
+              className="w-full py-4 rounded-xl font-bold bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white shadow-lg shadow-indigo-500/25 transition-all mb-4"
+            >
+              Get Fixvo Plus
+            </button>
+            <p className="text-xs text-slate-500 font-medium">Secure checkout powered by Razorpay</p>
           </div>
-          <div className="mb-8 block">
-            <span className="text-5xl font-extrabold text-white">Starts at $49</span>
-          </div>
-          <ul className="space-y-4 mb-8 flex-grow text-slate-300 font-medium">
-            <li className="flex items-start gap-3"><Check className="text-indigo-400 mt-1 shrink-0" size={20} /> <span>Inspection fee is waived entirely</span></li>
-            <li className="flex items-start gap-3"><Check className="text-indigo-400 mt-1 shrink-0" size={20} /> <span>Technician arrives equipped with common parts</span></li>
-            <li className="flex items-start gap-3"><Check className="text-indigo-400 mt-1 shrink-0" size={20} /> <span>Protected by 30-Day Workmanship Warranty</span></li>
-            <li className="flex items-start gap-3"><Check className="text-indigo-400 mt-1 shrink-0" size={20} /> <span>Secure 256-bit Checkout via Stripe/Razorpay</span></li>
-          </ul>
-          <button className="w-full py-4 rounded-xl font-bold bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white shadow-lg shadow-indigo-500/25 hover:shadow-indigo-500/40 transition-all">
-            Book Direct Repair
-          </button>
-        </div>
-      </div>
-      
-      <div className="bg-gradient-to-r from-slate-900 to-indigo-950 rounded-[2rem] p-10 border border-slate-800 shadow-xl max-w-4xl mx-auto mt-16 relative overflow-hidden flex flex-col md:flex-row items-center gap-8">
-        <div className="absolute top-0 right-0 w-64 h-64 bg-indigo-500/20 rounded-full blur-3xl"></div>
-        <div className="absolute bottom-0 left-0 w-64 h-64 bg-blue-500/20 rounded-full blur-3xl"></div>
-        
-        <div className="flex-1 relative z-10 text-center md:text-left">
-          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-indigo-500/20 text-indigo-300 font-bold text-xs uppercase tracking-widest mb-4 border border-indigo-500/30">
-            <span className="w-1.5 h-1.5 rounded-full bg-indigo-400 animate-pulse"></span> Subscription Tier
-          </div>
-          <h3 className="text-3xl font-extrabold text-white mb-2">Fixvo <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-indigo-400">Prime</span></h3>
-          <p className="text-slate-400 font-medium">Protect your home year-round. Get VIP matching and completely waived inspection fees.</p>
-        </div>
-        
-        <div className="relative z-10 bg-white/10 backdrop-blur-md rounded-2xl p-6 border border-white/20 w-full md:w-auto">
-          <div className="text-center md:text-left mb-6">
-            <span className="text-4xl font-black text-white">$99</span>
-            <span className="text-slate-400 font-medium ml-1">/year</span>
-          </div>
-          <ul className="space-y-3 mb-6 flex-grow text-slate-300 text-sm font-medium">
-            <li className="flex items-center gap-2"><Check className="text-indigo-400" size={16} /> <span className="text-white font-bold">100% Waived</span> Inspection Fees</li>
-            <li className="flex items-center gap-2"><Check className="text-indigo-400" size={16} /> Priority technician matching</li>
-            <li className="flex items-center gap-2"><Check className="text-indigo-400" size={16} /> 1 Free Annual AC Servicing</li>
-          </ul>
-          <button className="w-full py-3 rounded-xl font-bold bg-white text-slate-900 hover:bg-slate-100 transition-colors shadow-lg">
-            Join Prime Today
-          </button>
         </div>
       </div>
     </div>

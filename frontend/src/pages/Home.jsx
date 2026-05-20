@@ -425,17 +425,17 @@ const Home = () => {
         </div>
 
         {/* Customer Testimonials Section */}
-        <div className="mt-24 sm:mt-32 border-t border-white/5 pt-24 sm:pt-32 px-4 sm:px-0">
+        <div className="mt-24 sm:mt-32 border-t border-white/5 pt-20 sm:pt-32 px-4 sm:px-0">
           <div className="text-center mb-10 sm:mb-16">
             <h2 className="text-3xl sm:text-4xl md:text-5xl font-extrabold text-white mb-4">What Our Users Say</h2>
             <p className="text-base sm:text-lg text-slate-400">Real feedback from thousands of satisfied customers across the city.</p>
           </div>
-          {/* Horizontal scroll on mobile, grid on desktop */}
+          
           <div className="flex overflow-x-auto md:grid md:grid-cols-3 gap-6 sm:gap-8 pb-8 snap-x snap-mandatory hide-scrollbar custom-scrollbar-hide -mx-4 px-4 sm:mx-0 sm:px-0">
             {[
-              { name: "Priya S.", service: "AC Repair", text: "The technician arrived exactly on time. Fixed my AC cooling issue within an hour and the price was upfront. Truly a lifesaver in this heat!", rating: 5, bg: "from-blue-500/10 to-transparent" },
-              { name: "Rahul M.", service: "Electrical Wiring", text: "I had a sudden short circuit at night. Fixvo's emergency service had a verified electrician at my door in 30 mins. Extremely professional.", rating: 5, bg: "from-amber-500/10 to-transparent" },
-              { name: "Anita K.", service: "Plumbing Deep Clean", text: "Very transparent pricing. The diagnosis was accurate and I was only charged for the exact work done. Will strictly use Fixvo going forward.", rating: 5, bg: "from-emerald-500/10 to-transparent" }
+              { name: "Priya S.", service: "AC Repair", text: "The technician arrived exactly on time. Fixed my AC cooling issue within an hour and the price was upfront. Truly a lifesaver in this heat!", rating: 5, bg: "from-blue-500/10 to-transparent", initial: "P" },
+              { name: "Rahul M.", service: "Electrical Wiring", text: "I had a sudden short circuit at night. Fixvo's emergency service had a verified electrician at my door in 30 mins. Extremely professional.", rating: 5, bg: "from-amber-500/10 to-transparent", initial: "R" },
+              { name: "Anita K.", service: "Plumbing Deep Clean", text: "Very transparent pricing. The diagnosis was accurate and I was only charged for the exact work done. Will strictly use Fixvo going forward.", rating: 5, bg: "from-emerald-500/10 to-transparent", initial: "A" }
             ].map((testimonial, idx) => (
                <motion.div 
                  key={idx}
@@ -443,19 +443,27 @@ const Home = () => {
                  whileInView={{ opacity: 1, y: 0 }}
                  viewport={{ once: true, margin: "-50px" }}
                  transition={{ delay: idx * 0.1 }}
-                 className={`p-6 sm:p-8 rounded-[2rem] border border-white/10 bg-gradient-to-b ${testimonial.bg} shadow-lg backdrop-blur-sm relative min-w-[280px] sm:min-w-[320px] md:min-w-0 snap-center shrink-0 flex flex-col`}
+                 className={`p-6 sm:p-8 rounded-[2rem] border border-white/10 bg-gradient-to-b ${testimonial.bg} shadow-[0_8px_30px_rgb(0,0,0,0.12)] backdrop-blur-sm relative min-w-[300px] w-[85vw] sm:w-[320px] md:w-auto md:min-w-0 snap-center shrink-0 flex flex-col group hover:-translate-y-2 transition-transform duration-300`}
                >
-                 <div className="absolute top-4 right-4 sm:top-6 sm:right-6 text-white/5 font-serif text-5xl sm:text-6xl pointer-events-none">"</div>
-                 <div className="flex items-center gap-1 text-amber-400 mb-4">
-                    {[...Array(testimonial.rating)].map((_, i) => <Star key={i} size={14} className="fill-current sm:w-4 sm:h-4" />)}
+                 <div className="absolute top-4 right-4 sm:top-6 sm:right-6 text-white/5 font-serif text-5xl sm:text-7xl pointer-events-none transition-transform group-hover:scale-110">"</div>
+                 
+                 <div className="flex items-center gap-4 mb-6">
+                   <div className="w-12 h-12 rounded-full bg-gradient-to-br from-indigo-500 to-purple-500 flex items-center justify-center text-white font-bold text-lg shadow-inner">
+                     {testimonial.initial}
+                   </div>
+                   <div>
+                     <p className="font-bold text-white text-base sm:text-lg">{testimonial.name}</p>
+                     <div className="flex items-center gap-1 text-amber-400 mt-0.5">
+                        {[...Array(testimonial.rating)].map((_, i) => <Star key={i} size={12} className="fill-current sm:w-3 sm:h-3" />)}
+                     </div>
+                   </div>
                  </div>
-                 <p className="text-sm sm:text-base text-slate-300 italic mb-6 relative z-10 font-medium grow">"{testimonial.text}"</p>
-                 <div className="flex flex-wrap gap-2 justify-between items-end border-t border-white/10 pt-4 mt-auto">
-                    <div>
-                      <p className="font-bold text-white text-sm sm:text-base">{testimonial.name}</p>
-                      <p className="text-[10px] sm:text-xs text-slate-500 flex items-center gap-1 mt-1"><CheckCircle2 size={12} className="text-emerald-400"/> Verified Booking</p>
-                    </div>
-                    <span className="text-[10px] sm:text-xs font-bold text-slate-400 bg-white/5 px-2 sm:px-3 py-1 rounded-full whitespace-nowrap">{testimonial.service}</span>
+                 
+                 <p className="text-[15px] sm:text-base text-slate-300 italic mb-6 relative z-10 leading-relaxed grow">"{testimonial.text}"</p>
+                 
+                 <div className="flex flex-wrap gap-2 justify-between items-center border-t border-white/10 pt-5 mt-auto">
+                    <span className="text-[11px] sm:text-xs text-emerald-400 flex items-center gap-1.5 font-medium bg-emerald-400/10 px-2 py-1 rounded-full"><CheckCircle2 size={12} className="text-emerald-400"/> Verified</span>
+                    <span className="text-[10px] sm:text-xs font-bold text-slate-300 bg-white/5 border border-white/5 px-3 py-1.5 rounded-full whitespace-nowrap shadow-sm">{testimonial.service}</span>
                  </div>
                </motion.div>
             ))}

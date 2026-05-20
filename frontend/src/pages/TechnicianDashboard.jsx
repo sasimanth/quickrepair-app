@@ -69,28 +69,53 @@ const TechnicianDashboard = () => {
     finally { setLoading(false); }
   };
 
+  const [updatingJobs, setUpdatingJobs] = useState({});
+
   const updateJobStatus = async (id, status) => {
+    // Optimistic update
+    setJobs(prevJobs => prevJobs.map(job => job._id === id ? { ...job, status } : job));
+    setUpdatingJobs(prev => ({ ...prev, [id]: true }));
+    
     try {
       await api.put(`/bookings/${id}/status`, { status });
+    } catch (error) { 
+      // Revert on failure
+      alert(`Failed to update status to ${status}`);
       fetchJobs(); 
-    } catch (error) { alert(`Failed to update status to ${status}`); }
+    } finally {
+      setUpdatingJobs(prev => ({ ...prev, [id]: false }));
+    }
   };
 
   const handleSubmitQuote = async (e) => {
     e.preventDefault();
+    const jobId = quoteModalJob._id;
+    const finalPrice = Number(quoteForm.serviceCost) + Number(quoteModalJob.transportCharge || 0);
+    
+    // Optimistic update
+    setJobs(prevJobs => prevJobs.map(job => job._id === jobId ? { 
+      ...job, 
+      status: 'quote_pending', 
+      finalQuote: finalPrice, 
+      quoteReason: quoteForm.quoteReason 
+    } : job));
+    
+    setQuoteModalJob(null);
+    setQuoteForm({ serviceCost: '', quoteReason: '', quotePhoto: '', detectedIssues: '' });
+    setUpdatingJobs(prev => ({ ...prev, [jobId]: true }));
+    
     try {
-      const finalPrice = Number(quoteForm.serviceCost) + Number(quoteModalJob.transportCharge || 0);
-      await api.put(`/bookings/${quoteModalJob._id}/quote`, {
+      await api.put(`/bookings/${jobId}/quote`, {
          finalQuote: finalPrice,
          quoteReason: quoteForm.quoteReason,
          quotePhoto: quoteForm.quotePhoto,
          detectedIssues: quoteForm.detectedIssues
       });
-      setQuoteModalJob(null);
-      setQuoteForm({ serviceCost: '', quoteReason: '', quotePhoto: '', detectedIssues: '' });
-      fetchJobs();
     } catch (error) {
       alert("Failed to submit quote");
+      fetchJobs();
+    } finally {
+      setUpdatingJobs(prev => ({ ...prev, [jobId]: false }));
     }
   };
 
@@ -486,16 +511,18 @@ const TechnicianDashboard = () => {
                         {['pending', 'assigned'].includes(job.status) && (
                           <>
                             <button
+                              disabled={updatingJobs[job._id]}
                               onClick={() => updateJobStatus(job._id, 'accepted')}
-                              className="w-full bg-slate-900 hover:bg-slate-800 text-white font-bold py-4 px-4 rounded-2xl shadow-xl hover:shadow-2xl hover:shadow-slate-900/20 transition-all duration-300 transform hover:-translate-y-1 flex items-center justify-center gap-2"
+                              className="w-full bg-slate-900 hover:bg-slate-800 text-white font-bold py-4 px-4 rounded-2xl shadow-xl hover:shadow-2xl hover:shadow-slate-900/20 transition-all duration-300 transform hover:-translate-y-1 flex items-center justify-center gap-2 disabled:opacity-50"
                             >
-                              <CheckCircle size={18} /> Accept Job
+                              {updatingJobs[job._id] ? <Loader2 size={18} className="animate-spin" /> : <><CheckCircle size={18} /> Accept Job</>}
                             </button>
                             <button
+                              disabled={updatingJobs[job._id]}
                               onClick={() => updateJobStatus(job._id, 'rejected')}
-                              className="w-full bg-white hover:bg-red-50 text-red-600 border border-red-200 font-bold py-3 p-4 rounded-xl transition-colors flex items-center justify-center gap-2"
+                              className="w-full bg-white hover:bg-red-50 text-red-600 border border-red-200 font-bold py-3 p-4 rounded-xl transition-colors flex items-center justify-center gap-2 disabled:opacity-50"
                             >
-                              <XCircle size={18} /> Decline
+                              {updatingJobs[job._id] ? <Loader2 size={18} className="animate-spin" /> : <><XCircle size={18} /> Decline</>}
                             </button>
                           </>
                         )}
@@ -508,18 +535,20 @@ const TechnicianDashboard = () => {
                         )}
                         {job.status === 'accepted' && (
                             <button
+                              disabled={updatingJobs[job._id]}
                               onClick={() => updateJobStatus(job._id, 'on_the_way')}
-                              className="w-full bg-orange-500 hover:bg-orange-600 text-white font-bold py-4 px-4 rounded-2xl shadow-xl hover:shadow-orange-500/30 transition-all duration-300 transform hover:-translate-y-1 flex items-center justify-center gap-2"
+                              className="w-full bg-orange-500 hover:bg-orange-600 text-white font-bold py-4 px-4 rounded-2xl shadow-xl hover:shadow-orange-500/30 transition-all duration-300 transform hover:-translate-y-1 flex items-center justify-center gap-2 disabled:opacity-50"
                             >
-                              <Truck size={18} /> Start Route (On The Way)
+                              {updatingJobs[job._id] ? <Loader2 size={18} className="animate-spin" /> : <><Truck size={18} /> Start Route (On The Way)</>}
                             </button>
                         )}
                         {job.status === 'on_the_way' && (
                             <button
+                              disabled={updatingJobs[job._id]}
                               onClick={() => updateJobStatus(job._id, 'arrived')}
-                              className="w-full bg-blue-500 hover:bg-blue-600 text-white font-bold py-4 px-4 rounded-2xl shadow-xl hover:shadow-blue-500/30 transition-all duration-300 transform hover:-translate-y-1 flex items-center justify-center gap-2"
+                              className="w-full bg-blue-500 hover:bg-blue-600 text-white font-bold py-4 px-4 rounded-2xl shadow-xl hover:shadow-blue-500/30 transition-all duration-300 transform hover:-translate-y-1 flex items-center justify-center gap-2 disabled:opacity-50"
                             >
-                              <MapPin size={18} /> Technician Arrived
+                              {updatingJobs[job._id] ? <Loader2 size={18} className="animate-spin" /> : <><MapPin size={18} /> Technician Arrived</>}
                             </button>
                         )}
                         {job.status === 'arrived' && (
@@ -532,18 +561,20 @@ const TechnicianDashboard = () => {
                         )}
                         {job.status === 'quote_approved' && (
                             <button
+                              disabled={updatingJobs[job._id]}
                               onClick={() => updateJobStatus(job._id, 'in_progress')}
-                              className="w-full bg-purple-500 hover:bg-purple-600 text-white font-bold py-4 px-4 rounded-2xl shadow-xl hover:shadow-purple-500/30 transition-all duration-300 transform hover:-translate-y-1 flex items-center justify-center gap-2"
+                              className="w-full bg-purple-500 hover:bg-purple-600 text-white font-bold py-4 px-4 rounded-2xl shadow-xl hover:shadow-purple-500/30 transition-all duration-300 transform hover:-translate-y-1 flex items-center justify-center gap-2 disabled:opacity-50"
                             >
-                              <Wrench size={18} /> Work In Progress
+                              {updatingJobs[job._id] ? <Loader2 size={18} className="animate-spin" /> : <><Wrench size={18} /> Work In Progress</>}
                             </button>
                         )}
                         {job.status === 'in_progress' && (
                             <button
+                              disabled={updatingJobs[job._id]}
                               onClick={() => updateJobStatus(job._id, 'completed')}
-                              className="w-full bg-emerald-500 hover:bg-emerald-600 text-white font-bold py-3.5 px-4 rounded-2xl shadow-xl hover:shadow-emerald-500/30 transition-all duration-300 transform hover:-translate-y-1 flex items-center justify-center gap-2"
+                              className="w-full bg-emerald-500 hover:bg-emerald-600 text-white font-bold py-3.5 px-4 rounded-2xl shadow-xl hover:shadow-emerald-500/30 transition-all duration-300 transform hover:-translate-y-1 flex items-center justify-center gap-2 disabled:opacity-50"
                             >
-                              <CheckCircle size={18} /> Mark Completed
+                              {updatingJobs[job._id] ? <Loader2 size={18} className="animate-spin" /> : <><CheckCircle size={18} /> Mark Completed</>}
                             </button>
                         )}
                         {['accepted', 'quote_approved', 'on_the_way', 'arrived', 'in_progress'].includes(job.status) && (

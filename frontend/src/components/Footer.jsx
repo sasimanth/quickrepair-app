@@ -25,13 +25,13 @@ const Footer = () => {
             
             {/* Social Media Icons */}
             <div className="flex space-x-4">
-              <a href="https://www.instagram.com/sasimanth_9515?igsh=NXZ5amZxaDlkeGxy" target="_blank" rel="noopener noreferrer" className="p-2 bg-gray-800 rounded-full text-gray-400 hover:text-pink-500 hover:bg-gray-700 transition-all duration-300 transform hover:-translate-y-1">
+              <a href="https://www.instagram.com/fixvo.in?igsh=Mm1ubnEzeWM2d2Zi" target="_blank" rel="noopener noreferrer" className="p-2 bg-gray-800 rounded-full text-gray-400 hover:text-pink-500 hover:bg-gray-700 transition-all duration-300 transform hover:-translate-y-1">
                 <FaInstagram size={18} />
               </a>
               <a href="https://www.linkedin.com/in/gsasimanthreddy" target="_blank" rel="noopener noreferrer" className="p-2 bg-gray-800 rounded-full text-gray-400 hover:text-blue-500 hover:bg-gray-700 transition-all duration-300 transform hover:-translate-y-1">
                 <FaLinkedin size={18} />
               </a>
-              <a href="https://x.com/sasimanth_9515" target="_blank" rel="noopener noreferrer" className="p-2 bg-gray-800 rounded-full text-gray-400 hover:text-white hover:bg-gray-700 transition-all duration-300 transform hover:-translate-y-1">
+              <a href="https://x.com/fixvo_in" target="_blank" rel="noopener noreferrer" className="p-2 bg-gray-800 rounded-full text-gray-400 hover:text-white hover:bg-gray-700 transition-all duration-300 transform hover:-translate-y-1">
                 <FaXTwitter size={18} />
               </a>
               <a href="https://wa.me/9515980170" target="_blank" rel="noopener noreferrer" className="p-2 bg-gray-800 rounded-full text-gray-400 hover:text-emerald-500 hover:bg-gray-700 transition-all duration-300 transform hover:-translate-y-1">

@@ -207,7 +207,23 @@ const Signup = () => {
             <button type="submit" disabled={loading} className={`w-full py-4 mt-6 rounded-2xl text-white font-bold text-lg shadow-xl outline-none transition-all duration-300 flex items-center justify-center gap-2 ${loading ? 'bg-slate-300 shadow-none cursor-not-allowed' : 'bg-gradient-to-r from-emerald-500 to-teal-500 hover:shadow-emerald-500/30 transform hover:-translate-y-1'}`}>
               {loading ? <><Loader2 className="animate-spin" size={22} /> Verifying...</> : <>Verify & Complete Registration</>}
             </button>
-            <button type="button" onClick={() => setShowOtp(false)} className="w-full py-2 text-slate-500 font-medium hover:text-slate-800 text-sm underline mt-2">Go back</button>
+            <div className="flex flex-col gap-3 mt-4 text-center">
+               <button 
+                 type="button" 
+                 onClick={handleSignupSubmit}
+                 disabled={loading}
+                 className="text-indigo-600 font-bold text-sm hover:underline disabled:opacity-50"
+               >
+                 {loading ? 'Sending...' : 'Resend Code'}
+               </button>
+               <button 
+                 type="button" 
+                 onClick={() => { setShowOtp(false); setOtp(''); }} 
+                 className="text-slate-500 font-medium hover:text-slate-800 text-sm underline"
+               >
+                 Change Email Address
+               </button>
+            </div>
           </form>
         )}
         

@@ -39,11 +39,24 @@ const sendOtp = async (req, res) => {
       subject: 'Verify your Fixvo Account',
       text: `Hi ${name || 'there'},\n\nYour 6-digit verification code is: ${otp}\n\nThis code is valid for 5 minutes.\n\nBest,\nFixvo Team`,
       html: `
-        <div style="font-family: sans-serif; padding: 20px;">
-          <h2>Welcome to Fixvo!</h2>
-          <p>Your 6-digit verification code is:</p>
-          <h1 style="color: #4f46e5; letter-spacing: 5px;">${otp}</h1>
-          <p>Please enter this code on the verification screen. It expires in 5 minutes.</p>
+        <div style="font-family: 'Inter', Helvetica, sans-serif; max-width: 600px; margin: 0 auto; border: 1px solid #eaeaea; border-radius: 12px; overflow: hidden; box-shadow: 0 4px 6px rgba(0,0,0,0.05);">
+          <div style="background-color: #4f46e5; padding: 30px; text-align: center;">
+             <h1 style="color: white; margin: 0; font-size: 28px; font-weight: 800;">Fixvo</h1>
+          </div>
+          <div style="padding: 40px 30px; background-color: #ffffff;">
+            <h2 style="color: #1e293b; margin-top: 0;">Verify your email address</h2>
+            <p style="color: #475569; font-size: 16px; line-height: 1.5;">Hi ${name || 'there'},</p>
+            <p style="color: #475569; font-size: 16px; line-height: 1.5;">Thank you for joining Fixvo! Please use the following 6-digit verification code to complete your registration. This code will expire in 5 minutes.</p>
+            
+            <div style="background-color: #f8fafc; border: 2px dashed #cbd5e1; border-radius: 8px; padding: 20px; text-align: center; margin: 30px 0;">
+               <h1 style="color: #4f46e5; letter-spacing: 8px; margin: 0; font-size: 36px;">${otp}</h1>
+            </div>
+            
+            <p style="color: #64748b; font-size: 14px; margin-bottom: 0;">If you didn't request this code, you can safely ignore this email.</p>
+          </div>
+          <div style="background-color: #f8fafc; padding: 20px; text-align: center; border-top: 1px solid #eaeaea;">
+            <p style="color: #94a3b8; font-size: 12px; margin: 0;">© ${new Date().getFullYear()} Fixvo Inc. All rights reserved.</p>
+          </div>
         </div>
       `
     });

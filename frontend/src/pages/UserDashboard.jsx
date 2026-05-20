@@ -206,14 +206,22 @@ const UserDashboard = () => {
     }
   };
 
+  const [updatingJobs, setUpdatingJobs] = useState({});
+
   const handleQuoteApproval = async (bookingId, approved) => {
+    // Optimistic update
+    setBookings(prev => prev.map(b => b._id === bookingId ? { ...b, status: approved ? 'in_progress' : 'cancelled' } : b));
+    setUpdatingJobs(prev => ({ ...prev, [bookingId]: true }));
+    
     try {
       await api.put(`/bookings/${bookingId}/approve-quote`, { approved });
-      fetchData(); // Refresh UI to show accepted/rejected status
     } catch (error) {
        const errorMsg = error.response?.data?.message || error.message || 'Unknown error';
        alert(`Failed to update quote status: ${errorMsg}`);
        console.error(error);
+       fetchData(); // Revert on failure
+    } finally {
+       setUpdatingJobs(prev => ({ ...prev, [bookingId]: false }));
     }
   };
 
@@ -287,12 +295,26 @@ const UserDashboard = () => {
     );
   };
 
+  const [expandedBookings, setExpandedBookings] = useState({});
+  const [filterTab, setFilterTab] = useState('all');
+
+  const toggleExpand = (id) => {
+    setExpandedBookings(prev => ({ ...prev, [id]: !prev[id] }));
+  };
+
   const filteredBookings = bookings.filter(b => {
     const query = searchQuery.toLowerCase();
     const matchesService = (b.serviceId?.name || b.serviceName || '').toLowerCase().includes(query);
     const matchesId = b._id.toLowerCase().includes(query);
     const matchesStatus = b.status.toLowerCase().includes(query);
-    return matchesService || matchesId || matchesStatus;
+    const matchesSearch = matchesService || matchesId || matchesStatus;
+    
+    if (filterTab === 'active') {
+      return matchesSearch && !['completed', 'cancelled'].includes(b.status);
+    } else if (filterTab === 'completed') {
+      return matchesSearch && b.status === 'completed';
+    }
+    return matchesSearch;
   });
 
   return (
@@ -689,51 +711,66 @@ const UserDashboard = () => {
         ) : (
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
             {filteredBookings.map((booking) => (
-              <div key={booking._id} className="group bg-white rounded-[2rem] p-8 border border-slate-100/80 hover:border-indigo-200 hover:shadow-[0_8px_30px_rgb(0,0,0,0.06)] transition-all duration-500 flex flex-col justify-between overflow-hidden relative">
-                {/* Subtle corner highlight */}
-                <div className="absolute top-0 right-0 w-32 h-32 bg-indigo-50/50 rounded-bl-[100px] -z-0"></div>
+              <div key={booking._id} className={`group bg-white rounded-[2rem] p-6 sm:p-8 border ${expandedBookings[booking._id] ? 'border-indigo-300 shadow-md' : 'border-slate-100/80 shadow-sm'} hover:border-indigo-200 transition-all duration-300 flex flex-col justify-between overflow-hidden relative`}>
                 <div className="relative z-10">
-                  <div className="flex justify-between items-start mb-8">
+                  <div 
+                    className="flex justify-between items-start mb-2 cursor-pointer"
+                    onClick={() => toggleExpand(booking._id)}
+                  >
                     <div className="space-y-2">
                        <span className="inline-flex items-center gap-1.5 px-3 py-1 bg-slate-50 text-slate-600 border border-slate-200/60 text-[10px] font-black rounded uppercase tracking-widest">
                         {booking.serviceId?.name || booking.serviceName || 'Device Repair'}
                       </span>
-                      <h3 className="text-3xl font-black text-slate-900 tracking-tight">
+                      <h3 className="text-2xl font-black text-slate-900 tracking-tight">
                         ₹{booking.finalQuote ? booking.finalQuote : (booking.serviceId?.price || 0)}
-                        {!booking.finalQuote && <span className="text-sm text-slate-400 font-bold ml-2 tracking-normal block sm:inline">+ ₹{booking.transportCharge || 0} Trans.</span>}
-                        {!booking.finalQuote && booking.serviceOption === 'inspection' && <span className="text-sm text-slate-400 font-bold ml-2 tracking-normal block sm:inline">+ ₹{booking.inspectionFee || 99} Insp.</span>}
                       </h3>
+                      <p className="text-slate-500 text-sm font-medium flex items-center gap-1.5">
+                        <Calendar size={14} /> {booking.date ? new Date(booking.date).toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' }) : 'Pending'}
+                      </p>
                     </div>
-                    {getStatusBadge(booking.status)}
+                    <div className="flex flex-col items-end gap-2">
+                      {getStatusBadge(booking.status)}
+                      <span className="text-indigo-500 text-xs font-bold bg-indigo-50 px-2 py-1 rounded-full border border-indigo-100">
+                        {expandedBookings[booking._id] ? 'Less Details' : 'View Details'}
+                      </span>
+                    </div>
                   </div>
                   
-                  {booking.deviceType && (
-                    <div className="space-y-3 bg-slate-50 rounded-xl p-5 border border-slate-100/60">
-                      <div className="flex items-start gap-3 text-slate-700">
-                        <Smartphone className="w-5 h-5 text-blue-500 shrink-0 mt-0.5" />
-                        <div>
-                          <p className="font-bold text-sm text-slate-900">Device</p>
-                          <p className="text-slate-600">{booking.deviceType}</p>
+                  {expandedBookings[booking._id] && (
+                    <div className="mt-6 pt-6 border-t border-slate-100 animate-in fade-in slide-in-from-top-4 duration-300">
+                      {booking.deviceType && (
+                        <div className="space-y-3 bg-slate-50 rounded-xl p-5 border border-slate-100/60 mb-6">
+                          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div className="flex items-start gap-3 text-slate-700">
+                              <Smartphone className="w-5 h-5 text-blue-500 shrink-0 mt-0.5" />
+                              <div>
+                                <p className="font-bold text-sm text-slate-900">Device</p>
+                                <p className="text-slate-600">{booking.deviceType}</p>
+                              </div>
+                            </div>
+                            <div className="flex items-start gap-3 text-slate-700">
+                              <MapPin className="w-5 h-5 text-emerald-500 shrink-0 mt-0.5" />
+                              <div>
+                                <p className="font-bold text-sm text-slate-900 flex items-center gap-2">Location 
+                                  <span className="text-xs text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded uppercase tracking-wide border border-emerald-100">{booking.serviceLocation === 'gate' ? 'Gate Meetup' : booking.serviceLocation || 'On-site'}</span>
+                                </p>
+                                <p className="text-slate-600">{booking.location}</p>
+                              </div>
+                            </div>
+                          </div>
+                          
+                          <div className="flex items-start gap-3 text-slate-700 pt-3 border-t border-slate-200/50 mt-3">
+                            <AlertCircle className="w-5 h-5 text-rose-500 shrink-0 mt-0.5" />
+                            <div>
+                              <p className="font-bold text-sm text-slate-900">Issue</p>
+                              <p className="text-slate-600 line-clamp-2">{booking.problemDescription}</p>
+                            </div>
+                          </div>
                         </div>
-                      </div>
-                      <div className="flex items-start gap-3 text-slate-700">
-                        <AlertCircle className="w-5 h-5 text-rose-500 shrink-0 mt-0.5" />
-                        <div>
-                          <p className="font-bold text-sm text-slate-900">Issue</p>
-                          <p className="text-slate-600 line-clamp-2">{booking.problemDescription}</p>
-                        </div>
-                      </div>
-                      <div className="flex items-start gap-3 text-slate-700">
-                        <MapPin className="w-5 h-5 text-emerald-500 shrink-0 mt-0.5" />
-                        <div>
-                          <p className="font-bold text-sm text-slate-900 flex items-center gap-2">Location 
-                            <span className="text-xs text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded uppercase tracking-wide border border-emerald-100">{booking.serviceLocation === 'gate' ? 'Gate Meetup' : booking.serviceLocation || 'On-site'}</span>
-                          </p>
-                          <p className="text-slate-600">{booking.location}</p>
-                        </div>
-                      </div>
+                      )}
+                      
                       {(booking.imageUrl || booking.mediaUrl) && (
-                        <div className="flex items-start gap-3 text-slate-700 pt-2 border-t border-slate-100/80">
+                        <div className="flex items-start gap-3 text-slate-700 pt-2 border-t border-slate-100/80 mt-4">
                           <Camera className="w-5 h-5 text-indigo-500 shrink-0 mt-0.5" />
                           <div className="overflow-hidden rounded-xl border border-slate-200 shadow-sm w-full max-w-sm">
                             {booking.mediaType?.startsWith('video') ? (
@@ -746,7 +783,7 @@ const UserDashboard = () => {
                       )}
 
                       {booking.status === 'accepted' && booking.serviceLocation !== 'off-site' && (
-                        <div className="pt-2 border-t border-slate-100/80 space-y-3">
+                        <div className="pt-2 border-t border-slate-100/80 space-y-3 mt-4">
                            <div className="flex items-center justify-between bg-indigo-50/50 p-4 rounded-xl border border-indigo-100">
                              <p className="font-bold text-sm text-indigo-900 flex items-center gap-2">
                                <Truck size={18} className="text-indigo-500"/> Tech Status
@@ -784,22 +821,22 @@ const UserDashboard = () => {
                           </div>
 
                           <div className="flex gap-3">
-                            <button onClick={() => handleQuoteApproval(booking._id, false)} className="flex-1 bg-white/5 hover:bg-white/10 border border-white/10 text-white font-bold py-2.5 rounded-lg transition-colors">Reject Quote</button>
-                            <button onClick={() => handleQuoteApproval(booking._id, true)} className="flex-1 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white font-bold py-2.5 rounded-lg shadow-lg shadow-blue-500/30">Approve Work</button>
+                            <button disabled={updatingJobs[booking._id]} onClick={() => handleQuoteApproval(booking._id, false)} className="flex-1 bg-white/5 hover:bg-white/10 border border-white/10 text-white font-bold py-2.5 rounded-lg transition-colors flex justify-center items-center gap-2">
+                              {updatingJobs[booking._id] ? <Loader2 size={16} className="animate-spin"/> : 'Reject Quote'}
+                            </button>
+                            <button disabled={updatingJobs[booking._id]} onClick={() => handleQuoteApproval(booking._id, true)} className="flex-1 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white font-bold py-2.5 rounded-lg shadow-lg shadow-blue-500/30 flex justify-center items-center gap-2">
+                              {updatingJobs[booking._id] ? <Loader2 size={16} className="animate-spin"/> : 'Approve Work'}
+                            </button>
                           </div>
                         </div>
                       )}
+                      
                     </div>
                   )}
                 </div>
                 
-                <div className="mt-6 pt-5 border-t border-slate-100 flex items-center justify-between">
-                  <div className="flex items-center gap-2 text-slate-500">
-                    <Calendar size={18} />
-                    <span className="font-medium text-sm">
-                      {booking.date ? new Date(booking.date).toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' }) : 'Pending Date'}
-                    </span>
-                  </div>
+                {expandedBookings[booking._id] && (
+                <div className="mt-6 pt-5 border-t border-slate-100 flex items-center justify-between animate-in fade-in duration-300">
                   {booking.providerId ? (
                     <div className="flex flex-wrap items-center gap-3">
                       <div className="flex items-center gap-2 bg-indigo-50 px-3 py-2 rounded-xl text-indigo-700 text-sm font-bold shadow-sm border border-indigo-100">
@@ -813,7 +850,7 @@ const UserDashboard = () => {
                             <PhoneCall size={16} /> Call Technician
                           </a>
                           <a href={`https://wa.me/${booking.providerId.phone.replace(/\D/g, '')}?text=Hi, this is regarding my Fixvo booking. My exact location is: `} target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 bg-[#25D366] hover:bg-[#1ebd5a] text-white px-4 py-2 rounded-xl text-sm font-bold shadow-sm transition-all shadow-emerald-200 transform hover:-translate-y-0.5">
-                            <MapPin size={16} /> Share WhatsApp Location
+                            <MapPin size={16} /> Share Location
                           </a>
                         </>
                       )}
@@ -860,6 +897,7 @@ const UserDashboard = () => {
                     <span className="text-slate-400 text-sm font-medium italic">Unassigned...</span>
                   )}
                 </div>
+                )}
 
 
               </div>
