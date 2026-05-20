@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import api from '../services/api';
-import { Briefcase, MapPin, Smartphone, AlertCircle, Clock, CheckCircle, PackageSearch, XCircle, User, Wrench, RefreshCw, MessageSquare, Camera, HelpCircle, Hammer, Truck, Settings, Navigation, Copy, Map, PhoneCall } from 'lucide-react';
+import { Briefcase, MapPin, Smartphone, AlertCircle, Clock, CheckCircle, PackageSearch, XCircle, User, Wrench, RefreshCw, MessageSquare, Camera, HelpCircle, Hammer, Truck, Settings, Navigation, Copy, Map, PhoneCall, Loader2 } from 'lucide-react';
 import ChatModal from '../components/ChatModal';
 import SettingsModal from '../components/SettingsModal';
 import VerificationModal from '../components/VerificationModal';
