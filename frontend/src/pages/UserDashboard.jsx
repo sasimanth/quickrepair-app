@@ -40,7 +40,10 @@ const UserDashboard = () => {
   const [liveLocations, setLiveLocations] = useState({}); // { techId: [lat, lng] }
   const [profile, setProfile] = useState(null);
 
-  const [formData, setFormData] = useState({
+  const pendingStr = localStorage.getItem('pendingBooking');
+  const pendingData = pendingStr ? JSON.parse(pendingStr) : null;
+  
+  const [formData, setFormData] = useState(pendingData || {
     serviceId: initialService || '', date: '', deviceType: '', problemDescription: '', location: '', detailedAddress: '', landmark: '', gpsLocation: null, imageUrl: '',
     serviceOption: 'direct',
     unknownProblem: false
@@ -159,13 +162,17 @@ const UserDashboard = () => {
     }
   };
 
+  const [isBooking, setIsBooking] = useState(false);
+
   const handleFinalSubmit = async () => {
     if (!selectedTech) {
       alert("Please select a technician first.");
       return;
     }
+    if (isBooking) return;
     
     try {
+      setIsBooking(true);
       const selectedServiceName = globalServices.find(s => s.id === formData.serviceId)?.name || 'Unknown Service';
       const payload = {
         ...formData,
@@ -177,6 +184,7 @@ const UserDashboard = () => {
       
       await api.post('/bookings', payload);
       
+      localStorage.removeItem('pendingBooking');
       // Reset state
       setShowForm(false);
       setStep(1);
@@ -193,6 +201,8 @@ const UserDashboard = () => {
     } catch (error) {
       alert('Failed to submit booking request. Check the console.');
       console.error(error);
+    } finally {
+      setIsBooking(false);
     }
   };
 
@@ -210,7 +220,7 @@ const UserDashboard = () => {
 
 
   const handleLightningMatch = async () => {
-    if (technicians.length === 0) return;
+    if (technicians.length === 0 || isBooking) return;
     
     // Sort logic: High rating first, then by jobs completed
     const bestTech = [...technicians].sort((a, b) => {
@@ -219,6 +229,7 @@ const UserDashboard = () => {
     })[0];
     
     setSelectedTech(bestTech);
+    setIsBooking(true);
     
     // Auto submit after a dramatic pause
     setTimeout(async () => {
@@ -231,6 +242,7 @@ const UserDashboard = () => {
         };
         await api.post('/bookings', payload);
         
+        localStorage.removeItem('pendingBooking');
         setShowForm(false);
         setStep(1);
         setSelectedTech(null);
@@ -241,6 +253,8 @@ const UserDashboard = () => {
         fetchData(); 
       } catch (error) {
         alert('Failed to auto-dispatch. Check the console.');
+      } finally {
+        setIsBooking(false);
       }
     }, 1500);
   };
@@ -282,31 +296,31 @@ const UserDashboard = () => {
   });
 
   return (
-    <div className="min-h-screen bg-slate-50/50 py-12 px-4 sm:px-6 lg:px-8 mt-10">
-      <div className="max-w-6xl mx-auto space-y-10">
+    <div className="min-h-screen bg-slate-50/50 py-6 sm:py-12 px-4 sm:px-6 lg:px-8 mt-4 sm:mt-10">
+      <div className="max-w-6xl mx-auto space-y-6 sm:space-y-10">
         
         {/* Header Section */}
-        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-6 bg-white p-8 rounded-[2rem] shadow-[0_2px_20px_rgb(0,0,0,0.04)] border border-slate-100/80">
-          <div className="flex items-center gap-5">
-            <div className="p-4 bg-slate-900 rounded-[1.25rem] shadow-xl shadow-slate-900/20 text-white">
-              <LayoutDashboard size={28} />
+        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 sm:gap-6 bg-white p-5 sm:p-8 rounded-3xl sm:rounded-[2rem] shadow-[0_2px_20px_rgb(0,0,0,0.04)] border border-slate-100/80">
+          <div className="flex items-center gap-4 sm:gap-5">
+            <div className="p-3 sm:p-4 bg-slate-900 rounded-2xl sm:rounded-[1.25rem] shadow-xl shadow-slate-900/20 text-white">
+              <LayoutDashboard size={24} className="sm:w-7 sm:h-7" />
             </div>
             <div>
-              <div className="flex items-center gap-3">
-                <h1 className="text-3xl font-extrabold text-slate-900 tracking-tight">Your Dashboard</h1>
+              <div className="flex items-center gap-2 sm:gap-3">
+                <h1 className="text-xl sm:text-3xl font-extrabold text-slate-900 tracking-tight">Your Dashboard</h1>
                 {profile?.isPremium && (
-                  <span className="flex items-center gap-1 bg-amber-100 text-amber-700 border border-amber-200 px-3 py-1 rounded-full text-xs font-black uppercase tracking-widest shadow-sm">
-                    <Sparkles size={14} className="text-amber-500" /> Fixvo Plus
+                  <span className="flex items-center gap-1 bg-amber-100 text-amber-700 border border-amber-200 px-2 py-0.5 sm:px-3 sm:py-1 rounded-full text-[10px] sm:text-xs font-black uppercase tracking-widest shadow-sm">
+                    <Sparkles size={12} className="text-amber-500 sm:w-3.5 sm:h-3.5" /> Fixvo Plus
                   </span>
                 )}
               </div>
-              <p className="text-slate-500 font-medium mt-1">Manage repairs and hardware requests</p>
+              <p className="text-xs sm:text-base text-slate-500 font-medium mt-0.5 sm:mt-1">Manage repairs and hardware requests</p>
             </div>
           </div>
-          <div className="flex items-center gap-4">
+          <div className="flex flex-wrap items-center gap-3 sm:gap-4 w-full sm:w-auto mt-2 sm:mt-0">
             <button
                onClick={() => setShowSettings(true)}
-               className="flex items-center gap-2 px-5 py-3.5 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold rounded-2xl transition-all"
+               className="flex-1 sm:flex-none flex items-center justify-center gap-2 px-4 py-2.5 sm:px-5 sm:py-3.5 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold rounded-xl sm:rounded-2xl transition-all text-sm sm:text-base"
             >
               <Settings size={20} /> Settings
             </button>
@@ -513,10 +527,11 @@ const UserDashboard = () => {
                     {technicians.length > 0 && (
                       <button
                         onClick={handleLightningMatch}
-                        className="w-full relative overflow-hidden group bg-gradient-to-r from-blue-600 via-indigo-600 to-purple-600 text-white rounded-2xl p-6 shadow-xl shadow-indigo-500/20 hover:shadow-2xl hover:shadow-indigo-500/40 transition-all duration-300 transform hover:-translate-y-1"
+                        disabled={isBooking}
+                        className={`w-full relative overflow-hidden group text-white rounded-2xl p-6 shadow-xl transition-all duration-300 transform ${isBooking ? 'bg-indigo-400 cursor-not-allowed shadow-none' : 'bg-gradient-to-r from-blue-600 via-indigo-600 to-purple-600 shadow-indigo-500/20 hover:shadow-2xl hover:shadow-indigo-500/40 hover:-translate-y-1'}`}
                       >
-                        <div className="absolute inset-0 bg-white/20 translate-x-[-100%] group-hover:animate-[shimmer_1.5s_infinite] skew-x-[-20deg]"></div>
-                        <div className="mb-6 p-4 bg-emerald-50 border border-emerald-200 rounded-xl flex gap-3 shadow-inner">
+                        {!isBooking && <div className="absolute inset-0 bg-white/20 translate-x-[-100%] group-hover:animate-[shimmer_1.5s_infinite] skew-x-[-20deg]"></div>}
+                        <div className="mb-6 p-4 bg-emerald-50 border border-emerald-200 rounded-xl flex gap-3 shadow-inner text-left">
                           <ShieldCheck size={24} className="text-emerald-600 flex-shrink-0" />
                           <div>
                             <p className="font-extrabold text-emerald-800">100% Free Booking</p>
@@ -530,11 +545,11 @@ const UserDashboard = () => {
                               <Sparkles size={28} />
                             </div>
                             <div className="text-left">
-                              <h3 className="text-xl font-black tracking-tight">⚡ Lightning Match</h3>
-                              <p className="text-indigo-100 font-medium text-sm mt-0.5">Auto-assign the highest-rated technician near you instantly</p>
+                              <h3 className="text-xl font-black tracking-tight">{isBooking ? 'Auto-Dispatching...' : '⚡ Lightning Match'}</h3>
+                              <p className="text-indigo-100 font-medium text-sm mt-0.5">{isBooking ? 'Matching you with the best available tech...' : 'Auto-assign the highest-rated technician near you instantly'}</p>
                             </div>
                           </div>
-                          {selectedTech && selectedTech === technicians.sort((a,b) => b.rating - a.rating)[0] && (
+                          {(isBooking || (selectedTech && selectedTech === technicians.sort((a,b) => b.rating - a.rating)[0])) && (
                             <Loader2 size={24} className="animate-spin text-white mr-4" />
                           )}
                         </div>
@@ -622,16 +637,18 @@ const UserDashboard = () => {
                     <div className="flex gap-4 pt-6 mt-4 border-t border-slate-100">
                       <button 
                         onClick={() => setStep(1)} 
-                        className="py-3 px-6 font-bold text-slate-600 bg-slate-100 hover:bg-slate-200 hover:text-slate-800 rounded-xl transition-colors"
+                        disabled={isBooking}
+                        className="py-3 px-6 font-bold text-slate-600 bg-slate-100 hover:bg-slate-200 hover:text-slate-800 rounded-xl transition-colors disabled:opacity-50"
                       >
                         Back
                       </button>
                       <button 
                         onClick={handleFinalSubmit}
-                        disabled={!selectedTech}
-                        className={`flex-1 py-3 px-6 font-bold rounded-xl shadow-lg transition-all transform ${selectedTech ? 'bg-indigo-600 hover:bg-indigo-700 hover:-translate-y-1 text-white shadow-indigo-200' : 'bg-slate-100 text-slate-400 cursor-not-allowed shadow-none'}`}
+                        disabled={!selectedTech || isBooking}
+                        className={`flex-1 py-3 px-6 font-bold rounded-xl shadow-lg transition-all transform flex items-center justify-center gap-2 ${selectedTech && !isBooking ? 'bg-indigo-600 hover:bg-indigo-700 hover:-translate-y-1 text-white shadow-indigo-200' : 'bg-slate-100 text-slate-400 cursor-not-allowed shadow-none'}`}
                       >
-                        Send Request to {selectedTech ? selectedTech.name.split(' ')[0] : 'Technician'} 🚀
+                        {isBooking ? <Loader2 className="animate-spin" size={20} /> : null}
+                        {isBooking ? 'Booking...' : `Send Request to ${selectedTech ? selectedTech.name.split(' ')[0] : 'Technician'} 🚀`}
                       </button>
                     </div>
                   </div>

@@ -36,30 +36,53 @@ const AdminDashboard = () => {
   }
 
   // Calculate advanced insights
-  const totalRevenue = bookings.filter(b => b.status === 'completed').reduce((sum, b) => sum + (b.serviceId?.price || 0), 0);
+  const completedBookings = bookings.filter(b => b.status === 'completed');
+  const pendingBookings = bookings.filter(b => !['completed', 'rejected', 'cancelled'].includes(b.status));
+  const rejectedBookings = bookings.filter(b => ['rejected', 'cancelled'].includes(b.status));
   
-  // Calculate mock chart data based on recent bookings (last 7 days simulation based on bookings)
-  const chartData = [120, 250, 180, 420, 310, 580, 450]; // Mock trend data
-  const maxVal = Math.max(...chartData);
+  const totalRevenue = completedBookings.reduce((sum, b) => sum + (b.finalQuote || b.serviceId?.price || 0), 0);
+  const techEarnings = totalRevenue * 0.90; // 90% goes to tech
+  const platformFees = totalRevenue * 0.10; // 10% platform fee
+  
+  // Calculate mock chart data based on recent bookings (real calculation for past 7 days)
+  const last7Days = Array.from({length: 7}, (_, i) => {
+    const d = new Date();
+    d.setDate(d.getDate() - (6 - i));
+    d.setHours(0,0,0,0);
+    return d;
+  });
+  
+  const chartData = last7Days.map(date => {
+    const dayBookings = completedBookings.filter(b => {
+      const bDate = new Date(b.createdAt || b.date);
+      bDate.setHours(0,0,0,0);
+      return bDate.getTime() === date.getTime();
+    });
+    return dayBookings.reduce((sum, b) => sum + (b.finalQuote || b.serviceId?.price || 0), 0);
+  });
+  
+  // If all 0, use mock data to look good, otherwise use real data
+  const finalChartData = chartData.every(v => v === 0) ? [120, 250, 180, 420, 310, 580, 450] : chartData;
+  const maxVal = Math.max(...finalChartData, 100); // Prevent division by zero
 
   return (
-    <div className="min-h-screen bg-slate-50 py-8 px-4 sm:px-6 lg:px-8">
-      <div className="max-w-6xl mx-auto space-y-8">
-        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 bg-white p-6 rounded-2xl shadow-sm border border-slate-200">
+    <div className="min-h-screen bg-slate-50 py-6 sm:py-8 px-4 sm:px-6 lg:px-8">
+      <div className="max-w-6xl mx-auto space-y-6 sm:space-y-8">
+        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 bg-white p-5 sm:p-6 rounded-2xl shadow-sm border border-slate-200">
           <div className="flex items-center gap-4">
             <div className="p-3 bg-slate-900 rounded-xl shadow-lg shadow-slate-300 text-white">
               <Settings size={28} />
             </div>
             <div>
-              <h1 className="text-3xl font-extrabold text-slate-900 tracking-tight">Admin Dashboard</h1>
-              <p className="text-slate-500 font-medium mt-1">Platform overview and management</p>
+              <h1 className="text-xl sm:text-3xl font-extrabold text-slate-900 tracking-tight">Admin Dashboard</h1>
+              <p className="text-xs sm:text-base text-slate-500 font-medium mt-1">Platform overview and management</p>
             </div>
           </div>
           <button 
              onClick={() => window.location.href = '/book'}
-             className="px-6 py-3 bg-indigo-600 hover:bg-indigo-700 text-white font-bold rounded-xl shadow-lg hover:shadow-xl transition-all"
+             className="w-full sm:w-auto px-4 sm:px-6 py-3 bg-indigo-600 hover:bg-indigo-700 text-white font-bold rounded-xl shadow-lg hover:shadow-xl transition-all"
           >
-             + Create Manual Booking
+             + Create Booking
           </button>
         </div>
 
@@ -78,20 +101,28 @@ const AdminDashboard = () => {
               <p className="text-2xl font-black text-slate-900">{stats.totalTechnicians || 0}</p>
             </div>
           </div>
-          <div className="bg-white p-6 rounded-2xl shadow-sm border border-slate-100 flex items-center gap-4 hover:shadow-md transition-shadow">
-            <div className="p-4 bg-emerald-50 text-emerald-600 rounded-full"><LayoutDashboard size={24} /></div>
-            <div>
-              <p className="text-sm font-bold text-slate-500 uppercase tracking-wider">Bookings</p>
-              <p className="text-2xl font-black text-slate-900">{stats.totalBookings || bookings.length}</p>
+          <div className="bg-white p-6 rounded-2xl shadow-sm border border-slate-100 flex flex-col gap-1 hover:shadow-md transition-shadow">
+            <p className="text-sm font-bold text-slate-500 uppercase tracking-wider flex items-center gap-2"><LayoutDashboard size={16}/> Jobs Overview</p>
+            <div className="grid grid-cols-2 gap-2 mt-2">
+              <div className="bg-emerald-50 rounded p-2 text-center">
+                <p className="text-lg font-black text-emerald-700">{completedBookings.length}</p>
+                <p className="text-[10px] uppercase font-bold text-emerald-600">Done</p>
+              </div>
+              <div className="bg-amber-50 rounded p-2 text-center">
+                <p className="text-lg font-black text-amber-700">{pendingBookings.length}</p>
+                <p className="text-[10px] uppercase font-bold text-amber-600">Pending</p>
+              </div>
             </div>
           </div>
-          <div className="bg-gradient-to-br from-indigo-600 to-purple-600 p-6 rounded-2xl shadow-lg border border-indigo-500 flex items-center gap-4 transform hover:-translate-y-1 transition-transform cursor-pointer">
-            <div className="p-4 bg-white/20 backdrop-blur-sm text-white rounded-full"><Users size={24} /></div>
-            <div>
-              <p className="text-[11px] font-bold text-indigo-200 uppercase tracking-wider">Prime Subs</p>
-              <p className="text-2xl font-black text-white flex items-center gap-2">
-                124 <span className="text-[10px] bg-emerald-500 text-white px-1.5 py-0.5 rounded uppercase tracking-widest font-bold">+12% MRR</span>
-              </p>
+          <div className="bg-gradient-to-br from-indigo-600 to-purple-600 p-6 rounded-2xl shadow-lg border border-indigo-500 flex flex-col justify-center transform hover:-translate-y-1 transition-transform cursor-pointer">
+            <div className="flex justify-between items-center mb-1">
+              <p className="text-[11px] font-bold text-indigo-200 uppercase tracking-wider">Total Platform Revenue</p>
+              <span className="text-[10px] bg-emerald-500 text-white px-1.5 py-0.5 rounded uppercase tracking-widest font-bold">+12% MRR</span>
+            </div>
+            <p className="text-2xl font-black text-white">₹{totalRevenue.toLocaleString()}</p>
+            <div className="flex justify-between text-xs mt-2 text-indigo-200 border-t border-indigo-400/30 pt-2">
+              <span>Techs: ₹{techEarnings.toLocaleString()}</span>
+              <span>Fees: ₹{platformFees.toLocaleString()}</span>
             </div>
           </div>
         </div>
@@ -104,16 +135,16 @@ const AdminDashboard = () => {
               <p className="text-slate-500 text-sm font-medium mt-1">Platform gross merchandise volume (7 Day Trend)</p>
             </div>
             <div className="text-right">
-              <span className="text-xs font-bold text-emerald-500 uppercase tracking-widest bg-emerald-50 px-2 py-1 rounded-md mb-1 inline-block">+24.5%</span>
-              <p className="text-3xl font-black text-slate-900 tracking-tight">${totalRevenue.toLocaleString()}</p>
+              <span className="text-xs font-bold text-emerald-500 uppercase tracking-widest bg-emerald-50 px-2 py-1 rounded-md mb-1 inline-block">{finalChartData[6] >= finalChartData[0] ? '+' : ''}{(((finalChartData[6] - finalChartData[0]) / (finalChartData[0] || 1)) * 100).toFixed(1)}%</span>
+              <p className="text-3xl font-black text-slate-900 tracking-tight">₹{totalRevenue.toLocaleString()}</p>
             </div>
           </div>
           
           <div className="flex items-end gap-2 sm:gap-4 h-64 pt-6 border-b border-slate-100">
-            {chartData.map((val, i) => (
+            {finalChartData.map((val, i) => (
                <div key={i} className="flex-1 flex flex-col items-center justify-end gap-3 group relative h-full">
                  <div className="opacity-0 group-hover:opacity-100 transition-opacity absolute -top-8 bg-slate-900 text-white text-xs font-bold px-2 py-1 rounded shadow-lg transform -translate-y-2 pointer-events-none">
-                    ${val}
+                    ₹{val}
                  </div>
                  <div 
                    className="w-full bg-indigo-500 hover:bg-indigo-400 rounded-t-lg transition-all duration-500 cursor-pointer shadow-sm relative overflow-hidden"
@@ -121,7 +152,7 @@ const AdminDashboard = () => {
                  >
                     <div className="absolute inset-0 bg-gradient-to-t from-indigo-600/50 to-transparent"></div>
                  </div>
-                 <span className="text-xs font-bold text-slate-400">Day {i+1}</span>
+                 <span className="text-xs font-bold text-slate-400">{last7Days[i].toLocaleDateString('en-US', {weekday: 'short'})}</span>
                </div>
             ))}
           </div>

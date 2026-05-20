@@ -1,4 +1,4 @@
-import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
+import { BrowserRouter as Router, Routes, Route, Navigate, useLocation } from 'react-router-dom';
 import Home from './pages/Home';
 import Login from './pages/Login';
 import Signup from './pages/Signup';
@@ -34,69 +34,68 @@ const PrivateRoute = ({ children, allowedRoles }) => {
   return children;
 };
 
-const BookRedirect = () => {
-  const { user } = useAuth();
-  const search = document.location.search;
-  if (user) {
-    const separator = search ? '&' : '?';
-    return <Navigate to={`/dashboard${search}${separator}action=book`} replace />;
-  } else {
-    return <Navigate to={`/login${search}`} replace />;
-  }
+import Booking from './pages/Booking';
+
+const AppContent = () => {
+  const location = useLocation();
+  const isHome = location.pathname === '/';
+  return (
+    <div className="min-h-screen bg-gray-50 flex flex-col relative">
+      {isHome && (
+        <div className="bg-gradient-to-r from-blue-600 to-indigo-600 text-white text-xs sm:text-sm font-bold text-center py-2 px-4 shadow-md relative z-[60] flex justify-center items-center gap-2">
+          <span>🔥 First repair? Use code</span><span className="bg-white/20 px-2 py-0.5 rounded font-black tracking-wider">FIXVO10</span><span>for 10% off your direct repair!</span>
+        </div>
+      )}
+      <Navbar />
+      <main className="flex-grow flex flex-col">
+        <Routes>
+          <Route path="/" element={<Home />} />
+          <Route path="/book" element={<Booking />} />
+          <Route path="/login" element={<Login />} />
+          <Route path="/signup" element={<Signup />} />
+          
+          <Route path="/dashboard" element={
+            <PrivateRoute allowedRoles={['user']}>
+              <div className="container mx-auto px-4 py-8 flex-grow"><UserDashboard /></div>
+            </PrivateRoute>
+          } />
+          
+          <Route path="/technician-dashboard" element={
+            <PrivateRoute allowedRoles={['technician']}>
+              <div className="container mx-auto px-4 py-8 flex-grow"><TechnicianDashboard /></div>
+            </PrivateRoute>
+          } />
+          
+          <Route path="/admin-dashboard" element={
+            <PrivateRoute allowedRoles={['admin']}>
+              <div className="container mx-auto px-4 py-8 flex-grow"><AdminDashboard /></div>
+            </PrivateRoute>
+          } />
+          
+          {/* Legal & Static Pages */}
+          <Route path="/about" element={<About />} />
+          <Route path="/pricing" element={<Pricing />} />
+          <Route path="/faq" element={<FAQ />} />
+          <Route path="/contact" element={<Contact />} />
+          <Route path="/terms" element={<Terms />} />
+          <Route path="/privacy" element={<Privacy />} />
+          <Route path="/refund" element={<Refund />} />
+          <Route path="/cancellation" element={<Cancellation />} />
+          <Route path="/disclaimer" element={<Disclaimer />} />
+          <Route path="/referrals" element={<Referrals />} />
+          <Route path="*" element={<NotFound />} />
+        </Routes>
+      </main>
+      <Footer />
+    </div>
+  );
 };
 
 function App() {
   return (
     <AuthProvider>
       <Router>
-        <div className="min-h-screen bg-gray-50 flex flex-col relative">
-          <div className="bg-gradient-to-r from-blue-600 to-indigo-600 text-white text-xs sm:text-sm font-bold text-center py-2 px-4 shadow-md relative z-[60] flex justify-center items-center gap-2">
-            <span>🔥 First repair? Use code</span><span className="bg-white/20 px-2 py-0.5 rounded font-black tracking-wider">FIXVO10</span><span>for 10% off your direct repair!</span>
-          </div>
-          <Navbar />
-          <main className="flex-grow flex flex-col pt-20">
-            <Routes>
-              <Route path="/" element={<Home />} />
-              <Route path="/book" element={
-                <BookRedirect />
-              } />
-              <Route path="/login" element={<Login />} />
-              <Route path="/signup" element={<Signup />} />
-              
-              <Route path="/dashboard" element={
-                <PrivateRoute allowedRoles={['user']}>
-                  <div className="container mx-auto px-4 py-8 flex-grow"><UserDashboard /></div>
-                </PrivateRoute>
-              } />
-              
-              <Route path="/technician-dashboard" element={
-                <PrivateRoute allowedRoles={['technician']}>
-                  <div className="container mx-auto px-4 py-8 flex-grow"><TechnicianDashboard /></div>
-                </PrivateRoute>
-              } />
-              
-              <Route path="/admin-dashboard" element={
-                <PrivateRoute allowedRoles={['admin']}>
-                  <div className="container mx-auto px-4 py-8 flex-grow"><AdminDashboard /></div>
-                </PrivateRoute>
-              } />
-              
-              {/* Legal & Static Pages */}
-              <Route path="/about" element={<About />} />
-              <Route path="/pricing" element={<Pricing />} />
-              <Route path="/faq" element={<FAQ />} />
-              <Route path="/contact" element={<Contact />} />
-              <Route path="/terms" element={<Terms />} />
-              <Route path="/privacy" element={<Privacy />} />
-              <Route path="/refund" element={<Refund />} />
-              <Route path="/cancellation" element={<Cancellation />} />
-              <Route path="/disclaimer" element={<Disclaimer />} />
-              <Route path="/referrals" element={<Referrals />} />
-              <Route path="*" element={<NotFound />} />
-            </Routes>
-          </main>
-          <Footer />
-        </div>
+        <AppContent />
       </Router>
     </AuthProvider>
   );

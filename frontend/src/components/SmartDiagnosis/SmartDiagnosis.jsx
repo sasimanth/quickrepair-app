@@ -104,21 +104,22 @@ const SmartDiagnosis = () => {
               animate="in"
               exit="out"
               variants={pageVariants}
-              className="grid grid-cols-1 sm:grid-cols-3 gap-4"
             >
-              {Object.values(diagnosisDataBase).map((srv) => (
-                <button
-                  key={srv.id}
-                  onClick={() => handleServiceSelect(srv.id)}
-                  className="flex flex-col items-center justify-center p-6 bg-white/5 rounded-2xl hover:bg-white/10 hover:shadow-lg transition-all border border-white/5 group relative overflow-hidden"
-                >
-                  <div className="absolute inset-0 bg-gradient-to-t from-blue-500/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
-                  <div className="bg-[#0B0F19] p-4 rounded-full shadow-inner text-blue-400 group-hover:scale-110 transition-transform mb-4 border border-white/5 relative z-10">
-                    {iconMap[srv.icon] || <HelpCircle className="w-8 h-8" />}
-                  </div>
-                  <span className="font-semibold text-white relative z-10">{srv.title}</span>
-                </button>
-              ))}
+              <div className="flex overflow-x-auto sm:grid sm:grid-cols-3 gap-4 pb-4 snap-x snap-mandatory hide-scrollbar">
+                {Object.values(diagnosisDataBase).map((srv) => (
+                  <button
+                    key={srv.id}
+                    onClick={() => handleServiceSelect(srv.id)}
+                    className="flex-shrink-0 w-[240px] sm:w-auto snap-center flex flex-col items-center justify-center p-6 bg-white/5 rounded-2xl hover:bg-white/10 hover:shadow-lg transition-all border border-white/5 group relative overflow-hidden"
+                  >
+                    <div className="absolute inset-0 bg-gradient-to-t from-blue-500/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
+                    <div className="bg-[#0B0F19] p-4 rounded-full shadow-inner text-blue-400 group-hover:scale-110 transition-transform mb-4 border border-white/5 relative z-10">
+                      {iconMap[srv.icon] || <HelpCircle className="w-8 h-8" />}
+                    </div>
+                    <span className="font-semibold text-white relative z-10">{srv.title}</span>
+                  </button>
+                ))}
+              </div>
             </motion.div>
           )}
 

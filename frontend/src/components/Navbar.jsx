@@ -33,9 +33,9 @@ const Navbar = () => {
     return null;
   }
 
-  // Changed from "fixed" to "absolute" so it scrolls out of view and doesn't confuse the user by overlapping text
+  // Changed to sticky top-4 as requested by user to fix alignment and scrolling
   return (
-    <div className="absolute top-4 sm:top-8 inset-x-0 z-50 flex justify-center px-4 pointer-events-none">
+    <div className="sticky top-4 inset-x-0 z-50 flex justify-center px-4 pointer-events-none mb-4">
       <nav className="relative pointer-events-auto bg-white/70 backdrop-blur-2xl border border-white/60 shadow-[0_8px_30px_rgb(0,0,0,0.08)] rounded-[2rem] w-full max-w-5xl transition-all duration-500">
         <div className="px-4 sm:px-6">
           <div className="flex justify-between items-center h-16 sm:h-20">

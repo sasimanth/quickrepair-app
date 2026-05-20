@@ -191,28 +191,28 @@ const TechnicianDashboard = () => {
   };
 
   return (
-    <div className="min-h-screen bg-slate-50/50 py-12 px-4 sm:px-6 lg:px-8 mt-10">
-      <div className="max-w-6xl mx-auto space-y-10">
+    <div className="min-h-screen bg-slate-50/50 py-6 sm:py-12 px-4 sm:px-6 lg:px-8 mt-4 sm:mt-10">
+      <div className="max-w-6xl mx-auto space-y-6 sm:space-y-10">
         
         {/* Header Section */}
-        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-6 bg-white p-8 rounded-[2rem] shadow-[0_2px_20px_rgb(0,0,0,0.04)] border border-slate-100/80">
-          <div className="flex items-center gap-5">
-            <div className="p-4 bg-slate-900 rounded-[1.25rem] shadow-xl shadow-slate-900/20 text-white">
-              <Briefcase size={28} />
+        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 sm:gap-6 bg-white p-5 sm:p-8 rounded-3xl sm:rounded-[2rem] shadow-[0_2px_20px_rgb(0,0,0,0.04)] border border-slate-100/80">
+          <div className="flex items-center gap-4 sm:gap-5">
+            <div className="p-3 sm:p-4 bg-slate-900 rounded-2xl sm:rounded-[1.25rem] shadow-xl shadow-slate-900/20 text-white">
+              <Briefcase size={24} className="sm:w-7 sm:h-7" />
             </div>
             <div>
-              <div className="flex items-center gap-3">
-                 <h1 className="text-3xl font-extrabold text-slate-900 tracking-tight">Tech Dashboard</h1>
+              <div className="flex flex-wrap items-center gap-2 sm:gap-3">
+                 <h1 className="text-xl sm:text-3xl font-extrabold text-slate-900 tracking-tight">Tech Dashboard</h1>
                  {profile?.isVerified && (
-                   <div className="flex items-center gap-1 bg-emerald-100 text-emerald-700 px-2 py-0.5 rounded-md text-xs font-bold uppercase tooltip" title="Identity Verified">
-                     <ShieldCheck size={14} /> Verified
+                   <div className="flex items-center gap-1 bg-emerald-100 text-emerald-700 px-2 py-0.5 rounded-md text-[10px] sm:text-xs font-bold uppercase tooltip" title="Identity Verified">
+                     <ShieldCheck size={12} className="sm:w-3.5 sm:h-3.5" /> Verified
                    </div>
                  )}
               </div>
-              <p className="text-slate-500 font-medium mt-1">Manage assigned jobs and discover new repairs</p>
+              <p className="text-xs sm:text-base text-slate-500 font-medium mt-0.5 sm:mt-1">Manage assigned jobs and discover new repairs</p>
             </div>
           </div>
-          <div className="flex items-center gap-4">
+          <div className="flex flex-wrap items-center gap-3 sm:gap-4 w-full sm:w-auto mt-2 sm:mt-0">
             {profile?.isProfileComplete && (
               <button
                 onClick={toggleOnlineStatus}
