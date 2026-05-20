@@ -106,6 +106,14 @@ const bookingSchema = new mongoose.Schema({
     type: Boolean,
     default: false
   },
+  serviceCharge: {
+    type: Number,
+    default: 0
+  },
+  sparePartsCost: {
+    type: Number,
+    default: 0
+  },
   finalQuote: {
     type: Number,
     default: null

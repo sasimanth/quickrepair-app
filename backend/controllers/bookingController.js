@@ -167,25 +167,42 @@ const createBooking = async (req, res) => {
   }
 };
 
+const enrichBookingsWithChat = async (bookings, userId) => {
+  const Message = require('../models/Message');
+  return Promise.all(bookings.map(async (b) => {
+    const unreadCount = await Message.countDocuments({ bookingId: b._id, senderId: { $ne: userId }, isRead: false });
+    const lastMsg = await Message.findOne({ bookingId: b._id }).sort({ createdAt: -1 });
+    return {
+      ...b.toObject(),
+      unreadCount,
+      lastMessage: lastMsg ? {
+        text: lastMsg.text,
+        createdAt: lastMsg.createdAt,
+        senderId: lastMsg.senderId,
+        isRead: lastMsg.isRead
+      } : null
+    };
+  }));
+};
+
 // @desc    Get bookings based on user role
 // @route   GET /api/bookings
 const getBookings = async (req, res) => {
   try {
+    let bookings;
     if (req.user.role === 'admin') {
-      const bookings = await Booking.find({})
+      bookings = await Booking.find({})
         .populate('serviceId', 'name price');
-      return res.json(bookings);
     } else if (req.user.role === 'technician') {
       // A technician sees only jobs assigned explicitly to them
       // (For demonstration/MVP testing purposes, we also fetch jobs assigned to dummy 'tech-' ids)
-      const jobs = await Booking.find({
+      bookings = await Booking.find({
         $or: [
           { providerId: req.user.id },
           { providerId: { $regex: '^tech-' } }
         ]
       })
         .populate('serviceId', 'name price');
-      return res.json(jobs);
     } else {
       // Regular User
       const User = require('../models/User');
@@ -204,11 +221,13 @@ const getBookings = async (req, res) => {
         query.$or.push({ phone: new RegExp(userPhoneNorm, 'i') });
       }
 
-      const bookings = await Booking.find(query)
+      bookings = await Booking.find(query)
         .populate('serviceId', 'name price')
         .sort('-createdAt');
-      return res.json(bookings);
     }
+    
+    const enriched = await enrichBookingsWithChat(bookings, req.user.id);
+    return res.json(enriched);
   } catch (error) {
     res.status(500).json({ message: error.message });
   }
@@ -378,7 +397,7 @@ const createPaymentIntent = async (req, res) => {
 // @desc    Submit a quote (Technician)
 // @route   PUT /api/bookings/:id/quote
 const submitQuote = async (req, res) => {
-  const { finalQuote, quoteReason, quotePhoto, detectedIssues } = req.body;
+  const { serviceCharge, sparePartsCost, transportCharge, quoteReason, quotePhoto, detectedIssues } = req.body;
   try {
     const booking = await Booking.findById(req.params.id);
     if (!booking) return res.status(404).json({ message: 'Booking not found' });
@@ -388,7 +407,15 @@ const submitQuote = async (req, res) => {
        return res.status(403).json({ message: 'Not authorized for this booking assignment' });
     }
 
-    booking.finalQuote = finalQuote;
+    const sCharge = Number(serviceCharge || 0);
+    const pCost = Number(sparePartsCost || 0);
+    const tCharge = transportCharge !== undefined ? Number(transportCharge) : (booking.transportCharge || 50);
+    const total = sCharge + pCost + tCharge;
+
+    booking.serviceCharge = sCharge;
+    booking.sparePartsCost = pCost;
+    booking.transportCharge = tCharge;
+    booking.finalQuote = total;
     booking.quoteReason = quoteReason;
     booking.detectedIssues = detectedIssues;
     booking.quotePhoto = quotePhoto;
@@ -402,7 +429,7 @@ const submitQuote = async (req, res) => {
       email: booking.userEmail,
       type: 'both',
       subject: 'Action Required: Approve Final Quote',
-      text: `Your technician has diagnosed the issue and provided a final quote of $${finalQuote}. Please review and approve in the app.`
+      text: `Your technician has diagnosed the issue and provided a final quote of $${total}. Please review and approve in the app.`
     });
 
     res.json(updatedBooking);

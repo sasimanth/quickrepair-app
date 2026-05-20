@@ -16,6 +16,7 @@ const ChatModal = ({ bookingId, onClose, currentRole }) => {
     try {
       const { data } = await api.get(`/messages/${bookingId}`);
       setMessages(data);
+      socket.emit('read_messages', { bookingId, userId: user.id });
     } catch (error) {
       console.error('Failed to load messages', error);
     } finally {
@@ -35,10 +36,20 @@ const ChatModal = ({ bookingId, onClose, currentRole }) => {
         if (prev.find(m => m._id === newMsg._id)) return prev;
         return [...prev, newMsg];
       });
+      if (newMsg.senderId !== user.id) {
+        socket.emit('read_messages', { bookingId, userId: user.id });
+      }
+    });
+
+    socket.on('messages_read', ({ readerId }) => {
+      if (readerId !== user.id) {
+        setMessages(prev => prev.map(m => m.senderId === user.id ? { ...m, isRead: true } : m));
+      }
     });
 
     return () => {
       socket.off('receive_message');
+      socket.off('messages_read');
     };
   }, [bookingId]);
 
@@ -128,7 +139,7 @@ const ChatModal = ({ bookingId, onClose, currentRole }) => {
                       {new Date(msg.createdAt).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}
                     </span>
                     {isMine && (
-                      <CheckCheck size={14} className={msg.isOptimistic ? "text-slate-400" : "text-indigo-500"} />
+                      <CheckCheck size={14} className={msg.isRead ? "text-indigo-500 font-bold" : "text-slate-400"} />
                     )}
                   </div>
                 </div>

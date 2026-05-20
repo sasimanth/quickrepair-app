@@ -19,7 +19,20 @@ const TechnicianDashboard = () => {
   const [showKyc, setShowKyc] = useState(false);
   const [chatBookingId, setChatBookingId] = useState(null);
   const [quoteModalJob, setQuoteModalJob] = useState(null);
-  const [quoteForm, setQuoteForm] = useState({ serviceCost: '', quoteReason: '', quotePhoto: '', detectedIssues: '' });
+  const [quoteForm, setQuoteForm] = useState({ serviceCharge: '', sparePartsCost: '', transportCharge: '50', quoteReason: '', quotePhoto: '', detectedIssues: '' });
+  
+  const handleOpenQuoteModal = (job) => {
+    setQuoteModalJob(job);
+    setQuoteForm({
+      serviceCharge: '',
+      sparePartsCost: '',
+      transportCharge: String(job.transportCharge || 50),
+      quoteReason: '',
+      quotePhoto: '',
+      detectedIssues: ''
+    });
+  };
+
   const [isWithdrawing, setIsWithdrawing] = useState(false);
   const [withdrawAmount, setWithdrawAmount] = useState('');
   
@@ -50,6 +63,42 @@ const TechnicianDashboard = () => {
       if (watchId) navigator.geolocation.clearWatch(watchId);
     };
   }, [profile?.isOnline, profile?.userId]);
+
+  // WebSocket Chat Event Handlers
+  useEffect(() => {
+    if (jobs.length > 0) {
+      jobs.forEach(b => {
+        socket.emit('join_chat', b._id);
+      });
+    }
+  }, [jobs.length]);
+
+  useEffect(() => {
+    const handleReceiveMessage = (newMsg) => {
+      setJobs(prev => prev.map(b => {
+        if (b._id === newMsg.bookingId) {
+          const isCurrentChatOpen = chatBookingId === newMsg.bookingId;
+          return {
+            ...b,
+            unreadCount: isCurrentChatOpen ? b.unreadCount : (b.unreadCount || 0) + 1,
+            lastMessage: {
+              text: newMsg.text,
+              createdAt: newMsg.createdAt,
+              senderId: newMsg.senderId,
+              isRead: isCurrentChatOpen
+            }
+          };
+        }
+        return b;
+      }));
+    };
+
+    socket.on('receive_message', handleReceiveMessage);
+
+    return () => {
+      socket.off('receive_message', handleReceiveMessage);
+    };
+  }, [chatBookingId]);
 
   const fetchJobs = async () => {
     try {
@@ -90,23 +139,31 @@ const TechnicianDashboard = () => {
   const handleSubmitQuote = async (e) => {
     e.preventDefault();
     const jobId = quoteModalJob._id;
-    const finalPrice = Number(quoteForm.serviceCost) + Number(quoteModalJob.transportCharge || 0);
+    const sCharge = Number(quoteForm.serviceCharge || 0);
+    const pCost = Number(quoteForm.sparePartsCost || 0);
+    const tCharge = Number(quoteForm.transportCharge || 50);
+    const finalPrice = sCharge + pCost + tCharge;
     
     // Optimistic update
     setJobs(prevJobs => prevJobs.map(job => job._id === jobId ? { 
       ...job, 
       status: 'quote_pending', 
+      serviceCharge: sCharge,
+      sparePartsCost: pCost,
+      transportCharge: tCharge,
       finalQuote: finalPrice, 
       quoteReason: quoteForm.quoteReason 
     } : job));
     
     setQuoteModalJob(null);
-    setQuoteForm({ serviceCost: '', quoteReason: '', quotePhoto: '', detectedIssues: '' });
+    setQuoteForm({ serviceCharge: '', sparePartsCost: '', transportCharge: '50', quoteReason: '', quotePhoto: '', detectedIssues: '' });
     setUpdatingJobs(prev => ({ ...prev, [jobId]: true }));
     
     try {
       await api.put(`/bookings/${jobId}/quote`, {
-         finalQuote: finalPrice,
+         serviceCharge: sCharge,
+         sparePartsCost: pCost,
+         transportCharge: tCharge,
          quoteReason: quoteForm.quoteReason,
          quotePhoto: quoteForm.quotePhoto,
          detectedIssues: quoteForm.detectedIssues
@@ -117,6 +174,11 @@ const TechnicianDashboard = () => {
     } finally {
       setUpdatingJobs(prev => ({ ...prev, [jobId]: false }));
     }
+  };
+
+  const handleCloseChat = () => {
+    setChatBookingId(null);
+    setJobs(prev => prev.map(b => b._id === chatBookingId ? { ...b, unreadCount: 0 } : b));
   };
 
   const handleSetupProfile = async () => {
@@ -426,40 +488,7 @@ const TechnicianDashboard = () => {
                           </div>
                         )}
                         
-                        {(() => {
-                          const defaultTools = {
-                            ac_repair: ['Multimeter', 'Gas Kit', 'Drill'],
-                            washing_machine: ['Screwdriver Set', 'Multimeter', 'Spanner'],
-                            refrigerator: ['Multimeter', 'Gas Kit', 'Thermometer'],
-                            laptop_repair: ['Precision Screwdriver', 'Anti-static Wristband', 'Tweezers'],
-                            mobile_repair: ['Precision Screwdriver', 'Spudger', 'Heat Gun'],
-                            cctv_install: ['Drill', 'Wire Stripper', 'Hammer'],
-                            ro_install: ['Drill', 'Teflon Tape', 'Spanner'],
-                            fan_install: ['Screwdriver', 'Wire Stripper', 'Tester'],
-                            plumbing_work: ['Pipe Wrench', 'Teflon Tape', 'Hacksaw'],
-                            electric_wiring: ['Wire Stripper', 'Pliers', 'Tester', 'Insulation Tape']
-                          };
-                          const tools = (job.suggestedTools && job.suggestedTools.length > 0) 
-                            ? job.suggestedTools 
-                            : (defaultTools[job.serviceId?.id] || ['Standard Tool Kit']);
-                          
-                          if (!tools || tools.length === 0) return null;
-                          return (
-                            <div className="flex items-start gap-4 p-5 bg-indigo-50/50 border border-indigo-100 rounded-xl">
-                              <Hammer className="text-indigo-500 mt-1 shrink-0" size={24} />
-                              <div>
-                                <p className="text-xs font-bold uppercase tracking-wider text-indigo-400 mb-2">Suggested Tools for Visit</p>
-                                <div className="flex flex-wrap gap-2">
-                                  {tools.map((tool, i) => (
-                                    <span key={i} className="bg-white border border-indigo-200 text-indigo-700 text-xs font-bold px-2.5 py-1 rounded-md shadow-sm">
-                                      {tool}
-                                    </span>
-                                  ))}
-                                </div>
-                              </div>
-                            </div>
-                          );
-                        })()}
+
 
                         {(job.imageUrl || job.mediaUrl) && (
                           <div className="flex items-start gap-4 p-5 bg-slate-50 border border-slate-100 rounded-xl relative overflow-hidden group/image">
@@ -505,6 +534,15 @@ const TechnicianDashboard = () => {
                             Customer: {job.userEmail ? job.userEmail.split('@')[0] : 'Guest User'}
                           </span>
                         </div>
+                        {job.lastMessage && (
+                          <div className="mt-4 p-3 bg-slate-50 rounded-xl border border-slate-100 flex items-start gap-2 max-w-md">
+                            <MessageSquare size={14} className="text-indigo-500 shrink-0 mt-0.5" />
+                            <div className="text-xs text-slate-600 truncate">
+                              <span className="font-bold">{job.lastMessage.senderId === profile?.userId ? 'You: ' : ''}</span>
+                              {job.lastMessage.text}
+                            </div>
+                          </div>
+                        )}
                       </div>
 
                       <div className="flex flex-col gap-4 min-w-[200px] justify-center border-t md:border-t-0 md:border-l border-slate-100 pt-8 md:pt-0 md:pl-8">
@@ -553,7 +591,7 @@ const TechnicianDashboard = () => {
                         )}
                         {job.status === 'arrived' && (
                             <button
-                              onClick={() => setQuoteModalJob(job)}
+                              onClick={() => handleOpenQuoteModal(job)}
                               className="w-full bg-indigo-500 hover:bg-indigo-600 text-white font-bold py-4 px-4 rounded-2xl shadow-xl hover:shadow-indigo-500/30 transition-all duration-300 transform hover:-translate-y-1 flex items-center justify-center gap-2"
                             >
                               <Wrench size={18} /> Inspection Done - Send Quote
@@ -579,9 +617,9 @@ const TechnicianDashboard = () => {
                         )}
                         {['accepted', 'quote_approved', 'on_the_way', 'arrived', 'in_progress'].includes(job.status) && (
                             <div className="flex gap-2">
-                              {job.userId?.phone && (
+                              {job.phone && (
                                 <a 
-                                  href={`tel:${job.userId.phone}`} 
+                                  href={`tel:${job.phone}`} 
                                   className="flex-1 bg-gradient-to-r from-emerald-500 to-emerald-600 hover:from-emerald-400 hover:to-emerald-500 text-white font-bold py-3 p-4 rounded-2xl transition-all shadow-sm flex items-center justify-center gap-2 transform hover:-translate-y-0.5"
                                 >
                                   <PhoneCall size={18} /> Call
@@ -589,9 +627,14 @@ const TechnicianDashboard = () => {
                               )}
                               <button
                                 onClick={() => setChatBookingId(job._id)}
-                                className="flex-1 bg-white hover:bg-indigo-50 border-2 border-slate-100 hover:border-indigo-200 text-indigo-600 font-bold py-3 p-4 rounded-2xl transition-all shadow-sm flex items-center justify-center gap-2 transform hover:-translate-y-0.5"
+                                className="relative flex-1 bg-white hover:bg-indigo-50 border-2 border-slate-100 hover:border-indigo-200 text-indigo-600 font-bold py-3 p-4 rounded-2xl transition-all shadow-sm flex items-center justify-center gap-2 transform hover:-translate-y-0.5"
                               >
                                 <MessageSquare size={18} /> Chat
+                                {job.unreadCount > 0 && (
+                                  <span className="absolute -top-2 -right-2 bg-rose-500 text-white rounded-full text-xs font-black w-6 h-6 flex items-center justify-center border-2 border-white animate-pulse shadow-md">
+                                    {job.unreadCount}
+                                  </span>
+                                )}
                               </button>
                             </div>
                         )}
@@ -634,7 +677,7 @@ const TechnicianDashboard = () => {
         <ChatModal 
           bookingId={chatBookingId} 
           currentRole="technician" 
-          onClose={() => setChatBookingId(null)} 
+          onClose={handleCloseChat} 
         />
       )}
 
@@ -679,17 +722,25 @@ const TechnicianDashboard = () => {
               <button onClick={() => setQuoteModalJob(null)} className="text-slate-400 hover:text-slate-600"><XCircle /></button>
             </div>
             <form onSubmit={handleSubmitQuote} className="p-6 space-y-4">
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-1">Service Charge (₹)</label>
+                  <input required type="number" value={quoteForm.serviceCharge} onChange={(e) => setQuoteForm({...quoteForm, serviceCharge: e.target.value})} className="w-full px-4 py-3 rounded-xl border border-slate-200 focus:ring-2 focus:ring-blue-500 outline-none font-bold text-slate-800" placeholder="e.g. 150" />
+                </div>
+                <div>
+                  <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-1">Spare Parts (₹)</label>
+                  <input required type="number" value={quoteForm.sparePartsCost} onChange={(e) => setQuoteForm({...quoteForm, sparePartsCost: e.target.value})} className="w-full px-4 py-3 rounded-xl border border-slate-200 focus:ring-2 focus:ring-blue-500 outline-none font-bold text-slate-800" placeholder="e.g. 0" />
+                </div>
+              </div>
               <div>
-                <label className="block text-sm font-bold text-slate-700 mb-1">Service Cost ($)</label>
-                <input required type="number" value={quoteForm.serviceCost} onChange={(e) => setQuoteForm({...quoteForm, serviceCost: e.target.value})} className="w-full px-4 py-3 rounded-xl border border-slate-200 focus:ring-2 focus:ring-blue-500 outline-none" placeholder="e.g. 150" />
+                <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-1">Transport Charge (₹)</label>
+                <input required type="number" value={quoteForm.transportCharge} onChange={(e) => setQuoteForm({...quoteForm, transportCharge: e.target.value})} className="w-full px-4 py-3 rounded-xl border border-slate-200 focus:ring-2 focus:ring-blue-500 outline-none font-bold text-slate-800" placeholder="e.g. 50" />
               </div>
-              <div className="flex justify-between items-center bg-slate-50 p-3 rounded-lg border border-slate-200">
-                 <span className="text-sm font-bold text-slate-600">Transport Charge:</span>
-                 <span className="text-sm font-bold text-slate-800">${quoteModalJob.transportCharge || 0}</span>
-              </div>
-              <div className="flex justify-between items-center bg-indigo-50 p-3 rounded-lg border border-indigo-200">
-                 <span className="text-sm font-bold text-indigo-700">Total Quote to Customer:</span>
-                 <span className="text-lg font-black text-indigo-700">${Number(quoteForm.serviceCost || 0) + Number(quoteModalJob.transportCharge || 0)}</span>
+              <div className="flex justify-between items-center bg-indigo-50 p-4 rounded-xl border border-indigo-100">
+                 <span className="text-sm font-bold text-indigo-700">Total Customer Price:</span>
+                 <span className="text-xl font-black text-indigo-800">
+                   ₹{Number(quoteForm.serviceCharge || 0) + Number(quoteForm.sparePartsCost || 0) + Number(quoteForm.transportCharge || 0)}
+                 </span>
               </div>
               <div>
                 <label className="block text-sm font-bold text-slate-700 mb-1">Detected Issues (From Inspection)</label>

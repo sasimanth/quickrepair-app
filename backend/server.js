@@ -97,6 +97,11 @@ io.on('connection', (socket) => {
     io.to(`chat_${data.bookingId}`).emit('receive_message', data.messageObj);
   });
 
+  socket.on('read_messages', (data) => {
+    // data: { bookingId, readerId }
+    io.to(`chat_${data.bookingId}`).emit('read_messages', data);
+  });
+
   socket.on('disconnect', () => {
     console.log('❌ Socket disconnected:', socket.id);
   });

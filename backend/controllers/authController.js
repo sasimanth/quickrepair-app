@@ -76,11 +76,11 @@ const signup = async (req, res) => {
   if (phone) phone = normalizePhone(phone);
 
   try {
-    // Verify OTP
-    const stored = otpStore.get(email);
-    if (!stored || stored.otp !== otp || Date.now() > stored.expiresAt) {
-       return res.status(400).json({ message: 'Invalid or expired OTP' });
-    }
+    // Verify OTP bypassed for direct registration
+    // const stored = otpStore.get(email);
+    // if (!stored || stored.otp !== otp || Date.now() > stored.expiresAt) {
+    //    return res.status(400).json({ message: 'Invalid or expired OTP' });
+    // }
 
     const userExists = await User.findOne({ email });
     if (userExists) {

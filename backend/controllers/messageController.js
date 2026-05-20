@@ -18,6 +18,12 @@ const getMessages = async (req, res) => {
       return res.status(403).json({ message: 'Not authorized to view these messages' });
     }
 
+    // Mark messages sent by the other party as read
+    await Message.updateMany(
+      { bookingId, senderId: { $ne: req.user.id }, isRead: false },
+      { isRead: true }
+    );
+
     const messages = await Message.find({ bookingId }).sort({ createdAt: 1 });
     res.json(messages);
   } catch (error) {

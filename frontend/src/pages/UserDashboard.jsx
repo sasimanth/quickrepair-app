@@ -33,6 +33,10 @@ const UserDashboard = () => {
   const [promoCode, setPromoCode] = useState('');
   const [discountAmount, setDiscountAmount] = useState(0);
   const [chatBookingId, setChatBookingId] = useState(null);
+  const handleCloseChat = () => {
+    setChatBookingId(null);
+    setBookings(prev => prev.map(b => b._id === chatBookingId ? { ...b, unreadCount: 0 } : b));
+  };
   const [reviewBooking, setReviewBooking] = useState(null);
   const [paymentBooking, setPaymentBooking] = useState(null);
   const [uploadingImage, setUploadingImage] = useState(false);
@@ -64,6 +68,42 @@ const UserDashboard = () => {
       socket.off('location_update');
     };
   }, []);
+
+  // WebSocket Chat Event Handlers
+  useEffect(() => {
+    if (bookings.length > 0) {
+      bookings.forEach(b => {
+        socket.emit('join_chat', b._id);
+      });
+    }
+  }, [bookings.length]);
+
+  useEffect(() => {
+    const handleReceiveMessage = (newMsg) => {
+      setBookings(prev => prev.map(b => {
+        if (b._id === newMsg.bookingId) {
+          const isCurrentChatOpen = chatBookingId === newMsg.bookingId;
+          return {
+            ...b,
+            unreadCount: isCurrentChatOpen ? b.unreadCount : (b.unreadCount || 0) + 1,
+            lastMessage: {
+              text: newMsg.text,
+              createdAt: newMsg.createdAt,
+              senderId: newMsg.senderId,
+              isRead: isCurrentChatOpen
+            }
+          };
+        }
+        return b;
+      }));
+    };
+
+    socket.on('receive_message', handleReceiveMessage);
+
+    return () => {
+      socket.off('receive_message', handleReceiveMessage);
+    };
+  }, [chatBookingId]);
 
   const fetchData = async (showLoading = true) => {
     try {
@@ -727,6 +767,15 @@ const UserDashboard = () => {
                       <p className="text-slate-500 text-sm font-medium flex items-center gap-1.5">
                         <Calendar size={14} /> {booking.date ? new Date(booking.date).toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' }) : 'Pending'}
                       </p>
+                      {booking.lastMessage && (
+                        <div className="mt-3 p-2 bg-slate-50 rounded-xl border border-slate-100/80 flex items-start gap-2 max-w-xs sm:max-w-md">
+                          <MessageSquare size={12} className="text-indigo-500 shrink-0 mt-0.5" />
+                          <div className="text-[11px] text-slate-500 truncate">
+                            <span className="font-semibold">{booking.lastMessage.senderId === profile?.userId ? 'You: ' : 'Tech: '}</span>
+                            {booking.lastMessage.text}
+                          </div>
+                        </div>
+                      )}
                     </div>
                     <div className="flex flex-col items-end gap-2">
                       {getStatusBadge(booking.status)}
@@ -797,35 +846,58 @@ const UserDashboard = () => {
 
                       {/* Quote Approval UI */}
                       {booking.status === 'quote_pending' && (
-                        <div className="mt-4 p-5 bg-[#0B0F19] rounded-xl border border-blue-500 shadow-xl shadow-blue-900/20 animate-in fade-in zoom-in">
-                          <div className="flex justify-between items-center mb-3 border-b border-white/10 pb-3">
-                            <h4 className="text-white font-bold flex items-center gap-2"><CreditCard size={18} className="text-emerald-400"/> Approval Required</h4>
-                            <span className="text-emerald-400 font-extrabold text-2xl">₹{booking.finalQuote || 120}</span>
+                        <div className="mt-4 p-6 bg-slate-900 text-white rounded-2xl border border-indigo-500/50 shadow-xl animate-in fade-in zoom-in-95">
+                          <div className="flex justify-between items-center mb-4 border-b border-white/10 pb-3">
+                            <h4 className="text-white font-extrabold text-lg flex items-center gap-2">
+                              <CreditCard size={20} className="text-emerald-400"/> Quote Proposal
+                            </h4>
+                            <span className="text-rose-400 text-xs font-bold uppercase tracking-wider bg-rose-500/10 px-2.5 py-1 rounded-full border border-rose-500/20 animate-pulse">
+                              Approval Needed
+                            </span>
                           </div>
-                          <p className="text-slate-400 text-sm mb-4">Technician has diagnosed the issue and provided a final guaranteed quote to fix it. Review details and approve to start work immediately.</p>
                           
-                          <div className="bg-white/5 p-3 rounded-lg mb-4 border border-white/10">
+                          {/* Cost Breakdown */}
+                          <div className="bg-white/5 p-4 rounded-xl border border-white/10 mb-4 space-y-2.5">
+                            <div className="flex justify-between text-sm text-slate-300">
+                              <span>Service / Inspection Charge:</span>
+                              <span className="font-semibold text-white">₹{booking.serviceCharge || 0}</span>
+                            </div>
+                            <div className="flex justify-between text-sm text-slate-300">
+                              <span>Spare Parts / Material:</span>
+                              <span className="font-semibold text-white">₹{booking.sparePartsCost || 0}</span>
+                            </div>
+                            <div className="flex justify-between text-sm text-slate-300 pb-2 border-b border-white/10">
+                              <span>Transport & Travel Charge:</span>
+                              <span className="font-semibold text-white">₹{booking.transportCharge || 50}</span>
+                            </div>
+                            <div className="flex justify-between items-center pt-2">
+                              <span className="text-base font-bold text-slate-200">Total Guaranteed Quote:</span>
+                              <span className="text-2xl font-black text-emerald-400">₹{booking.finalQuote}</span>
+                            </div>
+                          </div>
+                          
+                          <div className="bg-white/5 p-4 rounded-xl mb-4 border border-white/10 text-sm">
                             {booking.detectedIssues && (
                               <div className="mb-2">
-                                <p className="text-amber-400 text-sm font-medium">Detected Issues:</p>
-                                <p className="text-amber-100/70 text-sm italic mt-1">"{booking.detectedIssues}"</p>
+                                <p className="text-amber-400 font-bold">Detected Issues:</p>
+                                <p className="text-amber-100/80 italic mt-0.5">"{booking.detectedIssues}"</p>
                               </div>
                             )}
-                            <p className="text-slate-300 text-sm font-medium mt-2">Technician Note:</p>
-                            <p className="text-slate-400 text-sm italic mt-1">"{booking.quoteReason || 'Replaced parts and labor for fixing the root cause.'}"</p>
+                            <p className="text-indigo-300 font-bold">Technician's Explanation:</p>
+                            <p className="text-slate-300 italic mt-0.5">"{booking.quoteReason || 'Replaced parts and labor for fixing the root cause.'}"</p>
                             {booking.quotePhoto && (
-                              <div className="mt-3">
-                                <img src={booking.quotePhoto} className="w-full h-24 object-cover rounded shadow-sm border border-white/10" alt="Proof" />
+                              <div className="mt-3 rounded-lg overflow-hidden border border-white/10 shadow-md">
+                                <img src={booking.quotePhoto} className="w-full h-32 object-cover" alt="Proof" />
                               </div>
                             )}
                           </div>
 
                           <div className="flex gap-3">
-                            <button disabled={updatingJobs[booking._id]} onClick={() => handleQuoteApproval(booking._id, false)} className="flex-1 bg-white/5 hover:bg-white/10 border border-white/10 text-white font-bold py-2.5 rounded-lg transition-colors flex justify-center items-center gap-2">
-                              {updatingJobs[booking._id] ? <Loader2 size={16} className="animate-spin"/> : 'Reject Quote'}
+                            <button disabled={updatingJobs[booking._id]} onClick={() => handleQuoteApproval(booking._id, false)} className="flex-1 bg-white/5 hover:bg-rose-500/10 border border-white/10 hover:border-rose-500/30 text-slate-300 hover:text-rose-400 font-bold py-3 rounded-xl transition-all flex justify-center items-center gap-2">
+                              {updatingJobs[booking._id] ? <Loader2 size={16} className="animate-spin"/> : 'Decline'}
                             </button>
-                            <button disabled={updatingJobs[booking._id]} onClick={() => handleQuoteApproval(booking._id, true)} className="flex-1 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white font-bold py-2.5 rounded-lg shadow-lg shadow-blue-500/30 flex justify-center items-center gap-2">
-                              {updatingJobs[booking._id] ? <Loader2 size={16} className="animate-spin"/> : 'Approve Work'}
+                            <button disabled={updatingJobs[booking._id]} onClick={() => handleQuoteApproval(booking._id, true)} className="flex-1 bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-400 hover:to-teal-400 text-white font-bold py-3 rounded-xl shadow-lg hover:shadow-emerald-500/20 transition-all flex justify-center items-center gap-2">
+                              {updatingJobs[booking._id] ? <Loader2 size={16} className="animate-spin"/> : 'Approve & Start Work'}
                             </button>
                           </div>
                         </div>
@@ -857,9 +929,14 @@ const UserDashboard = () => {
 
                       <button 
                          onClick={() => setChatBookingId(booking._id)}
-                         className="flex items-center gap-2 bg-white border border-slate-200 hover:border-indigo-300 hover:bg-indigo-50 text-indigo-600 px-4 py-2 rounded-xl text-sm font-bold shadow-sm transition-all shadow-indigo-100 transform hover:-translate-y-0.5"
+                         className="relative flex items-center gap-2 bg-white border border-slate-200 hover:border-indigo-300 hover:bg-indigo-50 text-indigo-600 px-4 py-2 rounded-xl text-sm font-bold shadow-sm transition-all shadow-indigo-100 transform hover:-translate-y-0.5"
                       >
                          <MessageSquare size={16} /> Open Chat
+                         {booking.unreadCount > 0 && (
+                           <span className="absolute -top-2 -right-2 bg-rose-500 text-white rounded-full text-xs font-black w-6 h-6 flex items-center justify-center border-2 border-white animate-pulse shadow-md">
+                             {booking.unreadCount}
+                           </span>
+                         )}
                       </button>
 
                       {booking.status === 'completed' && (
@@ -910,7 +987,7 @@ const UserDashboard = () => {
         <ChatModal 
           bookingId={chatBookingId} 
           currentRole="user" 
-          onClose={() => setChatBookingId(null)} 
+          onClose={handleCloseChat} 
         />
       )}
 
