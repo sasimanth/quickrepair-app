@@ -12,6 +12,15 @@ import { CreditCard, Sparkles, PhoneCall } from 'lucide-react';
 import { socket } from '../services/socket';
 import LoadingSkeleton from '../components/LoadingSkeleton';
 
+const formatPhoneLink = (phone) => {
+  if (!phone) return '';
+  let digits = phone.toString().replace(/\D/g, '');
+  if (digits.length === 10) digits = `91${digits}`;
+  if (digits.length === 11 && digits.startsWith('0')) digits = `91${digits.slice(1)}`;
+  if (digits.length === 12 && digits.startsWith('91')) return `+${digits}`;
+  if (digits.length >= 11) return `+${digits}`;
+  return `+${digits}`;
+};
 
 const UserDashboard = () => {
   const [bookings, setBookings] = useState([]);
@@ -916,12 +925,12 @@ const UserDashboard = () => {
                         Technician Assigned
                       </div>
 
-                      {['accepted', 'on_the_way', 'arrived'].includes(booking.status) && booking.providerId?.phone && (
+                      {['accepted', 'on_the_way', 'arrived'].includes(booking.status) && (booking.providerPhone || booking.providerId?.phone) && (
                         <>
-                          <a href={`tel:${booking.providerId.phone}`} className="flex items-center gap-2 bg-gradient-to-r from-emerald-500 to-emerald-600 hover:from-emerald-400 hover:to-emerald-500 text-white px-4 py-2 rounded-xl text-sm font-bold shadow-sm transition-all shadow-emerald-200 transform hover:-translate-y-0.5">
+                          <a href={`tel:${formatPhoneLink(booking.providerPhone || booking.providerId?.phone)}`} className="flex items-center gap-2 bg-gradient-to-r from-emerald-500 to-emerald-600 hover:from-emerald-400 hover:to-emerald-500 text-white px-4 py-2 rounded-xl text-sm font-bold shadow-sm transition-all shadow-emerald-200 transform hover:-translate-y-0.5">
                             <PhoneCall size={16} /> Call Technician
                           </a>
-                          <a href={`https://wa.me/${booking.providerId.phone.replace(/\D/g, '')}?text=Hi, this is regarding my Fixvo booking. My exact location is: `} target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 bg-[#25D366] hover:bg-[#1ebd5a] text-white px-4 py-2 rounded-xl text-sm font-bold shadow-sm transition-all shadow-emerald-200 transform hover:-translate-y-0.5">
+                          <a href={`https://wa.me/${(booking.providerPhone || booking.providerId?.phone || '').replace(/\D/g, '')}?text=Hi, this is regarding my Fixvo booking. My exact location is: `} target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 bg-[#25D366] hover:bg-[#1ebd5a] text-white px-4 py-2 rounded-xl text-sm font-bold shadow-sm transition-all shadow-emerald-200 transform hover:-translate-y-0.5">
                             <MapPin size={16} /> Share Location
                           </a>
                         </>

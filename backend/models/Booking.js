@@ -33,6 +33,10 @@ const bookingSchema = new mongoose.Schema({
     type: String,
     default: null,
   },
+  providerPhone: {
+    type: String,
+    default: null,
+  },
   status: {
     type: String,
     enum: ['pending', 'queued', 'assigned', 'accepted', 'on_the_way', 'arrived', 'quote_pending', 'quote_approved', 'in_progress', 'completed', 'rejected'],
@@ -163,10 +167,6 @@ const bookingSchema = new mongoose.Schema({
   isUnderWarranty: {
     type: Boolean,
     default: false
-  },
-  suggestedTools: {
-    type: [String],
-    default: []
   },
   paymentStatus: {
     type: String,

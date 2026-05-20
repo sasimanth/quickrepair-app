@@ -12,6 +12,17 @@ const ChatModal = ({ bookingId, onClose, currentRole }) => {
   const [sending, setSending] = useState(false);
   const messagesEndRef = useRef(null);
 
+  const formatMessageTimestamp = (dateString) => {
+    if (!dateString) return '';
+    const date = new Date(dateString);
+    return date.toLocaleString('en-IN', {
+      hour: '2-digit',
+      minute: '2-digit',
+      day: 'numeric',
+      month: 'short',
+    });
+  };
+
   const fetchMessages = async () => {
     try {
       const { data } = await api.get(`/messages/${bookingId}`);
@@ -134,12 +145,13 @@ const ChatModal = ({ bookingId, onClose, currentRole }) => {
                   <div className={`px-4 py-2.5 rounded-2xl max-w-[85%] ${isMine ? 'bg-indigo-600 text-white rounded-br-sm shadow-sm' : 'bg-white text-slate-800 border border-slate-200 rounded-bl-sm shadow-sm'}`}>
                     <p className="text-sm font-medium whitespace-pre-wrap break-words">{msg.text}</p>
                   </div>
-                  <div className="flex items-center gap-1 mt-1 mx-1.5 opacity-80">
-                    <span className="text-[10px] text-slate-500 font-medium">
-                      {new Date(msg.createdAt).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}
-                    </span>
+                  <div className="flex items-center gap-2 mt-1 mx-1.5 opacity-80 text-[10px] text-slate-500 font-medium">
+                    <span>{formatMessageTimestamp(msg.createdAt)}</span>
                     {isMine && (
-                      <CheckCheck size={14} className={msg.isRead ? "text-indigo-500 font-bold" : "text-slate-400"} />
+                      <span className="inline-flex items-center gap-1 text-[10px] font-bold">
+                        <CheckCheck size={12} className={msg.isRead ? "text-emerald-400" : "text-slate-400"} />
+                        {msg.isRead ? 'Seen' : 'Sent'}
+                      </span>
                     )}
                   </div>
                 </div>

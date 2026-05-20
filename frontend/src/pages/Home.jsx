@@ -72,7 +72,7 @@ const Home = () => {
                 <ChevronRight className="relative z-10 w-5 h-5 group-hover:translate-x-1 transition-transform" />
               </Link>
               <a
-                href="tel:9515980170"
+                href="tel:+919515980170"
                 className="px-6 sm:px-8 py-4 bg-white/5 backdrop-blur-md text-white font-bold rounded-2xl border border-white/10 shadow-sm hover:bg-white/10 transition-all duration-300 flex items-center justify-center gap-2 transform hover:-translate-y-1 w-full sm:w-auto"
               >
                 <span>📞 Call Now</span>
@@ -229,7 +229,7 @@ const Home = () => {
             </div>
             <h2 className="text-3xl sm:text-4xl md:text-5xl font-extrabold text-white mb-4">Urgent Repair Needed?</h2>
             <p className="text-base sm:text-lg text-slate-400 mb-8 max-w-2xl mx-auto">Skip the booking form and call us directly for an instant technician dispatch. We prioritize emergencies.</p>
-            <a href="tel:9515980170" className="inline-flex items-center gap-3 px-8 sm:px-10 py-4 sm:py-5 bg-gradient-to-r from-emerald-500 to-emerald-600 text-white font-extrabold text-lg sm:text-xl rounded-2xl shadow-xl shadow-emerald-500/30 hover:scale-105 transition-transform">
+            <a href="tel:+919515980170" className="inline-flex items-center gap-3 px-8 sm:px-10 py-4 sm:py-5 bg-gradient-to-r from-emerald-500 to-emerald-600 text-white font-extrabold text-lg sm:text-xl rounded-2xl shadow-xl shadow-emerald-500/30 hover:scale-105 transition-transform">
               <MessageCircle /> 
               <span className="hidden sm:inline">Call Now:</span> +91 95159 80170
             </a>

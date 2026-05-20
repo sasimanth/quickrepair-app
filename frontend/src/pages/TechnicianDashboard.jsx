@@ -8,6 +8,16 @@ import KycModal from '../components/KycModal';
 import { Star, ShieldAlert, ShieldCheck } from 'lucide-react';
 import { socket } from '../services/socket';
 
+const formatPhoneLink = (phone) => {
+  if (!phone) return '';
+  let digits = phone.toString().replace(/\D/g, '');
+  if (digits.length === 10) digits = `91${digits}`;
+  if (digits.length === 11 && digits.startsWith('0')) digits = `91${digits.slice(1)}`;
+  if (digits.length === 12 && digits.startsWith('91')) return `+${digits}`;
+  if (digits.length >= 11) return `+${digits}`;
+  return `+${digits}`;
+};
+
 const TechnicianDashboard = () => {
   const [jobs, setJobs] = useState([]);
   const [reviews, setReviews] = useState([]);
@@ -515,7 +525,7 @@ const TechnicianDashboard = () => {
                                <a href={job.mapsLink || `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(job.location)}`} target="_blank" rel="noopener noreferrer" className="bg-indigo-600 hover:bg-indigo-700 text-white px-3 py-2.5 rounded-lg text-sm font-bold shadow-sm border border-indigo-100 transition-all flex items-center justify-center gap-2 overflow-hidden text-ellipsis whitespace-nowrap">
                                  <Navigation size={16} className="shrink-0" /> <span className="truncate">Open Maps</span>
                                </a>
-                               <a href={`tel:${job.phone}`} className="bg-white hover:bg-slate-50 text-indigo-700 px-3 py-2.5 rounded-lg text-sm font-bold shadow-sm border border-indigo-200 transition-all flex items-center justify-center gap-2 overflow-hidden text-ellipsis whitespace-nowrap">
+                               <a href={`tel:${formatPhoneLink(job.phone)}`} className="bg-white hover:bg-slate-50 text-indigo-700 px-3 py-2.5 rounded-lg text-sm font-bold shadow-sm border border-indigo-200 transition-all flex items-center justify-center gap-2 overflow-hidden text-ellipsis whitespace-nowrap">
                                  <Smartphone size={16} className="shrink-0" /> <span className="truncate">Call Customer</span>
                                </a>
                                <button onClick={() => { navigator.clipboard.writeText(job.location); alert('Address copied to clipboard!'); }} className="bg-white hover:bg-slate-50 text-slate-700 px-3 py-2.5 rounded-lg text-sm font-bold shadow-sm border border-slate-200 transition-all flex items-center justify-center gap-2 overflow-hidden text-ellipsis whitespace-nowrap">
@@ -619,7 +629,7 @@ const TechnicianDashboard = () => {
                             <div className="flex gap-2">
                               {job.phone && (
                                 <a 
-                                  href={`tel:${job.phone}`} 
+                                  href={`tel:${formatPhoneLink(job.phone)}`} 
                                   className="flex-1 bg-gradient-to-r from-emerald-500 to-emerald-600 hover:from-emerald-400 hover:to-emerald-500 text-white font-bold py-3 p-4 rounded-2xl transition-all shadow-sm flex items-center justify-center gap-2 transform hover:-translate-y-0.5"
                                 >
                                   <PhoneCall size={18} /> Call

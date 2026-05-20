@@ -24,24 +24,11 @@ const createBooking = async (req, res) => {
        inspectionFee = 15; // $15 inspection fee
     }
 
-    let suggestedTools = ['Basic Screwdriver Set', 'Multimeter'];
-    if (unknownProblem || problem === 'Other Issue') {
-       suggestedTools.push('Diagnostic Kit', 'Universal Adapters');
-    }
-    const lowerProblem = (problemDescription || problem || '').toLowerCase();
-    const lowerDevice = (deviceType || service || '').toLowerCase();
-    if (lowerProblem.includes('screen') || lowerDevice.includes('phone') || lowerDevice.includes('tablet')) {
-       suggestedTools.push('Screen Pry Tools', 'Heat Gun', 'Suction Cups');
-    }
-    if (lowerProblem.includes('water') || lowerDevice.includes('liquid')) {
-       suggestedTools.push('Isopropyl Alcohol', 'Ultrasonic Cleaner');
-    }
-
     const Technician = require('../models/Technician');
     let finalProviderId = providerId || null;
     let bStatus = 'pending';
     let assignedTechEmail = 'technician@fixvo.com';
-    let assignedTechPhone = '+15551234567';
+    let assignedTechPhone = null;
 
     let reqTimeSlot = timeSlot || 'ASAP';
     if (reqTimeSlot !== 'ASAP') {
@@ -52,17 +39,20 @@ const createBooking = async (req, res) => {
       if (availableTech) {
         finalProviderId = availableTech.userId;
         assignedTechEmail = availableTech.email || assignedTechEmail;
+        assignedTechPhone = availableTech.phone || assignedTechPhone;
         bStatus = 'assigned'; 
       } else {
         const busyTech = await Technician.findOne({ currentStatus: { $in: ['busy', 'on_the_way'] }, isOnline: true }).sort('expectedAvailableTime');
         if (busyTech) {
            finalProviderId = busyTech.userId;
+           assignedTechPhone = busyTech.phone || assignedTechPhone;
            bStatus = 'queued';
         } else {
            // Guarantee assignment for MVP/Test
            const fallbackTech = await Technician.findOne({});
            if (fallbackTech) {
              finalProviderId = fallbackTech.userId;
+             assignedTechPhone = fallbackTech.phone || assignedTechPhone;
              bStatus = 'assigned';
              assignedTechEmail = fallbackTech.email;
            }
@@ -117,7 +107,7 @@ const createBooking = async (req, res) => {
       serviceLocation: serviceLocation || 'on-site',
       isRestrictedArea: isRestrictedArea || false,
       isUnderWarranty: isUnderWarranty || false,
-      suggestedTools,
+      providerPhone: assignedTechPhone,
       areaType: areaType || 'nearby',
       transportCharge: transportCharge || 50,
       transportOption: transportOption || 'doorstep',
@@ -263,6 +253,9 @@ const updateBookingStatus = async (req, res) => {
         tech.currentJobId = booking._id;
         tech.expectedAvailableTime = new Date(Date.now() + 90 * 60000); 
         await tech.save();
+        if (!booking.providerPhone && tech.phone) {
+          booking.providerPhone = tech.phone;
+        }
       }
 
       notifyUser({
@@ -294,6 +287,7 @@ const updateBookingStatus = async (req, res) => {
 
     if (status === 'rejected' && req.user.role === 'technician') {
        booking.providerId = null;
+       booking.providerPhone = null;
        booking.status = 'pending';
     }
 
