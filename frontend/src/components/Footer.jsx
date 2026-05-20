@@ -83,19 +83,6 @@ const Footer = () => {
                 <span className="text-sm">256-bit Secure Booking</span>
               </div>
             </div>
-            
-            <div className="mt-8 bg-gray-800/50 p-4 rounded-xl border border-gray-700">
-              <div className="flex items-start gap-3">
-                <div className="text-2xl">🎁</div>
-                <div>
-                  <h4 className="text-white font-bold text-sm">Refer & Earn ₹20</h4>
-                  <p className="text-xs text-gray-400 mt-1 mb-3">Invite friends to Fixvo and earn ₹20 reward.</p>
-                  <Link to="/referrals" className="inline-block bg-blue-600 hover:bg-blue-500 text-white text-xs font-bold py-2 px-4 rounded-lg transition-colors">
-                    Share Link
-                  </Link>
-                </div>
-              </div>
-            </div>
           </div>
         </div>
 
