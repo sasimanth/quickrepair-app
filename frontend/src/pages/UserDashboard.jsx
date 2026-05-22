@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import api from '../services/api'; 
 import { globalCategories, globalServices, getDbServices } from '../data/services';
-import { Calendar, MapPin, Smartphone, AlertCircle, Clock, CheckCircle, PackageSearch, XCircle, Plus, LayoutDashboard, Wrench, Settings, Star, User, ChevronRight, MessageSquare, Camera, UploadCloud, Loader2, Shield, ShieldCheck, HelpCircle, Truck, Home, Search } from 'lucide-react';
+import { Calendar, MapPin, Smartphone, AlertCircle, Clock, CheckCircle, PackageSearch, XCircle, Plus, LayoutDashboard, Wrench, Settings, Star, User, ChevronRight, MessageSquare, Camera, UploadCloud, Loader2, Shield, ShieldCheck, HelpCircle, Truck, Home, Search, Eye, Zap } from 'lucide-react';
 import ChatModal from '../components/ChatModal';
 import ReviewModal from '../components/ReviewModal';
 import PaymentModal from '../components/PaymentModal';
@@ -52,6 +52,43 @@ const UserDashboard = () => {
   const [showSettings, setShowSettings] = useState(false);
   const [liveLocations, setLiveLocations] = useState({}); // { techId: [lat, lng] }
   const [profile, setProfile] = useState(null);
+  const [toasts, setToasts] = useState([]);
+
+  const playChime = () => {
+    try {
+      const AudioContextClass = window.AudioContext || window.webkitAudioContext;
+      if (!AudioContextClass) return;
+      const ctx = new AudioContextClass();
+      
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+      osc.connect(gain);
+      gain.connect(ctx.destination);
+      
+      osc.frequency.setValueAtTime(587.33, ctx.currentTime);
+      gain.gain.setValueAtTime(0, ctx.currentTime);
+      gain.gain.linearRampToValueAtTime(0.3, ctx.currentTime + 0.05);
+      gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.3);
+      
+      osc.frequency.setValueAtTime(880.00, ctx.currentTime + 0.2);
+      gain.gain.setValueAtTime(0.3, ctx.currentTime + 0.2);
+      gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.5);
+      
+      osc.start(ctx.currentTime);
+      osc.stop(ctx.currentTime + 0.6);
+    } catch (error) {
+      console.warn('AudioContext failed to synthesize chime', error);
+    }
+  };
+
+  const showToast = (title, message, type = 'info') => {
+    const id = Date.now() + Math.random().toString(36).substr(2, 9);
+    setToasts(prev => [...prev, { id, title, message, type }]);
+    playChime();
+    setTimeout(() => {
+      setToasts(prev => prev.filter(t => t.id !== id));
+    }, 6000);
+  };
 
   const pendingStr = localStorage.getItem('pendingBooking');
   const pendingData = pendingStr ? JSON.parse(pendingStr) : null;
@@ -77,6 +114,32 @@ const UserDashboard = () => {
       socket.off('location_update');
     };
   }, []);
+
+  // Register private room for customer notification/alerts & handle status updates
+  useEffect(() => {
+    if (profile?.userId) {
+      socket.emit('register_user', profile.userId);
+    }
+  }, [profile?.userId]);
+
+  useEffect(() => {
+    if (!profile?.userId) return;
+
+    const handleJobUpdate = (updatedJob) => {
+      showToast(
+        '🔄 Repair Status Updated', 
+        `Your ${updatedJob.serviceName} status is now: ${updatedJob.status.replace(/_/g, ' ').toUpperCase()}`, 
+        'info'
+      );
+      setBookings(prev => prev.map(b => b._id === updatedJob._id ? updatedJob : b));
+    };
+
+    socket.on('job_update', handleJobUpdate);
+
+    return () => {
+      socket.off('job_update', handleJobUpdate);
+    };
+  }, [profile?.userId]);
 
   // WebSocket Chat Event Handlers
   useEffect(() => {
@@ -545,30 +608,67 @@ const UserDashboard = () => {
                     <div className="space-y-3">
                       <label className="text-sm font-bold text-slate-700 flex items-center gap-2"><HelpCircle size={16} className="text-slate-400"/> Describe the problem</label>
                       <div className="flex items-start gap-2 mb-2 p-3 bg-slate-50 border border-slate-200 rounded-xl">
-                        <input type="checkbox" id="unknownProblem" checked={formData.unknownProblem} onChange={(e) => setFormData({...formData, unknownProblem: e.target.checked})} className="mt-1 w-4 h-4 text-blue-600 rounded focus:ring-blue-500" />
-                        <label htmlFor="unknownProblem" className="text-sm text-slate-700 font-medium cursor-pointer">I don't know the exact issue (Technician will diagnose)</label>
+                        <input 
+                          type="checkbox" 
+                          id="unknownProblem" 
+                          checked={formData.unknownProblem} 
+                          onChange={(e) => {
+                            const checked = e.target.checked;
+                            setFormData({
+                              ...formData,
+                              unknownProblem: checked,
+                              serviceOption: checked ? 'inspection' : 'direct'
+                            });
+                          }} 
+                          className="mt-1 w-4 h-4 text-blue-600 rounded focus:ring-blue-500 cursor-pointer" 
+                        />
+                        <label htmlFor="unknownProblem" className="text-sm text-slate-700 font-bold cursor-pointer">I don't know the exact issue (Technician will diagnose)</label>
                       </div>
                       <textarea rows="3" placeholder={formData.unknownProblem ? "Tell us what happened (e.g., screen went black, strange noise)..." : "Describe the issue you're facing in detail..."} required className="w-full px-5 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:ring-4 focus:ring-blue-100 focus:border-blue-500 transition-all font-medium resize-none" value={formData.problemDescription} onChange={(e) => setFormData({ ...formData, problemDescription: e.target.value })}></textarea>
                     </div>
                     
                     <div className="space-y-3">
-                      <label className="text-sm font-bold text-slate-700 flex items-center gap-2"><Wrench size={16} className="text-slate-400"/> Service Visit Type</label>
+                      <label className="text-sm font-bold text-slate-700 flex items-center gap-2">
+                        <Wrench size={16} className="text-slate-400"/> Service Visit Type
+                      </label>
+                      
                       <div className="space-y-3">
-                        <label className={`block p-4 rounded-xl border-2 cursor-pointer transition-all ${formData.serviceOption === 'inspection' ? 'border-blue-500 bg-blue-50' : 'border-slate-200 bg-white hover:border-blue-200'}`}>
-                           <div className="flex items-center gap-3">
-                             <input type="radio" name="serviceOption" checked={formData.serviceOption === 'inspection'} onChange={() => setFormData({...formData, serviceOption: 'inspection'})} className="w-4 h-4 text-blue-600 focus:ring-blue-500" />
-                             <div>
-                               <span className="block font-bold text-slate-800">Inspection Visit</span>
-                               <span className="block text-xs text-slate-500 mt-1">Final price will be provided after inspection and approval</span>
+                        {/* Inspection Visit Card */}
+                        <label className={`relative block p-4 rounded-2xl border-2 cursor-pointer transition-all duration-300 transform hover:scale-[1.01] ${formData.serviceOption === 'inspection' ? 'border-indigo-600 bg-indigo-50/50 ring-4 ring-indigo-50 shadow-md' : 'border-slate-200 bg-white hover:border-indigo-200 hover:bg-slate-50/50'}`}>
+                           <div className="flex items-start gap-3">
+                             <input type="radio" name="serviceOption" checked={formData.serviceOption === 'inspection'} onChange={() => setFormData({...formData, serviceOption: 'inspection'})} className="mt-1 w-4 h-4 text-indigo-600 focus:ring-indigo-500 cursor-pointer" />
+                             <div className="flex-grow">
+                               <div className="flex items-center gap-2 flex-wrap">
+                                 <span className="font-extrabold text-slate-800 flex items-center gap-1.5"><Eye size={16} className="text-indigo-600" /> Inspection Visit</span>
+                                 {formData.unknownProblem && (
+                                   <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-black bg-indigo-600 text-white animate-pulse shadow-sm">
+                                     ✨ Recommended for Unknown Issues
+                                   </span>
+                                 )}
+                               </div>
+                               <span className="block text-xs text-slate-600 mt-1 font-medium leading-relaxed">
+                                 Recommended when issue is unknown or complex. Technician visits first to diagnose and provides a quote. Free booking – pay only after approving the final quote.
+                               </span>
                              </div>
                            </div>
                         </label>
-                        <label className={`block p-4 rounded-xl border-2 cursor-pointer transition-all ${formData.serviceOption === 'direct' ? 'border-blue-500 bg-blue-50' : 'border-slate-200 bg-white hover:border-blue-200'}`}>
-                           <div className="flex items-center gap-3">
-                             <input type="radio" name="serviceOption" checked={formData.serviceOption === 'direct'} onChange={() => setFormData({...formData, serviceOption: 'direct'})} className="w-4 h-4 text-blue-600 focus:ring-blue-500" />
-                             <div>
-                               <span className="block font-bold text-slate-800">Direct Repair Visit</span>
-                               <span className="block text-xs text-slate-500 mt-1">Tech comes fully prepared to fix standard issues immediately.</span>
+                        
+                        {/* Direct Repair Visit Card */}
+                        <label className={`relative block p-4 rounded-2xl border-2 cursor-pointer transition-all duration-300 transform hover:scale-[1.01] ${formData.serviceOption === 'direct' ? 'border-indigo-600 bg-indigo-50/50 ring-4 ring-indigo-50 shadow-md' : 'border-slate-200 bg-white hover:border-indigo-200 hover:bg-slate-50/50'}`}>
+                           <div className="flex items-start gap-3">
+                             <input type="radio" name="serviceOption" checked={formData.serviceOption === 'direct'} onChange={() => setFormData({...formData, serviceOption: 'direct'})} className="mt-1 w-4 h-4 text-indigo-600 focus:ring-indigo-500 cursor-pointer" />
+                             <div className="flex-grow">
+                               <div className="flex items-center gap-2 flex-wrap">
+                                 <span className="font-extrabold text-slate-800 flex items-center gap-1.5"><Zap size={16} className="text-amber-500" /> Direct Repair Visit</span>
+                                 {!formData.unknownProblem && (
+                                   <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-black bg-emerald-600 text-white shadow-sm">
+                                     ⚡ Faster for Known Repairs
+                                   </span>
+                                 )}
+                               </div>
+                               <span className="block text-xs text-slate-600 mt-1 font-medium leading-relaxed">
+                                 For simple, known services like cleaning, minor repairs, or installation. Technician comes fully prepared with the necessary tools to fix it immediately.
+                               </span>
                              </div>
                            </div>
                         </label>
@@ -1044,6 +1144,40 @@ const UserDashboard = () => {
           }}
         />
       )}
+
+      {/* Toast Alerts Stack */}
+      <div className="fixed bottom-5 right-5 z-[100] flex flex-col gap-3 w-full max-w-sm pointer-events-none px-4 sm:px-0">
+        <style>{`
+          @keyframes shrinkWidth {
+            from { width: 100%; }
+            to { width: 0%; }
+          }
+          .animate-shrink-width {
+            animation: shrinkWidth 6s linear forwards;
+          }
+        `}</style>
+        {toasts.map(toast => (
+          <div
+            key={toast.id}
+            className="pointer-events-auto bg-slate-950/95 backdrop-blur text-white rounded-2xl shadow-2xl border border-slate-800 p-4 flex gap-3 animate-in slide-in-from-bottom-5 fade-in duration-300 relative overflow-hidden"
+          >
+            <div className="absolute top-0 left-0 h-1 bg-gradient-to-r from-blue-500 via-indigo-500 to-purple-500 w-full animate-shrink-width" style={{ transformOrigin: 'left' }}></div>
+            <div className="p-1.5 bg-slate-800 rounded-lg text-indigo-400 self-start">
+              <Sparkles size={18} />
+            </div>
+            <div className="flex-1 min-w-0">
+              <h4 className="text-sm font-extrabold text-slate-100 leading-tight">{toast.title}</h4>
+              <p className="text-xs text-slate-400 font-medium mt-1 leading-relaxed">{toast.message}</p>
+            </div>
+            <button
+              onClick={() => setToasts(prev => prev.filter(t => t.id !== toast.id))}
+              className="text-slate-400 hover:text-slate-200 self-start transition-colors font-bold text-xs p-1"
+            >
+              ✕
+            </button>
+          </div>
+        ))}
+      </div>
     </div>
   );
 };

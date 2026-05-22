@@ -7,15 +7,16 @@ const getMessages = async (req, res) => {
   try {
     const { bookingId } = req.params;
 
-    // Optional Check: Is the user authorized to see these messages?
     const booking = await Booking.findById(bookingId);
     if (!booking) return res.status(404).json({ message: 'Booking not found' });
 
-    if (
-      req.user.role === 'user' && booking.userId !== req.user.id ||
-      req.user.role === 'technician' && booking.providerId !== req.user.id
-    ) {
-      return res.status(403).json({ message: 'Not authorized to view these messages' });
+    // Chat privacy validation
+    const isOwner = booking.userId && booking.userId.toString() === req.user.id.toString();
+    const isTech = booking.providerId && booking.providerId.toString() === req.user.id.toString();
+    const isAdmin = req.user.role === 'admin';
+
+    if (!isOwner && !isTech && !isAdmin) {
+      return res.status(403).json({ message: 'Not authorized to view this private chat' });
     }
 
     // Mark messages sent by the other party as read
@@ -41,11 +42,13 @@ const sendMessage = async (req, res) => {
     const booking = await Booking.findById(bookingId);
     if (!booking) return res.status(404).json({ message: 'Booking not found' });
 
-    if (
-      req.user.role === 'user' && booking.userId !== req.user.id ||
-      req.user.role === 'technician' && booking.providerId !== req.user.id
-    ) {
-      return res.status(403).json({ message: 'Not authorized to send messages for this job' });
+    // Chat privacy validation
+    const isOwner = booking.userId && booking.userId.toString() === req.user.id.toString();
+    const isTech = booking.providerId && booking.providerId.toString() === req.user.id.toString();
+    const isAdmin = req.user.role === 'admin';
+
+    if (!isOwner && !isTech && !isAdmin) {
+      return res.status(403).json({ message: 'Not authorized to send messages in this private chat' });
     }
 
     const newMessage = await Message.create({
@@ -54,6 +57,12 @@ const sendMessage = async (req, res) => {
       senderName: senderName || req.user.email.split('@')[0],
       text
     });
+
+    // Push live message to Chat room via Socket
+    const io = req.app.get('io');
+    if (io) {
+      io.to(`chat_${bookingId}`).emit('receive_message', newMessage);
+    }
 
     res.status(201).json(newMessage);
   } catch (error) {

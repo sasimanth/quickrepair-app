@@ -18,7 +18,7 @@ const normalizePhone = (phone) => {
 // @route   POST /api/auth/signup
 // @access  Public
 const signup = async (req, res) => {
-  let { name, email, phone, password, role, skills, location } = req.body;
+  let { name, email, phone, password, role, skills, location, availability } = req.body;
   if (phone) phone = normalizePhone(phone);
 
   try {
@@ -78,6 +78,9 @@ const signup = async (req, res) => {
         const selectedSkills = Array.isArray(skills) ? skills : [skills];
         const skillNames = selectedSkills.map(s => serviceIdToName[s] || s);
 
+        const isOnline = availability === 'offline' ? false : true;
+        const currentStatus = availability === 'offline' ? 'offline' : 'available';
+
         await Technician.create({
           userId: user._id,
           name: user.name,
@@ -88,8 +91,9 @@ const signup = async (req, res) => {
           area: location,
           address: location,
           isProfileComplete: true,
-          isOnline: true,
-          isVerified: true
+          isOnline: isOnline,
+          isVerified: true,
+          currentStatus: currentStatus
         });
       }
 
@@ -158,4 +162,50 @@ const getMe = async (req, res) => {
   }
 };
 
-module.exports = { signup, login, getMe };
+// @desc    Secure Admin Creation (Recovery Endpoint)
+// @route   POST /api/auth/create-admin
+// @access  Protected by secret key
+const createAdmin = async (req, res) => {
+  const { name, email, phone, password, secretKey } = req.body;
+  const recoveryKey = process.env.ADMIN_RECOVERY_KEY || process.env.JWT_SECRET || 'fixvoRecovery123!';
+
+  if (!secretKey || secretKey !== recoveryKey) {
+    return res.status(403).json({ message: 'Unauthorized admin recovery attempt. Invalid secret key.' });
+  }
+
+  if (!name || !email || !phone || !password) {
+    return res.status(400).json({ message: 'Please provide all required fields: name, email, phone, password.' });
+  }
+
+  try {
+    const adminExists = await User.findOne({ email });
+    if (adminExists) {
+      return res.status(400).json({ message: 'Admin account already exists.' });
+    }
+
+    const salt = await bcrypt.genSalt(10);
+    const hashedPassword = await bcrypt.hash(password, salt);
+
+    const user = await User.create({
+      name,
+      email,
+      phone,
+      password: hashedPassword,
+      role: 'admin',
+      isPremium: true
+    });
+
+    res.status(201).json({
+      _id: user._id,
+      name: user.name,
+      email: user.email,
+      phone: user.phone,
+      role: user.role,
+      token: generateToken(user._id, user.role, user.email),
+    });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
+module.exports = { signup, login, getMe, createAdmin };

@@ -10,12 +10,8 @@ import { socket } from '../services/socket';
 
 const formatPhoneLink = (phone) => {
   if (!phone) return '';
-  let digits = phone.toString().replace(/\D/g, '');
-  if (digits.length === 10) digits = `91${digits}`;
-  if (digits.length === 11 && digits.startsWith('0')) digits = `91${digits.slice(1)}`;
-  if (digits.length === 12 && digits.startsWith('91')) return `+${digits}`;
-  if (digits.length >= 11) return `+${digits}`;
-  return `+${digits}`;
+  // Strip spaces, brackets, hyphens but preserve digits and plus sign exactly
+  return phone.toString().replace(/[^\d+]/g, '');
 };
 
 const TechnicianDashboard = () => {
@@ -23,6 +19,43 @@ const TechnicianDashboard = () => {
   const [reviews, setReviews] = useState([]);
   const [profile, setProfile] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [toasts, setToasts] = useState([]);
+
+  const playChime = () => {
+    try {
+      const AudioContextClass = window.AudioContext || window.webkitAudioContext;
+      if (!AudioContextClass) return;
+      const ctx = new AudioContextClass();
+      
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+      osc.connect(gain);
+      gain.connect(ctx.destination);
+      
+      osc.frequency.setValueAtTime(587.33, ctx.currentTime);
+      gain.gain.setValueAtTime(0, ctx.currentTime);
+      gain.gain.linearRampToValueAtTime(0.3, ctx.currentTime + 0.05);
+      gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.3);
+      
+      osc.frequency.setValueAtTime(880.00, ctx.currentTime + 0.2);
+      gain.gain.setValueAtTime(0.3, ctx.currentTime + 0.2);
+      gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.5);
+      
+      osc.start(ctx.currentTime);
+      osc.stop(ctx.currentTime + 0.6);
+    } catch (error) {
+      console.warn('AudioContext failed to synthesize chime', error);
+    }
+  };
+
+  const showToast = (title, message, type = 'info') => {
+    const id = Date.now() + Math.random().toString(36).substr(2, 9);
+    setToasts(prev => [...prev, { id, title, message, type }]);
+    playChime();
+    setTimeout(() => {
+      setToasts(prev => prev.filter(t => t.id !== id));
+    }, 6000);
+  };
   const [setupLoading, setSetupLoading] = useState(false);
   const [showSettings, setShowSettings] = useState(false);
   const [showVerification, setShowVerification] = useState(false);
@@ -73,6 +106,46 @@ const TechnicianDashboard = () => {
       if (watchId) navigator.geolocation.clearWatch(watchId);
     };
   }, [profile?.isOnline, profile?.userId]);
+
+  // Register private user room for job alerts and status updates
+  useEffect(() => {
+    if (profile?.userId) {
+      socket.emit('register_user', profile.userId);
+    }
+  }, [profile?.userId]);
+
+  useEffect(() => {
+    if (!profile?.userId) return;
+
+    const handleNewJob = (newJob) => {
+      showToast(
+        '💼 New Job Assigned!', 
+        `New repair request for ${newJob.serviceName} has been assigned to you.`, 
+        'info'
+      );
+      setJobs(prev => {
+        if (prev.some(j => j._id === newJob._id)) return prev;
+        return [newJob, ...prev];
+      });
+    };
+
+    const handleJobUpdate = (updatedJob) => {
+      showToast(
+        '🔄 Job Update', 
+        `Job #${updatedJob._id.slice(-6)} is now: ${updatedJob.status.replace(/_/g, ' ').toUpperCase()}`, 
+        'info'
+      );
+      setJobs(prev => prev.map(j => j._id === updatedJob._id ? updatedJob : j));
+    };
+
+    socket.on('new_job', handleNewJob);
+    socket.on('job_update', handleJobUpdate);
+
+    return () => {
+      socket.off('new_job', handleNewJob);
+      socket.off('job_update', handleJobUpdate);
+    };
+  }, [profile?.userId]);
 
   // WebSocket Chat Event Handlers
   useEffect(() => {
@@ -747,6 +820,40 @@ const TechnicianDashboard = () => {
           </div>
         </div>
       )}
+
+      {/* Toast Alerts Stack */}
+      <div className="fixed bottom-5 right-5 z-[100] flex flex-col gap-3 w-full max-w-sm pointer-events-none px-4 sm:px-0">
+        <style>{`
+          @keyframes shrinkWidth {
+            from { width: 100%; }
+            to { width: 0%; }
+          }
+          .animate-shrink-width {
+            animation: shrinkWidth 6s linear forwards;
+          }
+        `}</style>
+        {toasts.map(toast => (
+          <div
+            key={toast.id}
+            className="pointer-events-auto bg-slate-950/95 backdrop-blur text-white rounded-2xl shadow-2xl border border-slate-800 p-4 flex gap-3 animate-in slide-in-from-bottom-5 fade-in duration-300 relative overflow-hidden"
+          >
+            <div className="absolute top-0 left-0 h-1 bg-gradient-to-r from-blue-500 via-indigo-500 to-purple-500 w-full animate-shrink-width" style={{ transformOrigin: 'left' }}></div>
+            <div className="p-1.5 bg-slate-800 rounded-lg text-indigo-400 self-start">
+              <Sparkles size={18} />
+            </div>
+            <div className="flex-1 min-w-0">
+              <h4 className="text-sm font-extrabold text-slate-100 leading-tight">{toast.title}</h4>
+              <p className="text-xs text-slate-400 font-medium mt-1 leading-relaxed">{toast.message}</p>
+            </div>
+            <button
+              onClick={() => setToasts(prev => prev.filter(t => t.id !== toast.id))}
+              className="text-slate-400 hover:text-slate-200 self-start transition-colors font-bold text-xs p-1"
+            >
+              ✕
+            </button>
+          </div>
+        ))}
+      </div>
     </div>
   );
 };

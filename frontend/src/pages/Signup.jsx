@@ -12,7 +12,8 @@ const Signup = () => {
     password: '',
     role: 'user',
     skills: [],
-    location: ''
+    location: '',
+    availability: 'available'
   });
   
   const [error, setError] = useState('');
@@ -81,7 +82,8 @@ const Signup = () => {
         password: formData.password,
         role: formData.role,
         skills: formData.role === 'technician' ? formData.skills : '',
-        location: formData.location
+        location: formData.location,
+        availability: formData.role === 'technician' ? formData.availability : 'available'
       });
       
       let role = data.role || 'user';
@@ -245,10 +247,24 @@ const Signup = () => {
                     <MapPin className="absolute left-4 top-1/2 -translate-y-1/2 text-indigo-300 z-10" size={18} />
                     <select name="location" className="w-full pl-11 pr-4 py-3 bg-white border border-indigo-100 rounded-xl focus:border-indigo-500 focus:ring-2 focus:ring-indigo-100 transition-all text-sm font-medium outline-none appearance-none cursor-pointer" value={formData.location} onChange={handleChange} required={formData.role === 'technician'}>
                       <option value="" disabled>Select your service area</option>
+                      <option value="Madanapalle">📍 Madanapalle</option>
+                      <option value="Kadiri">📍 Kadiri</option>
+                      <option value="Rayachoty">📍 Rayachoty</option>
                       <option value="Tirupati">Tirupati</option>
                       <option value="Hyderabad">Hyderabad</option>
                       <option value="Bangalore">Bangalore</option>
                       <option value="Chennai">Chennai</option>
+                    </select>
+                  </div>
+                </div>
+
+                {/* Availability Status */}
+                <div className="space-y-1">
+                  <label className="text-xs font-bold text-indigo-400 uppercase tracking-widest ml-1">Availability Status</label>
+                  <div className="relative group">
+                    <select name="availability" className="w-full px-4 py-3 bg-white border border-indigo-100 rounded-xl focus:border-indigo-500 focus:ring-2 focus:ring-indigo-100 transition-all text-sm font-medium outline-none cursor-pointer" value={formData.availability} onChange={handleChange}>
+                      <option value="available">🟢 Available (Receive alerts immediately)</option>
+                      <option value="offline">⚪ Offline (Unavailable for bookings)</option>
                     </select>
                   </div>
                 </div>

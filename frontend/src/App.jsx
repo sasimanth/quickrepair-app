@@ -56,19 +56,19 @@ const AppContent = () => {
           
           <Route path="/dashboard" element={
             <PrivateRoute allowedRoles={['user']}>
-              <div className="container mx-auto px-4 py-8 flex-grow"><UserDashboard /></div>
+              <UserDashboard />
             </PrivateRoute>
           } />
           
           <Route path="/technician-dashboard" element={
             <PrivateRoute allowedRoles={['technician']}>
-              <div className="container mx-auto px-4 py-8 flex-grow"><TechnicianDashboard /></div>
+              <TechnicianDashboard />
             </PrivateRoute>
           } />
           
           <Route path="/admin-dashboard" element={
             <PrivateRoute allowedRoles={['admin']}>
-              <div className="container mx-auto px-4 py-8 flex-grow"><AdminDashboard /></div>
+              <AdminDashboard />
             </PrivateRoute>
           } />
           

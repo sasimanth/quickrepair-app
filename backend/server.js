@@ -54,6 +54,12 @@ const PORT = process.env.PORT || 5000;
 io.on('connection', (socket) => {
   console.log('⚡ Socket client connected:', socket.id);
 
+  // Register any user (customer, technician, or admin) for private notifications/alerts
+  socket.on('register_user', (userId) => {
+    socket.join(`user_${userId}`);
+    console.log(`👤 User ${userId} registered for private notifications`);
+  });
+
   // Technician joins their own tracking room
   socket.on('register_tech', (techId) => {
     socket.join(`tech_${techId}`);
