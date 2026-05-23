@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { globalCategories, globalServices, getDbServices } from '../data/services';
 import SmartDiagnosis from '../components/SmartDiagnosis/SmartDiagnosis';
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion, AnimatePresence, useMotionValue, useAnimationFrame } from 'framer-motion';
 import { 
   Zap, 
   Droplets, 
@@ -29,6 +29,39 @@ const Home = () => {
   useEffect(() => {
     getDbServices().then(setServices);
   }, []);
+
+  const marqueeX = useMotionValue(0);
+  const [isHovered, setIsHovered] = useState(false);
+  const [isDragging, setIsDragging] = useState(false);
+  const [wrapWidth, setWrapWidth] = useState(1032);
+
+  useEffect(() => {
+    const handleResize = () => {
+      const cardWidth = window.innerWidth < 640 ? 324 : 344;
+      setWrapWidth(cardWidth * 3);
+    };
+    handleResize();
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
+
+  useAnimationFrame(() => {
+    let currentX = marqueeX.get();
+    if (isHovered || isDragging) {
+      if (currentX < -wrapWidth * 2) {
+        marqueeX.set(currentX + wrapWidth);
+      } else if (currentX > 0) {
+        marqueeX.set(currentX - wrapWidth);
+      }
+      return;
+    }
+    
+    currentX -= 2.0; // Optimized marquee scroll speed (faster and smoother)
+    if (currentX <= -wrapWidth) {
+      currentX += wrapWidth;
+    }
+    marqueeX.set(currentX);
+  });
 
   return (
     <div className="relative w-full min-h-screen bg-[#0B0F19] text-white overflow-x-hidden font-sans">
@@ -436,7 +469,17 @@ const Home = () => {
             <div className="absolute left-0 top-0 bottom-0 w-8 sm:w-24 bg-gradient-to-r from-[#0B0F19] to-transparent z-10 pointer-events-none"></div>
             <div className="absolute right-0 top-0 bottom-0 w-8 sm:w-24 bg-gradient-to-l from-[#0B0F19] to-transparent z-10 pointer-events-none"></div>
             
-            <div className="animate-infinite-scroll flex gap-6">
+            <motion.div 
+              style={{ x: marqueeX }}
+              drag="x"
+              dragConstraints={{ left: -wrapWidth * 2, right: 0 }}
+              dragElastic={0.05}
+              onDragStart={() => setIsDragging(true)}
+              onDragEnd={() => setIsDragging(false)}
+              onMouseEnter={() => setIsHovered(true)}
+              onMouseLeave={() => setIsHovered(false)}
+              className="flex gap-6 cursor-grab active:cursor-grabbing select-none"
+            >
               {[
                 { name: "Priya S.", service: "AC Repair", text: "The technician arrived exactly on time. Fixed my AC cooling issue within an hour and the price was upfront. Truly a lifesaver in this heat!", rating: 5, bg: "from-blue-500/10 to-transparent", initial: "P" },
                 { name: "Rahul M.", service: "Electrical Wiring", text: "I had a sudden short circuit at night. Fixvo's emergency service had a verified electrician at my door in 30 mins. Extremely professional.", rating: 5, bg: "from-amber-500/10 to-transparent", initial: "R" },
@@ -476,7 +519,7 @@ const Home = () => {
                    </div>
                  </div>
               ))}
-            </div>
+            </motion.div>
           </div>
         </div>
         

@@ -79,6 +79,12 @@ const triggerNotifications = async (req, booking, type) => {
         chatText = `📢 System: Payment of $${booking.amount} completed successfully.`;
         recipientId = booking.providerId; // Notify tech
         break;
+      case 'cancelled':
+        title = 'Service Booking Cancelled ❌';
+        message = `This booking has been cancelled. Reason: ${booking.cancellationReason || 'No reason specified'}.`;
+        chatText = `📢 System: Booking cancelled by ${booking.cancelledBy === 'customer' ? 'Customer' : 'Technician'}. Reason: ${booking.cancellationReason || 'No reason specified'}.`;
+        recipientId = booking.cancelledBy === 'customer' ? booking.providerId : booking.userId;
+        break;
       default:
         return;
     }
@@ -98,8 +104,19 @@ const triggerNotifications = async (req, booking, type) => {
       }
     }
 
-    // 2. Create DB Message inside Chat (DISABLED: System messages should not appear in chat section)
+    // 2. Create DB Message inside Chat for system notifications
     let newMsg = null;
+    if (chatText) {
+      newMsg = await Message.create({
+        bookingId: booking._id,
+        senderId: 'system',
+        senderName: 'System',
+        text: chatText
+      });
+      if (io) {
+        io.to(`chat_${booking._id}`).emit('receive_message', newMsg);
+      }
+    }
 
     // 3. Emit Sockets
     if (io) {
@@ -124,7 +141,8 @@ const createBooking = async (req, res) => {
     serviceId, date, deviceType, problemDescription, problemId, problemIds, location, detailedAddress, landmark, gpsLocation, imageUrl, mediaUrl, mediaType, providerId,
     unknownProblem, serviceOption, hasSpace, serviceLocation, isRestrictedArea, isUnderWarranty,
     name, phone, service, problem, address, timeSlot, areaType, transportCharge, transportOption,
-    promoCode, discountPercentage
+    promoCode, discountPercentage,
+    areaSize, houseType, numberOfRooms, wallArea, indoorOutdoor, paintPreference, applianceType, installationLocation, accessoriesNeeded
   } = req.body;
   
   try {
@@ -175,6 +193,7 @@ const createBooking = async (req, res) => {
       if (locationLower.includes('madanapalle')) matchedArea = 'Madanapalle';
       else if (locationLower.includes('kadiri')) matchedArea = 'Kadiri';
       else if (locationLower.includes('rayachoty')) matchedArea = 'Rayachoty';
+      else if (locationLower.includes('galiveedu')) matchedArea = 'Galiveedu';
 
       const techQuery = { currentStatus: 'available', isOnline: true };
       if (matchedArea) {
@@ -283,7 +302,16 @@ const createBooking = async (req, res) => {
       transportCharge: transportCharge || 50,
       transportOption: transportOption || 'doorstep',
       promoCode: promoCode || null,
-      discountPercentage: discountPercentage || 0
+      discountPercentage: discountPercentage || 0,
+      areaSize: areaSize || null,
+      houseType: houseType || null,
+      numberOfRooms: numberOfRooms || null,
+      wallArea: wallArea || null,
+      indoorOutdoor: indoorOutdoor || null,
+      paintPreference: paintPreference || null,
+      applianceType: applianceType || null,
+      installationLocation: installationLocation || null,
+      accessoriesNeeded: accessoriesNeeded || null
     });
     const createdBooking = await booking.save();
 
@@ -399,24 +427,8 @@ const getBookings = async (req, res) => {
       })
         .populate('serviceId', 'name price');
     } else {
-      // Regular User
-      const User = require('../models/User');
-      const userDoc = await User.findById(req.user.id);
-      const userPhoneNorm = userDoc && userDoc.phone ? normalizePhone(userDoc.phone) : null;
-      const originalPhone = userDoc ? userDoc.phone : null;
-      
-      const query = { $or: [{ userId: req.user.id }] };
-      const isDummyPhone = (p) => !p || p === '0000000000' || p === '1234567890' || p.length < 10;
-      
-      if (originalPhone && !isDummyPhone(originalPhone)) {
-        query.$or.push({ phone: originalPhone });
-      }
-      if (userPhoneNorm && !isDummyPhone(userPhoneNorm)) {
-        query.$or.push({ phone: userPhoneNorm });
-        query.$or.push({ phone: new RegExp(userPhoneNorm, 'i') });
-      }
-
-      bookings = await Booking.find(query)
+      // Regular User - Strictly filter by logged-in user ID to prevent cross-user access
+      bookings = await Booking.find({ userId: req.user.id })
         .populate('serviceId', 'name price')
         .sort('-createdAt');
     }
@@ -484,6 +496,13 @@ const updateBookingStatus = async (req, res) => {
         tech.currentJobId = null;
         tech.expectedAvailableTime = null;
         tech.jobsCompleted = (tech.jobsCompleted || 0) + 1;
+        
+        // Calculate technician earnings (80% share, 20% platform commission fee)
+        const bookingAmount = booking.finalQuote || (booking.serviceId?.price || 0);
+        const techShare = bookingAmount * 0.80;
+        tech.walletBalance = (tech.walletBalance || 0) + techShare;
+        tech.totalEarnings = (tech.totalEarnings || 0) + techShare;
+        
         await tech.save();
 
         // Queue check for ASAP waiting jobs
@@ -552,15 +571,9 @@ const processPayment = async (req, res) => {
       return res.status(404).json({ message: 'Booking not found' });
     }
     
-    const User = require('../models/User');
-    const userDoc = await User.findById(req.user.id);
-    const pPhone = userDoc && userDoc.phone ? normalizePhone(userDoc.phone) : null;
-    const bPhone = booking.phone ? normalizePhone(booking.phone) : null;
-    
     if (req.user.role === 'user') {
       const isOwnerById = booking.userId && booking.userId.toString() === req.user.id.toString();
-      const isOwnerByPhone = pPhone && bPhone && pPhone === bPhone;
-      if (!isOwnerById && !isOwnerByPhone) {
+      if (!isOwnerById) {
          return res.status(403).json({ message: 'Not authorized to pay for this booking' });
       }
     }
@@ -597,6 +610,13 @@ const createPaymentIntent = async (req, res) => {
   try {
     const booking = await Booking.findById(req.params.id);
     if (!booking) return res.status(404).json({ message: 'Booking not found' });
+    
+    if (req.user.role === 'user') {
+      const isOwnerById = booking.userId && booking.userId.toString() === req.user.id.toString();
+      if (!isOwnerById) {
+         return res.status(403).json({ message: 'Not authorized to create payment intent for this booking' });
+      }
+    }
     
     const amountStr = req.body.amount || booking.amount || 15;
     const amount = Math.max(50, Math.round(Number(amountStr) * 100));
@@ -668,15 +688,9 @@ const approveQuote = async (req, res) => {
     const booking = await Booking.findById(req.params.id);
     if (!booking) return res.status(404).json({ message: 'Booking not found' });
     
-    const User = require('../models/User');
-    const userDoc = await User.findById(req.user.id);
-    const pPhone = userDoc && userDoc.phone ? normalizePhone(userDoc.phone) : null;
-    const bPhone = booking.phone ? normalizePhone(booking.phone) : null;
-    
     const isOwnerById = booking.userId && booking.userId.toString() === req.user.id.toString();
-    const isOwnerByPhone = pPhone && bPhone && pPhone === bPhone;
     
-    if (!isOwnerById && !isOwnerByPhone) {
+    if (!isOwnerById) {
        return res.status(403).json({ message: 'Not authorized to approve quote' });
     }
 
@@ -709,4 +723,55 @@ const approveQuote = async (req, res) => {
   }
 };
 
-module.exports = { createBooking, getBookings, updateBookingStatus, assignBooking, processPayment, createPaymentIntent, submitQuote, approveQuote };
+// @desc    Cancel a booking
+// @route   PUT /api/bookings/:id/cancel
+const cancelBooking = async (req, res) => {
+  const { reason } = req.body;
+  try {
+    const booking = await Booking.findById(req.params.id);
+    if (!booking) return res.status(404).json({ message: 'Booking not found' });
+    
+    // Check authorization
+    const isOwner = booking.userId && booking.userId.toString() === req.user.id.toString();
+    const isTech = booking.providerId && booking.providerId.toString() === req.user.id.toString();
+    const isAdmin = req.user.role === 'admin';
+    
+    if (!isOwner && !isTech && !isAdmin) {
+      return res.status(403).json({ message: 'Not authorized to cancel this booking' });
+    }
+    
+    // Validate cancellation constraints
+    if (req.user.role === 'user') {
+      // Customer cancels before tech accepts, or can cancel any if needed, but track it
+      // Let's allow cancellation but track status
+    }
+    
+    booking.status = 'cancelled';
+    booking.cancelledBy = req.user.role === 'user' ? 'customer' : (req.user.role === 'technician' ? 'technician' : 'admin');
+    booking.cancellationReason = reason || 'No reason provided';
+    booking.cancelledAt = new Date();
+    
+    // Free up technician if they were busy with this job
+    if (booking.providerId) {
+      const Technician = require('../models/Technician');
+      const tech = await Technician.findOne({ userId: booking.providerId });
+      if (tech && tech.currentJobId?.toString() === booking._id.toString()) {
+        tech.currentStatus = 'available';
+        tech.currentJobId = null;
+        tech.expectedAvailableTime = null;
+        await tech.save();
+      }
+    }
+    
+    const updatedBooking = await booking.save();
+    
+    // Trigger notification
+    await triggerNotifications(req, updatedBooking, 'cancelled');
+    
+    res.json(updatedBooking);
+  } catch (error) {
+    res.status(400).json({ message: error.message });
+  }
+};
+
+module.exports = { createBooking, getBookings, updateBookingStatus, assignBooking, processPayment, createPaymentIntent, submitQuote, approveQuote, cancelBooking };

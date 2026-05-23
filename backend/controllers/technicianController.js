@@ -17,7 +17,28 @@ const getProfile = async (req, res) => {
         rating: 4.8 + (Math.random() * 0.2), // Random initial good rating
       });
     }
-    res.json(tech);
+
+    // Dynamic Pending Earnings Calculation (assigned active jobs)
+    const Booking = require('../models/Booking');
+    const activeJobs = await Booking.find({
+      providerId: req.user.id,
+      status: { $in: ['accepted', 'on_the_way', 'arrived', 'quote_pending', 'quote_approved', 'in_progress'] }
+    });
+    
+    const pendingEarnings = activeJobs.reduce((sum, job) => {
+      const amt = job.finalQuote || (job.serviceId?.price || 0);
+      return sum + (amt * 0.80); // 80% technician share
+    }, 0);
+
+    // Fetch previous withdrawal request logs
+    const WithdrawalRequest = require('../models/WithdrawalRequest');
+    const withdrawals = await WithdrawalRequest.find({ technicianId: req.user.id }).sort({ createdAt: -1 });
+
+    const techObj = tech.toObject();
+    techObj.pendingEarnings = pendingEarnings;
+    techObj.withdrawals = withdrawals;
+
+    res.json(techObj);
   } catch (error) {
     res.status(500).json({ message: error.message });
   }
@@ -68,8 +89,6 @@ const updateProfile = async (req, res) => {
   }
 };
 
-// @desc    Find nearby technicians (GeoSpatial Query / Area-based)
-// @route   GET /api/technicians/nearby
 const getNearbyTechnicians = async (req, res) => {
   const { area, serviceId } = req.query;
 
@@ -81,31 +100,18 @@ const getNearbyTechnicians = async (req, res) => {
 
     if (area) {
       // Area match (case-insensitive)
-      query.area = { $regex: new RegExp(area, 'i') };
+      query.area = { $regex: new RegExp(`^${area}$`, 'i') };
+    }
+
+    if (serviceId) {
+      query.services = serviceId;
     }
 
     let techs = await Technician.find(query).limit(30);
     
-    // Sort and filter by service
-    if (serviceId) {
-      const searchTerm = serviceId.toLowerCase().replace(/_/g, ' ');
-      const categoryTerm = serviceId.split('_')[1] || ''; // e.g. repair, install, clean
-      
-      // Filter out techs that don't match the service if required (or just sort them to the top)
-      // The prompt asks to "Show ONLY technicians... Matching the requested service category"
-      techs = techs.filter(tech => {
-        if (tech.services && tech.services.some(s => s.toLowerCase() === serviceId.toLowerCase())) {
-           return true;
-        }
-        if (!tech.skills) return false;
-        const skillsString = tech.skills.join(' ').toLowerCase();
-        return skillsString.includes('all devices') || skillsString.includes(searchTerm) || (categoryTerm && skillsString.includes(categoryTerm));
-      });
-      
-      techs.sort((a, b) => {
-        return b.rating - a.rating;
-      });
-    }
+    techs.sort((a, b) => {
+      return b.rating - a.rating;
+    });
 
     const formattedTechs = techs.slice(0, 10).map((tech, i) => ({
       id: tech.userId,
@@ -209,20 +215,48 @@ const updateJobStatus = async (req, res) => {
 // @desc    Request withdrawal of earnings
 // @route   POST /api/technicians/withdraw
 const requestWithdrawal = async (req, res) => {
-  const { amount } = req.body;
+  const { amount, accountName, accountNumber, ifscCode, upiId } = req.body;
   try {
     const tech = await Technician.findOne({ userId: req.user.id });
     if (!tech) return res.status(404).json({ message: 'Technician not found' });
 
     const numAmount = Number(amount);
-    if (!numAmount || numAmount <= 0) {
-       return res.status(400).json({ message: 'Invalid amount' });
+    if (!numAmount || numAmount < 500) {
+      return res.status(400).json({ message: 'Minimum withdrawal amount is ₹500.' });
     }
 
+    if (numAmount > tech.walletBalance) {
+      return res.status(400).json({ message: 'Cannot withdraw more than available balance.' });
+    }
+
+    // Check for existing pending requests
+    const WithdrawalRequest = require('../models/WithdrawalRequest');
+    const existingPending = await WithdrawalRequest.findOne({
+      technicianId: req.user.id,
+      status: 'pending'
+    });
+    if (existingPending) {
+      return res.status(400).json({ message: 'You already have a pending withdrawal request. Please wait for admin processing.' });
+    }
+
+    // Create withdrawal request log
+    const payoutReq = await WithdrawalRequest.create({
+      technicianId: req.user.id,
+      amount: numAmount,
+      bankDetails: {
+        accountName,
+        accountNumber,
+        ifscCode,
+        upiId: upiId || ''
+      },
+      status: 'pending'
+    });
+
+    // Update pending fields in tech profile
     tech.pendingWithdrawal = (tech.pendingWithdrawal || 0) + numAmount;
     await tech.save();
     
-    res.json({ message: 'Withdrawal requested successfully', tech });
+    res.json({ message: 'Withdrawal request submitted successfully', payoutReq, tech });
   } catch (error) {
     res.status(500).json({ message: error.message });
   }

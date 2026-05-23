@@ -37,7 +37,9 @@ const technicianSchema = new mongoose.Schema({
     accountNumber: String,
     ifscCode: String,
     idProofUrl: String
-  }
+  },
+  walletBalance: { type: Number, default: 0 },
+  totalEarnings: { type: Number, default: 0 }
 }, { timestamps: true });
 
 // Crucial: 2dsphere index for GeoSpatial search

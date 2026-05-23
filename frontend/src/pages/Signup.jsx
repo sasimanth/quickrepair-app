@@ -252,6 +252,7 @@ const Signup = () => {
                       <option value="Madanapalle">📍 Madanapalle</option>
                       <option value="Kadiri">📍 Kadiri</option>
                       <option value="Rayachoty">📍 Rayachoty</option>
+                      <option value="Galiveedu">📍 Galiveedu</option>
                     </select>
                   </div>
                 </div>

@@ -22,10 +22,8 @@ const ChatModal = ({ booking, onClose, currentRole }) => {
   const fetchMessages = async () => {
     try {
       const { data } = await api.get(`/messages/${bookingId}`);
-      // Filter out any system messages
-      const filtered = data.filter(m => m.senderId !== 'system');
-      setMessages(filtered);
-      socket.emit('read_messages', { bookingId, userId: user.id });
+      setMessages(data);
+      socket.emit('read_messages', { bookingId, userId: user?._id || user?.id });
     } catch (error) {
       console.error('Failed to load messages', error);
     } finally {
@@ -40,19 +38,18 @@ const ChatModal = ({ booking, onClose, currentRole }) => {
     socket.emit('join_chat', bookingId);
     
     const handleReceiveMessage = (newMsg) => {
-      if (newMsg.senderId === 'system') return; // Ignore system messages
       setMessages(prev => {
         if (prev.find(m => m._id === newMsg._id)) return prev;
         return [...prev, newMsg];
       });
-      if (newMsg.senderId !== user.id) {
-        socket.emit('read_messages', { bookingId, userId: user.id });
+      if (newMsg.senderId !== (user?._id || user?.id)) {
+        socket.emit('read_messages', { bookingId, userId: user?._id || user?.id });
       }
     };
 
     const handleMessagesRead = ({ readerId }) => {
-      if (readerId !== user.id) {
-        setMessages(prev => prev.map(m => m.senderId === user.id ? { ...m, isRead: true } : m));
+      if (readerId !== (user?._id || user?.id)) {
+        setMessages(prev => prev.map(m => m.senderId === (user?._id || user?.id) ? { ...m, isRead: true } : m));
       }
     };
 
@@ -77,12 +74,13 @@ const ChatModal = ({ booking, onClose, currentRole }) => {
     setText('');
     setSending(true);
 
+    const activeUserId = user?._id || user?.id;
     // Optimistic UI update
     const tempMsg = { 
       _id: `temp-${Date.now()}`, 
       text: messageText, 
-      senderId: user.id, 
-      senderName: user.name || 'Me', 
+      senderId: activeUserId, 
+      senderName: user?.name || user?.email?.split('@')[0] || 'Me', 
       createdAt: new Date().toISOString(), 
       isOptimistic: true 
     };
@@ -152,8 +150,22 @@ const ChatModal = ({ booking, onClose, currentRole }) => {
           ) : (
             <div className="space-y-4">
               {messages.map((msg, i) => {
-                const isMyMsg = msg.senderId === user?.id;
+                const isSystemMsg = msg.senderId === 'system';
+                const activeUserId = user?._id || user?.id;
+                const isMyMsg = !isSystemMsg && msg.senderId === activeUserId;
                 
+                if (isSystemMsg) {
+                  return (
+                    <div key={msg._id || i} className="flex justify-center my-3 animate-in fade-in zoom-in duration-300">
+                      <div className="bg-slate-100 border border-slate-200/60 rounded-2xl px-4 py-2 text-center max-w-[90%] shadow-sm">
+                        <p className="text-[10px] font-extrabold text-slate-500 uppercase tracking-widest leading-none mb-1">System Update</p>
+                        <p className="text-xs font-semibold text-slate-700 leading-normal">{msg.text.replace(/^📢 System:\s*/, '')}</p>
+                        <p className="text-[9px] text-slate-400 font-semibold mt-1 uppercase tracking-wider">{formatMessageTimestamp(msg.createdAt)}</p>
+                      </div>
+                    </div>
+                  );
+                }
+
                 return (
                   <div key={msg._id || i} className={`flex flex-col ${isMyMsg ? 'items-end' : 'items-start'} mb-3 animate-in fade-in slide-in-from-bottom-2 duration-300`}>
                     {/* Chat Bubble */}

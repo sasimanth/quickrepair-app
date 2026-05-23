@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import api from '../services/api'; 
 import { globalCategories, globalServices, getDbServices } from '../data/services';
-import { Calendar, MapPin, Smartphone, AlertCircle, Clock, CheckCircle, PackageSearch, XCircle, Plus, LayoutDashboard, Wrench, Settings, Star, User, ChevronRight, MessageSquare, Camera, UploadCloud, Loader2, Shield, ShieldCheck, HelpCircle, Truck, Home, Search, Eye, Zap } from 'lucide-react';
+import { Calendar, MapPin, Smartphone, AlertCircle, Clock, CheckCircle, PackageSearch, XCircle, Plus, LayoutDashboard, Wrench, Settings, Star, User, ChevronRight, MessageSquare, Camera, UploadCloud, Loader2, Shield, ShieldCheck, HelpCircle, Truck, Home, Search, Eye, Zap, Maximize2, Hash, Layers, Paintbrush } from 'lucide-react';
 import ChatModal from '../components/ChatModal';
 import ReviewModal from '../components/ReviewModal';
 import PaymentModal from '../components/PaymentModal';
@@ -54,6 +54,33 @@ const UserDashboard = () => {
   const [liveLocations, setLiveLocations] = useState({}); // { techId: [lat, lng] }
   const [profile, setProfile] = useState(null);
   const [toasts, setToasts] = useState([]);
+  
+  const [cancelBookingId, setCancelBookingId] = useState(null);
+  const [cancellationReason, setCancellationReason] = useState('');
+  const [submittingCancellation, setSubmittingCancellation] = useState(false);
+
+  const handleCancelBooking = async () => {
+    if (!cancellationReason.trim()) {
+      alert("Please provide a reason for cancellation.");
+      return;
+    }
+    setSubmittingCancellation(true);
+    try {
+      await api.put(`/bookings/${cancelBookingId}/cancel`, { reason: cancellationReason });
+      showToast('Booking Cancelled ❌', 'Your booking request was successfully cancelled.', 'success');
+      setCancelBookingId(null);
+      setCancellationReason('');
+      fetchData();
+    } catch (err) {
+      alert(err.response?.data?.message || "Failed to cancel booking.");
+    } finally {
+      setSubmittingCancellation(false);
+    }
+  };
+
+  const selectedServiceObj = services.find(s => s.id === formData.serviceId) || globalServices.find(s => s.id === formData.serviceId);
+  const categoryId = selectedServiceObj ? selectedServiceObj.categoryId : '';
+  const serviceNameLower = selectedServiceObj?.name?.toLowerCase() || '';
 
   const playChime = () => {
     try {
@@ -494,7 +521,43 @@ const UserDashboard = () => {
           </div>
         </div>
 
-        {!profile?.isPremium && (
+        {profile?.isPremium ? (
+          <div className="bg-gradient-to-r from-slate-900 to-indigo-950 border border-amber-500/30 rounded-3xl p-6 flex flex-col md:flex-row md:items-center justify-between gap-6 shadow-[0_4px_30px_rgba(245,158,11,0.08)] relative overflow-hidden text-white animate-in fade-in duration-300">
+            <div className="absolute top-[-50%] right-[-10%] w-[40%] h-[150%] bg-gradient-to-br from-amber-500/10 to-transparent rounded-full blur-[80px] pointer-events-none"></div>
+            <div className="flex flex-col sm:flex-row items-start sm:items-center gap-5 relative z-10">
+              <div className="w-16 h-16 bg-gradient-to-br from-amber-400 to-yellow-500 text-slate-950 rounded-2xl flex items-center justify-center shrink-0 shadow-lg shadow-amber-500/15">
+                <Sparkles size={30} className="animate-pulse" />
+              </div>
+              <div className="space-y-1">
+                <div className="flex flex-wrap items-center gap-2.5">
+                  <h3 className="text-xl font-black tracking-tight text-white">Fixvo Plus Premium Member</h3>
+                  <span className="bg-amber-500/20 text-amber-400 border border-amber-400/30 text-[9px] font-black uppercase tracking-wider px-2 py-0.5 rounded">Active</span>
+                </div>
+                <p className="text-xs text-indigo-200 font-medium">
+                  Priority Dispatch • Zero Inspection Fees • 15% Member Discount
+                </p>
+                <div className="flex flex-wrap items-center gap-x-4 gap-y-1 pt-1.5 text-[11px] text-slate-400 font-semibold uppercase tracking-wider">
+                  <span>Activated: <strong className="text-slate-200">{profile?.membershipActiveDate ? new Date(profile.membershipActiveDate).toLocaleDateString() : 'Recent'}</strong></span>
+                  <span className="hidden sm:inline text-slate-600">•</span>
+                  <span>Expires: <strong className="text-slate-200">{profile?.membershipExpiry ? new Date(profile.membershipExpiry).toLocaleDateString() : 'N/A'}</strong></span>
+                </div>
+              </div>
+            </div>
+
+            {/* Savings & Benefits Panel */}
+            <div className="flex items-center gap-6 bg-white/5 border border-white/5 rounded-2xl p-4 shrink-0 relative z-10 backdrop-blur-sm">
+              <div className="text-center px-2">
+                <p className="text-[10px] text-slate-400 font-black uppercase tracking-wider">Free Inspections</p>
+                <p className="text-xl font-black text-white mt-1">{profile?.premiumBenefits?.inspectionsUsed || 0} Used</p>
+              </div>
+              <div className="h-8 w-px bg-white/10"></div>
+              <div className="text-center px-2">
+                <p className="text-[10px] text-amber-400 font-black uppercase tracking-wider">Total Saved</p>
+                <p className="text-xl font-black text-amber-400 mt-1">₹{profile?.premiumBenefits?.totalSaved || 0}</p>
+              </div>
+            </div>
+          </div>
+        ) : (
           <div className="bg-gradient-to-r from-amber-500/10 via-amber-500/5 to-transparent border border-amber-500/20 rounded-3xl p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-4 shadow-sm relative overflow-hidden group">
             <div className="absolute top-0 right-0 p-8 w-full h-full opacity-10 pointer-events-none">
               <div className="absolute top-[-20%] right-[-10%] w-[50%] h-[50%] bg-amber-500 rounded-full blur-[60px]"></div>
@@ -514,9 +577,9 @@ const UserDashboard = () => {
             </div>
             <button 
               onClick={() => setShowPremiumModal(true)}
-              className="relative z-10 px-5 py-2.5 bg-gradient-to-r from-amber-500 to-yellow-600 hover:from-amber-400 hover:to-yellow-500 text-slate-900 font-extrabold text-xs rounded-xl shadow-md transition-all duration-300 transform hover:-translate-y-0.5 whitespace-nowrap self-start sm:self-auto cursor-pointer"
+              className="relative z-10 px-5 py-2.5 bg-gradient-to-r from-amber-500 to-yellow-600 hover:from-amber-400 hover:to-yellow-500 text-slate-900 font-extrabold text-xs rounded-xl shadow-md transition-all duration-300 transform hover:-translate-y-0.5 whitespace-nowrap self-start sm:self-auto cursor-pointer border-none outline-none"
             >
-              Upgrade Now
+              Upgrade to Plus
             </button>
           </div>
         )}
@@ -587,25 +650,116 @@ const UserDashboard = () => {
                     </div>
                   </div>
 
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    <div className="space-y-2">
-                      <label className="text-sm font-bold text-slate-700 flex items-center gap-2"><Smartphone size={16} className="text-slate-400"/> Device Type</label>
-                      <input type="text" placeholder="e.g. iPhone 13, HP Pavilion" required className="w-full px-5 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:ring-4 focus:ring-blue-100 focus:border-blue-500 transition-all font-medium" value={formData.deviceType} onChange={(e) => setFormData({ ...formData, deviceType: e.target.value })} />
-                    </div>
-                    <div className="space-y-2">
-                      <div className="flex justify-between items-center">
-                        <label className="text-sm font-bold text-slate-700 flex items-center gap-2"><MapPin size={16} className="text-slate-400"/> Town / Area</label>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6 bg-slate-50/50 p-6 rounded-2xl border border-slate-200/50">
+                    {/* Render Category-Specific Fields */}
+                    {categoryId === 'repair' && (
+                      <div className="space-y-2">
+                        <label className="text-sm font-bold text-slate-700 flex items-center gap-2"><Smartphone size={16} className="text-slate-400"/> Device Type</label>
+                        <input type="text" placeholder="e.g. iPhone 13, HP Pavilion" required className="w-full px-5 py-3 bg-white border border-slate-200 rounded-xl focus:ring-4 focus:ring-blue-100 focus:border-blue-500 transition-all font-medium text-slate-700" value={formData.deviceType || ''} onChange={(e) => setFormData({ ...formData, deviceType: e.target.value })} />
                       </div>
+                    )}
+
+                    {categoryId === 'cleaning' && (
+                      <>
+                        <div className="space-y-2">
+                          <label className="text-sm font-bold text-slate-700 flex items-center gap-2"><Home size={16} className="text-slate-400"/> House / Premise Type</label>
+                          <select required className="w-full px-5 py-3 bg-white border border-slate-200 rounded-xl focus:ring-4 focus:ring-blue-100 focus:border-blue-500 transition-all font-medium text-slate-700" value={formData.houseType || ''} onChange={(e) => setFormData({ ...formData, houseType: e.target.value })}>
+                            <option value="">Select premise type</option>
+                            <option value="1 BHK">1 BHK Apartment</option>
+                            <option value="2 BHK">2 BHK Apartment</option>
+                            <option value="3 BHK">3 BHK Apartment</option>
+                            <option value="4 BHK">4 BHK+ Apartment</option>
+                            <option value="Villa">Independent House / Villa</option>
+                            <option value="Office">Commercial Office Space</option>
+                          </select>
+                        </div>
+                        <div className="space-y-2">
+                          <label className="text-sm font-bold text-slate-700 flex items-center gap-2"><Maximize2 size={16} className="text-slate-400"/> Area Size (Sq Ft)</label>
+                          <input type="text" placeholder="e.g. 1200 sq ft" required className="w-full px-5 py-3 bg-white border border-slate-200 rounded-xl focus:ring-4 focus:ring-blue-100 focus:border-blue-500 transition-all font-medium text-slate-700" value={formData.areaSize || ''} onChange={(e) => setFormData({ ...formData, areaSize: e.target.value })} />
+                        </div>
+                        <div className="space-y-2 md:col-span-2">
+                          <label className="text-sm font-bold text-slate-700 flex items-center gap-2"><Hash size={16} className="text-slate-400"/> Number of Rooms/Bathrooms</label>
+                          <input type="number" min="1" placeholder="e.g. 3" required className="w-full px-5 py-3 bg-white border border-slate-200 rounded-xl focus:ring-4 focus:ring-blue-100 focus:border-blue-500 transition-all font-medium text-slate-700" value={formData.numberOfRooms || ''} onChange={(e) => setFormData({ ...formData, numberOfRooms: e.target.value })} />
+                        </div>
+                      </>
+                    )}
+
+                    {(categoryId === 'painting' || serviceNameLower.includes('paint')) && (
+                      <>
+                        <div className="space-y-2">
+                          <label className="text-sm font-bold text-slate-700 flex items-center gap-2"><Home size={16} className="text-slate-400"/> Premise / Area to Paint</label>
+                          <select required className="w-full px-5 py-3 bg-white border border-slate-200 rounded-xl focus:ring-4 focus:ring-blue-100 focus:border-blue-500 transition-all font-medium text-slate-700" value={formData.houseType || ''} onChange={(e) => setFormData({ ...formData, houseType: e.target.value })}>
+                            <option value="">Select option</option>
+                            <option value="1 BHK">1 BHK Interior</option>
+                            <option value="2 BHK">2 BHK Interior</option>
+                            <option value="3 BHK">3 BHK Interior</option>
+                            <option value="Single Room">Single Room / Accent Wall</option>
+                            <option value="Exterior">Exterior Painting</option>
+                          </select>
+                        </div>
+                        <div className="space-y-2">
+                          <label className="text-sm font-bold text-slate-700 flex items-center gap-2"><Maximize2 size={16} className="text-slate-400"/> Wall Area Size (Sq Ft)</label>
+                          <input type="text" placeholder="e.g. 1500 sq ft" required className="w-full px-5 py-3 bg-white border border-slate-200 rounded-xl focus:ring-4 focus:ring-blue-100 focus:border-blue-500 transition-all font-medium text-slate-700" value={formData.wallArea || ''} onChange={(e) => setFormData({ ...formData, wallArea: e.target.value })} />
+                        </div>
+                        <div className="space-y-2">
+                          <label className="text-sm font-bold text-slate-700 flex items-center gap-2"><Layers size={16} className="text-slate-400"/> Location Type</label>
+                          <select required className="w-full px-5 py-3 bg-white border border-slate-200 rounded-xl focus:ring-4 focus:ring-blue-100 focus:border-blue-500 transition-all font-medium text-slate-700" value={formData.indoorOutdoor || ''} onChange={(e) => setFormData({ ...formData, indoorOutdoor: e.target.value })}>
+                            <option value="">Select location type</option>
+                            <option value="Indoor">Indoor Only</option>
+                            <option value="Outdoor">Outdoor Only</option>
+                            <option value="Both">Both (Indoor & Outdoor)</option>
+                          </select>
+                        </div>
+                        <div className="space-y-2">
+                          <label className="text-sm font-bold text-slate-700 flex items-center gap-2"><Paintbrush size={16} className="text-slate-400"/> Paint Preference</label>
+                          <select required className="w-full px-5 py-3 bg-white border border-slate-200 rounded-xl focus:ring-4 focus:ring-blue-100 focus:border-blue-500 transition-all font-medium text-slate-700" value={formData.paintPreference || ''} onChange={(e) => setFormData({ ...formData, paintPreference: e.target.value })}>
+                            <option value="">Select paint quality</option>
+                            <option value="Premium Gloss">Premium Gloss / Emulsion</option>
+                            <option value="Standard Matte">Standard Matte</option>
+                            <option value="Economy">Economy Acrylic</option>
+                            <option value="Weatherproof">Weatherproof Exterior Protection</option>
+                          </select>
+                        </div>
+                      </>
+                    )}
+
+                    {categoryId === 'installation' && (
+                      <>
+                        <div className="space-y-2">
+                          <label className="text-sm font-bold text-slate-700 flex items-center gap-2"><Tv size={16} className="text-slate-400"/> Appliance / Item to Install</label>
+                          <input type="text" placeholder="e.g. Split AC 1.5 Ton, 55 inch TV" required className="w-full px-5 py-3 bg-white border border-slate-200 rounded-xl focus:ring-4 focus:ring-blue-100 focus:border-blue-500 transition-all font-medium text-slate-700" value={formData.applianceType || ''} onChange={(e) => setFormData({ ...formData, applianceType: e.target.value })} />
+                        </div>
+                        <div className="space-y-2">
+                          <label className="text-sm font-bold text-slate-700 flex items-center gap-2"><MapPin size={16} className="text-slate-400"/> Installation Location</label>
+                          <input type="text" placeholder="e.g. Living Room Brick Wall" required className="w-full px-5 py-3 bg-white border border-slate-200 rounded-xl focus:ring-4 focus:ring-blue-100 focus:border-blue-500 transition-all font-medium text-slate-700" value={formData.installationLocation || ''} onChange={(e) => setFormData({ ...formData, installationLocation: e.target.value })} />
+                        </div>
+                        <div className="space-y-2 md:col-span-2">
+                          <label className="text-sm font-bold text-slate-700 flex items-center gap-2"><Layers size={16} className="text-slate-400"/> Accessories Needed</label>
+                          <select required className="w-full px-5 py-3 bg-white border border-slate-200 rounded-xl focus:ring-4 focus:ring-blue-100 focus:border-blue-500 transition-all font-medium text-slate-700" value={formData.accessoriesNeeded || ''} onChange={(e) => setFormData({ ...formData, accessoriesNeeded: e.target.value })}>
+                            <option value="">Select option</option>
+                            <option value="None">None (I have all accessories)</option>
+                            <option value="Wall Mount Bracket">Wall Mount Bracket (+₹299)</option>
+                            <option value="Extension Pipe">Extension Copper Pipe (+₹599/m)</option>
+                            <option value="Full Kit">Standard Installation Kit</option>
+                          </select>
+                        </div>
+                      </>
+                    )}
+
+                    {/* Standard Town/Area selection */}
+                    <div className="space-y-2">
+                      <label className="text-sm font-bold text-slate-700 flex items-center gap-2"><MapPin size={16} className="text-slate-400"/> Town / Area</label>
                       <select 
                         required 
-                        className="w-full px-5 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:ring-4 focus:ring-blue-100 focus:border-blue-500 transition-all font-medium text-slate-700" 
-                        value={formData.location} 
+                        className="w-full px-5 py-3 bg-white border border-slate-200 rounded-xl focus:ring-4 focus:ring-blue-100 focus:border-blue-500 transition-all font-medium text-slate-700" 
+                        value={formData.location || ''} 
                         onChange={(e) => setFormData({ ...formData, location: e.target.value })}
                       >
                         <option value="">Select your area</option>
                         <option value="Madanapalle">Madanapalle</option>
                         <option value="Kadiri">Kadiri</option>
                         <option value="Rayachoty">Rayachoty</option>
+                        <option value="Galiveedu">Galiveedu</option>
                       </select>
                     </div>
                   </div>
@@ -1075,25 +1229,32 @@ const UserDashboard = () => {
                 </div>
                 
                 {expandedBookings[booking._id] && (
-                <div className="mt-6 pt-5 border-t border-slate-100 flex items-center justify-between animate-in fade-in duration-300">
-                  {booking.providerId ? (
-                    <div className="flex flex-wrap items-center gap-3">
+                <div className="mt-6 pt-5 border-t border-slate-100 flex flex-wrap items-center justify-between gap-3 animate-in fade-in duration-300">
+                  <div className="flex flex-wrap items-center gap-3">
+                    {booking.providerId ? (
                       <div className="flex items-center gap-2 bg-indigo-50 px-3 py-2 rounded-xl text-indigo-700 text-sm font-bold shadow-sm border border-indigo-100">
                         <User size={16} className="text-indigo-500"/>
                         Technician Assigned
                       </div>
+                    ) : (
+                      <div className="flex items-center gap-2 bg-slate-100 px-3 py-2 rounded-xl text-slate-500 text-sm font-bold shadow-sm border border-slate-200">
+                        <User size={16} className="text-slate-400"/>
+                        Finding Technician...
+                      </div>
+                    )}
 
-                      {['accepted', 'on_the_way', 'arrived'].includes(booking.status) && (booking.providerPhone || booking.providerId?.phone) && (
-                        <>
-                          <a href={`tel:${formatPhoneLink(booking.providerPhone || booking.providerId?.phone)}`} className="flex items-center gap-2 bg-gradient-to-r from-emerald-500 to-emerald-600 hover:from-emerald-400 hover:to-emerald-500 text-white px-4 py-2 rounded-xl text-sm font-bold shadow-sm transition-all shadow-emerald-200 transform hover:-translate-y-0.5">
-                            <PhoneCall size={16} /> Call Technician
-                          </a>
-                          <a href={`https://wa.me/${(booking.providerPhone || booking.providerId?.phone || '').replace(/\D/g, '')}?text=Hi, this is regarding my Fixvo booking. My exact location is: `} target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 bg-[#25D366] hover:bg-[#1ebd5a] text-white px-4 py-2 rounded-xl text-sm font-bold shadow-sm transition-all shadow-emerald-200 transform hover:-translate-y-0.5">
-                            <MapPin size={16} /> Share Location
-                          </a>
-                        </>
-                      )}
+                    {['accepted', 'on_the_way', 'arrived'].includes(booking.status) && (booking.providerPhone || booking.providerId?.phone) && (
+                      <>
+                        <a href={`tel:${formatPhoneLink(booking.providerPhone || booking.providerId?.phone)}`} className="flex items-center gap-2 bg-gradient-to-r from-emerald-500 to-emerald-600 hover:from-emerald-400 hover:to-emerald-500 text-white px-4 py-2 rounded-xl text-sm font-bold shadow-sm transition-all shadow-emerald-200 transform hover:-translate-y-0.5">
+                          <PhoneCall size={16} /> Call Technician
+                        </a>
+                        <a href={`https://wa.me/${(booking.providerPhone || booking.providerId?.phone || '').replace(/\D/g, '')}?text=Hi, this is regarding my Fixvo booking. My exact location is: `} target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 bg-[#25D366] hover:bg-[#1ebd5a] text-white px-4 py-2 rounded-xl text-sm font-bold shadow-sm transition-all shadow-emerald-200 transform hover:-translate-y-0.5">
+                          <MapPin size={16} /> Share Location
+                        </a>
+                      </>
+                    )}
 
+                    {booking.providerId && (
                       <button 
                          onClick={() => setChatBookingId(booking._id)}
                          className="relative flex items-center gap-2 bg-white border border-slate-200 hover:border-indigo-300 hover:bg-indigo-50 text-indigo-600 px-4 py-2 rounded-xl text-sm font-bold shadow-sm transition-all shadow-indigo-100 transform hover:-translate-y-0.5"
@@ -1105,41 +1266,48 @@ const UserDashboard = () => {
                            </span>
                          )}
                       </button>
+                    )}
 
-                      {booking.status === 'completed' && (
-                        <button 
-                           onClick={() => !booking.isReviewed && setReviewBooking(booking)}
-                           className={`flex items-center gap-2 px-4 py-2 ${booking.isReviewed ? 'bg-slate-100 text-slate-500 cursor-not-allowed border border-slate-200 shadow-none' : 'bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-400 hover:to-orange-400 text-white shadow-amber-200 transition-all hover:-translate-y-0.5'} rounded-xl text-sm font-bold shadow-sm`}
-                        >
-                           <Star size={16} className={`fill-current ${booking.isReviewed ? 'text-slate-400' : 'text-amber-100'}`} /> {booking.isReviewed ? 'Reviewed' : 'Leave Review'}
-                        </button>
-                      )}
+                    {booking.status === 'completed' && (
+                      <button 
+                         onClick={() => !booking.isReviewed && setReviewBooking(booking)}
+                         className={`flex items-center gap-2 px-4 py-2 ${booking.isReviewed ? 'bg-slate-100 text-slate-500 cursor-not-allowed border border-slate-200 shadow-none' : 'bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-400 hover:to-orange-400 text-white shadow-amber-200 transition-all hover:-translate-y-0.5'} rounded-xl text-sm font-bold shadow-sm`}
+                      >
+                         <Star size={16} className={`fill-current ${booking.isReviewed ? 'text-slate-400' : 'text-amber-100'}`} /> {booking.isReviewed ? 'Reviewed' : 'Leave Review'}
+                      </button>
+                    )}
 
-                      {booking.status === 'completed' && booking.paymentStatus !== 'completed' && (
-                        <button 
-                           onClick={() => setPaymentBooking(booking)}
-                           className="flex items-center gap-2 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white px-5 py-2.5 rounded-xl text-sm font-bold shadow-lg transition-all shadow-blue-500/30 transform hover:-translate-y-0.5"
-                        >
-                           <CreditCard size={16} /> Pay Now
-                        </button>
-                      )}
+                    {booking.status === 'completed' && booking.paymentStatus !== 'completed' && (
+                      <button 
+                         onClick={() => setPaymentBooking(booking)}
+                         className="flex items-center gap-2 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white px-5 py-2.5 rounded-xl text-sm font-bold shadow-lg transition-all shadow-blue-500/30 transform hover:-translate-y-0.5"
+                      >
+                         <CreditCard size={16} /> Pay Now
+                      </button>
+                    )}
 
-                      {booking.status === 'completed' && booking.paymentStatus === 'completed' && (
-                         <div className="flex items-center gap-2 bg-emerald-50 border border-emerald-100 px-3 py-2 rounded-xl text-emerald-700 text-sm font-bold shadow-sm">
-                           <CheckCircle size={16} className="text-emerald-500" /> Payment & Service Completed
-                         </div>
-                      )}
-                      
-                      {booking.isReviewed && (
-                         <div className="flex items-center gap-2 bg-emerald-50 border border-emerald-100 px-3 py-2 rounded-xl text-emerald-700 text-sm font-bold shadow-sm">
-                           <Star size={16} className="text-emerald-500 fill-emerald-500"/>
-                           Reviewed
-                         </div>
-                      )}
-                    </div>
-                  ) : (
-                    <span className="text-slate-400 text-sm font-medium italic">Unassigned...</span>
-                  )}
+                    {booking.status === 'completed' && booking.paymentStatus === 'completed' && (
+                       <div className="flex items-center gap-2 bg-emerald-50 border border-emerald-100 px-3 py-2 rounded-xl text-emerald-700 text-sm font-bold shadow-sm">
+                         <CheckCircle size={16} className="text-emerald-500" /> Payment & Completed
+                       </div>
+                    )}
+                    
+                    {booking.isReviewed && (
+                       <div className="flex items-center gap-2 bg-emerald-50 border border-emerald-100 px-3 py-2 rounded-xl text-emerald-700 text-sm font-bold shadow-sm">
+                         <Star size={16} className="text-emerald-500 fill-emerald-500"/>
+                         Reviewed
+                       </div>
+                    )}
+
+                    {!['completed', 'cancelled', 'rejected'].includes(booking.status) && (
+                      <button 
+                        onClick={() => setCancelBookingId(booking._id)}
+                        className="flex items-center gap-2 bg-white border border-rose-200 hover:border-rose-300 hover:bg-rose-50 text-rose-600 px-4 py-2 rounded-xl text-sm font-bold shadow-sm transition-all transform hover:-translate-y-0.5 cursor-pointer outline-none"
+                      >
+                        <XCircle size={16} /> Cancel Booking
+                      </button>
+                    )}
+                  </div>
                 </div>
                 )}
 
@@ -1202,6 +1370,62 @@ const UserDashboard = () => {
             fetchData();
           }}
         />
+      )}
+
+      {cancelBookingId && (
+        <div className="fixed inset-0 bg-[#0B0F19]/80 backdrop-blur-md flex items-center justify-center p-4 z-[999] animate-in fade-in duration-300">
+          <div className="bg-[#111827] border border-red-500/30 rounded-3xl w-full max-w-md overflow-hidden shadow-[0_0_50px_rgba(239,68,68,0.15)] relative animate-in fade-in zoom-in duration-300 text-white p-6 sm:p-8 space-y-6">
+            <button 
+              onClick={() => setCancelBookingId(null)} 
+              className="absolute top-4 right-4 text-slate-400 hover:text-white bg-white/5 hover:bg-white/10 rounded-full p-2 transition-all cursor-pointer"
+            >
+              <X size={16} />
+            </button>
+            <div className="text-center space-y-2">
+              <div className="w-12 h-12 bg-red-500/20 text-red-500 rounded-full flex items-center justify-center mx-auto shadow-md">
+                <AlertCircle size={24} />
+              </div>
+              <h3 className="text-xl font-bold tracking-tight text-white">Cancel Booking Request</h3>
+              <p className="text-slate-400 text-xs font-medium">Please let us know the reason for cancelling this booking.</p>
+            </div>
+            
+            <div className="space-y-3">
+              <label className="block text-xs font-bold text-slate-400 uppercase tracking-widest">Reason for Cancellation</label>
+              <textarea
+                rows="4"
+                placeholder="Describe your reason here..."
+                value={cancellationReason}
+                onChange={(e) => setCancellationReason(e.target.value)}
+                className="w-full px-4 py-3 rounded-xl bg-slate-900 border border-white/10 text-slate-200 outline-none text-sm font-semibold focus:border-red-500 transition-all resize-none"
+                required
+              />
+            </div>
+
+            <div className="flex gap-3 pt-2">
+              <button 
+                onClick={() => setCancelBookingId(null)} 
+                disabled={submittingCancellation}
+                className="flex-1 border border-white/10 hover:bg-white/5 text-slate-300 font-bold py-3 rounded-xl transition-all text-xs sm:text-sm uppercase tracking-wider outline-none disabled:opacity-50 cursor-pointer"
+              >
+                Back
+              </button>
+              <button 
+                onClick={handleCancelBooking} 
+                disabled={submittingCancellation}
+                className="flex-1 bg-red-600 hover:bg-red-500 text-white font-black py-3 rounded-xl transition-all flex justify-center items-center gap-2 text-xs sm:text-sm uppercase tracking-widest shadow-lg shadow-red-500/20 active:scale-[0.98] outline-none cursor-pointer"
+              >
+                {submittingCancellation ? (
+                  <>
+                    <Loader2 size={16} className="animate-spin text-white" />
+                    <span>Cancelling...</span>
+                  </>
+                ) : (
+                  <span>Cancel Booking</span>
+                )}
+              </button>
+            </div>
+          </div>
+        </div>
       )}
 
       {/* Toast Alerts Stack */}

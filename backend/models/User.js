@@ -65,6 +65,14 @@ const userSchema = new mongoose.Schema({
   avatar: {
     type: String,
     default: '👨‍🔧'
+  },
+  membershipActiveDate: {
+    type: Date,
+    default: null
+  },
+  premiumBenefits: {
+    inspectionsUsed: { type: Number, default: 0 },
+    totalSaved: { type: Number, default: 0 }
   }
 }, { timestamps: true });
 

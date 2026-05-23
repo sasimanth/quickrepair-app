@@ -1,6 +1,6 @@
 const express = require('express');
 const router = express.Router();
-const { createBooking, getBookings, updateBookingStatus, assignBooking, processPayment, createPaymentIntent, submitQuote, approveQuote } = require('../controllers/bookingController');
+const { createBooking, getBookings, updateBookingStatus, assignBooking, processPayment, createPaymentIntent, submitQuote, approveQuote, cancelBooking } = require('../controllers/bookingController');
 const { protect, authorize, optionalAuth } = require('../middleware/auth');
 
 router.route('/')
@@ -11,6 +11,7 @@ router.put('/:id/status', protect, authorize('user', 'technician', 'admin'), upd
 router.put('/:id/assign', protect, authorize('admin'), assignBooking);
 router.put('/:id/pay', protect, authorize('user'), processPayment);
 router.post('/:id/create-payment-intent', protect, authorize('user'), createPaymentIntent);
+router.put('/:id/cancel', protect, cancelBooking);
 
 // New startup quote endpoints
 router.put('/:id/quote', protect, authorize('technician'), submitQuote);

@@ -14,7 +14,19 @@ const getProfile = async (req, res) => {
         address: ''
       });
     }
-    res.json(profile);
+    
+    // Fetch User to append premium membership status details
+    const user = await User.findById(req.user.id);
+    const mergedProfile = {
+      ...profile.toObject(),
+      isPremium: user ? user.isPremium : false,
+      membershipType: user ? user.membershipType : 'none',
+      membershipExpiry: user ? user.membershipExpiry : null,
+      membershipActiveDate: user ? user.membershipActiveDate : null,
+      premiumBenefits: user ? user.premiumBenefits : { inspectionsUsed: 0, totalSaved: 0 }
+    };
+    
+    res.json(mergedProfile);
   } catch (error) {
     res.status(500).json({ message: error.message });
   }

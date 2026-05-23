@@ -9,27 +9,70 @@ const PremiumModal = ({ onClose, onSuccess }) => {
   const [selectedMethod, setSelectedMethod] = useState('upi'); // 'upi' | 'card' | 'net'
 
   const handleOpenGateway = () => {
-    setStep('payment_gateway');
+    handleSubscribe();
   };
 
   const handleSubscribe = async () => {
     setLoading(true);
-    // Simulated Razorpay integration latency
-    setTimeout(async () => {
-      try {
-        const planName = isYearly ? 'yearly' : 'monthly';
-        const res = await api.post('/users/premium', { plan: planName });
-        setLoading(false);
-        setStep('success');
-        setTimeout(() => {
-          onSuccess(res.data);
-        }, 2500);
-      } catch (err) {
-        alert('Payment processing failed. Please try again.');
-        setLoading(false);
-        setStep('info');
-      }
-    }, 2000);
+    const planName = isYearly ? 'yearly' : 'monthly';
+    const price = isYearly ? 499 : 49;
+    try {
+      // 1. Create order on backend
+      const { data: order } = await api.post('/payment/create-order', {
+        amount: price
+      });
+      
+      // 2. Configure Razorpay options
+      const options = {
+        key: import.meta.env.VITE_RAZORPAY_KEY_ID || 'YOUR_KEY_ID',
+        amount: order.amount,
+        currency: "INR",
+        name: "Fixvo",
+        description: `Fixvo Plus ${planName === 'yearly' ? 'Yearly' : 'Monthly'} Membership`,
+        order_id: order.id,
+        handler: async function (response) {
+          try {
+            setLoading(true);
+            // 3. Verify Payment and Upgrade Premium
+            const verifyRes = await api.post('/payment/verify-premium', {
+              ...response,
+              plan: planName
+            });
+            if (verifyRes.data.success) {
+              setStep('success');
+              setTimeout(() => {
+                onSuccess(verifyRes.data);
+              }, 2500);
+            } else {
+              alert("Payment verification failed. Please contact support.");
+              setLoading(false);
+            }
+          } catch(err) {
+             console.error(err);
+             alert("Server error verifying premium payment.");
+             setLoading(false);
+          }
+        },
+        prefill: {
+          name: "Member Name",
+          email: "member@fixvo.com",
+        },
+        theme: {
+          color: "#f59e0b",
+        },
+      };
+
+      const rzp = new window.Razorpay(options);
+      rzp.on('payment.failed', function (response){
+         alert(response.error.description);
+         setLoading(false);
+      });
+      rzp.open();
+    } catch (err) {
+      console.error(err);
+      alert("Failed to initialize payment gateway.");
+      setLoading(false);
+    }
   };
 
   return (

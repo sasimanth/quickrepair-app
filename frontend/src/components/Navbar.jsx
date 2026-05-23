@@ -73,6 +73,11 @@ const Navbar = () => {
                       <UserCircle2 size={14} />
                     </div>
                     <span className="text-xs font-bold text-slate-700 max-w-[100px] truncate">{name?.split('@')[0]}</span>
+                    {user?.isPremium && (
+                      <span className="px-1.5 py-0.5 bg-gradient-to-r from-amber-500 to-yellow-400 border border-amber-500 text-slate-900 text-[9px] font-extrabold rounded uppercase tracking-wider ml-1 shadow-sm">
+                        Plus
+                      </span>
+                    )}
                     <span className="px-1.5 py-0.5 bg-indigo-50 border border-indigo-100 text-indigo-700 text-[10px] font-black rounded uppercase tracking-wider ml-1">
                       {role}
                     </span>

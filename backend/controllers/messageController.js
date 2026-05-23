@@ -25,7 +25,7 @@ const getMessages = async (req, res) => {
       { isRead: true }
     );
 
-    const messages = await Message.find({ bookingId, senderId: { $ne: 'system' } }).sort({ createdAt: 1 });
+    const messages = await Message.find({ bookingId }).sort({ createdAt: 1 });
     res.json(messages);
   } catch (error) {
     res.status(500).json({ message: error.message });

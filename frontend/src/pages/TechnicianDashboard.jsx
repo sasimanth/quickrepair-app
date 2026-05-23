@@ -6,7 +6,7 @@ import ChatModal from '../components/ChatModal';
 import SettingsModal from '../components/SettingsModal';
 import VerificationModal from '../components/VerificationModal';
 import KycModal from '../components/KycModal';
-import { Star, ShieldAlert, ShieldCheck } from 'lucide-react';
+import { Star, ShieldAlert, ShieldCheck, Sparkles, IndianRupee, Wallet, Coins, ArrowUpRight, ArrowDownLeft, FileText } from 'lucide-react';
 import { socket } from '../services/socket';
 
 const formatPhoneLink = (phone) => {
@@ -64,6 +64,30 @@ const TechnicianDashboard = () => {
   const [chatBookingId, setChatBookingId] = useState(null);
   const [quoteModalJob, setQuoteModalJob] = useState(null);
   const [quoteForm, setQuoteForm] = useState({ serviceCharge: '', sparePartsCost: '', transportCharge: '50', quoteReason: '', quotePhoto: '', detectedIssues: '' });
+  const [updatingJobs, setUpdatingJobs] = useState({});
+  const [cancelJobId, setCancelJobId] = useState(null);
+  const [cancellationReason, setCancellationReason] = useState('');
+  const [submittingCancellation, setSubmittingCancellation] = useState(false);
+
+  const handleCancelJob = async () => {
+    if (!cancellationReason.trim()) {
+      alert("Please provide a reason for cancellation.");
+      return;
+    }
+    setSubmittingCancellation(true);
+    try {
+      await api.put(`/bookings/${cancelJobId}/cancel`, { reason: cancellationReason });
+      showToast('Job Cancelled ❌', 'You have successfully cancelled this job.', 'success');
+      setCancelJobId(null);
+      setCancellationReason('');
+      fetchJobs();
+    } catch (err) {
+      alert(err.response?.data?.message || "Failed to cancel job.");
+    } finally {
+      setSubmittingCancellation(false);
+    }
+  };
+
   const [expandedCompletedJobs, setExpandedCompletedJobs] = useState({});
   const toggleCompletedExpand = (id) => {
     setExpandedCompletedJobs(prev => ({ ...prev, [id]: !prev[id] }));
@@ -81,8 +105,26 @@ const TechnicianDashboard = () => {
     });
   };
 
-  const [isWithdrawing, setIsWithdrawing] = useState(false);
-  const [withdrawAmount, setWithdrawAmount] = useState('');
+  const [showWithdrawModal, setShowWithdrawModal] = useState(false);
+  const [withdrawForm, setWithdrawForm] = useState({
+    amount: '',
+    accountName: '',
+    accountNumber: '',
+    ifscCode: '',
+    upiId: ''
+  });
+  const [submittingWithdraw, setSubmittingWithdraw] = useState(false);
+
+  const handleOpenWithdrawModal = () => {
+    setWithdrawForm({
+      amount: '',
+      accountName: profile?.bankDetails?.accountName || profile?.name || '',
+      accountNumber: profile?.bankDetails?.accountNumber || '',
+      ifscCode: profile?.bankDetails?.ifscCode || '',
+      upiId: profile?.bankDetails?.upiId || ''
+    });
+    setShowWithdrawModal(true);
+  };
   
   // Calculate earnings with 10% commission
   const completedJobs = jobs.filter(j => j.status === 'completed');
@@ -143,12 +185,23 @@ const TechnicianDashboard = () => {
       setJobs(prev => prev.map(j => j._id === updatedJob._id ? updatedJob : j));
     };
 
+    const handleNewNotification = (notif) => {
+      showToast(
+        notif.title || '🔔 Notification', 
+        notif.message || '', 
+        'info'
+      );
+      fetchJobs();
+    };
+
     socket.on('new_job', handleNewJob);
     socket.on('job_update', handleJobUpdate);
+    socket.on('new_notification', handleNewNotification);
 
     return () => {
       socket.off('new_job', handleNewJob);
       socket.off('job_update', handleJobUpdate);
+      socket.off('new_notification', handleNewNotification);
     };
   }, [profile?.userId]);
 
@@ -205,8 +258,6 @@ const TechnicianDashboard = () => {
     } catch (error) { console.error('Error fetching dashboard data', error); }
     finally { setLoading(false); }
   };
-
-  const [updatingJobs, setUpdatingJobs] = useState({});
 
   const updateJobStatus = async (id, status) => {
     if (updatingJobs[id]) return;
@@ -314,33 +365,39 @@ const TechnicianDashboard = () => {
     }
   };
 
-  const handleWithdrawal = async () => {
-    if (!profile?.kycCompleted) {
-       setShowKyc(true);
-       return;
+  const handleWithdrawal = async (e) => {
+    if (e && e.preventDefault) e.preventDefault();
+    
+    const numAmount = Number(withdrawForm.amount);
+    if (!numAmount || numAmount < 500) {
+      alert("Minimum withdrawal amount is ₹500.");
+      return;
     }
-    if (!withdrawAmount || Number(withdrawAmount) <= 0) {
-       alert("Please enter a valid amount");
-       return;
+    if (numAmount > (profile?.walletBalance || 0)) {
+      alert("Cannot withdraw more than available wallet balance.");
+      return;
     }
-    const maxAvailable = netEarnings - (profile?.withdrawnAmount || 0) - (profile?.pendingWithdrawal || 0);
+    if (!withdrawForm.accountName || !withdrawForm.accountNumber || !withdrawForm.ifscCode) {
+      alert("Please fill all required bank account details.");
+      return;
+    }
 
-    if (Number(withdrawAmount) > maxAvailable) {
-       alert(`You can only withdraw up to $${maxAvailable}`);
-       return;
-    }
-
+    setSubmittingWithdraw(true);
     try {
-       setIsWithdrawing(true);
-       await api.post('/technicians/withdraw', { amount: Number(withdrawAmount) });
-       alert("Withdrawal requested successfully! Admin will approve it shortly.");
-       setWithdrawAmount('');
-       fetchJobs();
-       // Note: In real app, `profile` needs to update immediately via response instead of just relying on fetchJobs() (since fetchJobs fetches profile too it'll update)
+      await api.post('/technicians/withdraw', {
+        amount: numAmount,
+        accountName: withdrawForm.accountName,
+        accountNumber: withdrawForm.accountNumber,
+        ifscCode: withdrawForm.ifscCode,
+        upiId: withdrawForm.upiId
+      });
+      showToast('Withdrawal Requested 💰', `Your payout request for ₹${numAmount} was submitted successfully!`, 'success');
+      setShowWithdrawModal(false);
+      fetchJobs();
     } catch (error) {
-       alert(error.response?.data?.message || "Failed to request withdrawal");
+      alert(error.response?.data?.message || "Failed to submit withdrawal request.");
     } finally {
-       setIsWithdrawing(false);
+      setSubmittingWithdraw(false);
     }
   };
 
@@ -454,51 +511,61 @@ const TechnicianDashboard = () => {
 
         {/* Stats Section */}
         {!loading && profile?.isProfileComplete && (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-            <div className="group bg-white p-8 rounded-[2rem] shadow-[0_4px_20px_rgb(0,0,0,0.03)] border border-slate-100/80 flex items-center gap-6 transition-all hover:shadow-[0_8px_30px_rgb(0,0,0,0.06)] hover:-translate-y-1">
-              <div className="p-5 bg-emerald-50 text-emerald-600 rounded-[1.25rem] group-hover:scale-110 transition-transform"><CheckCircle size={32} /></div>
-              <div>
-                <p className="text-xs font-black tracking-widest text-slate-400 uppercase">Jobs Completed</p>
-                <p className="text-4xl font-black text-slate-900 tracking-tight mt-1">
-                  {jobs.filter(j => j.status === 'completed').length}
-                </p>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+            {/* Available Balance */}
+            <div className="group bg-gradient-to-br from-emerald-600 to-teal-700 p-6 rounded-[2rem] shadow-lg shadow-emerald-600/10 text-white flex flex-col justify-between relative overflow-hidden transition-all hover:scale-[1.01] hover:shadow-xl">
+              <div className="absolute top-[-30%] right-[-10%] w-[50%] h-[50%] bg-white/10 rounded-full blur-[40px]"></div>
+              <div className="flex justify-between items-start">
+                <div className="p-3 bg-white/10 rounded-xl"><Wallet size={24} /></div>
+                {profile?.pendingWithdrawal > 0 && (
+                  <span className="text-[9px] bg-white/20 text-white font-extrabold px-2.5 py-0.5 rounded-full uppercase tracking-wider">
+                    Pending: ₹{profile.pendingWithdrawal}
+                  </span>
+                )}
+              </div>
+              <div className="mt-4">
+                <p className="text-[10px] font-bold uppercase tracking-wider text-emerald-100 opacity-90">Available Balance</p>
+                <p className="text-3xl font-black mt-1">₹{(profile?.walletBalance || 0).toFixed(2)}</p>
+              </div>
+              <button 
+                onClick={handleOpenWithdrawModal}
+                className="mt-4 w-full bg-white hover:bg-emerald-50 text-emerald-700 font-extrabold py-2 px-4 rounded-xl text-xs transition-colors flex items-center justify-center gap-1.5 outline-none cursor-pointer border-none shadow-sm"
+              >
+                Withdraw Earnings <ArrowUpRight size={14} />
+              </button>
+            </div>
+
+            {/* Pending Earnings */}
+            <div className="group bg-white p-6 rounded-[2rem] shadow-[0_4px_20px_rgb(0,0,0,0.03)] border border-slate-100/80 flex flex-col justify-between transition-all hover:shadow-[0_8px_30px_rgb(0,0,0,0.06)] hover:-translate-y-0.5">
+              <div className="flex justify-between items-start">
+                <div className="p-3 bg-amber-50 text-amber-600 rounded-xl"><Clock size={24} /></div>
+              </div>
+              <div className="mt-4">
+                <p className="text-[10px] font-bold uppercase tracking-wider text-slate-400">Pending Earnings</p>
+                <p className="text-3xl font-black text-slate-800 mt-1">₹{(profile?.pendingEarnings || 0).toFixed(2)}</p>
               </div>
             </div>
-            <div className="group bg-white p-8 rounded-[2rem] shadow-[0_4px_20px_rgb(0,0,0,0.03)] border border-slate-100/80 flex flex-col justify-center transition-all hover:shadow-[0_8px_30px_rgb(0,0,0,0.06)] hover:-translate-y-1">
-              <div className="flex items-center gap-6">
-                 <div className="p-5 bg-indigo-50 text-indigo-600 rounded-[1.25rem] group-hover:scale-110 transition-transform"><Briefcase size={32} /></div>
-                 <div>
-                   <p className="text-xs font-black tracking-widest text-slate-400 uppercase">Total Earned</p>
-                   <p className="text-4xl font-black text-indigo-600 tracking-tight mt-1">
-                     ₹{totalAmount.toFixed(0)}
-                   </p>
-                 </div>
+
+            {/* Total Earnings */}
+            <div className="group bg-white p-6 rounded-[2rem] shadow-[0_4px_20px_rgb(0,0,0,0.03)] border border-slate-100/80 flex flex-col justify-between transition-all hover:shadow-[0_8px_30px_rgb(0,0,0,0.06)] hover:-translate-y-0.5">
+              <div className="flex justify-between items-start">
+                <div className="p-3 bg-indigo-50 text-indigo-600 rounded-xl"><Coins size={24} /></div>
+              </div>
+              <div className="mt-4">
+                <p className="text-[10px] font-bold uppercase tracking-wider text-slate-400">Total Earnings</p>
+                <p className="text-3xl font-black text-indigo-600 mt-1">₹{(profile?.totalEarnings || 0).toFixed(2)}</p>
               </div>
             </div>
-            <div className="group bg-white p-6 rounded-[2rem] shadow-[0_4px_20px_rgb(0,0,0,0.03)] border border-slate-100/80 flex flex-col transition-all hover:shadow-[0_8px_30px_rgb(0,0,0,0.06)] hover:-translate-y-1">
-               <div className="flex justify-between items-start mb-2">
-                 <p className="text-xs font-black tracking-widest text-slate-400 uppercase">Available Balance <span className="text-[10px] lowercase text-slate-400 font-normal">(After 10% Commission)</span></p>
-                 <span className="text-xs font-bold bg-amber-50 text-amber-600 px-2 py-0.5 rounded-full border border-amber-200">Pending: ₹{profile?.pendingWithdrawal || 0}</span>
-               </div>
-               <p className="text-3xl font-black text-emerald-600 tracking-tight mb-4">
-                 ₹{(netEarnings - (profile?.withdrawnAmount || 0) - (profile?.pendingWithdrawal || 0)).toFixed(0)}
-               </p>
-               <div className="flex gap-2">
-                 <input 
-                    type="number" 
-                    placeholder="Amount" 
-                    value={withdrawAmount}
-                    onChange={(e) => setWithdrawAmount(e.target.value)}
-                    className="w-full px-3 py-2 border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none text-sm"
-                 />
-                 <button 
-                    onClick={handleWithdrawal}
-                    disabled={isWithdrawing}
-                    className="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-xl text-sm font-bold shadow-sm flex items-center justify-center whitespace-nowrap disabled:bg-indigo-400"
-                 >
-                    {isWithdrawing ? 'Sending...' : 'Withdraw'}
-                 </button>
-               </div>
+
+            {/* Withdrawn Amount */}
+            <div className="group bg-white p-6 rounded-[2rem] shadow-[0_4px_20px_rgb(0,0,0,0.03)] border border-slate-100/80 flex flex-col justify-between transition-all hover:shadow-[0_8px_30px_rgb(0,0,0,0.06)] hover:-translate-y-0.5">
+              <div className="flex justify-between items-start">
+                <div className="p-3 bg-rose-50 text-rose-600 rounded-xl"><ArrowDownLeft size={24} /></div>
+              </div>
+              <div className="mt-4">
+                <p className="text-[10px] font-bold uppercase tracking-wider text-slate-400">Withdrawn Amount</p>
+                <p className="text-3xl font-black text-slate-800 mt-1">₹{(profile?.withdrawnAmount || 0).toFixed(2)}</p>
+              </div>
             </div>
           </div>
         )}
@@ -717,25 +784,35 @@ const TechnicianDashboard = () => {
                             </button>
                         )}
                         {['accepted', 'quote_approved', 'on_the_way', 'arrived', 'in_progress'].includes(job.status) && (
-                            <div className="flex gap-2">
-                              {(job.customerPhone || job.phone) && (
-                                <a 
-                                  href={`tel:${formatPhoneLink(job.customerPhone || job.phone)}`} 
-                                  className="flex-1 bg-gradient-to-r from-emerald-500 to-emerald-600 hover:from-emerald-400 hover:to-emerald-500 text-white font-bold py-3 p-4 rounded-2xl transition-all shadow-sm flex items-center justify-center gap-2 transform hover:-translate-y-0.5"
-                                >
-                                  <PhoneCall size={18} /> Call
-                                </a>
-                              )}
-                              <button
-                                onClick={() => setChatBookingId(job._id)}
-                                className="relative flex-1 bg-white hover:bg-indigo-50 border-2 border-slate-100 hover:border-indigo-200 text-indigo-600 font-bold py-3 p-4 rounded-2xl transition-all shadow-sm flex items-center justify-center gap-2 transform hover:-translate-y-0.5"
-                              >
-                                <MessageSquare size={18} /> Chat
-                                {job.unreadCount > 0 && (
-                                  <span className="absolute -top-2 -right-2 bg-rose-500 text-white rounded-full text-xs font-black w-6 h-6 flex items-center justify-center border-2 border-white animate-pulse shadow-md">
-                                    {job.unreadCount}
-                                  </span>
+                            <div className="space-y-2 w-full">
+                              <div className="flex gap-2">
+                                {(job.customerPhone || job.phone) && (
+                                  <a 
+                                    href={`tel:${formatPhoneLink(job.customerPhone || job.phone)}`} 
+                                    className="flex-1 bg-gradient-to-r from-emerald-500 to-emerald-600 hover:from-emerald-400 hover:to-emerald-500 text-white font-bold py-3 p-4 rounded-2xl transition-all shadow-sm flex items-center justify-center gap-2 transform hover:-translate-y-0.5 text-center"
+                                  >
+                                    <PhoneCall size={18} /> Call
+                                  </a>
                                 )}
+                                <button
+                                  onClick={() => setChatBookingId(job._id)}
+                                  className="relative flex-1 bg-white hover:bg-indigo-50 border-2 border-slate-100 hover:border-indigo-200 text-indigo-600 font-bold py-3 p-4 rounded-2xl transition-all shadow-sm flex items-center justify-center gap-2 transform hover:-translate-y-0.5"
+                                  type="button"
+                                >
+                                  <MessageSquare size={18} /> Chat
+                                  {job.unreadCount > 0 && (
+                                    <span className="absolute -top-2 -right-2 bg-rose-500 text-white rounded-full text-xs font-black w-6 h-6 flex items-center justify-center border-2 border-white animate-pulse shadow-md">
+                                      {job.unreadCount}
+                                    </span>
+                                  )}
+                                </button>
+                              </div>
+                              <button
+                                onClick={() => setCancelJobId(job._id)}
+                                className="w-full bg-white hover:bg-rose-50 border border-rose-200 text-rose-600 font-bold py-2.5 rounded-xl transition-all flex items-center justify-center gap-2 text-xs cursor-pointer outline-none"
+                                type="button"
+                              >
+                                <XCircle size={14} /> Cancel Job
                               </button>
                             </div>
                         )}
@@ -788,6 +865,93 @@ const TechnicianDashboard = () => {
             )}
           </>
         )}
+        {/* Payout & Withdrawal History Section */}
+        {!loading && profile?.isProfileComplete && (
+          <div className="bg-white p-6 sm:p-8 rounded-[2rem] shadow-[0_4px_20px_rgb(0,0,0,0.03)] border border-slate-100/80 mt-10">
+            <div className="flex flex-wrap items-center justify-between gap-4 mb-6">
+              <div className="flex items-center gap-3">
+                <div className="p-3 bg-indigo-50 text-indigo-600 rounded-xl"><FileText size={20} /></div>
+                <div>
+                  <h3 className="text-xl font-bold text-slate-800">Payout & Withdrawal History</h3>
+                  <p className="text-xs text-slate-500 font-medium">Track your bank transfers and payout request status</p>
+                </div>
+              </div>
+            </div>
+
+            {!profile.withdrawals || profile.withdrawals.length === 0 ? (
+              <div className="text-center py-12 bg-slate-50 rounded-2xl border border-dashed border-slate-200">
+                <Coins size={36} className="text-slate-400 mx-auto mb-2 opacity-60" />
+                <p className="text-sm font-bold text-slate-500">No withdrawal requests found.</p>
+                <p className="text-xs text-slate-400 mt-1">Submit your first request once you have at least ₹500 in earnings.</p>
+              </div>
+            ) : (
+              <div className="overflow-x-auto rounded-2xl border border-slate-100">
+                <table className="w-full text-left border-collapse">
+                  <thead>
+                    <tr className="bg-slate-50 text-slate-400 text-[10px] font-black uppercase tracking-wider border-b border-slate-100">
+                      <th className="px-6 py-4">Request Date</th>
+                      <th className="px-6 py-4">Bank Details</th>
+                      <th className="px-6 py-4">Amount</th>
+                      <th className="px-6 py-4">Status</th>
+                      <th className="px-6 py-4">Transaction ID / Notes</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-slate-50 text-xs sm:text-sm font-semibold text-slate-700">
+                    {profile.withdrawals.map((req) => (
+                      <tr key={req._id} className="hover:bg-slate-50/50 transition-colors">
+                        <td className="px-6 py-4 whitespace-nowrap text-slate-500">
+                          {new Date(req.createdAt).toLocaleDateString(undefined, {
+                            year: 'numeric',
+                            month: 'short',
+                            day: 'numeric'
+                          })}
+                        </td>
+                        <td className="px-6 py-4">
+                          <p className="font-bold text-slate-800">{req.bankDetails?.accountName}</p>
+                          <p className="text-[11px] text-slate-400 font-medium">
+                            {req.bankDetails?.accountNumber.slice(0, 4)}...{req.bankDetails?.accountNumber.slice(-4)} ({req.bankDetails?.ifscCode})
+                          </p>
+                          {req.bankDetails?.upiId && (
+                            <p className="text-[11px] text-indigo-500 font-bold">UPI: {req.bankDetails?.upiId}</p>
+                          )}
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap text-slate-900 font-extrabold text-base">
+                          ₹{req.amount}
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap">
+                          <span className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[10px] font-black uppercase tracking-wider border ${
+                            req.status === 'paid' 
+                              ? 'bg-emerald-100 text-emerald-700 border-emerald-200' 
+                              : req.status === 'approved'
+                              ? 'bg-blue-100 text-blue-700 border-blue-200 animate-pulse'
+                              : req.status === 'rejected'
+                              ? 'bg-rose-100 text-rose-700 border-rose-200'
+                              : 'bg-amber-100 text-amber-700 border-amber-200 animate-pulse'
+                          }`}>
+                            <span className={`w-1.5 h-1.5 rounded-full ${
+                              req.status === 'paid' ? 'bg-emerald-500' : req.status === 'approved' ? 'bg-blue-500' : req.status === 'rejected' ? 'bg-rose-500' : 'bg-amber-500'
+                            }`} />
+                            {req.status}
+                          </span>
+                        </td>
+                        <td className="px-6 py-4">
+                          {req.status === 'paid' ? (
+                            <div>
+                              <p className="text-[11px] font-mono text-slate-500 bg-slate-100 px-2 py-0.5 rounded border border-slate-200 w-max">{req.transactionId || 'TXN_N/A'}</p>
+                              {req.adminNotes && <p className="text-[10px] text-slate-400 font-medium mt-1">{req.adminNotes}</p>}
+                            </div>
+                          ) : (
+                            <p className="text-[11px] text-slate-400 font-medium italic">{req.adminNotes || 'Awaiting admin processing...'}</p>
+                          )}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            )}
+          </div>
+        )}
 
       </div>
 
@@ -822,6 +986,62 @@ const TechnicianDashboard = () => {
         />
       )}
 
+      {cancelJobId && (
+        <div className="fixed inset-0 bg-[#0B0F19]/80 backdrop-blur-md flex items-center justify-center p-4 z-[999] animate-in fade-in duration-300">
+          <div className="bg-[#111827] border border-red-500/30 rounded-3xl w-full max-w-md overflow-hidden shadow-[0_0_50px_rgba(239,68,68,0.15)] relative animate-in fade-in zoom-in duration-300 text-white p-6 sm:p-8 space-y-6">
+            <button 
+              onClick={() => setCancelJobId(null)} 
+              className="absolute top-4 right-4 text-slate-400 hover:text-white bg-white/5 hover:bg-white/10 rounded-full p-2 transition-all cursor-pointer"
+            >
+              <XCircle size={16} />
+            </button>
+            <div className="text-center space-y-2">
+              <div className="w-12 h-12 bg-red-500/20 text-red-500 rounded-full flex items-center justify-center mx-auto shadow-md">
+                <AlertCircle size={24} />
+              </div>
+              <h3 className="text-xl font-bold tracking-tight text-white">Cancel Job Assignment</h3>
+              <p className="text-slate-400 text-xs font-medium">Please let us know the reason for cancelling this job.</p>
+            </div>
+            
+            <div className="space-y-3">
+              <label className="block text-xs font-bold text-slate-400 uppercase tracking-widest">Reason for Cancellation</label>
+              <textarea
+                rows="4"
+                placeholder="Describe your reason here..."
+                value={cancellationReason}
+                onChange={(e) => setCancellationReason(e.target.value)}
+                className="w-full px-4 py-3 rounded-xl bg-slate-900 border border-white/10 text-slate-200 outline-none text-sm font-semibold focus:border-red-500 transition-all resize-none"
+                required
+              />
+            </div>
+
+            <div className="flex gap-3 pt-2">
+              <button 
+                onClick={() => setCancelJobId(null)} 
+                disabled={submittingCancellation}
+                className="flex-1 border border-white/10 hover:bg-white/5 text-slate-300 font-bold py-3 rounded-xl transition-all text-xs sm:text-sm uppercase tracking-wider outline-none disabled:opacity-50 cursor-pointer"
+              >
+                Back
+              </button>
+              <button 
+                onClick={handleCancelJob} 
+                disabled={submittingCancellation}
+                className="flex-1 bg-red-600 hover:bg-red-500 text-white font-black py-3 rounded-xl transition-all flex justify-center items-center gap-2 text-xs sm:text-sm uppercase tracking-widest shadow-lg shadow-red-500/20 active:scale-[0.98] outline-none cursor-pointer"
+              >
+                {submittingCancellation ? (
+                  <>
+                    <Loader2 size={16} className="animate-spin text-white" />
+                    <span>Cancelling...</span>
+                  </>
+                ) : (
+                  <span>Cancel Job</span>
+                )}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       {showKyc && (
         <KycModal 
           onClose={() => setShowKyc(false)}
@@ -832,9 +1052,121 @@ const TechnicianDashboard = () => {
         />
       )}
 
+      {showWithdrawModal && (
+        <div className="fixed inset-0 bg-[#0B0F19]/85 backdrop-blur-sm z-[999] flex items-center justify-center p-4 animate-in fade-in duration-300">
+          <div className="bg-[#111827] border border-indigo-500/20 rounded-3xl w-full max-w-md overflow-hidden shadow-2xl text-white p-6 sm:p-8 space-y-6">
+            <button 
+              onClick={() => setShowWithdrawModal(false)} 
+              className="absolute top-4 right-4 text-slate-400 hover:text-white bg-white/5 hover:bg-white/10 rounded-full p-2 transition-all cursor-pointer border-none outline-none"
+            >
+              <XCircle size={18} />
+            </button>
+            
+            <div className="text-center space-y-2">
+              <div className="w-12 h-12 bg-indigo-500/20 text-indigo-400 rounded-full flex items-center justify-center mx-auto">
+                <Wallet size={24} />
+              </div>
+              <h3 className="text-xl font-bold tracking-tight">Withdraw Earnings</h3>
+              <p className="text-slate-400 text-xs font-medium">Funds will be transferred directly to your bank account or UPI.</p>
+            </div>
+
+            <form onSubmit={handleWithdrawal} className="space-y-4">
+              <div>
+                <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">Withdrawal Amount (₹)</label>
+                <input 
+                  required 
+                  type="number" 
+                  min="500" 
+                  max={profile?.walletBalance || 0}
+                  value={withdrawForm.amount} 
+                  onChange={(e) => setWithdrawForm({ ...withdrawForm, amount: e.target.value })} 
+                  className="w-full px-4 py-3 rounded-xl bg-slate-900 border border-white/5 focus:border-indigo-500 focus:ring-4 focus:ring-indigo-500/20 outline-none font-bold text-white text-sm transition-all" 
+                  placeholder="Minimum ₹500" 
+                />
+                <p className="text-[10px] text-slate-500 mt-1 font-semibold">Available for withdrawal: ₹{(profile?.walletBalance || 0).toFixed(2)}</p>
+              </div>
+
+              <div>
+                <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">Account Holder Name</label>
+                <input 
+                  required 
+                  type="text" 
+                  value={withdrawForm.accountName} 
+                  onChange={(e) => setWithdrawForm({ ...withdrawForm, accountName: e.target.value })} 
+                  className="w-full px-4 py-3 rounded-xl bg-slate-900 border border-white/5 focus:border-indigo-500 focus:ring-4 focus:ring-indigo-500/20 outline-none font-semibold text-white text-sm transition-all" 
+                  placeholder="Name as in bank account" 
+                />
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">Account Number</label>
+                  <input 
+                    required 
+                    type="text" 
+                    value={withdrawForm.accountNumber} 
+                    onChange={(e) => setWithdrawForm({ ...withdrawForm, accountNumber: e.target.value })} 
+                    className="w-full px-4 py-3 rounded-xl bg-slate-900 border border-white/5 focus:border-indigo-500 focus:ring-4 focus:ring-indigo-500/20 outline-none font-semibold text-white text-sm transition-all" 
+                    placeholder="Bank Account Number" 
+                  />
+                </div>
+                <div>
+                  <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">IFSC Code</label>
+                  <input 
+                    required 
+                    type="text" 
+                    value={withdrawForm.ifscCode} 
+                    onChange={(e) => setWithdrawForm({ ...withdrawForm, ifscCode: e.target.value.toUpperCase() })} 
+                    className="w-full px-4 py-3 rounded-xl bg-slate-900 border border-white/5 focus:border-indigo-500 focus:ring-4 focus:ring-indigo-500/20 outline-none font-semibold text-white text-sm transition-all" 
+                    placeholder="SBIN0012345" 
+                  />
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">UPI ID (Optional)</label>
+                <input 
+                  type="text" 
+                  value={withdrawForm.upiId} 
+                  onChange={(e) => setWithdrawForm({ ...withdrawForm, upiId: e.target.value })} 
+                  className="w-full px-4 py-3 rounded-xl bg-slate-900 border border-white/5 focus:border-indigo-500 focus:ring-4 focus:ring-indigo-500/20 outline-none font-semibold text-white text-sm transition-all" 
+                  placeholder="username@okaxis" 
+                />
+              </div>
+
+              <div className="flex gap-3 pt-4">
+                <button 
+                  type="button"
+                  onClick={() => setShowWithdrawModal(false)} 
+                  disabled={submittingWithdraw}
+                  className="flex-1 border border-white/10 hover:bg-white/5 text-slate-300 font-bold py-3.5 rounded-xl transition-all text-xs sm:text-sm uppercase tracking-wider outline-none disabled:opacity-50 cursor-pointer"
+                >
+                  Cancel
+                </button>
+                <button 
+                  type="submit" 
+                  disabled={submittingWithdraw}
+                  className="flex-1 bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-400 hover:to-teal-500 text-white font-black py-3.5 rounded-xl transition-all flex justify-center items-center gap-2 text-xs sm:text-sm uppercase tracking-widest shadow-lg shadow-emerald-500/20 active:scale-[0.98] outline-none cursor-pointer border-none"
+                >
+                  {submittingWithdraw ? (
+                    <>
+                      <Loader2 size={16} className="animate-spin text-white" />
+                      <span>Requesting...</span>
+                    </>
+                  ) : (
+                    <span>Submit Request</span>
+                  )}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
       {quoteModalJob && (() => {
         const service = globalServices.find(s => s.id === quoteModalJob.serviceId) || {};
-        const categoryId = service.categoryId || 'repair';
+        const serviceNameLower = (quoteModalJob.serviceName || '').toLowerCase();
+        const categoryId = (serviceNameLower.includes('paint') || service.categoryId === 'painting') ? 'painting' : (service.categoryId || 'repair');
         
         return (
           <div className="fixed inset-0 bg-[#0B0F19]/80 backdrop-blur-md z-[100] flex items-center justify-center p-4 animate-in fade-in duration-300">
@@ -910,6 +1242,31 @@ const TechnicianDashboard = () => {
                             <div>
                               <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">Transport Charges (₹)</label>
                               <input required type="number" value={quoteForm.transportCharge} onChange={(e) => setQuoteForm({...quoteForm, transportCharge: e.target.value})} className="w-full px-4 py-3 rounded-xl bg-slate-900 border border-white/5 focus:border-indigo-500 focus:ring-4 focus:ring-indigo-500/20 outline-none font-bold text-white text-sm transition-all" placeholder="e.g. 50" />
+                            </div>
+                          </div>
+                        </>
+                      );
+                    case 'painting':
+                      return (
+                        <>
+                          <div className="space-y-4">
+                            <div>
+                              <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">Wall Area / Room Details</label>
+                              <input required type="text" value={quoteForm.detectedIssues} onChange={(e) => setQuoteForm({...quoteForm, detectedIssues: e.target.value})} className="w-full px-4 py-3 rounded-xl bg-slate-900 border border-white/5 focus:border-indigo-500 focus:ring-4 focus:ring-indigo-500/20 outline-none font-semibold text-white text-sm transition-all" placeholder="e.g. 1500 Sq Ft / 2 BHK" />
+                            </div>
+                            <div className="grid grid-cols-2 gap-4">
+                              <div>
+                                <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">Labor / Painter Cost (₹)</label>
+                                <input required type="number" value={quoteForm.serviceCharge} onChange={(e) => setQuoteForm({...quoteForm, serviceCharge: e.target.value})} className="w-full px-4 py-3 rounded-xl bg-slate-900 border border-white/5 focus:border-indigo-500 focus:ring-4 focus:ring-indigo-500/20 outline-none font-bold text-white text-sm transition-all" placeholder="e.g. 800" />
+                              </div>
+                              <div>
+                                <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">Paint & Material Cost (₹)</label>
+                                <input required type="number" value={quoteForm.sparePartsCost} onChange={(e) => setQuoteForm({...quoteForm, sparePartsCost: e.target.value})} className="w-full px-4 py-3 rounded-xl bg-slate-900 border border-white/5 focus:border-indigo-500 focus:ring-4 focus:ring-indigo-500/20 outline-none font-bold text-white text-sm transition-all" placeholder="e.g. 1200" />
+                              </div>
+                            </div>
+                            <div>
+                              <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">Transport / Setup Charges (₹)</label>
+                              <input required type="number" value={quoteForm.transportCharge} onChange={(e) => setQuoteForm({...quoteForm, transportCharge: e.target.value})} className="w-full px-4 py-3 rounded-xl bg-slate-900 border border-white/5 focus:border-indigo-500 focus:ring-4 focus:ring-indigo-500/20 outline-none font-bold text-white text-sm transition-all" placeholder="e.g. 100" />
                             </div>
                           </div>
                         </>

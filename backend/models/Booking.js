@@ -39,7 +39,7 @@ const bookingSchema = new mongoose.Schema({
   },
   status: {
     type: String,
-    enum: ['pending', 'queued', 'assigned', 'accepted', 'on_the_way', 'arrived', 'quote_pending', 'quote_approved', 'in_progress', 'completed', 'rejected'],
+    enum: ['pending', 'queued', 'assigned', 'accepted', 'on_the_way', 'arrived', 'quote_pending', 'quote_approved', 'in_progress', 'completed', 'rejected', 'cancelled'],
     default: 'pending',
   },
   date: {
@@ -207,7 +207,21 @@ const bookingSchema = new mongoose.Schema({
     type: String,
     enum: ['shop', 'doorstep'],
     default: 'doorstep'
-  }
+  },
+  // Dynamic fields based on service category
+  areaSize: { type: String, default: null },
+  houseType: { type: String, default: null },
+  numberOfRooms: { type: String, default: null },
+  wallArea: { type: String, default: null },
+  indoorOutdoor: { type: String, default: null },
+  paintPreference: { type: String, default: null },
+  applianceType: { type: String, default: null },
+  installationLocation: { type: String, default: null },
+  accessoriesNeeded: { type: String, default: null },
+  // Cancellation tracking
+  cancellationReason: { type: String, default: null },
+  cancelledBy: { type: String, enum: ['customer', 'technician', 'admin', null], default: null },
+  cancelledAt: { type: Date, default: null }
 }, { timestamps: true });
 
 bookingSchema.index({ userId: 1 });
