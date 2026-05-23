@@ -152,29 +152,16 @@ const ChatModal = ({ booking, onClose, currentRole }) => {
           ) : (
             <div className="space-y-4">
               {messages.map((msg, i) => {
-                // Customer is right side, Technician is left side
-                const isCustomerMsg = msg.senderId === booking.userId || (booking.providerId && msg.senderId !== booking.providerId && msg.senderId !== 'system');
+                const isMyMsg = msg.senderId === user?.id;
                 
                 return (
-                  <div key={msg._id || i} className={`flex flex-col ${isCustomerMsg ? 'items-end' : 'items-start'} mb-3`}>
-                    {/* Role Label */}
-                    <div className={`flex items-center gap-1.5 mb-1 px-1`}>
-                      <span className="text-[9px] font-black tracking-wider uppercase text-slate-400">
-                        {isCustomerMsg ? (booking.name || 'Customer') : 'Technician'}
-                      </span>
-                      <span className={`text-[8px] px-1.5 py-0.2 rounded font-black uppercase tracking-wider scale-90 border ${
-                        isCustomerMsg 
-                          ? 'bg-emerald-50 text-emerald-600 border-emerald-100' 
-                          : 'bg-indigo-50 text-indigo-600 border-indigo-100'
-                      }`}>
-                        {isCustomerMsg ? 'Customer' : 'Tech'}
-                      </span>
-                    </div>
-
+                  <div key={msg._id || i} className={`flex flex-col ${isMyMsg ? 'items-end' : 'items-start'} mb-3 animate-in fade-in slide-in-from-bottom-2 duration-300`}>
                     {/* Chat Bubble */}
-                    <div className={`px-4 py-2.5 rounded-2xl max-w-[82%] shadow-sm transition-all duration-300 transform scale-95 origin-bottom animate-in zoom-in-95 ${
-                      isCustomerMsg 
-                        ? 'bg-gradient-to-r from-emerald-600 to-teal-600 text-white rounded-tr-none' 
+                    <div className={`px-4 py-2.5 rounded-2xl max-w-[82%] shadow-sm relative transition-all ${
+                      isMyMsg 
+                        ? (currentRole === 'user' 
+                          ? 'bg-gradient-to-r from-emerald-600 to-teal-600 text-white rounded-tr-none' 
+                          : 'bg-gradient-to-r from-indigo-600 to-blue-600 text-white rounded-tr-none')
                         : 'bg-white text-slate-800 border border-slate-200/60 rounded-tl-none'
                     }`}>
                       <p className="text-xs sm:text-sm font-medium whitespace-pre-wrap break-words leading-relaxed">{msg.text}</p>
@@ -183,10 +170,9 @@ const ChatModal = ({ booking, onClose, currentRole }) => {
                     {/* Timestamp & Seen status */}
                     <div className="flex items-center gap-1 mt-1 px-1.5 opacity-80 text-[9px] text-slate-400 font-bold uppercase tracking-wider">
                       <span>{formatMessageTimestamp(msg.createdAt)}</span>
-                      {isCustomerMsg && (
+                      {isMyMsg && (
                         <span className="inline-flex items-center gap-0.5 ml-1">
-                          <CheckCheck size={12} className={msg.isRead ? "text-sky-500" : "text-slate-400"} />
-                          {msg.isRead ? 'Seen' : 'Sent'}
+                          <CheckCheck size={12} className={msg.isRead ? "text-sky-400" : "text-slate-400"} />
                         </span>
                       )}
                     </div>

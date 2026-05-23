@@ -1,10 +1,8 @@
+import React, { useState, useEffect, Suspense, lazy } from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate, useLocation } from 'react-router-dom';
 import Home from './pages/Home';
 import Login from './pages/Login';
 import Signup from './pages/Signup';
-import UserDashboard from './pages/UserDashboard';
-import TechnicianDashboard from './pages/TechnicianDashboard';
-import AdminDashboard from './pages/AdminDashboard';
 import Navbar from './components/Navbar';
 import Footer from './components/Footer';
 import Terms from './pages/Terms';
@@ -18,7 +16,13 @@ import Contact from './pages/Contact';
 import NotFound from './pages/NotFound';
 import Cancellation from './pages/Cancellation';
 import Referrals from './pages/Referrals';
+import LoadingSpinner from './components/LoadingSpinner';
 import { AuthProvider, useAuth } from './contexts/AuthContext';
+
+// Lazy load dashboards for optimized performance
+const UserDashboard = lazy(() => import('./pages/UserDashboard'));
+const TechnicianDashboard = lazy(() => import('./pages/TechnicianDashboard'));
+const AdminDashboard = lazy(() => import('./pages/AdminDashboard'));
 
 const PrivateRoute = ({ children, allowedRoles }) => {
   const { user } = useAuth();
@@ -36,55 +40,109 @@ const PrivateRoute = ({ children, allowedRoles }) => {
 
 import Booking from './pages/Booking';
 
+const PromoBanner = () => {
+  const [currentIndex, setCurrentIndex] = useState(0);
+  const [copied, setCopied] = useState(false);
+
+  const offers = [
+    { text: "First repair? Use code", code: "FIXVO10", suffix: "for 10% off your direct repair!", icon: "🔥" },
+    { text: "Priority dispatch & zero inspection fees with", code: "PLUS2026", suffix: "Get Fixvo Plus today!", icon: "✨" },
+    { text: "10-Min Arrival Guarantee on all emergency services", code: "", suffix: "Call: +91 95159 80170", icon: "⚡" }
+  ];
+
+  useEffect(() => {
+    const timer = setInterval(() => {
+      setCurrentIndex((prev) => (prev + 1) % offers.length);
+    }, 5000);
+    return () => clearInterval(timer);
+  }, []);
+
+  const handleCopy = (code) => {
+    if (!code) return;
+    navigator.clipboard.writeText(code);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000);
+  };
+
+  const current = offers[currentIndex];
+
+  return (
+    <div className="bg-gradient-to-r from-slate-900 via-indigo-950 to-slate-900 border-b border-indigo-900/30 text-white text-[11px] sm:text-xs font-bold text-center py-2.5 px-4 shadow-lg relative z-[60] overflow-hidden flex justify-center items-center transition-all duration-500">
+      <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-indigo-500/10 via-transparent to-transparent pointer-events-none"></div>
+      <div className="flex items-center gap-2 select-none animate-in fade-in slide-in-from-right-4 duration-500" key={currentIndex}>
+        <span className="text-base leading-none">{current.icon}</span>
+        <span className="text-slate-200">{current.text}</span>
+        {current.code && (
+          <button 
+            onClick={() => handleCopy(current.code)}
+            className="group relative inline-flex items-center bg-indigo-500/20 hover:bg-indigo-500/35 border border-indigo-400/30 rounded-lg px-2 py-0.5 text-[10px] font-black tracking-wide text-indigo-300 transition-all cursor-pointer select-all active:scale-95 duration-150"
+            title="Click to copy promo code"
+          >
+            <span>{current.code}</span>
+            <span className="absolute -top-8 left-1/2 -translate-x-1/2 scale-0 group-hover:scale-100 bg-slate-950 text-white text-[9px] px-2 py-0.5 rounded shadow-xl transition-all font-semibold">
+              Copy Code
+            </span>
+          </button>
+        )}
+        <span className="text-slate-300">{current.suffix}</span>
+      </div>
+      
+      {copied && (
+        <div className="absolute right-4 bg-emerald-500 text-white text-[9px] px-2 py-1 rounded-full font-black shadow-lg shadow-emerald-500/30 animate-bounce">
+          Copied!
+        </div>
+      )}
+    </div>
+  );
+};
+
 const AppContent = () => {
   const location = useLocation();
   const isHome = location.pathname === '/';
   return (
     <div className="min-h-screen bg-gray-50 flex flex-col relative">
-      {isHome && (
-        <div className="bg-gradient-to-r from-blue-600 to-indigo-600 text-white text-xs sm:text-sm font-bold text-center py-2 px-4 shadow-md relative z-[60] flex justify-center items-center gap-2">
-          <span>🔥 First repair? Use code</span><span className="bg-white/20 px-2 py-0.5 rounded font-black tracking-wider">FIXVO10</span><span>for 10% off your direct repair!</span>
-        </div>
-      )}
+      {isHome && <PromoBanner />}
       <Navbar />
       <main className="flex-grow flex flex-col">
-        <Routes>
-          <Route path="/" element={<Home />} />
-          <Route path="/book" element={<Booking />} />
-          <Route path="/login" element={<Login />} />
-          <Route path="/signup" element={<Signup />} />
-          
-          <Route path="/dashboard" element={
-            <PrivateRoute allowedRoles={['user']}>
-              <UserDashboard />
-            </PrivateRoute>
-          } />
-          
-          <Route path="/technician-dashboard" element={
-            <PrivateRoute allowedRoles={['technician']}>
-              <TechnicianDashboard />
-            </PrivateRoute>
-          } />
-          
-          <Route path="/admin-dashboard" element={
-            <PrivateRoute allowedRoles={['admin']}>
-              <AdminDashboard />
-            </PrivateRoute>
-          } />
-          
-          {/* Legal & Static Pages */}
-          <Route path="/about" element={<About />} />
-          <Route path="/pricing" element={<Pricing />} />
-          <Route path="/faq" element={<FAQ />} />
-          <Route path="/contact" element={<Contact />} />
-          <Route path="/terms" element={<Terms />} />
-          <Route path="/privacy" element={<Privacy />} />
-          <Route path="/refund" element={<Refund />} />
-          <Route path="/cancellation" element={<Cancellation />} />
-          <Route path="/disclaimer" element={<Disclaimer />} />
-          <Route path="/referrals" element={<Referrals />} />
-          <Route path="*" element={<NotFound />} />
-        </Routes>
+        <Suspense fallback={<LoadingSpinner text="Initializing Fixvo Secure Dashboard..." />}>
+          <Routes>
+            <Route path="/" element={<Home />} />
+            <Route path="/book" element={<Booking />} />
+            <Route path="/login" element={<Login />} />
+            <Route path="/signup" element={<Signup />} />
+            
+            <Route path="/dashboard" element={
+              <PrivateRoute allowedRoles={['user']}>
+                <UserDashboard />
+              </PrivateRoute>
+            } />
+            
+            <Route path="/technician-dashboard" element={
+              <PrivateRoute allowedRoles={['technician']}>
+                <TechnicianDashboard />
+              </PrivateRoute>
+            } />
+            
+            <Route path="/admin-dashboard" element={
+              <PrivateRoute allowedRoles={['admin']}>
+                <AdminDashboard />
+              </PrivateRoute>
+            } />
+            
+            {/* Legal & Static Pages */}
+            <Route path="/about" element={<About />} />
+            <Route path="/pricing" element={<Pricing />} />
+            <Route path="/faq" element={<FAQ />} />
+            <Route path="/contact" element={<Contact />} />
+            <Route path="/terms" element={<Terms />} />
+            <Route path="/privacy" element={<Privacy />} />
+            <Route path="/refund" element={<Refund />} />
+            <Route path="/cancellation" element={<Cancellation />} />
+            <Route path="/disclaimer" element={<Disclaimer />} />
+            <Route path="/referrals" element={<Referrals />} />
+            <Route path="*" element={<NotFound />} />
+          </Routes>
+        </Suspense>
       </main>
       <Footer />
     </div>

@@ -156,31 +156,12 @@ const Signup = () => {
               <select name="role" className="w-full px-4 py-4 border-2 border-slate-100 rounded-2xl bg-slate-50/50 hover:bg-slate-100 focus:border-indigo-500 focus:ring-4 focus:ring-indigo-50 font-bold text-slate-700 outline-none transition-all cursor-pointer appearance-none" value={formData.role} onChange={handleChange}>
                 <option value="user">🛠️ Customer (I need a repair)</option>
                 <option value="technician">💼 Technician (I can fix things)</option>
-                <option value="admin">🔑 Admin (Full control)</option>
               </select>
               <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-5 text-slate-500">
                 <svg className="fill-current h-4 w-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20"><path d="M9.293 12.95l.707.707L15.657 8l-1.414-1.414L10 10.828 5.757 6.586 4.343 8z"/></svg>
               </div>
             </div>
           </div>
-
-          {formData.role === 'admin' && (
-            <div className="space-y-1 pt-2 animate-in fade-in slide-in-from-top-4 duration-300">
-              <label className="text-xs font-bold text-slate-500 uppercase tracking-widest ml-1">Admin Security Code</label>
-              <div className="relative group">
-                <Lock className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-indigo-600 transition-colors" size={18} />
-                <input 
-                  type="password" 
-                  name="adminSecret" 
-                  required 
-                  className="w-full pl-11 pr-4 py-3.5 bg-white/80 border-2 border-slate-100 focus:border-indigo-500 rounded-2xl focus:ring-4 focus:ring-indigo-50 transition-all font-medium text-slate-800 outline-none" 
-                  placeholder="Enter admin security code" 
-                  value={formData.adminSecret} 
-                  onChange={handleChange} 
-                />
-              </div>
-            </div>
-          )}
 
           {formData.role === 'technician' && (
             <div className="p-6 bg-indigo-50/50 rounded-3xl space-y-5 border border-indigo-100/50 animate-in fade-in slide-in-from-top-4">

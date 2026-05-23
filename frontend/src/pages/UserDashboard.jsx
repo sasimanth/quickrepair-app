@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useLocation } from 'react-router-dom';
 import api from '../services/api'; 
 import { globalCategories, globalServices, getDbServices } from '../data/services';
 import { Calendar, MapPin, Smartphone, AlertCircle, Clock, CheckCircle, PackageSearch, XCircle, Plus, LayoutDashboard, Wrench, Settings, Star, User, ChevronRight, MessageSquare, Camera, UploadCloud, Loader2, Shield, ShieldCheck, HelpCircle, Truck, Home, Search, Eye, Zap } from 'lucide-react';
@@ -23,9 +23,10 @@ const formatPhoneLink = (phone) => {
 };
 
 const UserDashboard = () => {
+  const location = useLocation();
   const [bookings, setBookings] = useState([]);
   const [loading, setLoading] = useState(true);
-  const queryParams = new URLSearchParams(document.location.search);
+  const queryParams = new URLSearchParams(location.search);
   const initialShowForm = queryParams.get('action') === 'book';
   const initialShowPremium = queryParams.get('action') === 'premium';
   const initialService = queryParams.get('service');
@@ -114,6 +115,20 @@ const UserDashboard = () => {
       socket.off('location_update');
     };
   }, []);
+
+  useEffect(() => {
+    const params = new URLSearchParams(location.search);
+    if (params.get('action') === 'premium') {
+      setShowPremiumModal(true);
+    }
+    if (params.get('action') === 'book') {
+      setShowForm(true);
+      const serviceId = params.get('service');
+      if (serviceId) {
+        setFormData(prev => ({ ...prev, serviceId }));
+      }
+    }
+  }, [location.search]);
 
   // Register private room for customer notification/alerts & handle status updates
   useEffect(() => {
@@ -478,6 +493,33 @@ const UserDashboard = () => {
             </button>
           </div>
         </div>
+
+        {!profile?.isPremium && (
+          <div className="bg-gradient-to-r from-amber-500/10 via-amber-500/5 to-transparent border border-amber-500/20 rounded-3xl p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-4 shadow-sm relative overflow-hidden group">
+            <div className="absolute top-0 right-0 p-8 w-full h-full opacity-10 pointer-events-none">
+              <div className="absolute top-[-20%] right-[-10%] w-[50%] h-[50%] bg-amber-500 rounded-full blur-[60px]"></div>
+            </div>
+            <div className="flex items-center gap-4 relative z-10">
+              <div className="w-12 h-12 bg-amber-500/20 text-amber-500 rounded-2xl flex items-center justify-center shrink-0 border border-amber-500/20">
+                <Sparkles size={22} className="animate-pulse" />
+              </div>
+              <div>
+                <h3 className="text-base font-extrabold text-slate-800 tracking-tight flex items-center gap-2">
+                  Get Fixvo Plus Membership
+                </h3>
+                <p className="text-xs text-slate-500 font-medium mt-0.5">
+                  Save flat 15% on all quotes, get free inspections (save ₹99), and priority technician dispatches.
+                </p>
+              </div>
+            </div>
+            <button 
+              onClick={() => setShowPremiumModal(true)}
+              className="relative z-10 px-5 py-2.5 bg-gradient-to-r from-amber-500 to-yellow-600 hover:from-amber-400 hover:to-yellow-500 text-slate-900 font-extrabold text-xs rounded-xl shadow-md transition-all duration-300 transform hover:-translate-y-0.5 whitespace-nowrap self-start sm:self-auto cursor-pointer"
+            >
+              Upgrade Now
+            </button>
+          </div>
+        )}
 
         {/* Workflow container */}
         <div className={`transition-all duration-500 ease-in-out overflow-hidden ${showForm ? 'max-h-[2000px] opacity-100' : 'max-h-0 opacity-0'}`}>
@@ -912,7 +954,7 @@ const UserDashboard = () => {
                         </div>
                       )}
 
-                      {!isCompleted && booking.deviceType && (
+                      {booking.deviceType && (
                         <div className="space-y-3 bg-slate-50 rounded-xl p-5 border border-slate-100/60 mb-6">
                           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                             <div className="flex items-start gap-3 text-slate-700">
@@ -943,7 +985,7 @@ const UserDashboard = () => {
                         </div>
                       )}
                       
-                      {!isCompleted && (booking.imageUrl || booking.mediaUrl) && (
+                      {(booking.imageUrl || booking.mediaUrl) && (
                         <div className="flex items-start gap-3 text-slate-700 pt-2 border-t border-slate-100/80 mt-4">
                           <Camera className="w-5 h-5 text-indigo-500 shrink-0 mt-0.5" />
                           <div className="overflow-hidden rounded-xl border border-slate-200 shadow-sm w-full max-w-sm">

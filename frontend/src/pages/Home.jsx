@@ -431,42 +431,52 @@ const Home = () => {
             <p className="text-base sm:text-lg text-slate-400">Real feedback from thousands of satisfied customers across the city.</p>
           </div>
           
-          <div className="flex overflow-x-auto md:grid md:grid-cols-3 gap-6 sm:gap-8 pb-8 snap-x snap-mandatory hide-scrollbar custom-scrollbar-hide -mx-4 px-4 sm:mx-0 sm:px-0">
-            {[
-              { name: "Priya S.", service: "AC Repair", text: "The technician arrived exactly on time. Fixed my AC cooling issue within an hour and the price was upfront. Truly a lifesaver in this heat!", rating: 5, bg: "from-blue-500/10 to-transparent", initial: "P" },
-              { name: "Rahul M.", service: "Electrical Wiring", text: "I had a sudden short circuit at night. Fixvo's emergency service had a verified electrician at my door in 30 mins. Extremely professional.", rating: 5, bg: "from-amber-500/10 to-transparent", initial: "R" },
-              { name: "Anita K.", service: "Plumbing Deep Clean", text: "Very transparent pricing. The diagnosis was accurate and I was only charged for the exact work done. Will strictly use Fixvo going forward.", rating: 5, bg: "from-emerald-500/10 to-transparent", initial: "A" }
-            ].map((testimonial, idx) => (
-               <motion.div 
-                 key={idx}
-                 initial={{ opacity: 0, y: 30 }}
-                 whileInView={{ opacity: 1, y: 0 }}
-                 viewport={{ once: true, margin: "-50px" }}
-                 transition={{ delay: idx * 0.1 }}
-                 className={`p-6 sm:p-8 rounded-[2rem] border border-white/10 bg-gradient-to-b ${testimonial.bg} shadow-[0_8px_30px_rgb(0,0,0,0.12)] backdrop-blur-sm relative min-w-[300px] w-[85vw] sm:w-[320px] md:w-auto md:min-w-0 snap-center shrink-0 flex flex-col group hover:-translate-y-2 transition-transform duration-300`}
-               >
-                 <div className="absolute top-4 right-4 sm:top-6 sm:right-6 text-white/5 font-serif text-5xl sm:text-7xl pointer-events-none transition-transform group-hover:scale-110">"</div>
-                 
-                 <div className="flex items-center gap-4 mb-6">
-                   <div className="w-12 h-12 rounded-full bg-gradient-to-br from-indigo-500 to-purple-500 flex items-center justify-center text-white font-bold text-lg shadow-inner">
-                     {testimonial.initial}
-                   </div>
-                   <div>
-                     <p className="font-bold text-white text-base sm:text-lg">{testimonial.name}</p>
-                     <div className="flex items-center gap-1 text-amber-400 mt-0.5">
-                        {[...Array(testimonial.rating)].map((_, i) => <Star key={i} size={12} className="fill-current sm:w-3 sm:h-3" />)}
+          <div className="relative w-full overflow-hidden py-4">
+            {/* Left and Right Fade Overlays for Premium Depth */}
+            <div className="absolute left-0 top-0 bottom-0 w-8 sm:w-24 bg-gradient-to-r from-[#0B0F19] to-transparent z-10 pointer-events-none"></div>
+            <div className="absolute right-0 top-0 bottom-0 w-8 sm:w-24 bg-gradient-to-l from-[#0B0F19] to-transparent z-10 pointer-events-none"></div>
+            
+            <div className="animate-infinite-scroll flex gap-6">
+              {[
+                { name: "Priya S.", service: "AC Repair", text: "The technician arrived exactly on time. Fixed my AC cooling issue within an hour and the price was upfront. Truly a lifesaver in this heat!", rating: 5, bg: "from-blue-500/10 to-transparent", initial: "P" },
+                { name: "Rahul M.", service: "Electrical Wiring", text: "I had a sudden short circuit at night. Fixvo's emergency service had a verified electrician at my door in 30 mins. Extremely professional.", rating: 5, bg: "from-amber-500/10 to-transparent", initial: "R" },
+                { name: "Anita K.", service: "Plumbing Deep Clean", text: "Very transparent pricing. The diagnosis was accurate and I was only charged for the exact work done. Will strictly use Fixvo going forward.", rating: 5, bg: "from-emerald-500/10 to-transparent", initial: "A" }
+              ].concat([
+                { name: "Priya S.", service: "AC Repair", text: "The technician arrived exactly on time. Fixed my AC cooling issue within an hour and the price was upfront. Truly a lifesaver in this heat!", rating: 5, bg: "from-blue-500/10 to-transparent", initial: "P" },
+                { name: "Rahul M.", service: "Electrical Wiring", text: "I had a sudden short circuit at night. Fixvo's emergency service had a verified electrician at my door in 30 mins. Extremely professional.", rating: 5, bg: "from-amber-500/10 to-transparent", initial: "R" },
+                { name: "Anita K.", service: "Plumbing Deep Clean", text: "Very transparent pricing. The diagnosis was accurate and I was only charged for the exact work done. Will strictly use Fixvo going forward.", rating: 5, bg: "from-emerald-500/10 to-transparent", initial: "A" }
+              ]).concat([
+                { name: "Priya S.", service: "AC Repair", text: "The technician arrived exactly on time. Fixed my AC cooling issue within an hour and the price was upfront. Truly a lifesaver in this heat!", rating: 5, bg: "from-blue-500/10 to-transparent", initial: "P" },
+                { name: "Rahul M.", service: "Electrical Wiring", text: "I had a sudden short circuit at night. Fixvo's emergency service had a verified electrician at my door in 30 mins. Extremely professional.", rating: 5, bg: "from-amber-500/10 to-transparent", initial: "R" },
+                { name: "Anita K.", service: "Plumbing Deep Clean", text: "Very transparent pricing. The diagnosis was accurate and I was only charged for the exact work done. Will strictly use Fixvo going forward.", rating: 5, bg: "from-emerald-500/10 to-transparent", initial: "A" }
+              ]).map((testimonial, idx) => (
+                 <div 
+                   key={idx}
+                   className={`p-6 sm:p-8 rounded-[2rem] border border-white/10 bg-gradient-to-b ${testimonial.bg} shadow-[0_8px_30px_rgb(0,0,0,0.12)] backdrop-blur-sm relative w-[300px] sm:w-[320px] flex-shrink-0 flex flex-col group hover:-translate-y-2 transition-transform duration-300`}
+                 >
+                   <div className="absolute top-4 right-4 sm:top-6 sm:right-6 text-white/5 font-serif text-5xl sm:text-7xl pointer-events-none transition-transform group-hover:scale-110">"</div>
+                   
+                   <div className="flex items-center gap-4 mb-6">
+                     <div className="w-12 h-12 rounded-full bg-gradient-to-br from-indigo-500 to-purple-500 flex items-center justify-center text-white font-bold text-lg shadow-inner">
+                       {testimonial.initial}
+                     </div>
+                     <div>
+                       <p className="font-bold text-white text-base sm:text-lg">{testimonial.name}</p>
+                       <div className="flex items-center gap-1 text-amber-400 mt-0.5">
+                          {[...Array(testimonial.rating)].map((_, i) => <Star key={i} size={12} className="fill-current sm:w-3 sm:h-3" />)}
+                       </div>
                      </div>
                    </div>
+                   
+                   <p className="text-[14px] sm:text-[15px] text-slate-300 italic mb-6 relative z-10 leading-relaxed grow">"{testimonial.text}"</p>
+                   
+                   <div className="flex flex-wrap gap-2 justify-between items-center border-t border-white/10 pt-5 mt-auto">
+                      <span className="text-[11px] sm:text-xs text-emerald-400 flex items-center gap-1.5 font-medium bg-emerald-400/10 px-2 py-1 rounded-full"><CheckCircle2 size={12} className="text-emerald-400"/> Verified</span>
+                      <span className="text-[10px] sm:text-xs font-bold text-slate-300 bg-white/5 border border-white/5 px-3 py-1.5 rounded-full whitespace-nowrap shadow-sm">{testimonial.service}</span>
+                   </div>
                  </div>
-                 
-                 <p className="text-[15px] sm:text-base text-slate-300 italic mb-6 relative z-10 leading-relaxed grow">"{testimonial.text}"</p>
-                 
-                 <div className="flex flex-wrap gap-2 justify-between items-center border-t border-white/10 pt-5 mt-auto">
-                    <span className="text-[11px] sm:text-xs text-emerald-400 flex items-center gap-1.5 font-medium bg-emerald-400/10 px-2 py-1 rounded-full"><CheckCircle2 size={12} className="text-emerald-400"/> Verified</span>
-                    <span className="text-[10px] sm:text-xs font-bold text-slate-300 bg-white/5 border border-white/5 px-3 py-1.5 rounded-full whitespace-nowrap shadow-sm">{testimonial.service}</span>
-                 </div>
-               </motion.div>
-            ))}
+              ))}
+            </div>
           </div>
         </div>
         
@@ -477,22 +487,22 @@ const Home = () => {
                whileInView={{ opacity: 1, scale: 1 }}
                viewport={{ once: true }}
                className="bg-gradient-to-br from-blue-900/40 to-indigo-900/40 border border-blue-500/20 rounded-[2rem] sm:rounded-[3rem] p-8 sm:p-12 lg:p-20 relative overflow-hidden shadow-2xl shadow-blue-900/20"
-            >
-               <div className="absolute top-0 right-0 p-8 w-full h-full opacity-30 pointer-events-none">
-                 <div className="absolute top-[-20%] right-[-10%] w-[50%] h-[50%] bg-blue-500/50 rounded-full blur-[100px]"></div>
-               </div>
-               
-               <h2 className="text-3xl sm:text-4xl md:text-5xl font-extrabold text-white mb-4 sm:mb-6 relative z-10">Stop guessing. Get it fixed.</h2>
-               <p className="text-lg sm:text-xl text-blue-200/80 mb-8 sm:mb-10 max-w-2xl mx-auto relative z-10">
-                 Book now and get a <span className="text-white font-bold">100% Free Inspection</span> on your first booking.
-               </p>
-               <Link
-                to="/book"
-                className="inline-flex relative z-10 px-8 sm:px-10 py-4 sm:py-5 bg-white text-blue-900 font-extrabold rounded-2xl shadow-xl hover:shadow-2xl hover:scale-105 transition-all duration-300 items-center justify-center gap-2 w-full sm:w-auto"
-              >
-                <span className="text-lg sm:text-xl">Book Now in 10 Seconds</span>
-              </Link>
-            </motion.div>
+             >
+                <div className="absolute top-0 right-0 p-8 w-full h-full opacity-30 pointer-events-none">
+                  <div className="absolute top-[-20%] right-[-10%] w-[50%] h-[50%] bg-blue-500/50 rounded-full blur-[100px]"></div>
+                </div>
+                
+                <h2 className="text-3xl sm:text-4xl md:text-5xl font-extrabold text-white mb-4 sm:mb-6 relative z-10">Stop guessing. Get it fixed.</h2>
+                <p className="text-lg sm:text-xl text-blue-200/80 mb-8 sm:mb-10 max-w-2xl mx-auto relative z-10">
+                  Book now and get a <span className="text-white font-bold">100% Free Inspection</span> on your first booking.
+                </p>
+                <Link
+                 to="/book"
+                 className="inline-flex relative z-10 px-8 sm:px-10 py-4 sm:py-5 bg-white text-blue-900 font-extrabold rounded-2xl shadow-xl hover:shadow-2xl hover:scale-105 transition-all duration-300 items-center justify-center gap-2 w-full sm:w-auto"
+               >
+                 <span className="text-lg sm:text-xl">Book Now in 10 Seconds</span>
+               </Link>
+             </motion.div>
         </div>
 
       </div>
@@ -505,6 +515,18 @@ const Home = () => {
         .hide-scrollbar {
           -ms-overflow-style: none;
           scrollbar-width: none;
+        }
+        @keyframes scroll {
+          0% { transform: translateX(0); }
+          100% { transform: translateX(-1032px); }
+        }
+        .animate-infinite-scroll {
+          display: flex;
+          width: max-content;
+          animation: scroll 32s linear infinite;
+        }
+        .animate-infinite-scroll:hover {
+          animation-play-state: paused;
         }
       `}</style>
     </div>

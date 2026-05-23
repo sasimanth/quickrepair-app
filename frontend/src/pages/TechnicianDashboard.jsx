@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import api from '../services/api';
 import { Briefcase, MapPin, Smartphone, AlertCircle, Clock, CheckCircle, PackageSearch, XCircle, User, Wrench, RefreshCw, MessageSquare, Camera, HelpCircle, Hammer, Truck, Settings, Navigation, Copy, Map, PhoneCall, Loader2 } from 'lucide-react';
+import { globalServices } from '../data/services';
 import ChatModal from '../components/ChatModal';
 import SettingsModal from '../components/SettingsModal';
 import VerificationModal from '../components/VerificationModal';
@@ -744,9 +745,17 @@ const TechnicianDashboard = () => {
                            </div>
                         )}
                         {job.status === 'completed' && (
-                          <div className={`flex items-center justify-center gap-2 p-4 rounded-xl font-bold border ${job.paymentStatus === 'completed' ? 'bg-emerald-50 text-emerald-600 border-emerald-200 shadow-sm' : 'bg-amber-50 text-amber-600 border-amber-200 shadow-sm'}`}>
-                            {job.paymentStatus === 'completed' ? <><CheckCircle size={18} /> Paid In Full</> : <><Clock size={18} /> Awaiting Payment</>}
-                          </div>
+                           <div className="space-y-3">
+                             <div className={`flex items-center justify-center gap-2 p-4 rounded-xl font-bold border ${job.paymentStatus === 'completed' ? 'bg-emerald-50 text-emerald-600 border-emerald-200 shadow-sm' : 'bg-amber-50 text-amber-600 border-amber-200 shadow-sm'}`}>
+                               {job.paymentStatus === 'completed' ? <><CheckCircle size={18} /> Paid In Full</> : <><Clock size={18} /> Awaiting Payment</>}
+                             </div>
+                             <button
+                               onClick={() => setChatBookingId(job._id)}
+                               className="w-full bg-white hover:bg-indigo-50 border-2 border-slate-100 hover:border-indigo-200 text-indigo-600 font-bold py-3 px-4 rounded-2xl transition-all shadow-sm flex items-center justify-center gap-2"
+                             >
+                               <MessageSquare size={18} /> View Chat History
+                             </button>
+                           </div>
                         )}
                         {isCompleted && (
                           <button
@@ -823,51 +832,143 @@ const TechnicianDashboard = () => {
         />
       )}
 
-      {quoteModalJob && (
-        <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-[100] flex items-center justify-center p-4">
-          <div className="bg-white rounded-3xl w-full max-w-md overflow-hidden shadow-2xl">
-            <div className="p-6 border-b border-slate-100 flex justify-between items-center">
-              <h3 className="text-xl font-bold text-slate-800">Submit Final Quote</h3>
-              <button onClick={() => setQuoteModalJob(null)} className="text-slate-400 hover:text-slate-600"><XCircle /></button>
+      {quoteModalJob && (() => {
+        const service = globalServices.find(s => s.id === quoteModalJob.serviceId) || {};
+        const categoryId = service.categoryId || 'repair';
+        
+        return (
+          <div className="fixed inset-0 bg-[#0B0F19]/80 backdrop-blur-md z-[100] flex items-center justify-center p-4 animate-in fade-in duration-300">
+            <div className="bg-[#111827] border border-white/5 rounded-3xl w-full max-w-md overflow-hidden shadow-2xl text-white">
+              <div className="p-6 border-b border-white/5 flex justify-between items-center bg-slate-900/60">
+                <div>
+                  <h3 className="text-lg font-extrabold text-white tracking-tight">Submit Final Quote</h3>
+                  <p className="text-[10px] text-indigo-400 font-bold uppercase tracking-wider mt-0.5">Category: {categoryId}</p>
+                </div>
+                <button onClick={() => setQuoteModalJob(null)} className="text-slate-400 hover:text-white bg-white/5 hover:bg-white/10 rounded-full p-2 transition-all hover:rotate-95"><XCircle size={18} /></button>
+              </div>
+              <form onSubmit={handleSubmitQuote} className="p-6 space-y-4 max-h-[80vh] overflow-y-auto">
+                
+                {/* Category-Specific Inputs */}
+                {(() => {
+                  switch (categoryId) {
+                    case 'repair':
+                      return (
+                        <>
+                          <div className="grid grid-cols-2 gap-4">
+                            <div>
+                              <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">Labor Cost (₹)</label>
+                              <input required type="number" value={quoteForm.serviceCharge} onChange={(e) => setQuoteForm({...quoteForm, serviceCharge: e.target.value})} className="w-full px-4 py-3 rounded-xl bg-slate-900 border border-white/5 focus:border-indigo-500 focus:ring-4 focus:ring-indigo-500/20 outline-none font-bold text-white text-sm transition-all" placeholder="e.g. 250" />
+                            </div>
+                            <div>
+                              <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">Parts Cost (₹)</label>
+                              <input required type="number" value={quoteForm.sparePartsCost} onChange={(e) => setQuoteForm({...quoteForm, sparePartsCost: e.target.value})} className="w-full px-4 py-3 rounded-xl bg-slate-900 border border-white/5 focus:border-indigo-500 focus:ring-4 focus:ring-indigo-500/20 outline-none font-bold text-white text-sm transition-all" placeholder="e.g. 0" />
+                            </div>
+                          </div>
+                          <div>
+                            <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">Visiting / Inspection Fee (₹)</label>
+                            <input required type="number" value={quoteForm.transportCharge} onChange={(e) => setQuoteForm({...quoteForm, transportCharge: e.target.value})} className="w-full px-4 py-3 rounded-xl bg-slate-900 border border-white/5 focus:border-indigo-500 focus:ring-4 focus:ring-indigo-500/20 outline-none font-bold text-white text-sm transition-all" placeholder="e.g. 99" />
+                          </div>
+                        </>
+                      );
+                    case 'installation':
+                      return (
+                        <>
+                          <div className="grid grid-cols-2 gap-4">
+                            <div>
+                              <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">Installation Fee (₹)</label>
+                              <input required type="number" value={quoteForm.serviceCharge} onChange={(e) => setQuoteForm({...quoteForm, serviceCharge: e.target.value})} className="w-full px-4 py-3 rounded-xl bg-slate-900 border border-white/5 focus:border-indigo-500 focus:ring-4 focus:ring-indigo-500/20 outline-none font-bold text-white text-sm transition-all" placeholder="e.g. 350" />
+                            </div>
+                            <div>
+                              <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">Accessories (₹)</label>
+                              <input required type="number" value={quoteForm.sparePartsCost} onChange={(e) => setQuoteForm({...quoteForm, sparePartsCost: e.target.value})} className="w-full px-4 py-3 rounded-xl bg-slate-900 border border-white/5 focus:border-indigo-500 focus:ring-4 focus:ring-indigo-500/20 outline-none font-bold text-white text-sm transition-all" placeholder="e.g. 100" />
+                            </div>
+                          </div>
+                          <div>
+                            <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">Transport Charges (₹)</label>
+                            <input required type="number" value={quoteForm.transportCharge} onChange={(e) => setQuoteForm({...quoteForm, transportCharge: e.target.value})} className="w-full px-4 py-3 rounded-xl bg-slate-900 border border-white/5 focus:border-indigo-500 focus:ring-4 focus:ring-indigo-500/20 outline-none font-bold text-white text-sm transition-all" placeholder="e.g. 50" />
+                          </div>
+                        </>
+                      );
+                    case 'cleaning':
+                      return (
+                        <>
+                          <div className="space-y-4">
+                            <div>
+                              <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">Area Size / Rooms Details</label>
+                              <input required type="text" value={quoteForm.detectedIssues} onChange={(e) => setQuoteForm({...quoteForm, detectedIssues: e.target.value})} className="w-full px-4 py-3 rounded-xl bg-slate-900 border border-white/5 focus:border-indigo-500 focus:ring-4 focus:ring-indigo-500/20 outline-none font-semibold text-white text-sm transition-all" placeholder="e.g. 3 BHK / 1200 Sq Ft" />
+                            </div>
+                            <div className="grid grid-cols-2 gap-4">
+                              <div>
+                                <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">Labor / Manpower Cost (₹)</label>
+                                <input required type="number" value={quoteForm.serviceCharge} onChange={(e) => setQuoteForm({...quoteForm, serviceCharge: e.target.value})} className="w-full px-4 py-3 rounded-xl bg-slate-900 border border-white/5 focus:border-indigo-500 focus:ring-4 focus:ring-indigo-500/20 outline-none font-bold text-white text-sm transition-all" placeholder="e.g. 600" />
+                              </div>
+                              <div>
+                                <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">Material Cost (₹)</label>
+                                <input required type="number" value={quoteForm.sparePartsCost} onChange={(e) => setQuoteForm({...quoteForm, sparePartsCost: e.target.value})} className="w-full px-4 py-3 rounded-xl bg-slate-900 border border-white/5 focus:border-indigo-500 focus:ring-4 focus:ring-indigo-500/20 outline-none font-bold text-white text-sm transition-all" placeholder="e.g. 150" />
+                              </div>
+                            </div>
+                            <div>
+                              <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">Transport Charges (₹)</label>
+                              <input required type="number" value={quoteForm.transportCharge} onChange={(e) => setQuoteForm({...quoteForm, transportCharge: e.target.value})} className="w-full px-4 py-3 rounded-xl bg-slate-900 border border-white/5 focus:border-indigo-500 focus:ring-4 focus:ring-indigo-500/20 outline-none font-bold text-white text-sm transition-all" placeholder="e.g. 50" />
+                            </div>
+                          </div>
+                        </>
+                      );
+                    default:
+                      return (
+                        <>
+                          <div className="grid grid-cols-2 gap-4">
+                            <div>
+                              <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">Diagnosis Fee (₹)</label>
+                              <input required type="number" value={quoteForm.serviceCharge} onChange={(e) => setQuoteForm({...quoteForm, serviceCharge: e.target.value})} className="w-full px-4 py-3 rounded-xl bg-slate-900 border border-white/5 focus:border-indigo-500 focus:ring-4 focus:ring-indigo-500/20 outline-none font-bold text-white text-sm transition-all" placeholder="e.g. 199" />
+                            </div>
+                            <div>
+                              <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">Replacement Cost (₹)</label>
+                              <input required type="number" value={quoteForm.sparePartsCost} onChange={(e) => setQuoteForm({...quoteForm, sparePartsCost: e.target.value})} className="w-full px-4 py-3 rounded-xl bg-slate-900 border border-white/5 focus:border-indigo-500 focus:ring-4 focus:ring-indigo-500/20 outline-none font-bold text-white text-sm transition-all" placeholder="e.g. 200" />
+                            </div>
+                          </div>
+                          <div>
+                            <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">Visiting / Extra Charges (₹)</label>
+                            <input required type="number" value={quoteForm.transportCharge} onChange={(e) => setQuoteForm({...quoteForm, transportCharge: e.target.value})} className="w-full px-4 py-3 rounded-xl bg-slate-900 border border-white/5 focus:border-indigo-500 focus:ring-4 focus:ring-indigo-500/20 outline-none font-bold text-white text-sm transition-all" placeholder="e.g. 50" />
+                          </div>
+                        </>
+                      );
+                  }
+                })()}
+
+                {/* Total Summary */}
+                <div className="flex justify-between items-center bg-indigo-500/10 p-4 rounded-xl border border-indigo-500/20">
+                   <span className="text-xs font-bold text-indigo-400 uppercase tracking-widest">Total Customer Price:</span>
+                   <span className="text-xl font-black text-indigo-300">
+                     ₹{Number(quoteForm.serviceCharge || 0) + Number(quoteForm.sparePartsCost || 0) + Number(quoteForm.transportCharge || 0)}
+                   </span>
+                </div>
+
+                {categoryId !== 'cleaning' && (
+                  <div>
+                    <label className="block text-xs font-bold text-slate-400 uppercase tracking-widest mb-1">Detected Issues (From Inspection)</label>
+                    <textarea required value={quoteForm.detectedIssues} onChange={(e) => setQuoteForm({...quoteForm, detectedIssues: e.target.value})} className="w-full px-4 py-2.5 rounded-xl bg-slate-900 border border-white/5 focus:border-indigo-500 focus:ring-4 focus:ring-indigo-500/20 outline-none resize-none text-white text-xs font-semibold" rows="2" placeholder="List all observed problems..."></textarea>
+                  </div>
+                )}
+
+                <div>
+                  <label className="block text-xs font-bold text-slate-400 uppercase tracking-widest mb-1">Diagnosis / Explanation</label>
+                  <textarea required value={quoteForm.quoteReason} onChange={(e) => setQuoteForm({...quoteForm, quoteReason: e.target.value})} className="w-full px-4 py-2.5 rounded-xl bg-slate-900 border border-white/5 focus:border-indigo-500 focus:ring-4 focus:ring-indigo-500/20 outline-none resize-none text-white text-xs font-semibold" rows="2" placeholder="Explain the required work scope..."></textarea>
+                </div>
+
+                <div>
+                  <label className="block text-xs font-bold text-slate-400 uppercase tracking-widest mb-1">Proof Image URL (Optional)</label>
+                  <input type="url" value={quoteForm.quotePhoto} onChange={(e) => setQuoteForm({...quoteForm, quotePhoto: e.target.value})} className="w-full px-4 py-3 rounded-xl bg-slate-900 border border-white/5 focus:border-indigo-500 focus:ring-4 focus:ring-indigo-500/20 outline-none text-slate-200 text-xs font-medium" placeholder="https://..." />
+                </div>
+
+                <button type="submit" className="w-full bg-indigo-600 hover:bg-indigo-500 text-white font-black py-4 rounded-xl shadow-lg transition-all text-xs uppercase tracking-widest outline-none active:scale-[0.98] mt-4">
+                  Send Quote for Approval
+                </button>
+              </form>
             </div>
-            <form onSubmit={handleSubmitQuote} className="p-6 space-y-4">
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-1">Service Charge (₹)</label>
-                  <input required type="number" value={quoteForm.serviceCharge} onChange={(e) => setQuoteForm({...quoteForm, serviceCharge: e.target.value})} className="w-full px-4 py-3 rounded-xl border border-slate-200 focus:ring-2 focus:ring-blue-500 outline-none font-bold text-slate-800" placeholder="e.g. 150" />
-                </div>
-                <div>
-                  <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-1">Spare Parts (₹)</label>
-                  <input required type="number" value={quoteForm.sparePartsCost} onChange={(e) => setQuoteForm({...quoteForm, sparePartsCost: e.target.value})} className="w-full px-4 py-3 rounded-xl border border-slate-200 focus:ring-2 focus:ring-blue-500 outline-none font-bold text-slate-800" placeholder="e.g. 0" />
-                </div>
-              </div>
-              <div>
-                <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-1">Transport Charge (₹)</label>
-                <input required type="number" value={quoteForm.transportCharge} onChange={(e) => setQuoteForm({...quoteForm, transportCharge: e.target.value})} className="w-full px-4 py-3 rounded-xl border border-slate-200 focus:ring-2 focus:ring-blue-500 outline-none font-bold text-slate-800" placeholder="e.g. 50" />
-              </div>
-              <div className="flex justify-between items-center bg-indigo-50 p-4 rounded-xl border border-indigo-100">
-                 <span className="text-sm font-bold text-indigo-700">Total Customer Price:</span>
-                 <span className="text-xl font-black text-indigo-800">
-                   ₹{Number(quoteForm.serviceCharge || 0) + Number(quoteForm.sparePartsCost || 0) + Number(quoteForm.transportCharge || 0)}
-                 </span>
-              </div>
-              <div>
-                <label className="block text-sm font-bold text-slate-700 mb-1">Detected Issues (From Inspection)</label>
-                <textarea required value={quoteForm.detectedIssues} onChange={(e) => setQuoteForm({...quoteForm, detectedIssues: e.target.value})} className="w-full px-4 py-3 rounded-xl border border-slate-200 focus:ring-2 focus:ring-blue-500 outline-none resize-none" rows="2" placeholder="List all detected problems physically observed..."></textarea>
-              </div>
-              <div>
-                <label className="block text-sm font-bold text-slate-700 mb-1">Diagnosis / Reason</label>
-                <textarea required value={quoteForm.quoteReason} onChange={(e) => setQuoteForm({...quoteForm, quoteReason: e.target.value})} className="w-full px-4 py-3 rounded-xl border border-slate-200 focus:ring-2 focus:ring-blue-500 outline-none resize-none" rows="2" placeholder="Explain the required work..."></textarea>
-              </div>
-              <div>
-                <label className="block text-sm font-bold text-slate-700 mb-1">Proof Image URL (Optional)</label>
-                <input type="url" value={quoteForm.quotePhoto} onChange={(e) => setQuoteForm({...quoteForm, quotePhoto: e.target.value})} className="w-full px-4 py-3 rounded-xl border border-slate-200 focus:ring-2 focus:ring-blue-500 outline-none" placeholder="https://..." />
-              </div>
-              <button type="submit" className="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3.5 rounded-xl shadow-lg mt-4">Send Quote for Approval</button>
-            </form>
           </div>
-        </div>
-      )}
+        );
+      })()}
 
       {/* Toast Alerts Stack */}
       <div className="fixed bottom-5 right-5 z-[100] flex flex-col gap-3 w-full max-w-sm pointer-events-none px-4 sm:px-0">
