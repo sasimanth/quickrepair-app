@@ -25,7 +25,7 @@ const getMessages = async (req, res) => {
       { isRead: true }
     );
 
-    const messages = await Message.find({ bookingId }).sort({ createdAt: 1 });
+    const messages = await Message.find({ bookingId, senderId: { $ne: 'system' } }).sort({ createdAt: 1 });
     res.json(messages);
   } catch (error) {
     res.status(500).json({ message: error.message });
@@ -62,6 +62,22 @@ const sendMessage = async (req, res) => {
     const io = req.app.get('io');
     if (io) {
       io.to(`chat_${bookingId}`).emit('receive_message', newMessage);
+    }
+
+    // Create DB notification of type 'chat' for the recipient
+    const recipientId = isOwner ? booking.providerId : booking.userId;
+    if (recipientId && !recipientId.startsWith('tech-')) {
+      const Notification = require('../models/Notification');
+      const chatNotif = await Notification.create({
+        userId: recipientId,
+        title: `💬 New Message from ${senderName || req.user.email.split('@')[0]}`,
+        message: text,
+        isRead: false,
+        type: 'chat'
+      });
+      if (io) {
+        io.to(`user_${recipientId}`).emit('new_notification', chatNotif);
+      }
     }
 
     res.status(201).json(newMessage);

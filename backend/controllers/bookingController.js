@@ -85,24 +85,21 @@ const triggerNotifications = async (req, booking, type) => {
 
     // 1. Create DB Notification for recipient (if valid user ID)
     if (recipientId && !recipientId.startsWith('tech-')) {
-      await Notification.create({
+      const notifType = ['accepted', 'rejected', 'on_the_way', 'arrived'].includes(type) ? 'booking' : 'system';
+      const createdNotif = await Notification.create({
         userId: recipientId,
         title,
         message,
-        isRead: false
+        isRead: false,
+        type: notifType
       });
+      if (io) {
+        io.to(`user_${recipientId}`).emit('new_notification', createdNotif);
+      }
     }
 
-    // 2. Create DB Message inside Chat
+    // 2. Create DB Message inside Chat (DISABLED: System messages should not appear in chat section)
     let newMsg = null;
-    if (chatText) {
-      newMsg = await Message.create({
-        bookingId: booking._id,
-        senderId: 'system',
-        senderName: 'FIXVO System',
-        text: chatText
-      });
-    }
 
     // 3. Emit Sockets
     if (io) {
@@ -113,10 +110,6 @@ const triggerNotifications = async (req, booking, type) => {
       // Refresh Tech Dashboard
       if (booking.providerId) {
         io.to(`user_${booking.providerId}`).emit('job_update', booking);
-      }
-      // Emit Chat update
-      if (newMsg) {
-        io.to(`chat_${booking._id}`).emit('receive_message', newMsg);
       }
     }
   } catch (e) {
@@ -136,7 +129,15 @@ const createBooking = async (req, res) => {
   
   try {
     const bookingUserId = req.user ? req.user.id : null;
-    const finalPhone = normalizePhone(phone) || (req.user ? normalizePhone(req.user.phone) : null) || '0000000000';
+    let userPhone = null;
+    if (req.user) {
+      const User = require('../models/User');
+      const userDoc = await User.findById(req.user.id);
+      if (userDoc) {
+        userPhone = userDoc.phone;
+      }
+    }
+    const finalPhone = normalizePhone(phone) || normalizePhone(userPhone) || '0000000000';
 
     // DUPLICATE SUBMISSION CHECK (Within last 2 minutes)
     const twoMinutesAgo = new Date(Date.now() - 2 * 60 * 1000);
@@ -304,11 +305,16 @@ const createBooking = async (req, res) => {
       
       // Seed initial DB notification for tech
       const Notification = require('../models/Notification');
-      await Notification.create({
+      const techNotif = await Notification.create({
         userId: finalProviderId,
         title: bStatus === 'queued' ? 'New Job Queued' : 'New Job Assigned! 💼',
-        message: `New repair request for ${booking.serviceName} at ${finalAddress}.`
+        message: `New repair request for ${booking.serviceName} at ${finalAddress}.`,
+        type: 'booking'
       });
+      const io = req.app.get('io');
+      if (io) {
+        io.to(`user_${finalProviderId}`).emit('new_notification', techNotif);
+      }
     }
 
     // Google Sheets integration
@@ -340,11 +346,31 @@ const createBooking = async (req, res) => {
 
 const enrichBookingsWithChat = async (bookings, userId) => {
   const Message = require('../models/Message');
+  const User = require('../models/User');
   return Promise.all(bookings.map(async (b) => {
-    const unreadCount = await Message.countDocuments({ bookingId: b._id, senderId: { $ne: userId }, isRead: false });
-    const lastMsg = await Message.findOne({ bookingId: b._id }).sort({ createdAt: -1 });
+    const unreadCount = await Message.countDocuments({ bookingId: b._id, senderId: { $ne: userId, $ne: 'system' }, isRead: false });
+    const lastMsg = await Message.findOne({ bookingId: b._id, senderId: { $ne: 'system' } }).sort({ createdAt: -1 });
+    
+    let customerPhone = b.phone;
+    if ((!customerPhone || customerPhone === '0000000000' || customerPhone === '1234567890') && b.userId) {
+      const customer = await User.findById(b.userId);
+      if (customer && customer.phone) {
+        customerPhone = customer.phone;
+      }
+    }
+
+    let technicianName = 'Unassigned';
+    if (b.providerId) {
+      const techUser = await User.findById(b.providerId);
+      if (techUser) {
+        technicianName = techUser.name;
+      }
+    }
+
     return {
       ...b.toObject(),
+      customerPhone,
+      technicianName,
       unreadCount,
       lastMessage: lastMsg ? {
         text: lastMsg.text,

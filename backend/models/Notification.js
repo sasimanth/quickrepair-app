@@ -16,6 +16,11 @@ const notificationSchema = new mongoose.Schema({
   isRead: {
     type: Boolean,
     default: false
+  },
+  type: {
+    type: String,
+    enum: ['system', 'chat', 'booking'],
+    default: 'system'
   }
 }, { timestamps: true });
 

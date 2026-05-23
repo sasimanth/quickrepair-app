@@ -35,17 +35,17 @@ const Navbar = () => {
 
   // Changed to sticky top-4 as requested by user to fix alignment and scrolling
   return (
-    <div className="sticky top-4 inset-x-0 z-50 flex justify-center px-4 pointer-events-none mb-4">
+    <div className="sticky top-2 sm:top-4 inset-x-0 z-50 flex justify-center px-2 sm:px-4 pointer-events-none mb-4">
       <nav className="relative pointer-events-auto bg-white/70 backdrop-blur-2xl border border-white/60 shadow-[0_8px_30px_rgb(0,0,0,0.08)] rounded-[2rem] w-full max-w-5xl transition-all duration-500">
-        <div className="px-4 sm:px-6">
+        <div className="px-3 sm:px-6">
           <div className="flex justify-between items-center h-16 sm:h-20">
             
             {/* Logo Section */}
-            <Link to="/" className="flex items-center gap-2 group">
-              <div className="w-9 h-9 sm:w-10 sm:h-10 group-hover:scale-105 group-hover:rotate-3 transition-all duration-300 shadow-lg shadow-blue-500/30 rounded-full overflow-hidden">
+            <Link to="/" className="flex items-center gap-1.5 sm:gap-2 group">
+              <div className="w-8 h-8 sm:w-10 sm:h-10 group-hover:scale-105 group-hover:rotate-3 transition-all duration-300 shadow-lg shadow-blue-500/30 rounded-full overflow-hidden">
                 <img src={fixvoLogo} alt="Fixvo Logo" className="w-full h-full object-cover scale-110" />
               </div>
-              <span className="font-extrabold text-xl sm:text-2xl tracking-tight bg-clip-text text-transparent bg-gradient-to-r from-blue-700 to-slate-900">
+              <span className="font-extrabold text-lg sm:text-2xl tracking-tight bg-clip-text text-transparent bg-gradient-to-r from-blue-700 to-slate-900">
                 Fixvo
               </span>
             </Link>
@@ -53,7 +53,7 @@ const Navbar = () => {
 
 
             {/* Navigation Links */}
-            <div className="flex items-center gap-2 sm:gap-4 transition-all">
+            <div className="flex items-center gap-1 sm:gap-3 transition-all">
               {/* Social Media removed */}
               {user ? (
                 <>

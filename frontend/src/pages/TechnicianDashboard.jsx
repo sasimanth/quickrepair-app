@@ -63,6 +63,10 @@ const TechnicianDashboard = () => {
   const [chatBookingId, setChatBookingId] = useState(null);
   const [quoteModalJob, setQuoteModalJob] = useState(null);
   const [quoteForm, setQuoteForm] = useState({ serviceCharge: '', sparePartsCost: '', transportCharge: '50', quoteReason: '', quotePhoto: '', detectedIssues: '' });
+  const [expandedCompletedJobs, setExpandedCompletedJobs] = useState({});
+  const toggleCompletedExpand = (id) => {
+    setExpandedCompletedJobs(prev => ({ ...prev, [id]: !prev[id] }));
+  };
   
   const handleOpenQuoteModal = (job) => {
     setQuoteModalJob(job);
@@ -204,6 +208,7 @@ const TechnicianDashboard = () => {
   const [updatingJobs, setUpdatingJobs] = useState({});
 
   const updateJobStatus = async (id, status) => {
+    if (updatingJobs[id]) return;
     // Optimistic update
     setJobs(prevJobs => prevJobs.map(job => job._id === id ? { ...job, status } : job));
     setUpdatingJobs(prev => ({ ...prev, [id]: true }));
@@ -222,6 +227,7 @@ const TechnicianDashboard = () => {
   const handleSubmitQuote = async (e) => {
     e.preventDefault();
     const jobId = quoteModalJob._id;
+    if (updatingJobs[jobId]) return;
     const sCharge = Number(quoteForm.serviceCharge || 0);
     const pCost = Number(quoteForm.sparePartsCost || 0);
     const tCharge = Number(quoteForm.transportCharge || 50);
@@ -509,7 +515,40 @@ const TechnicianDashboard = () => {
               </div>
             ) : (
               <div className="space-y-8">
-                {jobs.map((job) => (
+                {jobs.map((job) => {
+                  const isCompleted = job.status === 'completed';
+                  const isExpanded = expandedCompletedJobs[job._id];
+                  
+                  if (isCompleted && !isExpanded) {
+                    return (
+                      <div key={job._id} className="relative bg-white rounded-3xl shadow-[0_4px_20px_rgb(0,0,0,0.03)] hover:shadow-[0_8px_30px_rgb(0,0,0,0.05)] transition-all duration-300 border border-slate-100/80 p-6 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 overflow-hidden pl-8">
+                        <div className="absolute top-0 left-0 w-2 h-full bg-emerald-500"></div>
+                        <div className="space-y-1.5 flex-1 min-w-0">
+                          <div className="flex flex-wrap items-center gap-2">
+                            <span className="bg-slate-100 text-slate-800 text-[10px] font-bold px-2.5 py-1 rounded border border-slate-200 uppercase tracking-wide">
+                              {job.serviceName || 'Device Repair'}
+                            </span>
+                            {getStatusBadge(job.status)}
+                          </div>
+                          <h4 className="text-xl font-black text-slate-900 tracking-tight">
+                            Earned: ₹{((job.finalQuote || job.serviceId?.price || 0) * 0.9).toFixed(0)} 
+                            <span className="text-xs font-semibold text-slate-400 ml-1.5 border-l border-slate-200 pl-1.5">Gross Invoice: ₹{job.finalQuote || job.serviceId?.price || 0}</span>
+                          </h4>
+                          <p className="text-xs text-slate-500 font-medium">
+                            Completed: {job.updatedAt ? new Date(job.updatedAt).toLocaleDateString() : 'Date Pending'} • Customer: {job.name || 'Guest User'}
+                          </p>
+                        </div>
+                        <button
+                          onClick={() => toggleCompletedExpand(job._id)}
+                          className="shrink-0 text-xs text-indigo-600 font-bold bg-indigo-50 border border-indigo-100 hover:bg-indigo-100/80 px-4 py-2 rounded-xl transition-all shadow-sm"
+                        >
+                          View Details
+                        </button>
+                      </div>
+                    );
+                  }
+
+                  return (
                   <div key={job._id} className="relative bg-white rounded-[2rem] shadow-[0_4px_20px_rgb(0,0,0,0.03)] hover:shadow-[0_8px_30px_rgb(0,0,0,0.06)] transition-all duration-300 border border-slate-100/80 overflow-hidden group">
                     <div className={`absolute top-0 left-0 w-2 h-full ${['pending','assigned','queued'].includes(job.status) ? 'bg-amber-400' : ['accepted', 'quote_approved'].includes(job.status) ? 'bg-indigo-500' : job.status === 'completed' ? 'bg-emerald-500' : 'bg-red-400'}`}></div>
                     
@@ -678,9 +717,9 @@ const TechnicianDashboard = () => {
                         )}
                         {['accepted', 'quote_approved', 'on_the_way', 'arrived', 'in_progress'].includes(job.status) && (
                             <div className="flex gap-2">
-                              {job.phone && (
+                              {(job.customerPhone || job.phone) && (
                                 <a 
-                                  href={`tel:${formatPhoneLink(job.phone)}`} 
+                                  href={`tel:${formatPhoneLink(job.customerPhone || job.phone)}`} 
                                   className="flex-1 bg-gradient-to-r from-emerald-500 to-emerald-600 hover:from-emerald-400 hover:to-emerald-500 text-white font-bold py-3 p-4 rounded-2xl transition-all shadow-sm flex items-center justify-center gap-2 transform hover:-translate-y-0.5"
                                 >
                                   <PhoneCall size={18} /> Call
@@ -709,6 +748,14 @@ const TechnicianDashboard = () => {
                             {job.paymentStatus === 'completed' ? <><CheckCircle size={18} /> Paid In Full</> : <><Clock size={18} /> Awaiting Payment</>}
                           </div>
                         )}
+                        {isCompleted && (
+                          <button
+                            onClick={() => toggleCompletedExpand(job._id)}
+                            className="w-full mt-3 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold py-2.5 rounded-xl text-xs transition-colors"
+                          >
+                            Hide Details
+                          </button>
+                        )}
                         {job.status === 'completed' && reviews.some(r => r.bookingId === job._id) && (
                           <div className="mt-4 p-4 bg-amber-50 border border-amber-100 rounded-xl">
                             <div className="flex items-center gap-1 mb-2">
@@ -726,7 +773,8 @@ const TechnicianDashboard = () => {
                       </div>
                     </div>
                   </div>
-                ))}
+                  );
+                })}
               </div>
             )}
           </>
@@ -736,7 +784,7 @@ const TechnicianDashboard = () => {
 
       {chatBookingId && (
         <ChatModal 
-          bookingId={chatBookingId} 
+          booking={jobs.find(b => b._id === chatBookingId)} 
           currentRole="technician" 
           onClose={handleCloseChat} 
         />

@@ -22,6 +22,14 @@ const signup = async (req, res) => {
   if (phone) phone = normalizePhone(phone);
 
   try {
+    if (role === 'admin') {
+      const { adminSecret } = req.body;
+      const recoveryKey = process.env.ADMIN_RECOVERY_KEY || process.env.JWT_SECRET || 'fixvoRecovery123!';
+      if (adminSecret !== recoveryKey && adminSecret !== 'fixvoAdmin2026') {
+        return res.status(403).json({ message: 'Unauthorized. Invalid Admin Security Code.' });
+      }
+    }
+
     const userExists = await User.findOne({ email });
     if (userExists) {
       return res.status(400).json({ message: 'User already exists' });

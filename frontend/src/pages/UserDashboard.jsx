@@ -321,6 +321,7 @@ const UserDashboard = () => {
   const [updatingJobs, setUpdatingJobs] = useState({});
 
   const handleQuoteApproval = async (bookingId, approved) => {
+    if (updatingJobs[bookingId]) return;
     // Optimistic update
     setBookings(prev => prev.map(b => b._id === bookingId ? { ...b, status: approved ? 'in_progress' : 'cancelled' } : b));
     setUpdatingJobs(prev => ({ ...prev, [bookingId]: true }));
@@ -560,10 +561,9 @@ const UserDashboard = () => {
                         onChange={(e) => setFormData({ ...formData, location: e.target.value })}
                       >
                         <option value="">Select your area</option>
-                        <option value="Tirupati">Tirupati</option>
-                        <option value="Hyderabad">Hyderabad</option>
-                        <option value="Bangalore">Bangalore</option>
-                        <option value="Chennai">Chennai</option>
+                        <option value="Madanapalle">Madanapalle</option>
+                        <option value="Kadiri">Kadiri</option>
+                        <option value="Rayachoty">Rayachoty</option>
                       </select>
                     </div>
                   </div>
@@ -859,7 +859,9 @@ const UserDashboard = () => {
           </div>
         ) : (
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-            {filteredBookings.map((booking) => (
+            {filteredBookings.map((booking) => {
+              const isCompleted = booking.status === 'completed';
+              return (
               <div key={booking._id} className={`group bg-white rounded-[2rem] p-6 sm:p-8 border ${expandedBookings[booking._id] ? 'border-indigo-300 shadow-md' : 'border-slate-100/80 shadow-sm'} hover:border-indigo-200 transition-all duration-300 flex flex-col justify-between overflow-hidden relative`}>
                 <div className="relative z-10">
                   <div 
@@ -873,10 +875,13 @@ const UserDashboard = () => {
                       <h3 className="text-2xl font-black text-slate-900 tracking-tight">
                         ₹{booking.finalQuote ? booking.finalQuote : (booking.serviceId?.price || 0)}
                       </h3>
-                      <p className="text-slate-500 text-sm font-medium flex items-center gap-1.5">
-                        <Calendar size={14} /> {booking.date ? new Date(booking.date).toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' }) : 'Pending'}
-                      </p>
-                      {booking.lastMessage && (
+                      <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-slate-500 text-sm font-medium">
+                        <span className="flex items-center gap-1"><Calendar size={14} /> {booking.date ? new Date(booking.date).toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' }) : 'Pending'}</span>
+                        {booking.technicianName && booking.technicianName !== 'Unassigned' && (
+                          <span className="flex items-center gap-1 text-indigo-600 font-extrabold uppercase text-[10px] tracking-wider bg-indigo-50 px-2 py-0.5 rounded border border-indigo-100">👨‍🔧 {booking.technicianName}</span>
+                        )}
+                      </div>
+                      {!isCompleted && booking.lastMessage && (
                         <div className="mt-3 p-2 bg-slate-50 rounded-xl border border-slate-100/80 flex items-start gap-2 max-w-xs sm:max-w-md">
                           <MessageSquare size={12} className="text-indigo-500 shrink-0 mt-0.5" />
                           <div className="text-[11px] text-slate-500 truncate">
@@ -896,7 +901,18 @@ const UserDashboard = () => {
                   
                   {expandedBookings[booking._id] && (
                     <div className="mt-6 pt-6 border-t border-slate-100 animate-in fade-in slide-in-from-top-4 duration-300">
-                      {booking.deviceType && (
+                      
+                      {isCompleted && (
+                        <div className="bg-emerald-50 border border-emerald-100 rounded-2xl p-4 mb-4 flex items-start gap-3 text-emerald-800 text-xs sm:text-sm font-semibold">
+                          <CheckCircle className="text-emerald-500 shrink-0 mt-0.5" size={18} />
+                          <div>
+                            <p>Service completed on {new Date(booking.updatedAt).toLocaleDateString()}</p>
+                            <p className="text-slate-500 font-medium text-[11px] mt-0.5">Technician: {booking.technicianName || 'Verified Technician'}</p>
+                          </div>
+                        </div>
+                      )}
+
+                      {!isCompleted && booking.deviceType && (
                         <div className="space-y-3 bg-slate-50 rounded-xl p-5 border border-slate-100/60 mb-6">
                           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                             <div className="flex items-start gap-3 text-slate-700">
@@ -927,7 +943,7 @@ const UserDashboard = () => {
                         </div>
                       )}
                       
-                      {(booking.imageUrl || booking.mediaUrl) && (
+                      {!isCompleted && (booking.imageUrl || booking.mediaUrl) && (
                         <div className="flex items-start gap-3 text-slate-700 pt-2 border-t border-slate-100/80 mt-4">
                           <Camera className="w-5 h-5 text-indigo-500 shrink-0 mt-0.5" />
                           <div className="overflow-hidden rounded-xl border border-slate-200 shadow-sm w-full max-w-sm">
@@ -1087,14 +1103,15 @@ const UserDashboard = () => {
 
 
               </div>
-            ))}
+            );
+            })}
           </div>
         )}
       </div>
       
       {chatBookingId && (
         <ChatModal 
-          bookingId={chatBookingId} 
+          booking={bookings.find(b => b._id === chatBookingId)} 
           currentRole="user" 
           onClose={handleCloseChat} 
         />
