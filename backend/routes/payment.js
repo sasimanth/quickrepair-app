@@ -43,11 +43,18 @@ router.post("/verify", async (req, res) => {
     // Payment is verified
     try {
       if (bookingId) {
-        await Booking.findByIdAndUpdate(bookingId, {
-          paymentStatus: "completed",
-          paymentMethod: "razorpay",
-          transactionId: razorpay_payment_id,
-        });
+        const booking = await Booking.findById(bookingId);
+        if (booking) {
+          booking.paymentStatus = "completed";
+          booking.paymentMethod = "razorpay";
+          booking.transactionId = razorpay_payment_id;
+          await booking.save();
+
+          const { updateTechnicianWallet } = require("../controllers/bookingController");
+          if (updateTechnicianWallet) {
+            await updateTechnicianWallet(booking);
+          }
+        }
       }
       res.json({ success: true, message: "Payment verified successfully" });
     } catch(err) {

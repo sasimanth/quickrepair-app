@@ -499,29 +499,23 @@ const UserDashboard = () => {
               <p className="text-xs sm:text-base text-slate-500 font-medium mt-0.5 sm:mt-1">Manage repairs and hardware requests</p>
             </div>
           </div>
-          <div className="flex flex-wrap items-center gap-3 sm:gap-4 w-full sm:w-auto mt-2 sm:mt-0">
+          <div className="grid grid-cols-2 md:flex md:items-center gap-3 w-full sm:w-auto mt-3 sm:mt-0">
             <button
                onClick={() => setShowSettings(true)}
-               className="flex-1 sm:flex-none flex items-center justify-center gap-2 px-4 py-2.5 sm:px-5 sm:py-3.5 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold rounded-xl sm:rounded-2xl transition-all text-sm sm:text-base"
+               className="col-span-1 flex items-center justify-center gap-2 px-4 py-3 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold rounded-2xl transition-all text-xs sm:text-sm border border-slate-200 shadow-sm"
             >
-              <Settings size={20} /> Settings
+              <Settings size={18} /> Settings
             </button>
-            <div className="relative hidden md:block w-72">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={18} />
-              <input 
-                type="text" 
-                placeholder="Search by ID, Status, or Service..." 
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                className="w-full pl-10 pr-4 py-3 bg-slate-50 border border-slate-200 rounded-2xl focus:ring-2 focus:ring-indigo-100 focus:border-indigo-500 transition-all text-sm font-medium text-slate-700"
-              />
-            </div>
             <button
               onClick={cancelRequest}
-              className={`flex items-center gap-2 px-6 py-3.5 rounded-2xl font-bold transition-all duration-300 transform hover:scale-105 shadow-md ${showForm ? 'bg-white text-slate-700 border-2 border-slate-200 hover:bg-slate-50' : 'bg-indigo-600 text-white hover:bg-indigo-700 hover:shadow-indigo-500/20 shadow-xl'}`}
+              className={`col-span-1 flex items-center justify-center gap-2 px-4 py-3 rounded-2xl font-bold transition-all duration-300 shadow-sm text-xs sm:text-sm ${
+                showForm 
+                  ? 'bg-white text-slate-700 border border-slate-200 hover:bg-slate-50' 
+                  : 'bg-indigo-600 text-white hover:bg-indigo-700 shadow-md shadow-indigo-600/10'
+              }`}
             >
-              {showForm ? <XCircle size={20} /> : <Plus size={20} />}
-              {showForm ? 'Cancel Request' : 'Book a New Repair'}
+              {showForm ? <XCircle size={18} /> : <Plus size={18} />}
+              {showForm ? 'Cancel Request' : 'Book Repair'}
             </button>
           </div>
         </div>
@@ -558,24 +552,24 @@ const UserDashboard = () => {
             </div>
           </div>
         ) : (
-          <div className="bg-gradient-to-br from-[#161D2E]/90 to-[#0B0F19]/90 border border-amber-500/20 rounded-3xl p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-4 shadow-[0_4px_20px_rgba(0,0,0,0.2)] relative overflow-hidden group">
+          <div className="bg-gradient-to-br from-[#161D2E]/90 to-[#0B0F19]/90 border border-amber-500/20 rounded-3xl p-6 flex flex-col sm:flex-row items-center justify-between gap-4 shadow-[0_4px_20px_rgba(0,0,0,0.2)] relative overflow-hidden group">
             <div className="absolute top-[-20%] right-[-10%] w-[50%] h-[150%] bg-gradient-to-br from-amber-500/10 to-transparent rounded-full blur-[60px] pointer-events-none"></div>
-            <div className="flex items-center gap-4 relative z-10">
-              <div className="w-12 h-12 bg-gradient-to-br from-amber-400 to-yellow-500 text-slate-955 rounded-2xl flex items-center justify-center shrink-0 shadow-lg shadow-amber-500/10">
+            <div className="flex flex-col sm:flex-row items-center gap-4 relative z-10 text-center sm:text-left">
+              <div className="w-12 h-12 bg-gradient-to-br from-amber-400 to-yellow-500 text-slate-900 rounded-2xl flex items-center justify-center shrink-0 shadow-lg shadow-amber-500/10">
                 <Sparkles size={22} className="animate-pulse" />
               </div>
-              <div className="space-y-0.5">
-                <h3 className="text-base font-extrabold text-white tracking-tight flex items-center gap-2">
+              <div className="space-y-1">
+                <h3 className="text-base font-extrabold text-white tracking-tight flex items-center justify-center sm:justify-start gap-2">
                   Upgrade to Fixvo Plus
                 </h3>
-                <p className="text-xs text-slate-400 font-semibold">
+                <p className="text-xs text-slate-400 font-semibold max-w-md">
                   Get 15% discount on all quotes, zero inspection fees (save ₹99), and priority dispatch.
                 </p>
               </div>
             </div>
             <button 
               onClick={() => setShowPremiumModal(true)}
-              className="relative z-10 px-5 py-2.5 bg-gradient-to-r from-amber-400 to-yellow-500 hover:from-amber-300 hover:to-yellow-400 text-slate-950 font-black text-xs rounded-xl shadow-lg shadow-amber-500/10 transition-all duration-300 transform hover:-translate-y-0.5 whitespace-nowrap self-start sm:self-auto cursor-pointer border-none outline-none"
+              className="relative z-10 w-full sm:w-auto px-5 py-3 bg-gradient-to-r from-amber-400 to-yellow-500 hover:from-amber-300 hover:to-yellow-400 text-slate-950 font-black text-xs rounded-xl shadow-lg shadow-amber-500/10 transition-all duration-300 transform hover:-translate-y-0.5 whitespace-nowrap cursor-pointer border-none outline-none"
             >
               Upgrade to Plus
             </button>
@@ -1059,10 +1053,10 @@ const UserDashboard = () => {
               <div key={booking._id} className={`group bg-white rounded-[2rem] p-6 sm:p-8 border ${expandedBookings[booking._id] ? 'border-indigo-300 shadow-md' : 'border-slate-100/80 shadow-sm'} hover:border-indigo-200 transition-all duration-300 flex flex-col justify-between overflow-hidden relative`}>
                 <div className="relative z-10">
                   <div 
-                    className="flex justify-between items-start mb-2 cursor-pointer"
+                    className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-4 cursor-pointer"
                     onClick={() => toggleExpand(booking._id)}
                   >
-                    <div className="space-y-2">
+                    <div className="space-y-2 w-full">
                        <span className="inline-flex items-center gap-1.5 px-3 py-1 bg-slate-50 text-slate-600 border border-slate-200/60 text-[10px] font-black rounded uppercase tracking-widest">
                         {booking.serviceId?.name || booking.serviceName || 'Device Repair'}
                       </span>
@@ -1076,7 +1070,7 @@ const UserDashboard = () => {
                         )}
                       </div>
                       {!isCompleted && booking.lastMessage && (
-                        <div className="mt-3 p-2 bg-slate-50 rounded-xl border border-slate-100/80 flex items-start gap-2 max-w-xs sm:max-w-md">
+                        <div className="mt-3 p-2 bg-slate-50 rounded-xl border border-slate-100/80 flex items-start gap-2 w-full max-w-md">
                           <MessageSquare size={12} className="text-indigo-500 shrink-0 mt-0.5" />
                           <div className="text-[11px] text-slate-500 truncate">
                             <span className="font-semibold">{booking.lastMessage.senderId === profile?.userId ? 'You: ' : 'Tech: '}</span>
@@ -1085,9 +1079,9 @@ const UserDashboard = () => {
                         </div>
                       )}
                     </div>
-                    <div className="flex flex-col items-end gap-2">
+                    <div className="flex flex-row sm:flex-col items-center sm:items-end justify-between w-full sm:w-auto gap-2 shrink-0 border-t sm:border-t-0 border-slate-100 pt-3 sm:pt-0 mt-1 sm:mt-0">
                       {getStatusBadge(booking.status)}
-                      <span className="text-indigo-500 text-xs font-bold bg-indigo-50 px-2 py-1 rounded-full border border-indigo-100">
+                      <span className="text-indigo-500 text-xs font-bold bg-indigo-50 px-3 py-1 rounded-full border border-indigo-100 whitespace-nowrap">
                         {expandedBookings[booking._id] ? 'Less Details' : 'View Details'}
                       </span>
                     </div>
@@ -1265,32 +1259,34 @@ const UserDashboard = () => {
                          )}
                       </button>
                     )}
-
-                    {booking.status === 'completed' && (
+                  </div>
+                  
+                  <div className="flex flex-col sm:flex-row gap-3 items-center w-full sm:w-auto">
+                    {booking.status === 'completed' && !booking.isReviewed && (
                       <button 
                          onClick={() => !booking.isReviewed && setReviewBooking(booking)}
-                         className={`flex items-center gap-2 px-4 py-2 ${booking.isReviewed ? 'bg-slate-100 text-slate-500 cursor-not-allowed border border-slate-200 shadow-none' : 'bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-400 hover:to-orange-400 text-white shadow-amber-200 transition-all hover:-translate-y-0.5'} rounded-xl text-sm font-bold shadow-sm`}
+                         className="w-full sm:w-auto flex items-center justify-center gap-2 px-4 py-3 bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-400 hover:to-orange-400 text-white shadow-amber-200 transition-all rounded-xl text-sm font-bold shadow-sm"
                       >
-                         <Star size={16} className={`fill-current ${booking.isReviewed ? 'text-slate-400' : 'text-amber-100'}`} /> {booking.isReviewed ? 'Reviewed' : 'Leave Review'}
+                         <Star size={16} className="text-amber-100 fill-current" /> Leave Review
                       </button>
                     )}
 
                     {booking.status === 'completed' && booking.paymentStatus !== 'completed' && (
                       <button 
                          onClick={() => setPaymentBooking(booking)}
-                         className="flex items-center gap-2 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white px-5 py-2.5 rounded-xl text-sm font-bold shadow-lg transition-all shadow-blue-500/30 transform hover:-translate-y-0.5"
+                         className="w-full sm:w-auto flex items-center justify-center gap-2 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white px-5 py-3 rounded-xl text-sm font-bold shadow-lg transition-all shadow-blue-500/30 font-sans cursor-pointer"
                       >
                          <CreditCard size={16} /> Pay Now
                       </button>
                     )}
 
                     {booking.status === 'completed' && booking.paymentStatus === 'completed' && (
-                       <div className="flex items-center gap-2 bg-emerald-50 border border-emerald-100 px-3 py-2 rounded-xl text-emerald-700 text-sm font-bold shadow-sm">
+                       <div className="w-full sm:w-auto flex items-center justify-center gap-2 bg-emerald-50 border border-emerald-100 px-3 py-2 rounded-xl text-emerald-700 text-sm font-bold shadow-sm">
                          <CheckCircle size={16} className="text-emerald-500" /> Payment & Completed
                        </div>
                     )}
                     
-                    {booking.isReviewed && (
+                    {booking.isReviewed && booking.status !== 'completed' && (
                        <div className="flex items-center gap-2 bg-emerald-50 border border-emerald-100 px-3 py-2 rounded-xl text-emerald-700 text-sm font-bold shadow-sm">
                          <Star size={16} className="text-emerald-500 fill-emerald-500"/>
                          Reviewed

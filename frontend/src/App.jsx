@@ -47,7 +47,7 @@ const PromoBanner = () => {
   const offers = [
     { text: "First repair? Use code", code: "FIXVO10", suffix: "for 10% off your direct repair!", icon: "🔥" },
     { text: "Priority dispatch & zero inspection fees with", code: "PLUS2026", suffix: "Get Fixvo Plus today!", icon: "✨" },
-    { text: "10-Min Arrival Guarantee on all emergency services", code: "", suffix: "Call: +91 95159 80170", icon: "⚡" }
+    { text: "60-Minute Arrival Guarantee on all home services", code: "", suffix: "Call: +91 95159 80170", icon: "⚡" }
   ];
 
   useEffect(() => {
@@ -84,7 +84,7 @@ const PromoBanner = () => {
             </span>
           </button>
         )}
-        <span className="text-slate-300">{current.suffix}</span>
+        <span className="text-slate-300 whitespace-nowrap">{current.suffix}</span>
       </div>
       
       {copied && (

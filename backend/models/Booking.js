@@ -186,6 +186,30 @@ const bookingSchema = new mongoose.Schema({
     type: Number,
     default: 0
   },
+  platformCommission: {
+    type: Number,
+    default: 0
+  },
+  membershipDiscount: {
+    type: Number,
+    default: 0
+  },
+  finalTechnicianEarning: {
+    type: Number,
+    default: 0
+  },
+  isPremiumUser: {
+    type: Boolean,
+    default: false
+  },
+  emergencyCharge: {
+    type: Number,
+    default: 0
+  },
+  walletUpdated: {
+    type: Boolean,
+    default: false
+  },
   promoCode: {
     type: String,
     default: null

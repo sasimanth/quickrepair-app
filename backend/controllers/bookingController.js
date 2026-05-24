@@ -172,9 +172,18 @@ const createBooking = async (req, res) => {
       return res.status(409).json({ message: 'Duplicate booking detected. Please wait 2 minutes before resubmitting.' });
     }
 
+    let isPremiumUser = false;
+    if (req.user) {
+      const User = require('../models/User');
+      const userDoc = await User.findById(req.user.id);
+      if (userDoc && userDoc.isPremium) {
+        isPremiumUser = true;
+      }
+    }
+
     let inspectionFee = 0;
     if (serviceOption === 'inspection') {
-       inspectionFee = 15; // $15 inspection fee
+       inspectionFee = isPremiumUser ? 0 : 99; // Standard ₹99 inspection fee, ₹0 for premium members
     }
 
     const Technician = require('../models/Technician');
@@ -301,8 +310,9 @@ const createBooking = async (req, res) => {
       areaType: areaType || 'nearby',
       transportCharge: transportCharge || 50,
       transportOption: transportOption || 'doorstep',
-      promoCode: promoCode || null,
-      discountPercentage: discountPercentage || 0,
+      promoCode: isPremiumUser ? 'FIXVO_PLUS' : (promoCode || null),
+      discountPercentage: isPremiumUser ? 15 : (discountPercentage || 0),
+      isPremiumUser,
       areaSize: areaSize || null,
       houseType: houseType || null,
       numberOfRooms: numberOfRooms || null,
@@ -491,21 +501,13 @@ const updateBookingStatus = async (req, res) => {
         tech.currentJobId = null;
         tech.expectedAvailableTime = null;
         tech.jobsCompleted = (tech.jobsCompleted || 0) + 1;
-        
-        // Calculate technician earnings (80% share, 20% platform commission fee)
-        const bookingAmount = booking.finalQuote || (booking.serviceId?.price || 0);
-        const techShare = bookingAmount * 0.80;
-        tech.walletBalance = (tech.walletBalance || 0) + techShare;
-        tech.totalEarnings = (tech.totalEarnings || 0) + techShare;
-        
         await tech.save();
 
-        // Queue check for ASAP waiting jobs
-        const queuedJob = await Booking.findOne({ status: 'queued' }).sort({ createdAt: 1 });
-        if (queuedJob) {
-          queuedJob.providerId = tech.userId;
-          queuedJob.status = "assigned";
-          await queuedJob.save();
+        booking.status = 'completed';
+
+        if (booking.paymentMethod === 'cash') {
+          booking.paymentStatus = 'completed';
+          await updateTechnicianWallet(booking);
         }
       }
     }
@@ -769,4 +771,55 @@ const cancelBooking = async (req, res) => {
   }
 };
 
-module.exports = { createBooking, getBookings, updateBookingStatus, assignBooking, processPayment, createPaymentIntent, submitQuote, approveQuote, cancelBooking };
+// Helper to credit/debit technician wallet upon completed payment
+const updateTechnicianWallet = async (booking) => {
+  if (booking.walletUpdated) return;
+
+  const Technician = require('../models/Technician');
+  const tech = await Technician.findOne({ userId: booking.providerId });
+  if (!tech) return;
+
+  const bookingAmount = booking.finalQuote || (booking.serviceId?.price || 0);
+  
+  // Calculate discount if premium
+  let isPremium = booking.isPremiumUser;
+  if (booking.userId) {
+    const User = require('../models/User');
+    const userDoc = await User.findById(booking.userId);
+    if (userDoc && userDoc.isPremium) {
+      isPremium = true;
+    }
+  }
+
+  let discount = 0;
+  if (isPremium) {
+    discount = bookingAmount * 0.15;
+    booking.isPremiumUser = true;
+    booking.discountPercentage = 15;
+  }
+
+  const customerPaid = bookingAmount - discount;
+  const platformCommission = customerPaid * 0.20;
+  const techShare = customerPaid * 0.80;
+
+  booking.amount = customerPaid;
+  booking.platformCommission = platformCommission;
+  booking.membershipDiscount = discount;
+  booking.finalTechnicianEarning = techShare;
+
+  if (booking.paymentMethod === 'cash') {
+    // Cash: Tech collects full cash directly. Deduct commission from their wallet balance.
+    tech.walletBalance = (tech.walletBalance || 0) - platformCommission;
+    tech.totalEarnings = (tech.totalEarnings || 0) + techShare;
+  } else {
+    // Razorpay: Client pays platform. Credit tech's wallet balance.
+    tech.walletBalance = (tech.walletBalance || 0) + techShare;
+    tech.totalEarnings = (tech.totalEarnings || 0) + techShare;
+  }
+
+  await tech.save();
+  booking.walletUpdated = true;
+  await booking.save();
+};
+
+module.exports = { createBooking, getBookings, updateBookingStatus, assignBooking, processPayment, createPaymentIntent, submitQuote, approveQuote, cancelBooking, updateTechnicianWallet };

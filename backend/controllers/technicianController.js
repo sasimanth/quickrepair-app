@@ -34,9 +34,35 @@ const getProfile = async (req, res) => {
     const WithdrawalRequest = require('../models/WithdrawalRequest');
     const withdrawals = await WithdrawalRequest.find({ technicianId: req.user.id }).sort({ createdAt: -1 });
 
+    // Fetch completed bookings to calculate gross, commission, net
+    const completedJobs = await Booking.find({
+      providerId: req.user.id,
+      status: 'completed'
+    });
+
+    let calculatedGross = 0;
+    let calculatedCommission = 0;
+    let calculatedNet = 0;
+
+    completedJobs.forEach(job => {
+      const gross = job.finalQuote || job.amount || 0;
+      const discount = job.membershipDiscount || 0;
+      const commission = job.platformCommission || ((gross - discount) * 0.20);
+      const net = job.finalTechnicianEarning || ((gross - discount) * 0.80);
+
+      calculatedGross += gross;
+      calculatedCommission += commission;
+      calculatedNet += net;
+    });
+
     const techObj = tech.toObject();
     techObj.pendingEarnings = pendingEarnings;
     techObj.withdrawals = withdrawals;
+    
+    // Attach dynamically calculated statistics
+    techObj.totalEarned = calculatedGross;
+    techObj.platformCommission = calculatedCommission;
+    techObj.netEarnings = calculatedNet;
 
     res.json(techObj);
   } catch (error) {

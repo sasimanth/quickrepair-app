@@ -128,12 +128,6 @@ const TechnicianDashboard = () => {
     setShowWithdrawModal(true);
   };
   
-  // Calculate earnings with 10% commission
-  const completedJobs = jobs.filter(j => j.status === 'completed');
-  const totalAmount = completedJobs.reduce((sum, j) => sum + (j.finalQuote || j.serviceId?.price || 0), 0);
-  const commissionAmount = totalAmount * 0.10;
-  const netEarnings = totalAmount - commissionAmount;
-
   const filteredJobs = useMemo(() => {
     return jobs.filter(job => {
       if (jobTab === 'new') {
@@ -531,60 +525,82 @@ const TechnicianDashboard = () => {
 
         {/* Stats Section */}
         {!loading && profile?.isProfileComplete && (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+          <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-6 gap-4">
             {/* Available Balance */}
-            <div className="group bg-gradient-to-br from-emerald-600 to-teal-700 p-6 rounded-[2rem] shadow-lg shadow-emerald-600/10 text-white flex flex-col justify-between relative overflow-hidden transition-all hover:scale-[1.01] hover:shadow-xl">
+            <div className="col-span-2 sm:col-span-1 md:col-span-1 xl:col-span-1 group bg-gradient-to-br from-emerald-600 to-teal-700 p-5 rounded-[2rem] shadow-lg shadow-emerald-600/10 text-white flex flex-col justify-between relative overflow-hidden transition-all hover:scale-[1.01] hover:shadow-xl">
               <div className="absolute top-[-30%] right-[-10%] w-[50%] h-[50%] bg-white/10 rounded-full blur-[40px]"></div>
               <div className="flex justify-between items-start">
-                <div className="p-3 bg-white/10 rounded-xl"><Wallet size={24} /></div>
+                <div className="p-2 bg-white/10 rounded-xl"><Wallet size={20} /></div>
                 {profile?.pendingWithdrawal > 0 && (
-                  <span className="text-[9px] bg-white/20 text-white font-extrabold px-2.5 py-0.5 rounded-full uppercase tracking-wider">
+                  <span className="text-[8px] bg-white/20 text-white font-extrabold px-2 py-0.5 rounded-full uppercase tracking-wider">
                     Pending: ₹{profile.pendingWithdrawal}
                   </span>
                 )}
               </div>
-              <div className="mt-4">
-                <p className="text-[10px] font-bold uppercase tracking-wider text-emerald-100 opacity-90">Available Balance</p>
-                <p className="text-3xl font-black mt-1">₹{(profile?.walletBalance || 0).toFixed(2)}</p>
+              <div className="mt-3">
+                <p className="text-[9px] font-bold uppercase tracking-wider text-emerald-100 opacity-90">Available Balance</p>
+                <p className="text-2xl font-black mt-0.5">₹{(profile?.walletBalance || 0).toFixed(2)}</p>
               </div>
               <button 
                 onClick={handleOpenWithdrawModal}
-                className="mt-4 w-full bg-white hover:bg-emerald-50 text-emerald-700 font-extrabold py-2 px-4 rounded-xl text-xs transition-colors flex items-center justify-center gap-1.5 outline-none cursor-pointer border-none shadow-sm"
+                className="mt-3 w-full bg-white hover:bg-emerald-50 text-emerald-700 font-extrabold py-2 px-3 rounded-xl text-[11px] transition-colors flex items-center justify-center gap-1.5 outline-none cursor-pointer border-none shadow-sm"
               >
-                Withdraw Earnings <ArrowUpRight size={14} />
+                Withdraw <ArrowUpRight size={12} />
               </button>
             </div>
 
-            {/* Pending Earnings */}
-            <div className="group bg-white p-6 rounded-[2rem] shadow-[0_4px_20px_rgb(0,0,0,0.03)] border border-slate-100/80 flex flex-col justify-between transition-all hover:shadow-[0_8px_30px_rgb(0,0,0,0.06)] hover:-translate-y-0.5">
+            {/* Gross Earned */}
+            <div className="group bg-white p-5 rounded-[2rem] shadow-[0_4px_20px_rgb(0,0,0,0.03)] border border-slate-100/80 flex flex-col justify-between transition-all hover:shadow-[0_8px_30px_rgb(0,0,0,0.06)] hover:-translate-y-0.5">
               <div className="flex justify-between items-start">
-                <div className="p-3 bg-amber-50 text-amber-600 rounded-xl"><Clock size={24} /></div>
+                <div className="p-2 bg-indigo-50 text-indigo-600 rounded-xl"><Coins size={20} /></div>
               </div>
-              <div className="mt-4">
-                <p className="text-[10px] font-bold uppercase tracking-wider text-slate-400">Pending Earnings</p>
-                <p className="text-3xl font-black text-slate-800 mt-1">₹{(profile?.pendingEarnings || 0).toFixed(2)}</p>
+              <div className="mt-3">
+                <p className="text-[9px] font-bold uppercase tracking-wider text-slate-400">Gross Earned</p>
+                <p className="text-2xl font-black text-indigo-600 mt-0.5">₹{(profile?.totalEarned || 0).toFixed(2)}</p>
               </div>
             </div>
 
-            {/* Total Earnings */}
-            <div className="group bg-white p-6 rounded-[2rem] shadow-[0_4px_20px_rgb(0,0,0,0.03)] border border-slate-100/80 flex flex-col justify-between transition-all hover:shadow-[0_8px_30px_rgb(0,0,0,0.06)] hover:-translate-y-0.5">
+            {/* Platform Commission */}
+            <div className="group bg-white p-5 rounded-[2rem] shadow-[0_4px_20px_rgb(0,0,0,0.03)] border border-slate-100/80 flex flex-col justify-between transition-all hover:shadow-[0_8px_30px_rgb(0,0,0,0.06)] hover:-translate-y-0.5">
               <div className="flex justify-between items-start">
-                <div className="p-3 bg-indigo-50 text-indigo-600 rounded-xl"><Coins size={24} /></div>
+                <div className="p-2 bg-rose-50 text-rose-600 rounded-xl"><ArrowDownLeft size={20} /></div>
               </div>
-              <div className="mt-4">
-                <p className="text-[10px] font-bold uppercase tracking-wider text-slate-400">Total Earnings</p>
-                <p className="text-3xl font-black text-indigo-600 mt-1">₹{(profile?.totalEarnings || 0).toFixed(2)}</p>
+              <div className="mt-3">
+                <p className="text-[9px] font-bold uppercase tracking-wider text-slate-400">Commission (20%)</p>
+                <p className="text-2xl font-black text-rose-600 mt-0.5">₹{(profile?.platformCommission || 0).toFixed(2)}</p>
+              </div>
+            </div>
+
+            {/* Net Earnings */}
+            <div className="group bg-white p-5 rounded-[2rem] shadow-[0_4px_20px_rgb(0,0,0,0.03)] border border-slate-100/80 flex flex-col justify-between transition-all hover:shadow-[0_8px_30px_rgb(0,0,0,0.06)] hover:-translate-y-0.5">
+              <div className="flex justify-between items-start">
+                <div className="p-2 bg-teal-50 text-teal-600 rounded-xl"><CheckCircle size={20} /></div>
+              </div>
+              <div className="mt-3">
+                <p className="text-[9px] font-bold uppercase tracking-wider text-slate-400">Net Earnings</p>
+                <p className="text-2xl font-black text-teal-600 mt-0.5">₹{(profile?.netEarnings || 0).toFixed(2)}</p>
+              </div>
+            </div>
+
+            {/* Pending Payouts / Pending Earnings */}
+            <div className="group bg-white p-5 rounded-[2rem] shadow-[0_4px_20px_rgb(0,0,0,0.03)] border border-slate-100/80 flex flex-col justify-between transition-all hover:shadow-[0_8px_30px_rgb(0,0,0,0.06)] hover:-translate-y-0.5">
+              <div className="flex justify-between items-start">
+                <div className="p-2 bg-amber-50 text-amber-600 rounded-xl"><Clock size={20} /></div>
+              </div>
+              <div className="mt-3">
+                <p className="text-[9px] font-bold uppercase tracking-wider text-slate-400">Pending Earnings</p>
+                <p className="text-2xl font-black text-amber-500 mt-0.5">₹{(profile?.pendingEarnings || 0).toFixed(2)}</p>
               </div>
             </div>
 
             {/* Withdrawn Amount */}
-            <div className="group bg-white p-6 rounded-[2rem] shadow-[0_4px_20px_rgb(0,0,0,0.03)] border border-slate-100/80 flex flex-col justify-between transition-all hover:shadow-[0_8px_30px_rgb(0,0,0,0.06)] hover:-translate-y-0.5">
+            <div className="group bg-white p-5 rounded-[2rem] shadow-[0_4px_20px_rgb(0,0,0,0.03)] border border-slate-100/80 flex flex-col justify-between transition-all hover:shadow-[0_8px_30px_rgb(0,0,0,0.06)] hover:-translate-y-0.5">
               <div className="flex justify-between items-start">
-                <div className="p-3 bg-rose-50 text-rose-600 rounded-xl"><ArrowDownLeft size={24} /></div>
+                <div className="p-2 bg-slate-100 text-slate-600 rounded-xl"><FileText size={20} /></div>
               </div>
-              <div className="mt-4">
-                <p className="text-[10px] font-bold uppercase tracking-wider text-slate-400">Withdrawn Amount</p>
-                <p className="text-3xl font-black text-slate-800 mt-1">₹{(profile?.withdrawnAmount || 0).toFixed(2)}</p>
+              <div className="mt-3">
+                <p className="text-[9px] font-bold uppercase tracking-wider text-slate-400">Withdrawn Amount</p>
+                <p className="text-2xl font-black text-slate-700 mt-0.5">₹{(profile?.withdrawnAmount || 0).toFixed(2)}</p>
               </div>
             </div>
           </div>
@@ -645,7 +661,7 @@ const TechnicianDashboard = () => {
                             {getStatusBadge(job.status)}
                           </div>
                           <h4 className="text-xl font-black text-slate-900 tracking-tight">
-                            Earned: ₹{((job.finalQuote || job.serviceId?.price || 0) * 0.9).toFixed(0)} 
+                            Earned: ₹{job.finalTechnicianEarning ? job.finalTechnicianEarning.toFixed(2) : (((job.finalQuote || job.amount || job.serviceId?.price || 0) - (job.membershipDiscount || 0)) * 0.8).toFixed(2)} 
                             <span className="text-xs font-semibold text-slate-400 ml-1.5 border-l border-slate-200 pl-1.5">Gross Invoice: ₹{job.finalQuote || job.serviceId?.price || 0}</span>
                           </h4>
                           <p className="text-xs text-slate-500 font-medium">
@@ -754,6 +770,50 @@ const TechnicianDashboard = () => {
                             <div className="text-xs text-slate-600 truncate">
                               <span className="font-bold">{job.lastMessage.senderId === profile?.userId ? 'You: ' : ''}</span>
                               {job.lastMessage.text}
+                            </div>
+                          </div>
+                        )}
+                        {job.status === 'completed' && (
+                          <div className="space-y-3 bg-slate-50 border border-slate-200/60 rounded-2xl p-5 mt-4 max-w-xl">
+                            <h4 className="text-sm font-bold text-slate-800 flex items-center gap-1.5">
+                              <FileText size={16} className="text-indigo-600" /> Billing & Earning Breakdown
+                            </h4>
+                            <div className="overflow-hidden rounded-xl border border-slate-200/60 bg-white shadow-sm">
+                              <table className="w-full text-left border-collapse text-xs">
+                                <thead>
+                                  <tr className="bg-slate-50 text-slate-500 font-bold border-b border-slate-200/60">
+                                    <th className="px-4 py-2.5">Billing Item</th>
+                                    <th className="px-4 py-2.5 text-right">Amount</th>
+                                  </tr>
+                                </thead>
+                                <tbody className="divide-y divide-slate-100 text-slate-700 font-medium">
+                                  <tr>
+                                    <td className="px-4 py-2 text-slate-500">Gross Invoice (Billed to Customer)</td>
+                                    <td className="px-4 py-2 text-right font-semibold">₹{job.finalQuote || job.amount || 0}</td>
+                                  </tr>
+                                  {job.membershipDiscount > 0 && (
+                                    <tr className="text-amber-600 bg-amber-50/20">
+                                      <td className="px-4 py-2 flex items-center gap-1">
+                                        <Sparkles size={12} className="text-amber-500" /> 
+                                        Plus Member Discount (15%)
+                                      </td>
+                                      <td className="px-4 py-2 text-right font-semibold">-₹{job.membershipDiscount}</td>
+                                    </tr>
+                                  )}
+                                  <tr className="text-rose-600 bg-rose-50/10">
+                                    <td className="px-4 py-2">Platform Commission Deducted (20%)</td>
+                                    <td className="px-4 py-2 text-right font-semibold">-₹{(job.platformCommission || (((job.finalQuote || job.amount || 0) - (job.membershipDiscount || 0)) * 0.2)).toFixed(2)}</td>
+                                  </tr>
+                                  <tr className="bg-emerald-50 text-emerald-800 font-bold border-t border-slate-200">
+                                    <td className="px-4 py-2.5">Your Net Earnings (80%)</td>
+                                    <td className="px-4 py-2.5 text-right text-sm">₹{(job.finalTechnicianEarning || (((job.finalQuote || job.amount || 0) - (job.membershipDiscount || 0)) * 0.8)).toFixed(2)}</td>
+                                  </tr>
+                                </tbody>
+                              </table>
+                            </div>
+                            <div className="flex justify-between items-center text-[10px] text-slate-500 font-bold px-1 uppercase tracking-wider">
+                              <span>Payment Mode: <strong className="text-slate-700">{job.paymentMethod || 'Cash'}</strong></span>
+                              <span>Status: <strong className={job.paymentStatus === 'completed' ? 'text-emerald-600' : 'text-amber-600'}>{job.paymentStatus === 'completed' ? 'Paid' : 'Awaiting Payment'}</strong></span>
                             </div>
                           </div>
                         )}
