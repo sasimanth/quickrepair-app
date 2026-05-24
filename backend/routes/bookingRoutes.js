@@ -9,7 +9,7 @@ router.route('/')
 
 router.put('/:id/status', protect, authorize('user', 'technician', 'admin'), updateBookingStatus);
 router.put('/:id/assign', protect, authorize('admin'), assignBooking);
-router.put('/:id/pay', protect, authorize('user'), processPayment);
+router.put('/:id/pay', protect, authorize('user', 'technician'), processPayment);
 router.post('/:id/create-payment-intent', protect, authorize('user'), createPaymentIntent);
 router.put('/:id/cancel', protect, cancelBooking);
 

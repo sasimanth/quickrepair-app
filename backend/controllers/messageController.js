@@ -73,7 +73,8 @@ const sendMessage = async (req, res) => {
         title: `💬 New Message from ${senderName || req.user.email.split('@')[0]}`,
         message: text,
         isRead: false,
-        type: 'chat'
+        type: 'chat',
+        bookingId: bookingId
       });
       if (io) {
         io.to(`user_${recipientId}`).emit('new_notification', chatNotif);

@@ -41,12 +41,16 @@ const getDashboardStats = async (req, res) => {
       }
     });
 
-    // Service Revenue estimation (20% platform fee of completed bookings)
+    // Service Revenue estimation (platform fee of completed bookings)
     const completedBookings = await Booking.find({ status: 'completed' });
     let serviceRevenue = 0;
     completedBookings.forEach(b => {
-      const amt = b.finalQuote || b.serviceCharge || 0;
-      serviceRevenue += amt * 0.20; // 20% platform share
+      if (typeof b.platformCommission === 'number') {
+        serviceRevenue += b.platformCommission;
+      } else {
+        const amt = b.amount || b.finalQuote || b.serviceCharge || 0;
+        serviceRevenue += amt * 0.10; // 10% platform share fallback
+      }
     });
     
     const totalPlatformRevenue = premiumRevenue + serviceRevenue;

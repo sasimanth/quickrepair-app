@@ -27,7 +27,7 @@ const getProfile = async (req, res) => {
     
     const pendingEarnings = activeJobs.reduce((sum, job) => {
       const amt = job.finalQuote || (job.serviceId?.price || 0);
-      return sum + (amt * 0.80); // 80% technician share
+      return sum + (amt * 0.90); // 90% technician share
     }, 0);
 
     // Fetch previous withdrawal request logs
@@ -47,8 +47,8 @@ const getProfile = async (req, res) => {
     completedJobs.forEach(job => {
       const gross = job.finalQuote || job.amount || 0;
       const discount = job.membershipDiscount || 0;
-      const commission = job.platformCommission || ((gross - discount) * 0.20);
-      const net = job.finalTechnicianEarning || ((gross - discount) * 0.80);
+      const commission = typeof job.platformCommission === 'number' ? job.platformCommission : ((gross - discount) * 0.10);
+      const net = typeof job.finalTechnicianEarning === 'number' ? job.finalTechnicianEarning : ((gross - discount) * 0.90);
 
       calculatedGross += gross;
       calculatedCommission += commission;

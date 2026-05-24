@@ -6,7 +6,7 @@ import ChatModal from '../components/ChatModal';
 import SettingsModal from '../components/SettingsModal';
 import VerificationModal from '../components/VerificationModal';
 import KycModal from '../components/KycModal';
-import { Star, ShieldAlert, ShieldCheck, Sparkles, IndianRupee, Wallet, Coins, ArrowUpRight, ArrowDownLeft, FileText } from 'lucide-react';
+import { Star, ShieldAlert, ShieldCheck, Sparkles, IndianRupee, Wallet, Coins, ArrowUpRight, ArrowDownLeft, FileText, Bell } from 'lucide-react';
 import { socket } from '../services/socket';
 
 const formatPhoneLink = (phone) => {
@@ -21,8 +21,13 @@ const TechnicianDashboard = () => {
   const [profile, setProfile] = useState(null);
   const [loading, setLoading] = useState(true);
   const [toasts, setToasts] = useState([]);
+  const [notifications, setNotifications] = useState([]);
+  const [showNotifDropdown, setShowNotifDropdown] = useState(false);
 
   const playChime = () => {
+    if (navigator.vibrate) {
+      navigator.vibrate([200, 100, 200]);
+    }
     try {
       const AudioContextClass = window.AudioContext || window.webkitAudioContext;
       if (!AudioContextClass) return;
@@ -46,6 +51,44 @@ const TechnicianDashboard = () => {
       osc.stop(ctx.currentTime + 0.6);
     } catch (error) {
       console.warn('AudioContext failed to synthesize chime', error);
+    }
+  };
+
+  const triggerBrowserNotification = (title, message, options = {}) => {
+    if ('Notification' in window && Notification.permission === 'granted') {
+      const defaultOptions = {
+        body: message,
+        icon: '/icon.svg',
+        tag: options.tag || 'fixvo-general',
+        vibrate: [200, 100, 200],
+        renotify: true,
+        data: options.data || {}
+      };
+      
+      const notif = new Notification(title, defaultOptions);
+      notif.onclick = () => {
+        window.focus();
+        if (options.data?.url) {
+          const urlParams = new URLSearchParams(options.data.url.split('?')[1]);
+          const jobId = urlParams.get('jobId');
+          const chatId = urlParams.get('chatId');
+          if (chatId) {
+            setChatBookingId(chatId);
+          } else if (jobId) {
+            // Find job status to change tab
+            const job = jobs.find(j => j._id === jobId);
+            if (job) {
+              if (['pending', 'assigned', 'queued'].includes(job.status)) setJobTab('new');
+              else if (['accepted', 'on_the_way', 'arrived', 'quote_approved', 'in_progress'].includes(job.status)) setJobTab('active');
+              else if (job.status === 'quote_pending') setJobTab('quote_pending');
+              else if (job.status === 'completed') {
+                setJobTab('completed');
+                setExpandedCompletedJobs(prev => ({ ...prev, [jobId]: true }));
+              } else if (['cancelled', 'rejected'].includes(job.status)) setJobTab('cancelled');
+            }
+          }
+        }
+      };
     }
   };
 
@@ -183,6 +226,10 @@ const TechnicianDashboard = () => {
         `New repair request for ${newJob.serviceName} has been assigned to you.`, 
         'info'
       );
+      triggerBrowserNotification('💼 New Job Assigned!', `New repair request for ${newJob.serviceName} has been assigned to you.`, {
+        tag: `job-${newJob._id}`,
+        data: { url: `/dashboard?jobId=${newJob._id}` }
+      });
       setJobs(prev => {
         if (prev.some(j => j._id === newJob._id)) return prev;
         return [newJob, ...prev];
@@ -195,6 +242,10 @@ const TechnicianDashboard = () => {
         `Job #${updatedJob._id.slice(-6)} is now: ${updatedJob.status.replace(/_/g, ' ').toUpperCase()}`, 
         'info'
       );
+      triggerBrowserNotification('🔄 Job Update', `Job #${updatedJob._id.slice(-6)} is now: ${updatedJob.status.replace(/_/g, ' ').toUpperCase()}`, {
+        tag: `job-${updatedJob._id}`,
+        data: { url: `/dashboard?jobId=${updatedJob._id}` }
+      });
       setJobs(prev => prev.map(j => j._id === updatedJob._id ? updatedJob : j));
     };
 
@@ -204,6 +255,10 @@ const TechnicianDashboard = () => {
         notif.message || '', 
         'info'
       );
+      triggerBrowserNotification(notif.title || '🔔 Notification', notif.message || '', {
+        tag: `notif-${notif._id}`,
+        data: { url: notif.bookingId ? `/dashboard?jobId=${notif.bookingId}` : undefined }
+      });
       fetchJobs();
     };
 
@@ -229,9 +284,20 @@ const TechnicianDashboard = () => {
 
   useEffect(() => {
     const handleReceiveMessage = (newMsg) => {
+      const isCurrentChatOpen = chatBookingId === newMsg.bookingId;
+      if (!isCurrentChatOpen) {
+        showToast(
+          `💬 Message from ${newMsg.senderName}`, 
+          newMsg.text, 
+          'info'
+        );
+        triggerBrowserNotification(`💬 Message from ${newMsg.senderName}`, newMsg.text, {
+          tag: `chat-${newMsg.bookingId}`,
+          data: { url: `/dashboard?chatId=${newMsg.bookingId}` }
+        });
+      }
       setJobs(prev => prev.map(b => {
         if (b._id === newMsg.bookingId) {
-          const isCurrentChatOpen = chatBookingId === newMsg.bookingId;
           return {
             ...b,
             unreadCount: isCurrentChatOpen ? b.unreadCount : (b.unreadCount || 0) + 1,
@@ -254,6 +320,15 @@ const TechnicianDashboard = () => {
     };
   }, [chatBookingId]);
 
+  const fetchNotifications = async () => {
+    try {
+      const { data } = await api.get('/notifications');
+      setNotifications(data);
+    } catch (err) {
+      console.error('Error fetching notifications', err);
+    }
+  };
+
   const fetchJobs = async () => {
     try {
       setLoading(true);
@@ -267,10 +342,58 @@ const TechnicianDashboard = () => {
         setJobs(sortedJobs);
         const reviewsRes = await api.get(`/reviews/technician/${profileRes.data.userId}`);
         setReviews(reviewsRes.data);
+        await fetchNotifications();
       }
     } catch (error) { console.error('Error fetching dashboard data', error); }
     finally { setLoading(false); }
   };
+
+  useEffect(() => {
+    if ('Notification' in window) {
+      if (Notification.permission === 'default') {
+        Notification.requestPermission();
+      }
+    }
+  }, []);
+
+  const unreadNotifCount = useMemo(() => {
+    return notifications.filter(n => !n.isRead).length;
+  }, [notifications]);
+
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const jobId = params.get('jobId');
+    const chatId = params.get('chatId');
+
+    if (jobs.length > 0) {
+      if (chatId) {
+        const foundJob = jobs.find(j => j._id === chatId);
+        if (foundJob) {
+          setChatBookingId(chatId);
+          window.history.replaceState({}, document.title, window.location.pathname);
+        }
+      } else if (jobId) {
+        const foundJob = jobs.find(j => j._id === jobId);
+        if (foundJob) {
+          if (['pending', 'assigned', 'queued'].includes(foundJob.status)) setJobTab('new');
+          else if (['accepted', 'on_the_way', 'arrived', 'quote_approved', 'in_progress'].includes(foundJob.status)) setJobTab('active');
+          else if (foundJob.status === 'quote_pending') setJobTab('quote_pending');
+          else if (foundJob.status === 'completed') {
+            setJobTab('completed');
+            setExpandedCompletedJobs(prev => ({ ...prev, [jobId]: true }));
+          } else if (['cancelled', 'rejected'].includes(foundJob.status)) setJobTab('cancelled');
+          window.history.replaceState({}, document.title, window.location.pathname);
+        }
+      }
+    }
+  }, [jobs, window.location.search]);
+
+  useEffect(() => {
+    if (!showNotifDropdown) return;
+    const closeDropdown = () => setShowNotifDropdown(false);
+    window.addEventListener('click', closeDropdown);
+    return () => window.removeEventListener('click', closeDropdown);
+  }, [showNotifDropdown]);
 
   const updateJobStatus = async (id, status) => {
     if (updatingJobs[id]) return;
@@ -476,6 +599,101 @@ const TechnicianDashboard = () => {
             >
               <Settings size={18} /> Settings
             </button>
+            <div className="relative col-span-1">
+              <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setShowNotifDropdown(!showNotifDropdown);
+                }}
+                className="w-full flex items-center justify-center gap-2 px-5 py-3.5 bg-slate-100 hover:bg-slate-200 border border-slate-200 text-slate-700 font-bold rounded-2xl transition-all shadow-sm text-sm relative"
+              >
+                <Bell size={18} />
+                <span className="md:hidden lg:inline">Notifications</span>
+                {unreadNotifCount > 0 && (
+                  <span className="absolute -top-1 -right-1 bg-red-500 text-white font-extrabold text-[10px] w-5 h-5 rounded-full flex items-center justify-center border-2 border-white animate-bounce">
+                    {unreadNotifCount}
+                  </span>
+                )}
+              </button>
+              
+              {showNotifDropdown && (
+                <div 
+                  onClick={(e) => e.stopPropagation()}
+                  className="absolute right-0 mt-2 w-80 bg-white/95 backdrop-blur-md rounded-2xl border border-slate-200/80 shadow-xl z-50 overflow-hidden animate-in fade-in slide-in-from-top-2 duration-200"
+                >
+                  <div className="p-4 border-b border-slate-100 flex justify-between items-center bg-slate-50/50">
+                    <span className="font-bold text-slate-800 text-sm">Notifications</span>
+                    {unreadNotifCount > 0 && (
+                      <button 
+                        onClick={async () => {
+                          try {
+                            await Promise.all(
+                              notifications
+                                .filter(n => !n.isRead)
+                                .map(n => api.put(`/notifications/${n._id}/read`))
+                            );
+                            fetchNotifications();
+                          } catch (err) {
+                            console.error('Error marking all as read', err);
+                          }
+                        }}
+                        className="text-xs text-indigo-600 hover:text-indigo-800 font-semibold cursor-pointer"
+                      >
+                        Mark all as read
+                      </button>
+                    )}
+                  </div>
+                  <div className="max-h-64 overflow-y-auto divide-y divide-slate-100">
+                    {notifications.length === 0 ? (
+                      <div className="p-6 text-center text-xs text-slate-400">
+                        No notifications yet
+                      </div>
+                    ) : (
+                      notifications.map(notif => (
+                        <div
+                          key={notif._id}
+                          onClick={async () => {
+                            try {
+                              if (!notif.isRead) {
+                                await api.put(`/notifications/${notif._id}/read`);
+                                fetchNotifications();
+                              }
+                              setShowNotifDropdown(false);
+                              if (notif.type === 'chat' && notif.bookingId) {
+                                setChatBookingId(notif.bookingId);
+                              } else if (notif.bookingId) {
+                                const job = jobs.find(j => j._id === notif.bookingId);
+                                if (job) {
+                                  if (['pending', 'assigned', 'queued'].includes(job.status)) setJobTab('new');
+                                  else if (['accepted', 'on_the_way', 'arrived', 'quote_approved', 'in_progress'].includes(job.status)) setJobTab('active');
+                                  else if (job.status === 'quote_pending') setJobTab('quote_pending');
+                                  else if (job.status === 'completed') {
+                                    setJobTab('completed');
+                                    setExpandedCompletedJobs(prev => ({ ...prev, [notif.bookingId]: true }));
+                                  } else if (['cancelled', 'rejected'].includes(job.status)) setJobTab('cancelled');
+                                }
+                              }
+                            } catch (err) {
+                              console.error('Error handling notification click', err);
+                            }
+                          }}
+                          className={`p-3.5 text-left text-xs transition-colors hover:bg-slate-50 cursor-pointer ${!notif.isRead ? 'bg-indigo-50/30' : ''}`}
+                        >
+                          <div className="flex justify-between items-start gap-1">
+                            <span className={`font-bold ${!notif.isRead ? 'text-slate-900' : 'text-slate-700'}`}>{notif.title}</span>
+                            {!notif.isRead && <span className="w-1.5 h-1.5 bg-indigo-600 rounded-full shrink-0 mt-1"></span>}
+                          </div>
+                          <p className="text-slate-500 mt-1 line-clamp-2">{notif.message}</p>
+                          <span className="text-[10px] text-slate-400 mt-1.5 block">
+                            {new Date(notif.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                          </span>
+                        </div>
+                      ))
+                    )}
+                  </div>
+                </div>
+              )}
+            </div>
             <button
               onClick={fetchJobs}
               className="col-span-1 flex items-center justify-center gap-2 bg-slate-100 hover:bg-slate-200 text-slate-700 px-5 py-3.5 rounded-2xl font-bold transition-all duration-300 shadow-sm text-sm"
@@ -566,7 +784,7 @@ const TechnicianDashboard = () => {
                 <div className="p-2 bg-rose-50 text-rose-600 rounded-xl"><ArrowDownLeft size={20} /></div>
               </div>
               <div className="mt-3">
-                <p className="text-[9px] font-bold uppercase tracking-wider text-slate-400">Commission (20%)</p>
+                <p className="text-[9px] font-bold uppercase tracking-wider text-slate-400">Platform Fee (10%)</p>
                 <p className="text-2xl font-black text-rose-600 mt-0.5">₹{(profile?.platformCommission || 0).toFixed(2)}</p>
               </div>
             </div>
@@ -801,19 +1019,32 @@ const TechnicianDashboard = () => {
                                     </tr>
                                   )}
                                   <tr className="text-rose-600 bg-rose-50/10">
-                                    <td className="px-4 py-2">Platform Commission Deducted (20%)</td>
-                                    <td className="px-4 py-2 text-right font-semibold">-₹{(job.platformCommission || (((job.finalQuote || job.amount || 0) - (job.membershipDiscount || 0)) * 0.2)).toFixed(2)}</td>
+                                    <td className="px-4 py-2">Platform Commission Deducted ({(() => {
+                                      const grossInvoice = job.finalQuote || job.amount || 0;
+                                      const memberDiscount = job.membershipDiscount || 0;
+                                      const netPaidAmount = grossInvoice - memberDiscount;
+                                      const commVal = typeof job.platformCommission === 'number' ? job.platformCommission : (netPaidAmount * 0.10);
+                                      return netPaidAmount > 0 ? Math.round((commVal / netPaidAmount) * 100) : 10;
+                                    })()}%)</td>
+                                    <td className="px-4 py-2 text-right font-semibold">-₹{(typeof job.platformCommission === 'number' ? job.platformCommission : (((job.finalQuote || job.amount || 0) - (job.membershipDiscount || 0)) * 0.1)).toFixed(2)}</td>
                                   </tr>
                                   <tr className="bg-emerald-50 text-emerald-800 font-bold border-t border-slate-200">
-                                    <td className="px-4 py-2.5">Your Net Earnings (80%)</td>
-                                    <td className="px-4 py-2.5 text-right text-sm">₹{(job.finalTechnicianEarning || (((job.finalQuote || job.amount || 0) - (job.membershipDiscount || 0)) * 0.8)).toFixed(2)}</td>
+                                    <td className="px-4 py-2.5">Your Net Earnings ({(() => {
+                                      const grossInvoice = job.finalQuote || job.amount || 0;
+                                      const memberDiscount = job.membershipDiscount || 0;
+                                      const netPaidAmount = grossInvoice - memberDiscount;
+                                      const commVal = typeof job.platformCommission === 'number' ? job.platformCommission : (netPaidAmount * 0.10);
+                                      const commPct = netPaidAmount > 0 ? Math.round((commVal / netPaidAmount) * 100) : 10;
+                                      return 100 - commPct;
+                                    })()}%)</td>
+                                    <td className="px-4 py-2.5 text-right text-sm">₹{(typeof job.finalTechnicianEarning === 'number' ? job.finalTechnicianEarning : (((job.finalQuote || job.amount || 0) - (job.membershipDiscount || 0)) * 0.9)).toFixed(2)}</td>
                                   </tr>
                                 </tbody>
                               </table>
                             </div>
                             <div className="flex justify-between items-center text-[10px] text-slate-500 font-bold px-1 uppercase tracking-wider">
                               <span>Payment Mode: <strong className="text-slate-700">{job.paymentMethod || 'Cash'}</strong></span>
-                              <span>Status: <strong className={job.paymentStatus === 'completed' ? 'text-emerald-600' : 'text-amber-600'}>{job.paymentStatus === 'completed' ? 'Paid' : 'Awaiting Payment'}</strong></span>
+                              <span>Status: <strong className={job.paymentStatus === 'completed' ? 'text-emerald-600' : 'text-amber-600'}>{job.paymentStatus === 'completed' ? 'Paid' : (job.paymentMethod === 'cash' ? 'Cash Payment Pending' : 'Awaiting Payment')}</strong></span>
                             </div>
                           </div>
                         )}
@@ -930,8 +1161,25 @@ const TechnicianDashboard = () => {
                         {job.status === 'completed' && (
                            <div className="space-y-3">
                              <div className={`flex items-center justify-center gap-2 p-4 rounded-xl font-bold border ${job.paymentStatus === 'completed' ? 'bg-emerald-50 text-emerald-600 border-emerald-200 shadow-sm' : 'bg-amber-50 text-amber-600 border-amber-200 shadow-sm'}`}>
-                               {job.paymentStatus === 'completed' ? <><CheckCircle size={18} /> Paid In Full</> : <><Clock size={18} /> Awaiting Payment</>}
+                               {job.paymentStatus === 'completed' ? <><CheckCircle size={18} /> Paid In Full</> : <><Clock size={18} /> {job.paymentMethod === 'cash' ? 'Cash Payment Pending' : 'Awaiting Payment'}</>}
                              </div>
+                             {job.paymentStatus !== 'completed' && job.paymentMethod === 'cash' && (
+                               <button
+                                 onClick={async () => {
+                                   try {
+                                     await api.put(`/bookings/${job._id}/pay`, { paymentMethod: 'cash' });
+                                     showToast("Success", "Cash payment confirmed!", "success");
+                                     fetchJobs();
+                                   } catch (err) {
+                                     console.error("Error confirming cash payment:", err);
+                                     showToast("Error", "Could not confirm cash payment. Please try again.", "error");
+                                   }
+                                 }}
+                                 className="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-3 px-4 rounded-2xl transition-all shadow-md hover:shadow-lg flex items-center justify-center gap-2 cursor-pointer"
+                               >
+                                 <CheckCircle size={18} /> Confirm Cash Received
+                               </button>
+                             )}
                              <button
                                onClick={() => setChatBookingId(job._id)}
                                className="w-full bg-white hover:bg-indigo-50 border-2 border-slate-100 hover:border-indigo-200 text-indigo-600 font-bold py-3 px-4 rounded-2xl transition-all shadow-sm flex items-center justify-center gap-2"

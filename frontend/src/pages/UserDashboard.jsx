@@ -455,6 +455,52 @@ const UserDashboard = () => {
     );
   };
 
+  const getPaymentStatusConfig = (status, method) => {
+    const isCash = method === 'cash';
+    const config = {
+      pending: {
+        label: isCash ? 'Cash Payment Pending' : 'Payment Pending',
+        bg: 'bg-amber-50/85 text-amber-850 border-amber-200/60',
+        badge: 'bg-amber-100/80 text-amber-800 border-amber-200'
+      },
+      awaiting_payment: {
+        label: 'Awaiting Payment',
+        bg: 'bg-amber-50/85 text-amber-850 border-amber-200/60',
+        badge: 'bg-amber-100/80 text-amber-800 border-amber-200'
+      },
+      cash_pending: {
+        label: 'Cash Payment Pending',
+        bg: 'bg-amber-50/85 text-amber-850 border-amber-200/60',
+        badge: 'bg-amber-100/80 text-amber-800 border-amber-200'
+      },
+      processing: {
+        label: 'Payment Processing',
+        bg: 'bg-amber-50/85 text-amber-850 border-amber-200/60',
+        badge: 'bg-amber-100/80 text-amber-800 border-amber-200'
+      },
+      completed: {
+        label: 'Paid In Full',
+        bg: 'bg-emerald-50/85 text-emerald-800 border-emerald-200/60',
+        badge: 'bg-emerald-100/80 text-emerald-800 border-emerald-200'
+      },
+      failed: {
+        label: 'Payment Failed',
+        bg: 'bg-rose-50/85 text-rose-800 border-rose-200/60',
+        badge: 'bg-rose-100/80 text-rose-800 border-rose-200'
+      },
+      refunded: {
+        label: 'Payment Refunded',
+        bg: 'bg-slate-50/85 text-slate-800 border-slate-200/60',
+        badge: 'bg-slate-100/80 text-slate-800 border-slate-200'
+      }
+    };
+    return config[status] || {
+      label: status || 'Pending',
+      bg: 'bg-amber-50/85 text-amber-850 border-amber-200/60',
+      badge: 'bg-amber-100/80 text-amber-800 border-amber-200'
+    };
+  };
+
   const [expandedBookings, setExpandedBookings] = useState({});
   const [filterTab, setFilterTab] = useState('all');
 
@@ -1081,6 +1127,17 @@ const UserDashboard = () => {
                     </div>
                     <div className="flex flex-row sm:flex-col items-center sm:items-end justify-between w-full sm:w-auto gap-2 shrink-0 border-t sm:border-t-0 border-slate-100 pt-3 sm:pt-0 mt-1 sm:mt-0">
                       {getStatusBadge(booking.status)}
+                      {booking.status === 'completed' && booking.paymentStatus !== 'completed' && booking.paymentMethod !== 'cash' && (
+                        <button 
+                           onClick={(e) => {
+                             e.stopPropagation();
+                             setPaymentBooking(booking);
+                           }}
+                           className="flex items-center gap-1.5 px-3.5 py-2 text-xs font-extrabold bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white rounded-xl transition-all shadow-md shadow-blue-500/20 transform hover:-translate-y-0.5 cursor-pointer whitespace-nowrap"
+                        >
+                           <CreditCard size={14} /> Pay Now
+                        </button>
+                      )}
                       <span className="text-indigo-500 text-xs font-bold bg-indigo-50 px-3 py-1 rounded-full border border-indigo-100 whitespace-nowrap">
                         {expandedBookings[booking._id] ? 'Less Details' : 'View Details'}
                       </span>
@@ -1091,13 +1148,82 @@ const UserDashboard = () => {
                     <div className="mt-6 pt-6 border-t border-slate-100 animate-in fade-in slide-in-from-top-4 duration-300">
                       
                       {isCompleted && (
-                        <div className="bg-emerald-50 border border-emerald-100 rounded-2xl p-4 mb-4 flex items-start gap-3 text-emerald-800 text-xs sm:text-sm font-semibold">
-                          <CheckCircle className="text-emerald-500 shrink-0 mt-0.5" size={18} />
-                          <div>
-                            <p>Service completed on {new Date(booking.updatedAt).toLocaleDateString()}</p>
-                            <p className="text-slate-500 font-medium text-[11px] mt-0.5">Technician: {booking.technicianName || 'Verified Technician'}</p>
+                        <>
+                          {/* Service Completion Card */}
+                          <div className="bg-blue-50 border border-blue-100 rounded-2xl p-5 mb-4 flex items-start gap-4 text-blue-900 text-xs sm:text-sm font-semibold shadow-sm">
+                            <div className="p-2.5 bg-blue-100/80 rounded-xl text-blue-600 shrink-0">
+                              <CheckCircle size={20} />
+                            </div>
+                            <div>
+                              <p className="text-sm font-extrabold text-blue-950">Service Completed Successfully</p>
+                              <p className="text-blue-800/80 font-medium text-xs mt-1">Completed on: {new Date(booking.updatedAt).toLocaleDateString()} at {new Date(booking.updatedAt).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}</p>
+                              <p className="text-slate-500 font-medium text-xs mt-1">Technician: <span className="font-semibold text-slate-700">{booking.technicianName || 'Verified Technician'}</span></p>
+                            </div>
                           </div>
-                        </div>
+
+                          {/* Payment Card */}
+                          {(() => {
+                            const config = getPaymentStatusConfig(booking.paymentStatus, booking.paymentMethod);
+                            const isPaid = booking.paymentStatus === 'completed';
+                            const isCash = booking.paymentMethod === 'cash';
+                            return (
+                              <div className={`${config.bg} border rounded-2xl p-5 mb-4 flex flex-col gap-4 shadow-sm`}>
+                                <div className="flex items-center justify-between">
+                                  <div className="flex items-center gap-3">
+                                    <div className="p-2 bg-white rounded-xl shadow-sm text-slate-700">
+                                      <CreditCard size={18} />
+                                    </div>
+                                    <div>
+                                      <h4 className="text-sm font-extrabold text-slate-900">Billing & Payment</h4>
+                                      <p className="text-[10px] text-slate-500 font-semibold uppercase tracking-wider mt-0.5">Mode: {booking.paymentMethod || 'Cash'}</p>
+                                    </div>
+                                  </div>
+                                  <span className={`px-3 py-1 rounded-full text-xs font-black uppercase border shadow-sm ${config.badge}`}>
+                                    {config.label}
+                                  </span>
+                                </div>
+                                
+                                <div className="bg-white/80 backdrop-blur-sm rounded-xl p-4 border border-slate-100 flex flex-col gap-2.5">
+                                  <div className="flex justify-between items-center text-xs text-slate-600 font-medium">
+                                    <span>Total Bill Amount</span>
+                                    <span className="text-slate-900 font-extrabold text-sm">₹{booking.finalQuote || booking.amount || 0}</span>
+                                  </div>
+                                  {isPaid && (
+                                    <div className="pt-2.5 border-t border-slate-100 flex flex-col gap-1.5 text-xs">
+                                      {booking.transactionId && (
+                                        <div className="flex justify-between items-center text-slate-500">
+                                          <span>Transaction ID</span>
+                                          <span className="font-mono font-semibold text-slate-800">{booking.transactionId}</span>
+                                        </div>
+                                      )}
+                                      <div className="flex justify-between items-center text-slate-500">
+                                        <span>Payment Time</span>
+                                        <span className="font-semibold text-slate-800">{new Date(booking.updatedAt).toLocaleString()}</span>
+                                      </div>
+                                    </div>
+                                  )}
+                                  {!isPaid && isCash && (
+                                    <div className="pt-2 border-t border-slate-100 text-xs text-slate-500 font-medium leading-relaxed">
+                                      ℹ️ Please pay the final bill amount of <strong className="text-slate-700 font-bold">₹{booking.finalQuote || booking.amount || 0}</strong> directly to the technician in cash. Once received, the technician will mark the job as paid.
+                                    </div>
+                                  )}
+                                </div>
+                                
+                                {!isPaid && !isCash && (
+                                  <button
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      setPaymentBooking(booking);
+                                    }}
+                                    className="w-full bg-gradient-to-r from-indigo-600 to-indigo-700 hover:from-indigo-500 hover:to-indigo-650 text-white font-extrabold py-3.5 px-4 rounded-xl shadow-md shadow-indigo-600/10 hover:shadow-lg transition-all flex items-center justify-center gap-2 cursor-pointer"
+                                  >
+                                    <CreditCard size={16} /> Pay Online Now
+                                  </button>
+                                )}
+                              </div>
+                            );
+                          })()}
+                        </>
                       )}
 
                       {booking.deviceType && (
@@ -1271,7 +1397,7 @@ const UserDashboard = () => {
                       </button>
                     )}
 
-                    {booking.status === 'completed' && booking.paymentStatus !== 'completed' && (
+                    {booking.status === 'completed' && booking.paymentStatus !== 'completed' && booking.paymentMethod !== 'cash' && (
                       <button 
                          onClick={() => setPaymentBooking(booking)}
                          className="w-full sm:w-auto flex items-center justify-center gap-2 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white px-5 py-3 rounded-xl text-sm font-bold shadow-lg transition-all shadow-blue-500/30 font-sans cursor-pointer"

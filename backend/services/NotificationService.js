@@ -93,9 +93,9 @@ const dispatchExternal = async (email, phone, type, subject, message) => {
 };
 
 // Internal In-App Push Method
-const sendInAppPush = async (userId, title, message) => {
+const sendInAppPush = async (userId, title, message, type = 'system', bookingId = null) => {
   try {
-    await Notification.create({ userId, title, message });
+    await Notification.create({ userId, title, message, type, bookingId });
   } catch (err) {
     console.error('Failed saving push to DB:', err.message);
   }
@@ -104,10 +104,10 @@ const sendInAppPush = async (userId, title, message) => {
 /**
  * Main dispatcher to handle Email + SMS + In-App Push instantly.
  */
-const notifyUser = async ({ userId, email, phone, type = 'email', subject, text }) => {
+const notifyUser = async ({ userId, email, phone, type = 'email', subject, text, notifType = 'system', bookingId = null }) => {
   // Fire In-App DB Notification
   if (userId) {
-    await sendInAppPush(userId, subject, text);
+    await sendInAppPush(userId, subject, text, notifType, bookingId);
   }
 
   // Simulate remote external (Twilio / SendGrid)

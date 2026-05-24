@@ -19,8 +19,12 @@ const notificationSchema = new mongoose.Schema({
   },
   type: {
     type: String,
-    enum: ['system', 'chat', 'booking'],
+    enum: ['system', 'chat', 'booking', 'payout'],
     default: 'system'
+  },
+  bookingId: {
+    type: String,
+    required: false
   }
 }, { timestamps: true });
 

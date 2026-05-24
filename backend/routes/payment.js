@@ -50,9 +50,12 @@ router.post("/verify", async (req, res) => {
           booking.transactionId = razorpay_payment_id;
           await booking.save();
 
-          const { updateTechnicianWallet } = require("../controllers/bookingController");
+          const { updateTechnicianWallet, triggerNotifications } = require("../controllers/bookingController");
           if (updateTechnicianWallet) {
             await updateTechnicianWallet(booking);
+          }
+          if (triggerNotifications) {
+            await triggerNotifications(req, booking, 'payment_completed');
           }
         }
       }

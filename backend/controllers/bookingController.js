@@ -57,14 +57,14 @@ const triggerNotifications = async (req, booking, type) => {
         break;
       case 'quote_pending':
         title = 'Action Required: Final Quote Received 📋';
-        message = `Technician ${techName} has submitted a final quote of $${booking.finalQuote}. Please approve to proceed.`;
-        chatText = `📢 System: Technician ${techName} submitted a final quote of $${booking.finalQuote}. Please review and approve.`;
+        message = `Technician ${techName} has submitted a final quote of ₹${booking.finalQuote}. Please approve to proceed.`;
+        chatText = `📢 System: Technician ${techName} submitted a final quote of ₹${booking.finalQuote}. Please review and approve.`;
         recipientId = booking.userId;
         break;
       case 'quote_approved':
         title = 'Quote Approved! 🛠️';
         message = `You approved the quote. Repair work is now in progress.`;
-        chatText = `📢 System: Customer approved the final quote of $${booking.finalQuote}. Work in progress.`;
+        chatText = `📢 System: Customer approved the final quote of ₹${booking.finalQuote}. Work in progress.`;
         recipientId = booking.providerId; // Notify tech
         break;
       case 'completed':
@@ -75,8 +75,8 @@ const triggerNotifications = async (req, booking, type) => {
         break;
       case 'payment_completed':
         title = 'Payment Received! 💳';
-        message = `Thank you! Payment of $${booking.amount} has been successfully completed.`;
-        chatText = `📢 System: Payment of $${booking.amount} completed successfully.`;
+        message = `Thank you! Payment of ₹${booking.amount} has been successfully completed.`;
+        chatText = `📢 System: Payment of ₹${booking.amount} completed successfully.`;
         recipientId = booking.providerId; // Notify tech
         break;
       case 'cancelled':
@@ -97,7 +97,8 @@ const triggerNotifications = async (req, booking, type) => {
         title,
         message,
         isRead: false,
-        type: notifType
+        type: notifType,
+        bookingId: booking._id.toString()
       });
       if (io) {
         io.to(`user_${recipientId}`).emit('new_notification', createdNotif);
@@ -338,7 +339,9 @@ const createBooking = async (req, res) => {
         phone: assignedTechPhone,
         type: 'both',
         subject: bStatus === 'queued' ? 'New Job Added To Your Queue!' : 'New Job Assigned!',
-        text: `Hey Technician, you have a new ${booking.serviceName} request. Open the app to check your pending/queued jobs!`
+        text: `Hey Technician, you have a new ${booking.serviceName} request. Open the app to check your pending/queued jobs!`,
+        notifType: 'booking',
+        bookingId: booking._id.toString()
       });
       
       // Seed initial DB notification for tech
@@ -347,7 +350,8 @@ const createBooking = async (req, res) => {
         userId: finalProviderId,
         title: bStatus === 'queued' ? 'New Job Queued' : 'New Job Assigned! 💼',
         message: `New repair request for ${booking.serviceName} at ${finalAddress}.`,
-        type: 'booking'
+        type: 'booking',
+        bookingId: booking._id.toString()
       });
       const io = req.app.get('io');
       if (io) {
@@ -491,7 +495,9 @@ const updateBookingStatus = async (req, res) => {
         email: booking.userEmail,
         type: 'both',
         subject: 'Technician accepted job!',
-        text: `Great news! Your technician has accepted the job and is reviewing details.`
+        text: `Great news! Your technician has accepted the job and is reviewing details.`,
+        notifType: 'booking',
+        bookingId: booking._id.toString()
       });
     }
 
@@ -506,8 +512,9 @@ const updateBookingStatus = async (req, res) => {
         booking.status = 'completed';
 
         if (booking.paymentMethod === 'cash') {
-          booking.paymentStatus = 'completed';
-          await updateTechnicianWallet(booking);
+          booking.paymentStatus = 'cash_pending';
+        } else {
+          booking.paymentStatus = 'awaiting_payment';
         }
       }
     }
@@ -573,6 +580,11 @@ const processPayment = async (req, res) => {
       if (!isOwnerById) {
          return res.status(403).json({ message: 'Not authorized to pay for this booking' });
       }
+    } else if (req.user.role === 'technician') {
+      const isProvider = booking.providerId && booking.providerId.toString() === req.user.id.toString();
+      if (!isProvider) {
+         return res.status(403).json({ message: 'Not authorized to confirm payment for this booking' });
+      }
     }
 
     booking.paymentStatus = 'completed';
@@ -582,13 +594,18 @@ const processPayment = async (req, res) => {
 
     const updatedBooking = await booking.save();
 
+    // Credit technician's wallet upon completed payment
+    await updateTechnicianWallet(updatedBooking);
+
     if (booking.providerEmail) {
       notifyUser({
         userId: booking.providerId,
         email: booking.providerEmail,
         type: 'both',
         subject: 'Payment Received!',
-        text: `Customer has paid $${booking.amount} for the completed job.`
+        text: `Customer has paid ₹${booking.amount} for the completed job.`,
+        notifType: 'booking',
+        bookingId: booking._id.toString()
       });
     }
 
@@ -665,7 +682,9 @@ const submitQuote = async (req, res) => {
       email: booking.userEmail,
       type: 'both',
       subject: 'Action Required: Approve Final Quote',
-      text: `Your technician has diagnosed the issue and provided a final quote of $${total}. Please review and approve in the app.`
+      text: `Your technician has diagnosed the issue and provided a final quote of ₹${total}. Please review and approve in the app.`,
+      notifType: 'booking',
+      bookingId: booking._id.toString()
     });
 
     // Call Automated Notification System
@@ -707,7 +726,9 @@ const approveQuote = async (req, res) => {
         email: booking.providerEmail,
         type: 'both',
         subject: approved ? 'Quote Approved!' : 'Quote Rejected',
-        text: approved ? 'The customer approved the quote. You may start the repair.' : 'The customer rejected your quote.'
+        text: approved ? 'The customer approved the quote. You may start the repair.' : 'The customer rejected your quote.',
+        notifType: 'booking',
+        bookingId: booking._id.toString()
       });
     }
 
@@ -799,8 +820,8 @@ const updateTechnicianWallet = async (booking) => {
   }
 
   const customerPaid = bookingAmount - discount;
-  const platformCommission = customerPaid * 0.20;
-  const techShare = customerPaid * 0.80;
+  const platformCommission = customerPaid * 0.10;
+  const techShare = customerPaid * 0.90;
 
   booking.amount = customerPaid;
   booking.platformCommission = platformCommission;
@@ -822,4 +843,4 @@ const updateTechnicianWallet = async (booking) => {
   await booking.save();
 };
 
-module.exports = { createBooking, getBookings, updateBookingStatus, assignBooking, processPayment, createPaymentIntent, submitQuote, approveQuote, cancelBooking, updateTechnicianWallet };
+module.exports = { createBooking, getBookings, updateBookingStatus, assignBooking, processPayment, createPaymentIntent, submitQuote, approveQuote, cancelBooking, updateTechnicianWallet, triggerNotifications };
