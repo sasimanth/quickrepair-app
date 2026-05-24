@@ -304,7 +304,7 @@ const AdminDashboard = () => {
         </div>
 
         {/* Navigation Tabs */}
-        <div className="flex border-b border-white/5 gap-6">
+        <div className="flex overflow-x-auto gap-4 sm:gap-6 border-b border-white/5 pb-1 scrollbar-none snap-x snap-mandatory shrink-0">
           {[
             { id: 'bookings', label: 'Dispatch Center', icon: LayoutDashboard },
             { id: 'withdrawals', label: 'Withdrawal Requests', icon: CreditCard },
@@ -314,7 +314,7 @@ const AdminDashboard = () => {
             <button
               key={tab.id}
               onClick={() => { setActiveTab(tab.id); }}
-              className={`flex items-center gap-2 pb-4 text-xs sm:text-sm font-extrabold uppercase tracking-wider border-b-2 transition-all outline-none cursor-pointer ${activeTab === tab.id ? 'border-indigo-500 text-indigo-400' : 'border-transparent text-slate-400 hover:text-slate-200'}`}
+              className={`flex items-center gap-2 pb-4 text-xs sm:text-sm font-extrabold uppercase tracking-wider border-b-2 transition-all outline-none cursor-pointer shrink-0 snap-center ${activeTab === tab.id ? 'border-indigo-500 text-indigo-400' : 'border-transparent text-slate-400 hover:text-slate-200'}`}
             >
               <tab.icon size={16} />
               {tab.label}
@@ -725,6 +725,16 @@ const AdminDashboard = () => {
                           </span>
                           {req.transactionId && (
                             <p className="text-[9px] text-slate-400 font-mono mt-1">Txn: {req.transactionId}</p>
+                          )}
+                          {req.processedAt && (
+                            <p className="text-[9px] text-slate-400 font-medium mt-1">
+                              Processed: {new Date(req.processedAt).toLocaleString(undefined, {
+                                month: 'short',
+                                day: 'numeric',
+                                hour: '2-digit',
+                                minute: '2-digit'
+                              })}
+                            </p>
                           )}
                           {req.adminNotes && (
                             <p className="text-[9px] text-slate-500 mt-1 italic">Note: {req.adminNotes}</p>

@@ -12,7 +12,7 @@ const iconMap = {
   PlusCircle: <PlusCircle className="w-8 h-8" />
 };
 
-const SmartDiagnosis = () => {
+const SmartDiagnosis = ({ onOpenAuth }) => {
   const [selectedService, setSelectedService] = useState(null);
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
   const [answers, setAnswers] = useState({});
@@ -59,7 +59,13 @@ const SmartDiagnosis = () => {
   };
 
   const handleBookNow = () => {
-    navigate('/book');
+    if (user) {
+      navigate('/dashboard?action=book');
+    } else if (onOpenAuth) {
+      onOpenAuth('/dashboard?action=book');
+    } else {
+      navigate('/login?redirect=/dashboard?action=book');
+    }
   };
 
   // Variants for framer-motion animations

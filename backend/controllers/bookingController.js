@@ -419,12 +419,7 @@ const getBookings = async (req, res) => {
       bookings = await Booking.find({})
         .populate('serviceId', 'name price');
     } else if (req.user.role === 'technician') {
-      bookings = await Booking.find({
-        $or: [
-          { providerId: req.user.id },
-          { providerId: { $regex: '^tech-' } }
-        ]
-      })
+      bookings = await Booking.find({ providerId: req.user.id })
         .populate('serviceId', 'name price');
     } else {
       // Regular User - Strictly filter by logged-in user ID to prevent cross-user access

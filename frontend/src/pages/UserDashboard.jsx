@@ -49,6 +49,7 @@ const UserDashboard = () => {
   };
   const [reviewBooking, setReviewBooking] = useState(null);
   const [paymentBooking, setPaymentBooking] = useState(null);
+  const [viewReasonBooking, setViewReasonBooking] = useState(null);
   const [uploadingImage, setUploadingImage] = useState(false);
   const [showSettings, setShowSettings] = useState(false);
   const [liveLocations, setLiveLocations] = useState({}); // { techId: [lat, lng] }
@@ -442,9 +443,10 @@ const UserDashboard = () => {
       in_progress: { color: 'bg-indigo-100 text-indigo-700 border-indigo-200', icon: Wrench, label: 'Work In Progress' },
       quote_pending: { color: 'bg-purple-100 text-purple-700 border-purple-200', icon: CreditCard, label: 'Pending Quote Approval' },
       completed: { color: 'bg-emerald-100 text-emerald-700 border-emerald-200', icon: CheckCircle, label: 'Completed' },
-      rejected: { color: 'bg-red-100 text-red-700 border-red-200', icon: XCircle, label: 'Rejected' }
+      rejected: { color: 'bg-red-100 text-red-700 border-red-200', icon: XCircle, label: 'Rejected' },
+      cancelled: { color: 'bg-rose-100 text-rose-700 border-rose-200', icon: XCircle, label: 'Cancelled' }
     };
-    const { color, icon: Icon, label } = config[status] || config.pending;
+    const { color, icon: Icon, label } = config[status] || { color: 'bg-slate-100 text-slate-700 border-slate-200', icon: Clock, label: status };
     return (
       <span className={`flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider border ${color}`}>
         <Icon size={14} />
@@ -525,62 +527,55 @@ const UserDashboard = () => {
         </div>
 
         {profile?.isPremium ? (
-          <div className="bg-gradient-to-r from-slate-900 to-indigo-950 border border-amber-500/30 rounded-3xl p-6 flex flex-col md:flex-row md:items-center justify-between gap-6 shadow-[0_4px_30px_rgba(245,158,11,0.08)] relative overflow-hidden text-white animate-in fade-in duration-300">
-            <div className="absolute top-[-50%] right-[-10%] w-[40%] h-[150%] bg-gradient-to-br from-amber-500/10 to-transparent rounded-full blur-[80px] pointer-events-none"></div>
-            <div className="flex flex-col sm:flex-row items-start sm:items-center gap-5 relative z-10">
-              <div className="w-16 h-16 bg-gradient-to-br from-amber-400 to-yellow-500 text-slate-950 rounded-2xl flex items-center justify-center shrink-0 shadow-lg shadow-amber-500/15">
-                <Sparkles size={30} className="animate-pulse" />
+          <div className="bg-gradient-to-r from-slate-950 to-indigo-950 border border-amber-500/30 rounded-3xl p-5 flex flex-col md:flex-row md:items-center justify-between gap-5 shadow-[0_4px_30px_rgba(245,158,11,0.08)] relative overflow-hidden text-white animate-in fade-in duration-300">
+            <div className="absolute top-[-50%] right-[-10%] w-[30%] h-[150%] bg-gradient-to-br from-amber-500/10 to-transparent rounded-full blur-[80px] pointer-events-none"></div>
+            <div className="flex items-center gap-4 relative z-10">
+              <div className="w-12 h-12 bg-gradient-to-br from-amber-400 to-yellow-500 text-slate-950 rounded-2xl flex items-center justify-center shrink-0 shadow-lg shadow-amber-500/15">
+                <Sparkles size={22} className="animate-pulse" />
               </div>
-              <div className="space-y-1">
-                <div className="flex flex-wrap items-center gap-2.5">
-                  <h3 className="text-xl font-black tracking-tight text-white">Fixvo Plus Premium Member</h3>
+              <div className="space-y-0.5">
+                <div className="flex flex-wrap items-center gap-2">
+                  <h3 className="text-base font-extrabold tracking-tight text-white">Fixvo Plus Active Member</h3>
                   <span className="bg-amber-500/20 text-amber-400 border border-amber-400/30 text-[9px] font-black uppercase tracking-wider px-2 py-0.5 rounded">Active</span>
                 </div>
-                <p className="text-xs text-indigo-200 font-medium">
+                <p className="text-xs text-slate-400 font-semibold">
                   Priority Dispatch • Zero Inspection Fees • 15% Member Discount
                 </p>
-                <div className="flex flex-wrap items-center gap-x-4 gap-y-1 pt-1.5 text-[11px] text-slate-400 font-semibold uppercase tracking-wider">
-                  <span>Activated: <strong className="text-slate-200">{profile?.membershipActiveDate ? new Date(profile.membershipActiveDate).toLocaleDateString() : 'Recent'}</strong></span>
-                  <span className="hidden sm:inline text-slate-600">•</span>
-                  <span>Expires: <strong className="text-slate-200">{profile?.membershipExpiry ? new Date(profile.membershipExpiry).toLocaleDateString() : 'N/A'}</strong></span>
-                </div>
               </div>
             </div>
 
             {/* Savings & Benefits Panel */}
-            <div className="flex items-center gap-6 bg-white/5 border border-white/5 rounded-2xl p-4 shrink-0 relative z-10 backdrop-blur-sm">
+            <div className="flex items-center gap-5 bg-white/5 border border-white/5 rounded-2xl p-3 shrink-0 relative z-10 backdrop-blur-sm">
               <div className="text-center px-2">
-                <p className="text-[10px] text-slate-400 font-black uppercase tracking-wider">Free Inspections</p>
-                <p className="text-xl font-black text-white mt-1">{profile?.premiumBenefits?.inspectionsUsed || 0} Used</p>
+                <p className="text-[9px] text-slate-400 font-black uppercase tracking-wider">Inspections Used</p>
+                <p className="text-lg font-black text-white mt-0.5">{profile?.premiumBenefits?.inspectionsUsed || 0}</p>
               </div>
-              <div className="h-8 w-px bg-white/10"></div>
+              <div className="h-6 w-px bg-white/10"></div>
               <div className="text-center px-2">
-                <p className="text-[10px] text-amber-400 font-black uppercase tracking-wider">Total Saved</p>
-                <p className="text-xl font-black text-amber-400 mt-1">₹{profile?.premiumBenefits?.totalSaved || 0}</p>
+                <p className="text-[9px] text-amber-400 font-black uppercase tracking-wider">Total Saved</p>
+                <p className="text-lg font-black text-amber-400 mt-0.5">₹{profile?.premiumBenefits?.totalSaved || 0}</p>
               </div>
             </div>
           </div>
         ) : (
-          <div className="bg-gradient-to-r from-amber-500/10 via-amber-500/5 to-transparent border border-amber-500/20 rounded-3xl p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-4 shadow-sm relative overflow-hidden group">
-            <div className="absolute top-0 right-0 p-8 w-full h-full opacity-10 pointer-events-none">
-              <div className="absolute top-[-20%] right-[-10%] w-[50%] h-[50%] bg-amber-500 rounded-full blur-[60px]"></div>
-            </div>
+          <div className="bg-gradient-to-br from-[#161D2E]/90 to-[#0B0F19]/90 border border-amber-500/20 rounded-3xl p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-4 shadow-[0_4px_20px_rgba(0,0,0,0.2)] relative overflow-hidden group">
+            <div className="absolute top-[-20%] right-[-10%] w-[50%] h-[150%] bg-gradient-to-br from-amber-500/10 to-transparent rounded-full blur-[60px] pointer-events-none"></div>
             <div className="flex items-center gap-4 relative z-10">
-              <div className="w-12 h-12 bg-amber-500/20 text-amber-500 rounded-2xl flex items-center justify-center shrink-0 border border-amber-500/20">
+              <div className="w-12 h-12 bg-gradient-to-br from-amber-400 to-yellow-500 text-slate-955 rounded-2xl flex items-center justify-center shrink-0 shadow-lg shadow-amber-500/10">
                 <Sparkles size={22} className="animate-pulse" />
               </div>
-              <div>
-                <h3 className="text-base font-extrabold text-slate-800 tracking-tight flex items-center gap-2">
-                  Get Fixvo Plus Membership
+              <div className="space-y-0.5">
+                <h3 className="text-base font-extrabold text-white tracking-tight flex items-center gap-2">
+                  Upgrade to Fixvo Plus
                 </h3>
-                <p className="text-xs text-slate-500 font-medium mt-0.5">
-                  Save flat 15% on all quotes, get free inspections (save ₹99), and priority technician dispatches.
+                <p className="text-xs text-slate-400 font-semibold">
+                  Get 15% discount on all quotes, zero inspection fees (save ₹99), and priority dispatch.
                 </p>
               </div>
             </div>
             <button 
               onClick={() => setShowPremiumModal(true)}
-              className="relative z-10 px-5 py-2.5 bg-gradient-to-r from-amber-500 to-yellow-600 hover:from-amber-400 hover:to-yellow-500 text-slate-900 font-extrabold text-xs rounded-xl shadow-md transition-all duration-300 transform hover:-translate-y-0.5 whitespace-nowrap self-start sm:self-auto cursor-pointer border-none outline-none"
+              className="relative z-10 px-5 py-2.5 bg-gradient-to-r from-amber-400 to-yellow-500 hover:from-amber-300 hover:to-yellow-400 text-slate-950 font-black text-xs rounded-xl shadow-lg shadow-amber-500/10 transition-all duration-300 transform hover:-translate-y-0.5 whitespace-nowrap self-start sm:self-auto cursor-pointer border-none outline-none"
             >
               Upgrade to Plus
             </button>
@@ -1310,6 +1305,15 @@ const UserDashboard = () => {
                         <XCircle size={16} /> Cancel Booking
                       </button>
                     )}
+
+                    {['cancelled', 'rejected'].includes(booking.status) && (
+                      <button 
+                        onClick={() => setViewReasonBooking(booking)}
+                        className="flex items-center gap-2 bg-white border border-slate-200 hover:border-slate-300 hover:bg-slate-50 text-slate-600 px-4 py-2 rounded-xl text-sm font-bold shadow-sm transition-all transform hover:-translate-y-0.5 cursor-pointer outline-none"
+                      >
+                        <Eye size={16} /> View Reason
+                      </button>
+                    )}
                   </div>
                 </div>
                 )}
@@ -1373,6 +1377,32 @@ const UserDashboard = () => {
             fetchData();
           }}
         />
+      )}
+
+      {viewReasonBooking && (
+        <div className="fixed inset-0 z-[999] bg-[#0B0F19]/80 backdrop-blur-md flex items-center justify-center p-4">
+          <div className="bg-slate-900 border border-white/10 rounded-[2.5rem] p-6 sm:p-8 w-full max-w-md shadow-2xl relative animate-in fade-in zoom-in-95 duration-200 text-white">
+            <h3 className="text-xl font-black text-white mb-2">Cancellation Details</h3>
+            <div className="space-y-4 my-6">
+              <div className="p-4 bg-rose-500/10 border border-rose-500/20 rounded-2xl text-rose-300 text-xs sm:text-sm font-semibold">
+                <span className="font-extrabold text-[10px] bg-rose-500/20 text-rose-300 px-2.5 py-1 rounded uppercase tracking-wider block mb-2 w-max border border-rose-500/30">Reason Given</span>
+                "{viewReasonBooking.cancellationReason || 'No reason provided.'}"
+              </div>
+              <div className="text-xs text-slate-400 font-semibold space-y-2 pl-1">
+                <p>Cancelled By: <strong className="text-slate-200 capitalize">{viewReasonBooking.cancelledBy || 'system'}</strong></p>
+                {viewReasonBooking.cancelledAt && (
+                  <p>Cancelled On: <strong className="text-slate-200">{new Date(viewReasonBooking.cancelledAt).toLocaleString()}</strong></p>
+                )}
+              </div>
+            </div>
+            <button
+              onClick={() => setViewReasonBooking(null)}
+              className="w-full bg-white hover:bg-slate-100 text-slate-900 font-extrabold py-3.5 rounded-xl transition-all shadow-md cursor-pointer border-none outline-none"
+            >
+              Close
+            </button>
+          </div>
+        </div>
       )}
 
       {cancelBookingId && (

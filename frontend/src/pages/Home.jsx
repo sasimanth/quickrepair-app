@@ -20,9 +20,24 @@ import {
 } from 'lucide-react';
 import { FaInstagram, FaLinkedin, FaXTwitter, FaWhatsapp } from 'react-icons/fa6';
 import founderImg from '../assets/sasi_founder.jpeg';
+import { useAuth } from '../contexts/AuthContext';
+import AuthModal from '../components/AuthModal';
 
 const Home = () => {
   const navigate = useNavigate();
+  const { user } = useAuth();
+  const [showAuthModal, setShowAuthModal] = useState(false);
+  const [postAuthAction, setPostAuthAction] = useState(null);
+  
+  const handleBookingClick = (serviceId = '') => {
+    const targetPath = `/dashboard?action=book${serviceId ? `&service=${serviceId}` : ''}`;
+    if (user) {
+      navigate(targetPath);
+    } else {
+      setPostAuthAction(() => () => navigate(targetPath));
+      setShowAuthModal(true);
+    }
+  };
   const [activeCategory, setActiveCategory] = useState(globalCategories[0].id);
   const [services, setServices] = useState(globalServices);
 
@@ -38,7 +53,7 @@ const Home = () => {
   useEffect(() => {
     const handleResize = () => {
       const cardWidth = window.innerWidth < 640 ? 324 : 344;
-      setWrapWidth(cardWidth * 3);
+      setWrapWidth(cardWidth * 4);
     };
     handleResize();
     window.addEventListener('resize', handleResize);
@@ -56,7 +71,7 @@ const Home = () => {
       return;
     }
     
-    currentX -= 2.0; // Optimized marquee scroll speed (faster and smoother)
+    currentX -= 0.8; // Butter-smooth slow scrolling marquee
     if (currentX <= -wrapWidth) {
       currentX += wrapWidth;
     }
@@ -97,13 +112,13 @@ const Home = () => {
             </p>
             
             <div className="flex flex-col sm:flex-row gap-4 pt-2 lg:pt-4 justify-center lg:justify-start w-full sm:w-auto">
-              <Link
-                to="/book"
-                className="group relative px-6 sm:px-8 py-4 bg-gradient-to-r from-blue-600 to-indigo-600 text-white font-bold rounded-2xl shadow-xl shadow-blue-900/30 hover:shadow-blue-600/40 transition-all duration-300 flex items-center justify-center gap-2 transform hover:-translate-y-1 w-full sm:w-auto text-center"
+              <button
+                onClick={() => handleBookingClick()}
+                className="group relative px-6 sm:px-8 py-4 bg-gradient-to-r from-blue-600 to-indigo-600 text-white font-bold rounded-2xl shadow-xl shadow-blue-900/30 hover:shadow-blue-600/40 transition-all duration-300 flex items-center justify-center gap-2 transform hover:-translate-y-1 w-full sm:w-auto text-center border-none cursor-pointer outline-none font-sans"
               >
                 <span className="relative z-10 text-lg">Book Service</span>
                 <ChevronRight className="relative z-10 w-5 h-5 group-hover:translate-x-1 transition-transform" />
-              </Link>
+              </button>
               <a
                 href="tel:+919515980170"
                 className="px-6 sm:px-8 py-4 bg-white/5 backdrop-blur-md text-white font-bold rounded-2xl border border-white/10 shadow-sm hover:bg-white/10 transition-all duration-300 flex items-center justify-center gap-2 transform hover:-translate-y-1 w-full sm:w-auto"
@@ -222,7 +237,7 @@ const Home = () => {
                   initial={{ opacity: 0, scale: 0.95 }}
                   animate={{ opacity: 1, scale: 1 }}
                   transition={{ duration: 0.4, delay: idx * 0.05 }}
-                  onClick={() => navigate(`/book?service=${service.id}`)}
+                  onClick={() => handleBookingClick(service.id)}
                   className="group cursor-pointer rounded-[2rem] overflow-hidden relative h-[320px] sm:h-[360px] min-w-[260px] sm:min-w-[300px] snap-center shadow-2xl border border-white/10 hover:border-blue-500/50 transition-all shrink-0"
                 >
                   <div className="absolute inset-0 bg-gradient-to-t from-[#0B0F19] via-[#0B0F19]/60 to-transparent z-10 transition-opacity duration-300 group-hover:opacity-80"></div>
@@ -252,7 +267,10 @@ const Home = () => {
             <h2 className="text-3xl sm:text-4xl md:text-5xl font-extrabold text-white mb-4">AI Smart Diagnosis</h2>
             <p className="text-base sm:text-lg text-slate-400 max-w-2xl mx-auto">Not sure what the exact problem is? Answer a few quick questions to identify the issue and get an estimated cost instantly.</p>
           </div>
-          <SmartDiagnosis />
+          <SmartDiagnosis onOpenAuth={(redirectUrl) => {
+            setPostAuthAction(() => () => navigate(redirectUrl));
+            setShowAuthModal(true);
+          }} />
         </div>
 
         {/* Urgent Repair Needed */}
@@ -481,41 +499,37 @@ const Home = () => {
               className="flex gap-6 cursor-grab active:cursor-grabbing select-none"
             >
               {[
-                { name: "Priya S.", service: "AC Repair", text: "The technician arrived exactly on time. Fixed my AC cooling issue within an hour and the price was upfront. Truly a lifesaver in this heat!", rating: 5, bg: "from-blue-500/10 to-transparent", initial: "P" },
-                { name: "Rahul M.", service: "Electrical Wiring", text: "I had a sudden short circuit at night. Fixvo's emergency service had a verified electrician at my door in 30 mins. Extremely professional.", rating: 5, bg: "from-amber-500/10 to-transparent", initial: "R" },
-                { name: "Anita K.", service: "Plumbing Deep Clean", text: "Very transparent pricing. The diagnosis was accurate and I was only charged for the exact work done. Will strictly use Fixvo going forward.", rating: 5, bg: "from-emerald-500/10 to-transparent", initial: "A" }
-              ].concat([
-                { name: "Priya S.", service: "AC Repair", text: "The technician arrived exactly on time. Fixed my AC cooling issue within an hour and the price was upfront. Truly a lifesaver in this heat!", rating: 5, bg: "from-blue-500/10 to-transparent", initial: "P" },
-                { name: "Rahul M.", service: "Electrical Wiring", text: "I had a sudden short circuit at night. Fixvo's emergency service had a verified electrician at my door in 30 mins. Extremely professional.", rating: 5, bg: "from-amber-500/10 to-transparent", initial: "R" },
-                { name: "Anita K.", service: "Plumbing Deep Clean", text: "Very transparent pricing. The diagnosis was accurate and I was only charged for the exact work done. Will strictly use Fixvo going forward.", rating: 5, bg: "from-emerald-500/10 to-transparent", initial: "A" }
-              ]).concat([
-                { name: "Priya S.", service: "AC Repair", text: "The technician arrived exactly on time. Fixed my AC cooling issue within an hour and the price was upfront. Truly a lifesaver in this heat!", rating: 5, bg: "from-blue-500/10 to-transparent", initial: "P" },
-                { name: "Rahul M.", service: "Electrical Wiring", text: "I had a sudden short circuit at night. Fixvo's emergency service had a verified electrician at my door in 30 mins. Extremely professional.", rating: 5, bg: "from-amber-500/10 to-transparent", initial: "R" },
-                { name: "Anita K.", service: "Plumbing Deep Clean", text: "Very transparent pricing. The diagnosis was accurate and I was only charged for the exact work done. Will strictly use Fixvo going forward.", rating: 5, bg: "from-emerald-500/10 to-transparent", initial: "A" }
-              ]).map((testimonial, idx) => (
+                { name: "Priya Sharma", location: "Kondapur, Hyderabad", service: "AC Repair & Gas Refill", text: "My AC stopped cooling in peak May. Dispatched a technician within 25 minutes! Extremely professional, showed me the pressure gauge before and after refilling.", rating: 5, bg: "from-blue-500/10 to-transparent", avatar: "https://images.unsplash.com/photo-1494790108377-be9c29b29330?q=80&w=150&auto=format&fit=crop" },
+                { name: "Vikram Reddy", location: "Indiranagar, Bangalore", service: "Electrical Wiring", text: "Had a complete power outage on Sunday night. The technician arrived in 30 minutes, diagnosed a burnt main MCB, and replaced it in no time. Literal lifesaver!", rating: 5, bg: "from-amber-500/10 to-transparent", avatar: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?q=80&w=150&auto=format&fit=crop" },
+                { name: "Anjali Krishnan", location: "Adyar, Chennai", service: "Bathroom Deep Clean", text: "Absolutely stellar work! They deep cleaned two bathrooms. Removed tough hard-water scaling that regular cleaning couldn't budge. Worth every rupee.", rating: 5, bg: "from-emerald-500/10 to-transparent", avatar: "https://images.unsplash.com/photo-1438761681033-6461ffad8d80?q=80&w=150&auto=format&fit=crop" },
+                { name: "Sandeep Nair", location: "Gachibowli, Hyderabad", service: "CCTV Installation", text: "Seamless installation of a 4-camera setup for my home. The technician guided me on camera angles, set up the app on my phone, and kept the wiring very neat.", rating: 5, bg: "from-purple-500/10 to-transparent", avatar: "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?q=80&w=150&auto=format&fit=crop" }
+              ].reduce((acc, current) => acc.concat([current, current, current]), []).map((testimonial, idx) => (
                  <div 
                    key={idx}
-                   className={`p-6 sm:p-8 rounded-[2rem] border border-white/10 bg-gradient-to-b ${testimonial.bg} shadow-[0_8px_30px_rgb(0,0,0,0.12)] backdrop-blur-sm relative w-[300px] sm:w-[320px] flex-shrink-0 flex flex-col group hover:-translate-y-2 transition-transform duration-300`}
+                   className={`p-6 sm:p-8 rounded-[2rem] border border-white/10 bg-[#161D2E]/60 bg-gradient-to-b ${testimonial.bg} shadow-[0_8px_30px_rgb(0,0,0,0.3)] backdrop-blur-md relative w-[300px] sm:w-[320px] flex-shrink-0 flex flex-col group hover:-translate-y-2 transition-transform duration-300`}
                  >
                    <div className="absolute top-4 right-4 sm:top-6 sm:right-6 text-white/5 font-serif text-5xl sm:text-7xl pointer-events-none transition-transform group-hover:scale-110">"</div>
                    
                    <div className="flex items-center gap-4 mb-6">
-                     <div className="w-12 h-12 rounded-full bg-gradient-to-br from-indigo-500 to-purple-500 flex items-center justify-center text-white font-bold text-lg shadow-inner">
-                       {testimonial.initial}
-                     </div>
+                     <img 
+                       src={testimonial.avatar} 
+                       alt={testimonial.name} 
+                       className="w-12 h-12 rounded-full object-cover border border-white/10 shadow-inner" 
+                     />
                      <div>
-                       <p className="font-bold text-white text-base sm:text-lg">{testimonial.name}</p>
-                       <div className="flex items-center gap-1 text-amber-400 mt-0.5">
-                          {[...Array(testimonial.rating)].map((_, i) => <Star key={i} size={12} className="fill-current sm:w-3 sm:h-3" />)}
+                       <p className="font-extrabold text-white text-base sm:text-lg">{testimonial.name}</p>
+                       <p className="text-[10px] text-slate-400 font-semibold mt-0.5">{testimonial.location}</p>
+                       <div className="flex items-center gap-1 text-amber-400 mt-1">
+                          {[...Array(testimonial.rating)].map((_, i) => <Star key={i} size={11} className="fill-current sm:w-2.5 sm:h-2.5" />)}
                        </div>
                      </div>
                    </div>
                    
-                   <p className="text-[14px] sm:text-[15px] text-slate-300 italic mb-6 relative z-10 leading-relaxed grow">"{testimonial.text}"</p>
+                   <p className="text-[13px] sm:text-[14px] text-slate-300 italic mb-6 relative z-10 leading-relaxed grow font-medium">"{testimonial.text}"</p>
                    
-                   <div className="flex flex-wrap gap-2 justify-between items-center border-t border-white/10 pt-5 mt-auto">
-                      <span className="text-[11px] sm:text-xs text-emerald-400 flex items-center gap-1.5 font-medium bg-emerald-400/10 px-2 py-1 rounded-full"><CheckCircle2 size={12} className="text-emerald-400"/> Verified</span>
-                      <span className="text-[10px] sm:text-xs font-bold text-slate-300 bg-white/5 border border-white/5 px-3 py-1.5 rounded-full whitespace-nowrap shadow-sm">{testimonial.service}</span>
+                   <div className="flex flex-wrap gap-2 justify-between items-center border-t border-white/5 pt-5 mt-auto">
+                      <span className="text-[10px] sm:text-xs text-emerald-400 flex items-center gap-1.5 font-bold bg-emerald-500/10 px-3 py-1 rounded-full border border-emerald-500/20"><CheckCircle2 size={12} className="text-emerald-400"/> Verified</span>
+                      <span className="text-[10px] sm:text-xs font-extrabold text-slate-300 bg-white/5 border border-white/5 px-3 py-1.5 rounded-full whitespace-nowrap shadow-sm">{testimonial.service}</span>
                    </div>
                  </div>
               ))}
@@ -539,14 +553,24 @@ const Home = () => {
                 <p className="text-lg sm:text-xl text-blue-200/80 mb-8 sm:mb-10 max-w-2xl mx-auto relative z-10">
                   Book now and get a <span className="text-white font-bold">100% Free Inspection</span> on your first booking.
                 </p>
-                <Link
-                 to="/book"
-                 className="inline-flex relative z-10 px-8 sm:px-10 py-4 sm:py-5 bg-white text-blue-900 font-extrabold rounded-2xl shadow-xl hover:shadow-2xl hover:scale-105 transition-all duration-300 items-center justify-center gap-2 w-full sm:w-auto"
-               >
-                 <span className="text-lg sm:text-xl">Book Now in 10 Seconds</span>
-               </Link>
+                <button
+                  onClick={() => handleBookingClick()}
+                  className="inline-flex relative z-10 px-8 sm:px-10 py-4 sm:py-5 bg-white text-blue-900 font-extrabold rounded-2xl shadow-xl hover:shadow-2xl hover:scale-105 transition-all duration-300 items-center justify-center gap-2 w-full sm:w-auto border-none cursor-pointer outline-none font-sans"
+                >
+                  <span className="text-lg sm:text-xl font-bold">Book Now in 10 Seconds</span>
+                </button>
              </motion.div>
         </div>
+
+      {showAuthModal && (
+        <AuthModal 
+          onClose={() => setShowAuthModal(false)}
+          onSuccess={() => {
+            setShowAuthModal(false);
+            if (postAuthAction) postAuthAction();
+          }}
+        />
+      )}
 
       </div>
 

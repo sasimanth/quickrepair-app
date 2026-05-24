@@ -165,7 +165,11 @@ const updateWithdrawalStatus = async (req, res) => {
       return res.status(404).json({ message: 'Withdrawal request not found' });
     }
 
-    if (payoutReq.status !== 'pending' && status !== 'rejected') {
+    const allowedTransitions = (
+      (payoutReq.status === 'pending' && ['approved', 'paid', 'rejected'].includes(status)) ||
+      (payoutReq.status === 'approved' && ['paid', 'rejected'].includes(status))
+    );
+    if (!allowedTransitions) {
       return res.status(400).json({ message: `Cannot update withdrawal request from status '${payoutReq.status}' to '${status}'` });
     }
 

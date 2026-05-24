@@ -29,8 +29,13 @@ const Login = () => {
       });
 
       let role = data.role || 'user';
-      const search = document.location.search;
-      navigate(role === 'admin' ? `/admin-dashboard${search}` : role === 'technician' ? `/technician-dashboard${search}` : `/dashboard${search}`);
+      const queryParams = new URLSearchParams(document.location.search);
+      const redirectPath = queryParams.get('redirect');
+      if (redirectPath && role === 'user') {
+         navigate(redirectPath);
+      } else {
+         navigate(role === 'admin' ? '/admin-dashboard' : role === 'technician' ? '/technician-dashboard' : '/dashboard');
+      }
       window.location.reload();
     } catch (err) {
       if (err.status === 403) {

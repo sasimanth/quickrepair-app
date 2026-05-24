@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import api from '../services/api';
 import { Briefcase, MapPin, Smartphone, AlertCircle, Clock, CheckCircle, PackageSearch, XCircle, User, Wrench, RefreshCw, MessageSquare, Camera, HelpCircle, Hammer, Truck, Settings, Navigation, Copy, Map, PhoneCall, Loader2 } from 'lucide-react';
 import { globalServices } from '../data/services';
@@ -68,6 +68,8 @@ const TechnicianDashboard = () => {
   const [cancelJobId, setCancelJobId] = useState(null);
   const [cancellationReason, setCancellationReason] = useState('');
   const [submittingCancellation, setSubmittingCancellation] = useState(false);
+  const [jobTab, setJobTab] = useState('new');
+  const [viewReasonJob, setViewReasonJob] = useState(null);
 
   const handleCancelJob = async () => {
     if (!cancellationReason.trim()) {
@@ -131,6 +133,23 @@ const TechnicianDashboard = () => {
   const totalAmount = completedJobs.reduce((sum, j) => sum + (j.finalQuote || j.serviceId?.price || 0), 0);
   const commissionAmount = totalAmount * 0.10;
   const netEarnings = totalAmount - commissionAmount;
+
+  const filteredJobs = useMemo(() => {
+    return jobs.filter(job => {
+      if (jobTab === 'new') {
+        return ['pending', 'assigned', 'queued'].includes(job.status);
+      } else if (jobTab === 'active') {
+        return ['accepted', 'on_the_way', 'arrived', 'quote_approved', 'in_progress'].includes(job.status);
+      } else if (jobTab === 'quote_pending') {
+        return job.status === 'quote_pending';
+      } else if (jobTab === 'completed') {
+        return job.status === 'completed';
+      } else if (jobTab === 'cancelled') {
+        return ['cancelled', 'rejected'].includes(job.status);
+      }
+      return true;
+    });
+  }, [jobs, jobTab]);
 
   useEffect(() => { fetchJobs(); }, []);
 
@@ -413,7 +432,8 @@ const TechnicianDashboard = () => {
       arrived: { color: 'bg-blue-100 text-blue-700 border-blue-200', icon: MapPin, label: 'Arrived at Location' },
       in_progress: { color: 'bg-purple-100 text-purple-700 border-purple-200', icon: Wrench, label: 'Work In Progress' },
       completed: { color: 'bg-emerald-100 text-emerald-700 border-emerald-200', icon: CheckCircle, label: 'Completed' },
-      rejected: { color: 'bg-red-100 text-red-700 border-red-200', icon: XCircle, label: 'Rejected' }
+      rejected: { color: 'bg-red-100 text-red-700 border-red-200', icon: XCircle, label: 'Rejected' },
+      cancelled: { color: 'bg-rose-100 text-rose-700 border-rose-200', icon: XCircle, label: 'Cancelled' }
     };
     const { color, icon: Icon, label } = config[status] || config.pending;
     return (
@@ -446,11 +466,11 @@ const TechnicianDashboard = () => {
               <p className="text-xs sm:text-base text-slate-500 font-medium mt-0.5 sm:mt-1">Manage assigned jobs and discover new repairs</p>
             </div>
           </div>
-          <div className="flex flex-wrap items-center gap-3 sm:gap-4 w-full sm:w-auto mt-2 sm:mt-0">
+          <div className="grid grid-cols-2 md:flex md:items-center gap-3 w-full sm:w-auto mt-2 sm:mt-0">
             {profile?.isProfileComplete && (
               <button
                 onClick={toggleOnlineStatus}
-                className={`flex items-center gap-2 px-5 py-3 rounded-2xl font-bold transition-all shadow-sm border-2 ${profile?.isOnline ? 'bg-emerald-50 text-emerald-600 border-emerald-200 hover:bg-emerald-100' : 'bg-slate-100 text-slate-500 border-slate-200 hover:bg-slate-200'}`}
+                className={`col-span-2 md:col-span-1 flex items-center justify-center gap-2 px-5 py-3 rounded-2xl font-bold transition-all shadow-sm border-2 ${profile?.isOnline ? 'bg-emerald-50 text-emerald-600 border-emerald-200 hover:bg-emerald-100' : 'bg-slate-100 text-slate-500 border-slate-200 hover:bg-slate-200'}`}
               >
                 <div className={`w-3 h-3 rounded-full ${profile?.isOnline ? 'bg-emerald-500 animate-pulse' : 'bg-slate-400'}`}></div>
                 {profile?.isOnline ? 'Online (Accepting Jobs)' : 'Offline (Hidden)'}
@@ -458,15 +478,15 @@ const TechnicianDashboard = () => {
             )}
             <button
                onClick={() => setShowSettings(true)}
-               className="flex items-center gap-2 px-5 py-3.5 bg-slate-100 hover:bg-slate-200 border border-slate-200 text-slate-700 font-bold rounded-2xl transition-all shadow-sm"
+               className="col-span-1 flex items-center justify-center gap-2 px-5 py-3.5 bg-slate-100 hover:bg-slate-200 border border-slate-200 text-slate-700 font-bold rounded-2xl transition-all shadow-sm text-sm"
             >
-              <Settings size={20} /> Settings
+              <Settings size={18} /> Settings
             </button>
             <button
               onClick={fetchJobs}
-              className="flex items-center gap-2 bg-slate-100 hover:bg-slate-200 text-slate-700 px-6 py-3.5 rounded-2xl font-bold transition-all duration-300 shadow-sm"
+              className="col-span-1 flex items-center justify-center gap-2 bg-slate-100 hover:bg-slate-200 text-slate-700 px-5 py-3.5 rounded-2xl font-bold transition-all duration-300 shadow-sm text-sm"
             >
-              <RefreshCw size={18} /> Refresh Jobs
+              <RefreshCw size={18} /> Refresh
             </button>
           </div>
         </div>
@@ -573,17 +593,43 @@ const TechnicianDashboard = () => {
         {/* Jobs List */}
         {!loading && profile?.isProfileComplete && (
           <>
-            {jobs.length === 0 ? (
-              <div className="flex flex-col items-center justify-center py-24 bg-white rounded-3xl border border-dashed border-slate-300">
-                <div className="w-24 h-24 bg-amber-50 rounded-full flex items-center justify-center mb-6">
-                  <PackageSearch className="text-amber-500" size={48} />
+            {/* Quick Filters */}
+            <div className="flex overflow-x-auto gap-2 pb-5 scrollbar-none snap-x snap-mandatory mb-2">
+              {[
+                { id: 'new', label: 'New Jobs', count: jobs.filter(j => ['pending', 'assigned', 'queued'].includes(j.status)).length },
+                { id: 'active', label: 'In Progress', count: jobs.filter(j => ['accepted', 'on_the_way', 'arrived', 'quote_approved', 'in_progress'].includes(j.status)).length },
+                { id: 'quote_pending', label: 'Pending Quote', count: jobs.filter(j => j.status === 'quote_pending').length },
+                { id: 'completed', label: 'Completed', count: jobs.filter(j => j.status === 'completed').length },
+                { id: 'cancelled', label: 'Cancelled / Rejected', count: jobs.filter(j => ['cancelled', 'rejected'].includes(j.status)).length }
+              ].map(tab => (
+                <button
+                  key={tab.id}
+                  onClick={() => setJobTab(tab.id)}
+                  className={`px-5 py-3 rounded-2xl text-xs font-bold transition-all shrink-0 snap-center outline-none border cursor-pointer flex items-center gap-1.5 ${
+                    jobTab === tab.id 
+                      ? 'bg-slate-900 text-white border-slate-800 shadow-md shadow-slate-900/10' 
+                      : 'bg-white text-slate-500 border-slate-200 hover:bg-slate-50 hover:text-slate-700'
+                  }`}
+                >
+                  <span>{tab.label}</span>
+                  <span className={`px-1.5 py-0.5 rounded-full text-[9px] font-extrabold ${
+                    jobTab === tab.id ? 'bg-white/20 text-white' : 'bg-slate-100 text-slate-500'
+                  }`}>{tab.count}</span>
+                </button>
+              ))}
+            </div>
+
+            {filteredJobs.length === 0 ? (
+              <div className="flex flex-col items-center justify-center py-20 bg-white rounded-3xl border border-dashed border-slate-300">
+                <div className="w-20 h-20 bg-amber-50 rounded-full flex items-center justify-center mb-5">
+                  <PackageSearch className="text-amber-500" size={38} />
                 </div>
-                <h3 className="text-2xl font-bold text-slate-800 mb-2">No Jobs Available</h3>
-                <p className="text-slate-500 max-w-sm text-center">There are no pending repair requests assigned to you currently. Check back soon!</p>
+                <h3 className="text-xl font-bold text-slate-800 mb-1">No Jobs Found</h3>
+                <p className="text-slate-500 max-w-xs text-center text-xs font-medium">There are no jobs matching this category currently.</p>
               </div>
             ) : (
               <div className="space-y-8">
-                {jobs.map((job) => {
+                {filteredJobs.map((job) => {
                   const isCompleted = job.status === 'completed';
                   const isExpanded = expandedCompletedJobs[job._id];
                   
@@ -834,6 +880,19 @@ const TechnicianDashboard = () => {
                              </button>
                            </div>
                         )}
+                        {['cancelled', 'rejected'].includes(job.status) && (
+                           <div className="space-y-3">
+                             <div className="flex items-center justify-center gap-2 p-4 rounded-xl font-bold border bg-rose-50 text-rose-700 border-rose-200 shadow-sm">
+                               <XCircle size={18} /> {job.status === 'cancelled' ? 'Cancelled' : 'Rejected'}
+                             </div>
+                             <button
+                               onClick={() => setViewReasonJob(job)}
+                               className="w-full bg-white hover:bg-rose-50 border border-rose-200 text-rose-600 font-bold py-3 px-4 rounded-2xl transition-all shadow-sm flex items-center justify-center gap-2 text-xs"
+                             >
+                               <FileText size={18} /> View Reason
+                             </button>
+                           </div>
+                        )}
                         {isCompleted && (
                           <button
                             onClick={() => toggleCompletedExpand(job._id)}
@@ -984,6 +1043,32 @@ const TechnicianDashboard = () => {
             fetchJobs();
           }}
         />
+      )}
+
+      {viewReasonJob && (
+        <div className="fixed inset-0 z-[999] bg-[#0B0F19]/80 backdrop-blur-md flex items-center justify-center p-4">
+          <div className="bg-slate-900 border border-white/10 rounded-[2.5rem] p-6 sm:p-8 w-full max-w-md shadow-2xl relative animate-in fade-in zoom-in-95 duration-200 text-white">
+            <h3 className="text-xl font-black text-white mb-2">Cancellation Details</h3>
+            <div className="space-y-4 my-6">
+              <div className="p-4 bg-rose-500/10 border border-rose-500/20 rounded-2xl text-rose-300 text-xs sm:text-sm font-semibold">
+                <span className="font-extrabold text-[10px] bg-rose-500/20 text-rose-300 px-2.5 py-1 rounded uppercase tracking-wider block mb-2 w-max border border-rose-500/30">Reason Given</span>
+                "{viewReasonJob.cancellationReason || 'No reason provided.'}"
+              </div>
+              <div className="text-xs text-slate-400 font-semibold space-y-2 pl-1">
+                <p>Cancelled By: <strong className="text-slate-200 capitalize">{viewReasonJob.cancelledBy || 'system'}</strong></p>
+                {viewReasonJob.cancelledAt && (
+                  <p>Cancelled On: <strong className="text-slate-200">{new Date(viewReasonJob.cancelledAt).toLocaleString()}</strong></p>
+                )}
+              </div>
+            </div>
+            <button
+              onClick={() => setViewReasonJob(null)}
+              className="w-full bg-white hover:bg-slate-100 text-slate-900 font-extrabold py-3.5 rounded-xl transition-all shadow-md cursor-pointer border-none outline-none"
+            >
+              Close
+            </button>
+          </div>
+        </div>
       )}
 
       {cancelJobId && (
