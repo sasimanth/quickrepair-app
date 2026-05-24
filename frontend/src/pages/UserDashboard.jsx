@@ -1,8 +1,8 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import api from '../services/api'; 
 import { globalCategories, globalServices, getDbServices } from '../data/services';
-import { Calendar, MapPin, Smartphone, AlertCircle, Clock, CheckCircle, PackageSearch, XCircle, Plus, LayoutDashboard, Wrench, Settings, Star, User, ChevronRight, MessageSquare, Camera, UploadCloud, Loader2, Shield, ShieldCheck, HelpCircle, Truck, Home, Search, Eye, Zap, Maximize2, Hash, Layers, Paintbrush } from 'lucide-react';
+import { Calendar, MapPin, Smartphone, AlertCircle, Clock, CheckCircle, PackageSearch, XCircle, Plus, LayoutDashboard, Wrench, Settings, Star, User, ChevronRight, MessageSquare, Camera, UploadCloud, Loader2, Shield, ShieldCheck, HelpCircle, Truck, Home, Search, Eye, Zap, Maximize2, Hash, Layers, Paintbrush, Tv, X } from 'lucide-react';
 import ChatModal from '../components/ChatModal';
 import ReviewModal from '../components/ReviewModal';
 import PaymentModal from '../components/PaymentModal';
@@ -78,9 +78,6 @@ const UserDashboard = () => {
     }
   };
 
-  const selectedServiceObj = services.find(s => s.id === formData.serviceId) || globalServices.find(s => s.id === formData.serviceId);
-  const categoryId = selectedServiceObj ? selectedServiceObj.categoryId : '';
-  const serviceNameLower = selectedServiceObj?.name?.toLowerCase() || '';
 
   const playChime = () => {
     try {
@@ -126,6 +123,12 @@ const UserDashboard = () => {
     serviceOption: 'direct',
     unknownProblem: false
   });
+
+  const selectedServiceObj = useMemo(() => {
+    return services.find(s => s.id === formData.serviceId) || globalServices.find(s => s.id === formData.serviceId);
+  }, [services, formData.serviceId]);
+  const categoryId = selectedServiceObj ? selectedServiceObj.categoryId : '';
+  const serviceNameLower = selectedServiceObj?.name?.toLowerCase() || '';
 
   useEffect(() => {
     getDbServices().then(setServices);
