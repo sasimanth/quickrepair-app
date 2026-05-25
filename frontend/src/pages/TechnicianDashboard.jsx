@@ -237,16 +237,23 @@ const TechnicianDashboard = () => {
     };
 
     const handleJobUpdate = (updatedJob) => {
-      showToast(
-        '🔄 Job Update', 
-        `Job #${updatedJob._id.slice(-6)} is now: ${updatedJob.status.replace(/_/g, ' ').toUpperCase()}`, 
-        'info'
-      );
-      triggerBrowserNotification('🔄 Job Update', `Job #${updatedJob._id.slice(-6)} is now: ${updatedJob.status.replace(/_/g, ' ').toUpperCase()}`, {
-        tag: `job-${updatedJob._id}`,
-        data: { url: `/dashboard?jobId=${updatedJob._id}` }
-      });
-      setJobs(prev => prev.map(j => j._id === updatedJob._id ? updatedJob : j));
+      fetchJobs(true);
+
+      // Do NOT show notifications/sounds for self-generated actions
+      const isSelfGenerated = ['accepted', 'on_the_way', 'arrived', 'in_progress', 'completed'].includes(updatedJob.status);
+      const isTechCancel = updatedJob.status === 'cancelled' && updatedJob.cancelledBy === 'technician';
+
+      if (!isSelfGenerated && !isTechCancel) {
+        showToast(
+          '🔄 Job Update', 
+          `Job #${updatedJob._id.slice(-6)} is now: ${updatedJob.status.replace(/_/g, ' ').toUpperCase()}`, 
+          'info'
+        );
+        triggerBrowserNotification('🔄 Job Update', `Job #${updatedJob._id.slice(-6)} is now: ${updatedJob.status.replace(/_/g, ' ').toUpperCase()}`, {
+          tag: `job-${updatedJob._id}`,
+          data: { url: `/dashboard?jobId=${updatedJob._id}` }
+        });
+      }
     };
 
     const handleNewNotification = (notif) => {
@@ -259,7 +266,7 @@ const TechnicianDashboard = () => {
         tag: `notif-${notif._id}`,
         data: { url: notif.bookingId ? `/dashboard?jobId=${notif.bookingId}` : undefined }
       });
-      fetchJobs();
+      fetchJobs(true);
     };
 
     socket.on('new_job', handleNewJob);
@@ -329,9 +336,9 @@ const TechnicianDashboard = () => {
     }
   };
 
-  const fetchJobs = async () => {
+  const fetchJobs = async (silent = false) => {
     try {
-      setLoading(true);
+      if (!silent) setLoading(true);
       const profileRes = await api.get('/technicians/profile');
       setProfile(profileRes.data);
 
@@ -345,7 +352,7 @@ const TechnicianDashboard = () => {
         await fetchNotifications();
       }
     } catch (error) { console.error('Error fetching dashboard data', error); }
-    finally { setLoading(false); }
+    finally { if (!silent) setLoading(false); }
   };
 
   useEffect(() => {
@@ -599,101 +606,6 @@ const TechnicianDashboard = () => {
             >
               <Settings size={18} /> Settings
             </button>
-            <div className="relative col-span-1">
-              <button
-                onClick={(e) => {
-                  e.stopPropagation();
-                  setShowNotifDropdown(!showNotifDropdown);
-                }}
-                className="w-full flex items-center justify-center gap-2 px-5 py-3.5 bg-slate-100 hover:bg-slate-200 border border-slate-200 text-slate-700 font-bold rounded-2xl transition-all shadow-sm text-sm relative"
-              >
-                <Bell size={18} />
-                <span className="md:hidden lg:inline">Notifications</span>
-                {unreadNotifCount > 0 && (
-                  <span className="absolute -top-1 -right-1 bg-red-500 text-white font-extrabold text-[10px] w-5 h-5 rounded-full flex items-center justify-center border-2 border-white animate-bounce">
-                    {unreadNotifCount}
-                  </span>
-                )}
-              </button>
-              
-              {showNotifDropdown && (
-                <div 
-                  onClick={(e) => e.stopPropagation()}
-                  className="absolute right-0 mt-2 w-80 bg-white/95 backdrop-blur-md rounded-2xl border border-slate-200/80 shadow-xl z-50 overflow-hidden animate-in fade-in slide-in-from-top-2 duration-200"
-                >
-                  <div className="p-4 border-b border-slate-100 flex justify-between items-center bg-slate-50/50">
-                    <span className="font-bold text-slate-800 text-sm">Notifications</span>
-                    {unreadNotifCount > 0 && (
-                      <button 
-                        onClick={async () => {
-                          try {
-                            await Promise.all(
-                              notifications
-                                .filter(n => !n.isRead)
-                                .map(n => api.put(`/notifications/${n._id}/read`))
-                            );
-                            fetchNotifications();
-                          } catch (err) {
-                            console.error('Error marking all as read', err);
-                          }
-                        }}
-                        className="text-xs text-indigo-600 hover:text-indigo-800 font-semibold cursor-pointer"
-                      >
-                        Mark all as read
-                      </button>
-                    )}
-                  </div>
-                  <div className="max-h-64 overflow-y-auto divide-y divide-slate-100">
-                    {notifications.length === 0 ? (
-                      <div className="p-6 text-center text-xs text-slate-400">
-                        No notifications yet
-                      </div>
-                    ) : (
-                      notifications.map(notif => (
-                        <div
-                          key={notif._id}
-                          onClick={async () => {
-                            try {
-                              if (!notif.isRead) {
-                                await api.put(`/notifications/${notif._id}/read`);
-                                fetchNotifications();
-                              }
-                              setShowNotifDropdown(false);
-                              if (notif.type === 'chat' && notif.bookingId) {
-                                setChatBookingId(notif.bookingId);
-                              } else if (notif.bookingId) {
-                                const job = jobs.find(j => j._id === notif.bookingId);
-                                if (job) {
-                                  if (['pending', 'assigned', 'queued'].includes(job.status)) setJobTab('new');
-                                  else if (['accepted', 'on_the_way', 'arrived', 'quote_approved', 'in_progress'].includes(job.status)) setJobTab('active');
-                                  else if (job.status === 'quote_pending') setJobTab('quote_pending');
-                                  else if (job.status === 'completed') {
-                                    setJobTab('completed');
-                                    setExpandedCompletedJobs(prev => ({ ...prev, [notif.bookingId]: true }));
-                                  } else if (['cancelled', 'rejected'].includes(job.status)) setJobTab('cancelled');
-                                }
-                              }
-                            } catch (err) {
-                              console.error('Error handling notification click', err);
-                            }
-                          }}
-                          className={`p-3.5 text-left text-xs transition-colors hover:bg-slate-50 cursor-pointer ${!notif.isRead ? 'bg-indigo-50/30' : ''}`}
-                        >
-                          <div className="flex justify-between items-start gap-1">
-                            <span className={`font-bold ${!notif.isRead ? 'text-slate-900' : 'text-slate-700'}`}>{notif.title}</span>
-                            {!notif.isRead && <span className="w-1.5 h-1.5 bg-indigo-600 rounded-full shrink-0 mt-1"></span>}
-                          </div>
-                          <p className="text-slate-500 mt-1 line-clamp-2">{notif.message}</p>
-                          <span className="text-[10px] text-slate-400 mt-1.5 block">
-                            {new Date(notif.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-                          </span>
-                        </div>
-                      ))
-                    )}
-                  </div>
-                </div>
-              )}
-            </div>
             <button
               onClick={fetchJobs}
               className="col-span-1 flex items-center justify-center gap-2 bg-slate-100 hover:bg-slate-200 text-slate-700 px-5 py-3.5 rounded-2xl font-bold transition-all duration-300 shadow-sm text-sm"

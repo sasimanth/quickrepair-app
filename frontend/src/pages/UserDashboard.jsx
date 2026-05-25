@@ -136,14 +136,16 @@ const UserDashboard = () => {
     fetchData(true);
     const interval = setInterval(() => fetchData(false), 5000);
 
-    // Subscribe to WebSocket location updates
-    socket.on('location_update', (data) => {
+    const handleLocationUpdate = (data) => {
        setLiveLocations(prev => ({ ...prev, [data.techId]: [data.lat, data.lng] }));
-    });
+    };
+
+    // Subscribe to WebSocket location updates
+    socket.on('location_update', handleLocationUpdate);
 
     return () => {
       clearInterval(interval);
-      socket.off('location_update');
+      socket.off('location_update', handleLocationUpdate);
     };
   }, []);
 
@@ -172,12 +174,18 @@ const UserDashboard = () => {
     if (!profile?.userId) return;
 
     const handleJobUpdate = (updatedJob) => {
-      showToast(
-        '🔄 Repair Status Updated', 
-        `Your ${updatedJob.serviceName} status is now: ${updatedJob.status.replace(/_/g, ' ').toUpperCase()}`, 
-        'info'
-      );
-      setBookings(prev => prev.map(b => b._id === updatedJob._id ? updatedJob : b));
+      fetchData(false);
+
+      const isSelfGenerated = ['quote_approved'].includes(updatedJob.status);
+      const isCustomerCancel = updatedJob.status === 'cancelled' && updatedJob.cancelledBy === 'customer';
+
+      if (!isSelfGenerated && !isCustomerCancel) {
+        showToast(
+          '🔄 Repair Status Updated', 
+          `Your ${updatedJob.serviceName} status is now: ${updatedJob.status.replace(/_/g, ' ').toUpperCase()}`, 
+          'info'
+        );
+      }
     };
 
     socket.on('job_update', handleJobUpdate);
@@ -1127,7 +1135,7 @@ const UserDashboard = () => {
                     </div>
                     <div className="flex flex-row sm:flex-col items-center sm:items-end justify-between w-full sm:w-auto gap-2 shrink-0 border-t sm:border-t-0 border-slate-100 pt-3 sm:pt-0 mt-1 sm:mt-0">
                       {getStatusBadge(booking.status)}
-                      {booking.status === 'completed' && booking.paymentStatus !== 'completed' && booking.paymentMethod !== 'cash' && (
+                      {booking.status === 'completed' && !['completed', 'cash_pending'].includes(booking.paymentStatus) && (
                         <button 
                            onClick={(e) => {
                              e.stopPropagation();
@@ -1137,6 +1145,11 @@ const UserDashboard = () => {
                         >
                            <CreditCard size={14} /> Pay Now
                         </button>
+                      )}
+                      {booking.status === 'completed' && booking.paymentStatus === 'cash_pending' && (
+                        <span className="flex items-center gap-1.5 px-3.5 py-2 text-xs font-bold bg-amber-50 text-amber-700 rounded-xl border border-amber-200 whitespace-nowrap">
+                          <Clock size={12} className="text-amber-500 animate-pulse" /> Awaiting Cash Confirm
+                        </span>
                       )}
                       <span className="text-indigo-500 text-xs font-bold bg-indigo-50 px-3 py-1 rounded-full border border-indigo-100 whitespace-nowrap">
                         {expandedBookings[booking._id] ? 'Less Details' : 'View Details'}
@@ -1397,13 +1410,19 @@ const UserDashboard = () => {
                       </button>
                     )}
 
-                    {booking.status === 'completed' && booking.paymentStatus !== 'completed' && booking.paymentMethod !== 'cash' && (
+                    {booking.status === 'completed' && !['completed', 'cash_pending'].includes(booking.paymentStatus) && (
                       <button 
                          onClick={() => setPaymentBooking(booking)}
                          className="w-full sm:w-auto flex items-center justify-center gap-2 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white px-5 py-3 rounded-xl text-sm font-bold shadow-lg transition-all shadow-blue-500/30 font-sans cursor-pointer"
                       >
                          <CreditCard size={16} /> Pay Now
                       </button>
+                    )}
+
+                    {booking.status === 'completed' && booking.paymentStatus === 'cash_pending' && (
+                      <div className="w-full sm:w-auto flex items-center justify-center gap-2 bg-amber-50 border border-amber-100 px-4 py-3 rounded-xl text-amber-700 text-sm font-bold shadow-sm">
+                        <Clock size={16} className="text-amber-500 animate-pulse" /> Cash Receipt Pending Confirmation
+                      </div>
                     )}
 
                     {booking.status === 'completed' && booking.paymentStatus === 'completed' && (

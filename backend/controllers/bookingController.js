@@ -73,6 +73,12 @@ const triggerNotifications = async (req, booking, type) => {
         chatText = `📢 System: Technician marked the service as completed.`;
         recipientId = booking.userId;
         break;
+      case 'cash_pending':
+        title = 'Cash Payment Requested 💵';
+        message = `Customer requested to pay ₹${booking.amount} in cash. Please confirm receipt upon collection.`;
+        chatText = `📢 System: Customer selected Direct Cash Payment. Awaiting technician confirmation.`;
+        recipientId = booking.providerId; // Notify tech
+        break;
       case 'payment_completed':
         title = 'Payment Received! 💳';
         message = `Thank you! Payment of ₹${booking.amount} has been successfully completed.`;
@@ -510,12 +516,8 @@ const updateBookingStatus = async (req, res) => {
         await tech.save();
 
         booking.status = 'completed';
-
-        if (booking.paymentMethod === 'cash') {
-          booking.paymentStatus = 'cash_pending';
-        } else {
-          booking.paymentStatus = 'awaiting_payment';
-        }
+        // Always default completed jobs to awaiting_payment so customers can select cash or online checkout
+        booking.paymentStatus = 'awaiting_payment';
       }
     }
 
@@ -526,6 +528,7 @@ const updateBookingStatus = async (req, res) => {
     }
 
     const updatedBooking = await booking.save();
+    await updatedBooking.populate('serviceId', 'name price');
     
     // Call Automated Notification System
     await triggerNotifications(req, updatedBooking, status);
@@ -555,6 +558,7 @@ const assignBooking = async (req, res) => {
     booking.status = 'accepted';
     
     const updatedBooking = await booking.save();
+    await updatedBooking.populate('serviceId', 'name price');
 
     // Call Automated Notification
     await triggerNotifications(req, updatedBooking, 'accepted');
@@ -565,7 +569,7 @@ const assignBooking = async (req, res) => {
   }
 };
 
-// @desc    Process a mock payment for a booking
+// @desc    Process a mock/cash payment for a booking
 // @route   PUT /api/bookings/:id/pay
 const processPayment = async (req, res) => {
   const { paymentMethod, amount } = req.body;
@@ -580,39 +584,80 @@ const processPayment = async (req, res) => {
       if (!isOwnerById) {
          return res.status(403).json({ message: 'Not authorized to pay for this booking' });
       }
+
+      if (paymentMethod === 'cash') {
+        booking.paymentStatus = 'cash_pending';
+        booking.paymentMethod = 'cash';
+        booking.amount = amount || booking.finalQuote || 0;
+        
+        const updatedBooking = await booking.save();
+        await updatedBooking.populate('serviceId', 'name price');
+        
+        // Notify technician to confirm cash receipt
+        await triggerNotifications(req, updatedBooking, 'cash_pending');
+        return res.json(updatedBooking);
+      } else {
+        // Mock online/other payment
+        booking.paymentStatus = 'completed';
+        booking.paymentMethod = paymentMethod || 'mock';
+        booking.amount = amount || booking.finalQuote || 0;
+        booking.transactionId = 'tx_' + Math.random().toString(36).substr(2, 9);
+
+        const updatedBooking = await booking.save();
+        await updatedBooking.populate('serviceId', 'name price');
+
+        await updateTechnicianWallet(updatedBooking);
+
+        if (booking.providerEmail) {
+          notifyUser({
+            userId: booking.providerId,
+            email: booking.providerEmail,
+            type: 'both',
+            subject: 'Payment Received!',
+            text: `Customer has paid ₹${booking.amount} for the completed job.`,
+            notifType: 'booking',
+            bookingId: booking._id.toString()
+          });
+        }
+
+        await triggerNotifications(req, updatedBooking, 'payment_completed');
+        return res.json(updatedBooking);
+      }
     } else if (req.user.role === 'technician') {
       const isProvider = booking.providerId && booking.providerId.toString() === req.user.id.toString();
       if (!isProvider) {
          return res.status(403).json({ message: 'Not authorized to confirm payment for this booking' });
       }
+
+      // Tech confirming receipt of cash payment
+      booking.paymentStatus = 'completed';
+      booking.paymentMethod = 'cash';
+      booking.amount = amount || booking.finalQuote || 0;
+      booking.transactionId = 'tx_cash_' + Math.random().toString(36).substr(2, 9);
+
+      const updatedBooking = await booking.save();
+      await updatedBooking.populate('serviceId', 'name price');
+
+      // Credit technician's wallet upon completed payment
+      await updateTechnicianWallet(updatedBooking);
+
+      if (booking.providerEmail) {
+        notifyUser({
+          userId: booking.providerId,
+          email: booking.providerEmail,
+          type: 'both',
+          subject: 'Payment Received!',
+          text: `Customer has paid ₹${booking.amount} for the completed job.`,
+          notifType: 'booking',
+          bookingId: booking._id.toString()
+        });
+      }
+
+      // Call Automated Notification System
+      await triggerNotifications(req, updatedBooking, 'payment_completed');
+
+      return res.json(updatedBooking);
     }
-
-    booking.paymentStatus = 'completed';
-    booking.paymentMethod = paymentMethod || 'mock';
-    booking.amount = amount || booking.finalQuote || 0;
-    booking.transactionId = 'tx_' + Math.random().toString(36).substr(2, 9);
-
-    const updatedBooking = await booking.save();
-
-    // Credit technician's wallet upon completed payment
-    await updateTechnicianWallet(updatedBooking);
-
-    if (booking.providerEmail) {
-      notifyUser({
-        userId: booking.providerId,
-        email: booking.providerEmail,
-        type: 'both',
-        subject: 'Payment Received!',
-        text: `Customer has paid ₹${booking.amount} for the completed job.`,
-        notifType: 'booking',
-        bookingId: booking._id.toString()
-      });
-    }
-
-    // Call Automated Notification System
-    await triggerNotifications(req, updatedBooking, 'payment_completed');
-
-    res.json(updatedBooking);
   } catch (error) {
     res.status(400).json({ message: error.message });
   }
@@ -676,6 +721,7 @@ const submitQuote = async (req, res) => {
     booking.quoteApproved = false;
 
     const updatedBooking = await booking.save();
+    await updatedBooking.populate('serviceId', 'name price');
     
     notifyUser({
       userId: booking.userId,
@@ -719,6 +765,7 @@ const approveQuote = async (req, res) => {
     }
 
     const updatedBooking = await booking.save();
+    await updatedBooking.populate('serviceId', 'name price');
 
     if (booking.providerEmail) {
       notifyUser({
@@ -782,6 +829,7 @@ const cancelBooking = async (req, res) => {
     }
     
     const updatedBooking = await booking.save();
+    await updatedBooking.populate('serviceId', 'name price');
     
     // Trigger notification
     await triggerNotifications(req, updatedBooking, 'cancelled');

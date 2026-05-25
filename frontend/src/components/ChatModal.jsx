@@ -40,6 +40,15 @@ const ChatModal = ({ booking, onClose, currentRole }) => {
     const handleReceiveMessage = (newMsg) => {
       setMessages(prev => {
         if (prev.find(m => m._id === newMsg._id)) return prev;
+        
+        // Deduplicate: if an optimistic message with matching text and sender exists, replace it
+        const optimisticIndex = prev.findIndex(m => m.isOptimistic && m.senderId === newMsg.senderId && m.text === newMsg.text);
+        if (optimisticIndex !== -1) {
+          const updated = [...prev];
+          updated[optimisticIndex] = newMsg;
+          return updated;
+        }
+        
         return [...prev, newMsg];
       });
       if (newMsg.senderId !== (user?._id || user?.id)) {
@@ -93,7 +102,12 @@ const ChatModal = ({ booking, onClose, currentRole }) => {
       // Dispatch instantly via WebSockets instead of fetching
       socket.emit('send_message', { bookingId, messageObj: data });
       
-      setMessages(prev => prev.map(m => m._id === tempMsg._id ? data : m));
+      setMessages(prev => {
+        if (prev.find(m => m._id === data._id)) {
+          return prev.filter(m => m._id !== tempMsg._id);
+        }
+        return prev.map(m => m._id === tempMsg._id ? data : m);
+      });
     } catch (error) {
       console.error('Failed to send message:', error);
       alert("Failed to send message. Please try again.");

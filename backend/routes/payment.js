@@ -17,10 +17,23 @@ router.post("/create-order", async (req, res) => {
 
     const order = await razorpay.orders.create(options);
     
-    // Optionally update booking with razorpay order id if doing payment before tech completes (or after)
-    // if (bookingId) {
-    //   await Booking.findByIdAndUpdate(bookingId, { transactionId: order.id });
-    // }
+    if (bookingId) {
+      const updatedBooking = await Booking.findByIdAndUpdate(
+        bookingId,
+        { paymentStatus: 'awaiting_payment', paymentMethod: 'razorpay' },
+        { new: true }
+      ).populate('serviceId', 'name price');
+
+      const io = req.app.get('io');
+      if (io && updatedBooking) {
+        if (updatedBooking.userId) {
+          io.to(`user_${updatedBooking.userId}`).emit('job_update', updatedBooking);
+        }
+        if (updatedBooking.providerId) {
+          io.to(`user_${updatedBooking.providerId}`).emit('job_update', updatedBooking);
+        }
+      }
+    }
 
     res.json(order);
   } catch (err) {

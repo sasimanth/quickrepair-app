@@ -18,33 +18,41 @@ const getProfile = async (req, res) => {
       });
     }
 
-    // Dynamic Pending Earnings Calculation (assigned active jobs)
+    // Dynamic Pending Earnings Calculation (active jobs OR completed but unpaid jobs)
     const Booking = require('../models/Booking');
-    const activeJobs = await Booking.find({
+    const pendingJobs = await Booking.find({
       providerId: req.user.id,
-      status: { $in: ['accepted', 'on_the_way', 'arrived', 'quote_pending', 'quote_approved', 'in_progress'] }
+      $or: [
+        { status: { $in: ['accepted', 'on_the_way', 'arrived', 'quote_pending', 'quote_approved', 'in_progress'] } },
+        { status: 'completed', paymentStatus: { $ne: 'completed' } }
+      ]
     });
     
-    const pendingEarnings = activeJobs.reduce((sum, job) => {
-      const amt = job.finalQuote || (job.serviceId?.price || 0);
-      return sum + (amt * 0.90); // 90% technician share
+    const pendingEarnings = pendingJobs.reduce((sum, job) => {
+      const gross = job.finalQuote || (job.serviceId?.price || 0);
+      const discount = job.isPremiumUser ? (gross * 0.15) : 0;
+      const net = (gross - discount) * 0.90;
+      return sum + net;
     }, 0);
 
     // Fetch previous withdrawal request logs
     const WithdrawalRequest = require('../models/WithdrawalRequest');
     const withdrawals = await WithdrawalRequest.find({ technicianId: req.user.id }).sort({ createdAt: -1 });
 
-    // Fetch completed bookings to calculate gross, commission, net
-    const completedJobs = await Booking.find({
+    // Fetch completed & PAID bookings to calculate gross, commission, net
+    const completedPaidJobs = await Booking.find({
       providerId: req.user.id,
-      status: 'completed'
+      status: 'completed',
+      paymentStatus: 'completed'
     });
 
     let calculatedGross = 0;
     let calculatedCommission = 0;
     let calculatedNet = 0;
+    let onlineNetEarnings = 0;
+    let cashPlatformFee = 0;
 
-    completedJobs.forEach(job => {
+    completedPaidJobs.forEach(job => {
       const gross = job.finalQuote || job.amount || 0;
       const discount = job.membershipDiscount || 0;
       const commission = typeof job.platformCommission === 'number' ? job.platformCommission : ((gross - discount) * 0.10);
@@ -53,7 +61,20 @@ const getProfile = async (req, res) => {
       calculatedGross += gross;
       calculatedCommission += commission;
       calculatedNet += net;
+
+      if (job.paymentMethod === 'cash') {
+        cashPlatformFee += commission;
+      } else {
+        onlineNetEarnings += net;
+      }
     });
+
+    // Available Balance is online net earnings minus commission owed from cash jobs, minus withdrawals
+    const availableBalance = Math.max(0, onlineNetEarnings - cashPlatformFee - (tech.withdrawnAmount || 0) - (tech.pendingWithdrawal || 0));
+
+    // Persist correct wallet balance in DB
+    tech.walletBalance = availableBalance;
+    await tech.save();
 
     const techObj = tech.toObject();
     techObj.pendingEarnings = pendingEarnings;
@@ -63,6 +84,7 @@ const getProfile = async (req, res) => {
     techObj.totalEarned = calculatedGross;
     techObj.platformCommission = calculatedCommission;
     techObj.netEarnings = calculatedNet;
+    techObj.walletBalance = availableBalance;
 
     res.json(techObj);
   } catch (error) {
