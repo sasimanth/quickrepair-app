@@ -9,7 +9,6 @@ const Booking = require('./models/Booking');
 const Technician = require('./models/Technician');
 const Review = require('./models/Review');
 const QuickBooking = require('./models/QuickBooking');
-const RepairRequest = require('./models/RepairRequest');
 const Message = require('./models/Message');
 
 const reset = async () => {
@@ -34,7 +33,6 @@ const reset = async () => {
     const qRes = await QuickBooking.deleteMany({});
     console.log(`Deleted ${qRes.deletedCount} quick bookings`);
     
-    await RepairRequest.deleteMany({});
     await Message.deleteMany({});
 
     console.log('Database reset successfully.');

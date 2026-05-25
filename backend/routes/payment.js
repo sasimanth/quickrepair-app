@@ -26,11 +26,15 @@ router.post("/create-order", async (req, res) => {
 
       const io = req.app.get('io');
       if (io && updatedBooking) {
+        const payload = typeof updatedBooking.toObject === 'function' ? updatedBooking.toObject() : { ...updatedBooking };
+        payload.initiatorId = req.user ? (req.user._id || req.user.id) : updatedBooking.userId;
+        payload.initiatorRole = req.user ? req.user.role : 'user';
+
         if (updatedBooking.userId) {
-          io.to(`user_${updatedBooking.userId}`).emit('job_update', updatedBooking);
+          io.to(`user_${updatedBooking.userId}`).emit('job_update', payload);
         }
         if (updatedBooking.providerId) {
-          io.to(`user_${updatedBooking.providerId}`).emit('job_update', updatedBooking);
+          io.to(`user_${updatedBooking.providerId}`).emit('job_update', payload);
         }
       }
     }

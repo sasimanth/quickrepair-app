@@ -71,8 +71,8 @@ const NotificationsBell = () => {
       setUnreadCount(prev => prev + 1);
 
       const onDashboard = window.location.pathname === '/dashboard' || window.location.pathname === '/technician-dashboard';
-      if (notif.type === 'booking' && onDashboard) {
-        // Skip duplicate sound; local dashboard toast handles the audio chime
+      if (onDashboard) {
+        // Skip duplicate sound; local dashboard handles the audio chime
       } else {
         playNotificationSound();
       }

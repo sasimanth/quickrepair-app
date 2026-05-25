@@ -127,13 +127,20 @@ const triggerNotifications = async (req, booking, type) => {
 
     // 3. Emit Sockets
     if (io) {
+      const initiatorId = req && req.user ? (req.user._id || req.user.id) : null;
+      const initiatorRole = req && req.user ? req.user.role : null;
+      
+      const payload = typeof booking.toObject === 'function' ? booking.toObject() : { ...booking };
+      payload.initiatorId = initiatorId;
+      payload.initiatorRole = initiatorRole;
+
       // Refresh User Dashboard
       if (booking.userId) {
-        io.to(`user_${booking.userId}`).emit('job_update', booking);
+        io.to(`user_${booking.userId}`).emit('job_update', payload);
       }
       // Refresh Tech Dashboard
       if (booking.providerId) {
-        io.to(`user_${booking.providerId}`).emit('job_update', booking);
+        io.to(`user_${booking.providerId}`).emit('job_update', payload);
       }
     }
   } catch (e) {

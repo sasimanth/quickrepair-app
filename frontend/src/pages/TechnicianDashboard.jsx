@@ -107,6 +107,38 @@ const TechnicianDashboard = () => {
   const [chatBookingId, setChatBookingId] = useState(null);
   const [quoteModalJob, setQuoteModalJob] = useState(null);
   const [quoteForm, setQuoteForm] = useState({ serviceCharge: '', sparePartsCost: '', transportCharge: '50', quoteReason: '', quotePhoto: '', detectedIssues: '' });
+  const [uploadedImages, setUploadedImages] = useState({
+    damagedPart: '',
+    repairProof: '',
+    completedWork: ''
+  });
+
+  const handleImageChange = (e, slot) => {
+    const file = e.target.files[0];
+    if (!file) return;
+
+    if (file.size > 2.5 * 1024 * 1024) {
+      showToast('File Too Large ⚠️', 'Please upload an image smaller than 2.5MB.', 'error');
+      return;
+    }
+
+    const reader = new FileReader();
+    reader.onloadend = () => {
+      setUploadedImages(prev => ({
+        ...prev,
+        [slot]: reader.result
+      }));
+    };
+    reader.readAsDataURL(file);
+  };
+
+  const handleRemoveImage = (slot) => {
+    setUploadedImages(prev => ({
+      ...prev,
+      [slot]: ''
+    }));
+  };
+
   const [updatingJobs, setUpdatingJobs] = useState({});
   const [cancelJobId, setCancelJobId] = useState(null);
   const [cancellationReason, setCancellationReason] = useState('');
@@ -122,10 +154,10 @@ const TechnicianDashboard = () => {
     setSubmittingCancellation(true);
     try {
       await api.put(`/bookings/${cancelJobId}/cancel`, { reason: cancellationReason });
-      showToast('Job Cancelled ❌', 'You have successfully cancelled this job.', 'success');
+      setJobs(prev => prev.filter(b => b._id !== cancelJobId));
       setCancelJobId(null);
       setCancellationReason('');
-      fetchJobs();
+      showToast('Job Cancelled ❌', 'You have successfully cancelled this job.', 'success');
     } catch (err) {
       alert(err.response?.data?.message || "Failed to cancel job.");
     } finally {
@@ -147,6 +179,11 @@ const TechnicianDashboard = () => {
       quoteReason: '',
       quotePhoto: '',
       detectedIssues: ''
+    });
+    setUploadedImages({
+      damagedPart: '',
+      repairProof: '',
+      completedWork: ''
     });
   };
 
@@ -239,11 +276,10 @@ const TechnicianDashboard = () => {
     const handleJobUpdate = (updatedJob) => {
       fetchJobs(true);
 
-      // Do NOT show notifications/sounds for self-generated actions
-      const isSelfGenerated = ['accepted', 'on_the_way', 'arrived', 'in_progress', 'completed'].includes(updatedJob.status);
-      const isTechCancel = updatedJob.status === 'cancelled' && updatedJob.cancelledBy === 'technician';
+      // Strict sender-role/ID validation to prevent self-notifications
+      const isSelfGenerated = updatedJob.initiatorId === profile?.userId || updatedJob.initiatorRole === 'technician';
 
-      if (!isSelfGenerated && !isTechCancel) {
+      if (!isSelfGenerated) {
         showToast(
           '🔄 Job Update', 
           `Job #${updatedJob._id.slice(-6)} is now: ${updatedJob.status.replace(/_/g, ' ').toUpperCase()}`, 
@@ -256,27 +292,12 @@ const TechnicianDashboard = () => {
       }
     };
 
-    const handleNewNotification = (notif) => {
-      showToast(
-        notif.title || '🔔 Notification', 
-        notif.message || '', 
-        'info'
-      );
-      triggerBrowserNotification(notif.title || '🔔 Notification', notif.message || '', {
-        tag: `notif-${notif._id}`,
-        data: { url: notif.bookingId ? `/dashboard?jobId=${notif.bookingId}` : undefined }
-      });
-      fetchJobs(true);
-    };
-
     socket.on('new_job', handleNewJob);
     socket.on('job_update', handleJobUpdate);
-    socket.on('new_notification', handleNewNotification);
 
     return () => {
       socket.off('new_job', handleNewJob);
       socket.off('job_update', handleJobUpdate);
-      socket.off('new_notification', handleNewNotification);
     };
   }, [profile?.userId]);
 
@@ -291,6 +312,10 @@ const TechnicianDashboard = () => {
 
   useEffect(() => {
     const handleReceiveMessage = (newMsg) => {
+      // Do not display toast/notification for messages sent by self
+      if (newMsg.senderId === profile?.userId) {
+        return;
+      }
       const isCurrentChatOpen = chatBookingId === newMsg.bookingId;
       if (!isCurrentChatOpen) {
         showToast(
@@ -428,6 +453,17 @@ const TechnicianDashboard = () => {
     const tCharge = Number(quoteForm.transportCharge || 50);
     const finalPrice = sCharge + pCost + tCharge;
     
+    // Compile uploaded images into a JSON string if any are present
+    let quotePhotoVal = '';
+    const activePhotos = {};
+    if (uploadedImages.damagedPart) activePhotos.damagedPart = uploadedImages.damagedPart;
+    if (uploadedImages.repairProof) activePhotos.repairProof = uploadedImages.repairProof;
+    if (uploadedImages.completedWork) activePhotos.completedWork = uploadedImages.completedWork;
+    
+    if (Object.keys(activePhotos).length > 0) {
+      quotePhotoVal = JSON.stringify(activePhotos);
+    }
+
     // Optimistic update
     setJobs(prevJobs => prevJobs.map(job => job._id === jobId ? { 
       ...job, 
@@ -436,11 +472,13 @@ const TechnicianDashboard = () => {
       sparePartsCost: pCost,
       transportCharge: tCharge,
       finalQuote: finalPrice, 
-      quoteReason: quoteForm.quoteReason 
+      quoteReason: quoteForm.quoteReason,
+      quotePhoto: quotePhotoVal
     } : job));
     
     setQuoteModalJob(null);
     setQuoteForm({ serviceCharge: '', sparePartsCost: '', transportCharge: '50', quoteReason: '', quotePhoto: '', detectedIssues: '' });
+    setUploadedImages({ damagedPart: '', repairProof: '', completedWork: '' });
     setUpdatingJobs(prev => ({ ...prev, [jobId]: true }));
     
     try {
@@ -449,7 +487,7 @@ const TechnicianDashboard = () => {
          sparePartsCost: pCost,
          transportCharge: tCharge,
          quoteReason: quoteForm.quoteReason,
-         quotePhoto: quoteForm.quotePhoto,
+         quotePhoto: quotePhotoVal,
          detectedIssues: quoteForm.detectedIssues
       });
     } catch (error) {
@@ -1618,9 +1656,96 @@ const TechnicianDashboard = () => {
                   <textarea required value={quoteForm.quoteReason} onChange={(e) => setQuoteForm({...quoteForm, quoteReason: e.target.value})} className="w-full px-4 py-2.5 rounded-xl bg-slate-900 border border-white/5 focus:border-indigo-500 focus:ring-4 focus:ring-indigo-500/20 outline-none resize-none text-white text-xs font-semibold" rows="2" placeholder="Explain the required work scope..."></textarea>
                 </div>
 
-                <div>
-                  <label className="block text-xs font-bold text-slate-400 uppercase tracking-widest mb-1">Proof Image URL (Optional)</label>
-                  <input type="url" value={quoteForm.quotePhoto} onChange={(e) => setQuoteForm({...quoteForm, quotePhoto: e.target.value})} className="w-full px-4 py-3 rounded-xl bg-slate-900 border border-white/5 focus:border-indigo-500 focus:ring-4 focus:ring-indigo-500/20 outline-none text-slate-200 text-xs font-medium" placeholder="https://..." />
+                <div className="space-y-3">
+                  <label className="block text-xs font-bold text-slate-400 uppercase tracking-widest mb-1">Upload Proof Images (Optional)</label>
+                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                    {/* Damaged Part Slot */}
+                    <div className="flex flex-col items-center justify-center p-3 rounded-xl bg-slate-950/40 border border-dashed border-white/10 hover:border-indigo-500/50 transition-all relative min-h-[120px] text-center">
+                      {uploadedImages.damagedPart ? (
+                        <div className="w-full h-full flex flex-col items-center justify-between relative">
+                          <img src={uploadedImages.damagedPart} className="w-full h-20 object-cover rounded-lg" alt="Damaged Part" />
+                          <span className="text-[9px] font-black text-slate-400 mt-1.5 uppercase tracking-wider">Damaged Part</span>
+                          <button 
+                            type="button" 
+                            onClick={() => handleRemoveImage('damagedPart')}
+                            className="absolute -top-1.5 -right-1.5 bg-rose-600 hover:bg-rose-500 text-white rounded-full p-1 shadow-md transition-all cursor-pointer"
+                          >
+                            <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M6 18L18 6M6 6l12 12" /></svg>
+                          </button>
+                        </div>
+                      ) : (
+                        <label className="cursor-pointer w-full h-full flex flex-col items-center justify-center py-2">
+                          <svg className="w-6 h-6 text-slate-500 mb-1" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" /></svg>
+                          <span className="text-[9px] font-black text-slate-300 uppercase tracking-wider">Damaged Part</span>
+                          <span className="text-[8px] text-slate-500 mt-0.5">Click to upload</span>
+                          <input 
+                            type="file" 
+                            accept="image/*" 
+                            onChange={(e) => handleImageChange(e, 'damagedPart')}
+                            className="hidden" 
+                          />
+                        </label>
+                      )}
+                    </div>
+
+                    {/* Repair Proof Slot */}
+                    <div className="flex flex-col items-center justify-center p-3 rounded-xl bg-slate-950/40 border border-dashed border-white/10 hover:border-indigo-500/50 transition-all relative min-h-[120px] text-center">
+                      {uploadedImages.repairProof ? (
+                        <div className="w-full h-full flex flex-col items-center justify-between relative">
+                          <img src={uploadedImages.repairProof} className="w-full h-20 object-cover rounded-lg" alt="Repair Proof" />
+                          <span className="text-[9px] font-black text-slate-400 mt-1.5 uppercase tracking-wider">Repair Proof</span>
+                          <button 
+                            type="button" 
+                            onClick={() => handleRemoveImage('repairProof')}
+                            className="absolute -top-1.5 -right-1.5 bg-rose-600 hover:bg-rose-500 text-white rounded-full p-1 shadow-md transition-all cursor-pointer"
+                          >
+                            <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M6 18L18 6M6 6l12 12" /></svg>
+                          </button>
+                        </div>
+                      ) : (
+                        <label className="cursor-pointer w-full h-full flex flex-col items-center justify-center py-2">
+                          <svg className="w-6 h-6 text-slate-500 mb-1" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" /></svg>
+                          <span className="text-[9px] font-black text-slate-300 uppercase tracking-wider">Repair Proof</span>
+                          <span className="text-[8px] text-slate-500 mt-0.5">Click to upload</span>
+                          <input 
+                            type="file" 
+                            accept="image/*" 
+                            onChange={(e) => handleImageChange(e, 'repairProof')}
+                            className="hidden" 
+                          />
+                        </label>
+                      )}
+                    </div>
+
+                    {/* Completed Work Slot */}
+                    <div className="flex flex-col items-center justify-center p-3 rounded-xl bg-slate-950/40 border border-dashed border-white/10 hover:border-indigo-500/50 transition-all relative min-h-[120px] text-center">
+                      {uploadedImages.completedWork ? (
+                        <div className="w-full h-full flex flex-col items-center justify-between relative">
+                          <img src={uploadedImages.completedWork} className="w-full h-20 object-cover rounded-lg" alt="Completed Work" />
+                          <span className="text-[9px] font-black text-slate-400 mt-1.5 uppercase tracking-wider">Completed Work</span>
+                          <button 
+                            type="button" 
+                            onClick={() => handleRemoveImage('completedWork')}
+                            className="absolute -top-1.5 -right-1.5 bg-rose-600 hover:bg-rose-500 text-white rounded-full p-1 shadow-md transition-all cursor-pointer"
+                          >
+                            <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M6 18L18 6M6 6l12 12" /></svg>
+                          </button>
+                        </div>
+                      ) : (
+                        <label className="cursor-pointer w-full h-full flex flex-col items-center justify-center py-2">
+                          <svg className="w-6 h-6 text-slate-500 mb-1" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" /></svg>
+                          <span className="text-[9px] font-black text-slate-300 uppercase tracking-wider">Completed Work</span>
+                          <span className="text-[8px] text-slate-500 mt-0.5">Click to upload</span>
+                          <input 
+                            type="file" 
+                            accept="image/*" 
+                            onChange={(e) => handleImageChange(e, 'completedWork')}
+                            className="hidden" 
+                          />
+                        </label>
+                      )}
+                    </div>
+                  </div>
                 </div>
 
                 <button type="submit" className="w-full bg-indigo-600 hover:bg-indigo-500 text-white font-black py-4 rounded-xl shadow-lg transition-all text-xs uppercase tracking-widest outline-none active:scale-[0.98] mt-4">

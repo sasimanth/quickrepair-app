@@ -176,10 +176,10 @@ const UserDashboard = () => {
     const handleJobUpdate = (updatedJob) => {
       fetchData(false);
 
-      const isSelfGenerated = ['quote_approved'].includes(updatedJob.status);
-      const isCustomerCancel = updatedJob.status === 'cancelled' && updatedJob.cancelledBy === 'customer';
+      // Strict sender-role/ID validation to prevent self-notifications
+      const isSelfGenerated = updatedJob.initiatorId === profile?.userId || updatedJob.initiatorRole === 'user';
 
-      if (!isSelfGenerated && !isCustomerCancel) {
+      if (!isSelfGenerated) {
         showToast(
           '🔄 Repair Status Updated', 
           `Your ${updatedJob.serviceName} status is now: ${updatedJob.status.replace(/_/g, ' ').toUpperCase()}`, 
@@ -1337,11 +1337,49 @@ const UserDashboard = () => {
                             )}
                             <p className="text-indigo-300 font-bold">Technician's Explanation:</p>
                             <p className="text-slate-300 italic mt-0.5">"{booking.quoteReason || 'Replaced parts and labor for fixing the root cause.'}"</p>
-                            {booking.quotePhoto && (
-                              <div className="mt-3 rounded-lg overflow-hidden border border-white/10 shadow-md">
-                                <img src={booking.quotePhoto} className="w-full h-32 object-cover" alt="Proof" />
-                              </div>
-                            )}
+                            {(() => {
+                              if (!booking.quotePhoto) return null;
+                              
+                              let photos = [];
+                              if (booking.quotePhoto.startsWith('{') || booking.quotePhoto.startsWith('[')) {
+                                try {
+                                  const parsed = JSON.parse(booking.quotePhoto);
+                                  if (Array.isArray(parsed)) {
+                                    photos = parsed.map(url => ({ label: 'Proof', url }));
+                                  } else {
+                                    photos = Object.entries(parsed)
+                                      .filter(([_, val]) => !!val)
+                                      .map(([key, val]) => ({
+                                        label: key.replace(/([A-Z])/g, ' $1'),
+                                        url: val
+                                      }));
+                                  }
+                                } catch (e) {
+                                  console.error("Failed to parse quotePhoto JSON", e);
+                                  photos = [{ label: 'Proof', url: booking.quotePhoto }];
+                                }
+                              } else {
+                                photos = [{ label: 'Proof', url: booking.quotePhoto }];
+                              }
+
+                              if (photos.length === 0) return null;
+
+                              return (
+                                <div className="mt-4 space-y-2">
+                                  <p className="text-indigo-300 font-bold text-xs uppercase tracking-wider">Proof Images (Click to view full-size):</p>
+                                  <div className="grid grid-cols-3 gap-2">
+                                    {photos.map((photo, idx) => (
+                                      <div key={idx} className="rounded-lg overflow-hidden border border-white/10 shadow-sm relative group bg-slate-950/60 aspect-video flex items-center justify-center cursor-zoom-in" onClick={() => window.open(photo.url, '_blank')}>
+                                        <img src={photo.url} className="w-full h-full object-cover group-hover:scale-105 transition-all duration-300" alt={photo.label} />
+                                        <span className="absolute bottom-1 left-1 bg-black/85 text-[8px] font-black uppercase tracking-wider px-1.5 py-0.5 rounded text-indigo-200 border border-white/5 capitalize">
+                                          {photo.label}
+                                        </span>
+                                      </div>
+                                    ))}
+                                  </div>
+                                </div>
+                              );
+                            })()}
                           </div>
 
                           <div className="flex gap-3">
