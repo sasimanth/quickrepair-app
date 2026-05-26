@@ -4,6 +4,78 @@ const QuickBooking = require('../models/QuickBooking');
 
 // @desc    Get or create technician profile
 // @route   GET /api/technicians/profile
+const calculateTechnicianWallet = async (userId) => {
+  const Booking = require('../models/Booking');
+  const WithdrawalRequest = require('../models/WithdrawalRequest');
+  
+  // Fetch bookings
+  const bookings = await Booking.find({ providerId: userId });
+  const completedBookings = bookings.filter(b => b.status === 'completed');
+  
+  // 1. Gross Earnings: Sum of finalQuote || amount for completed bookings
+  const grossEarnings = completedBookings.reduce((sum, b) => {
+    return sum + (b.finalQuote || b.amount || 0);
+  }, 0);
+
+  // 2. Platform Fee (10% of gross)
+  const platformFee = grossEarnings * 0.10;
+
+  // 3. Net Earnings (90% of gross)
+  const netEarnings = grossEarnings - platformFee;
+
+  // 4. Cash Collected: Gross amount of completed bookings where paymentMethod === 'cash'
+  const cashBookings = completedBookings.filter(b => b.paymentMethod === 'cash');
+  const cashCollected = cashBookings.reduce((sum, b) => {
+    return sum + (b.finalQuote || b.amount || 0);
+  }, 0);
+
+  // 5. Online Payments: Gross amount of completed bookings where paymentMethod !== 'cash'
+  const onlineBookings = completedBookings.filter(b => b.paymentMethod !== 'cash');
+  const onlinePayments = onlineBookings.reduce((sum, b) => {
+    return sum + (b.finalQuote || b.amount || 0);
+  }, 0);
+
+  // 6. Platform Due: 10% of cashCollected
+  const platformDue = cashCollected * 0.10;
+
+  // Fetch withdrawals
+  const withdrawals = await WithdrawalRequest.find({ technicianId: userId });
+  
+  // 7. Withdrawn: Paid withdrawal requests
+  const withdrawn = withdrawals
+    .filter(w => w.status === 'paid')
+    .reduce((sum, w) => sum + w.amount, 0);
+
+  // Pending withdrawals
+  const pendingWithdrawal = withdrawals
+    .filter(w => w.status === 'pending' || w.status === 'approved')
+    .reduce((sum, w) => sum + w.amount, 0);
+
+  // 8. Pending Clearance: Net earnings (90%) of completed online bookings that are NOT paid yet (paymentStatus !== 'completed')
+  const pendingClearance = onlineBookings
+    .filter(b => b.paymentStatus !== 'completed')
+    .reduce((sum, b) => {
+      const grossVal = b.finalQuote || b.amount || 0;
+      return sum + (grossVal * 0.90);
+    }, 0);
+
+  // 9. Available Balance: (Online Payments * 0.90) - Platform Due - Withdrawn - Pending Withdrawal - Pending Clearance (clamped at 0)
+  const availableBalance = Math.max(0, (onlinePayments * 0.90) - platformDue - withdrawn - pendingWithdrawal - pendingClearance);
+
+  return {
+    grossEarnings,
+    platformFee,
+    netEarnings,
+    cashCollected,
+    onlinePayments,
+    platformDue,
+    withdrawn,
+    pendingWithdrawal,
+    pendingClearance,
+    availableBalance
+  };
+};
+
 const getProfile = async (req, res) => {
   try {
     let tech = await Technician.findOne({ userId: req.user.id });
@@ -18,68 +90,37 @@ const getProfile = async (req, res) => {
       });
     }
 
-    // Fetch all bookings for this technician
-    const Booking = require('../models/Booking');
-    const bookings = await Booking.find({ providerId: req.user.id });
+    const walletStats = await calculateTechnicianWallet(req.user.id);
 
-    // 1. Gross Earnings = Total completed service earnings
-    const completedBookings = bookings.filter(b => b.status === 'completed');
-    const calculatedGross = completedBookings.reduce((sum, b) => {
-      const grossVal = b.finalQuote || b.amount || (b.serviceId?.price || 0);
-      return sum + grossVal;
-    }, 0);
+    // Persist correct values in DB
+    tech.withdrawnAmount = walletStats.withdrawn;
+    tech.pendingWithdrawal = walletStats.pendingWithdrawal;
+    tech.walletBalance = walletStats.availableBalance;
+    tech.totalEarnings = walletStats.netEarnings;
+    await tech.save();
 
-    // 2. Platform Fee = 10%
-    const calculatedCommission = calculatedGross * 0.10;
-
-    // 3. Net Earnings = Gross - Platform Fee
-    const calculatedNet = calculatedGross - calculatedCommission;
-
-    // 4. Pending Earnings = Net earnings (90%) of active/pending jobs OR completed but unpaid jobs
-    const activeStatusList = ['accepted', 'on_the_way', 'arrived', 'quote_pending', 'quote_approved', 'in_progress'];
-    const pendingJobs = bookings.filter(b => 
-      activeStatusList.includes(b.status) || 
-      (b.status === 'completed' && b.paymentStatus !== 'completed')
-    );
-    const pendingEarnings = pendingJobs.reduce((sum, b) => {
-      const grossVal = b.finalQuote || b.amount || (b.serviceId?.price || 0);
-      const netVal = grossVal * 0.90;
-      return sum + netVal;
-    }, 0);
-
-    // Fetch previous withdrawal request logs
     const WithdrawalRequest = require('../models/WithdrawalRequest');
     const withdrawals = await WithdrawalRequest.find({ technicianId: req.user.id }).sort({ createdAt: -1 });
 
-    // 5. Withdrawn Amount = Actual withdrawn money only
-    const withdrawnAmount = withdrawals
-      .filter(w => w.status === 'paid')
-      .reduce((sum, w) => sum + w.amount, 0);
-
-    // 6. Available Balance = Net Earnings - Withdrawn Amount - Pending
-    const pendingWithdrawalVal = withdrawals
-      .filter(w => w.status === 'pending' || w.status === 'approved')
-      .reduce((sum, w) => sum + w.amount, 0);
-
-    const availableBalance = Math.max(0, calculatedNet - withdrawnAmount - pendingEarnings - pendingWithdrawalVal);
-
-    // Persist correct values in DB
-    tech.withdrawnAmount = withdrawnAmount;
-    tech.pendingWithdrawal = pendingWithdrawalVal;
-    tech.walletBalance = availableBalance;
-    tech.totalEarnings = calculatedNet;
-    await tech.save();
-
     const techObj = tech.toObject();
-    techObj.pendingEarnings = pendingEarnings;
     techObj.withdrawals = withdrawals;
     
     // Attach dynamically calculated statistics
-    techObj.totalEarned = calculatedGross;
-    techObj.platformCommission = calculatedCommission;
-    techObj.netEarnings = calculatedNet;
-    techObj.walletBalance = availableBalance;
-    techObj.withdrawnAmount = withdrawnAmount;
+    techObj.grossEarnings = walletStats.grossEarnings;
+    techObj.platformFee = walletStats.platformFee;
+    techObj.netEarnings = walletStats.netEarnings;
+    techObj.cashCollected = walletStats.cashCollected;
+    techObj.onlinePayments = walletStats.onlinePayments;
+    techObj.platformDue = walletStats.platformDue;
+    techObj.withdrawn = walletStats.withdrawn;
+    techObj.pendingWithdrawal = walletStats.pendingWithdrawal;
+    techObj.pendingClearance = walletStats.pendingClearance;
+    techObj.availableBalance = walletStats.availableBalance;
+
+    // Backward compatibility fields
+    techObj.totalEarned = walletStats.grossEarnings;
+    techObj.platformCommission = walletStats.platformFee;
+    techObj.pendingEarnings = walletStats.pendingClearance;
 
     res.json(techObj);
   } catch (error) {
@@ -263,6 +304,14 @@ const requestWithdrawal = async (req, res) => {
     const tech = await Technician.findOne({ userId: req.user.id });
     if (!tech) return res.status(404).json({ message: 'Technician not found' });
 
+    // Recalculate dynamic wallet stats before validating withdrawal
+    const walletStats = await calculateTechnicianWallet(req.user.id);
+    tech.walletBalance = walletStats.availableBalance;
+    tech.totalEarnings = walletStats.netEarnings;
+    tech.withdrawnAmount = walletStats.withdrawn;
+    tech.pendingWithdrawal = walletStats.pendingWithdrawal;
+    await tech.save();
+
     const numAmount = Number(amount);
     if (!numAmount || numAmount < 500) {
       return res.status(400).json({ message: 'Minimum withdrawal amount is ₹500.' });
@@ -297,6 +346,7 @@ const requestWithdrawal = async (req, res) => {
 
     // Update pending fields in tech profile
     tech.pendingWithdrawal = (tech.pendingWithdrawal || 0) + numAmount;
+    tech.walletBalance = Math.max(0, tech.walletBalance - numAmount);
     await tech.save();
     
     res.json({ message: 'Withdrawal request submitted successfully', payoutReq, tech });

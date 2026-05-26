@@ -591,9 +591,9 @@ const UserDashboard = () => {
                   <h3 className="text-base font-extrabold tracking-tight text-white">Fixvo Plus Active Member</h3>
                   <span className="bg-amber-500/20 text-amber-400 border border-amber-400/30 text-[9px] font-black uppercase tracking-wider px-2 py-0.5 rounded">Active</span>
                 </div>
-                <p className="text-xs text-slate-400 font-semibold">
-                  Priority Dispatch • Zero Inspection Fees • 15% Member Discount
-                </p>
+                 <p className="text-xs text-slate-400 font-semibold">
+                   Priority Dispatch • Zero Inspection Fees • 5% Member Discount
+                 </p>
               </div>
             </div>
 
@@ -622,8 +622,8 @@ const UserDashboard = () => {
                   Upgrade to Fixvo Plus
                 </h3>
                 <p className="text-xs text-slate-400 font-semibold max-w-md">
-                  Get 15% discount on all quotes, zero inspection fees (save ₹99), and priority dispatch.
-                </p>
+                   Get 5% discount on all quotes, zero inspection fees (save ₹99), and priority dispatch.
+                 </p>
               </div>
             </div>
             <button 

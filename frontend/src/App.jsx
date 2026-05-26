@@ -151,7 +151,7 @@ const AppContent = () => {
             
             {/* Legal & Static Pages */}
             <Route path="/about" element={<About />} />
-            <Route path="/pricing" element={<Pricing />} />
+            <Route path="/pricing" element={<Navigate to="/#pricing" replace />} />
             <Route path="/faq" element={<FAQ />} />
             <Route path="/contact" element={<Contact />} />
             <Route path="/terms" element={<Terms />} />

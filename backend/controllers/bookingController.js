@@ -325,7 +325,7 @@ const createBooking = async (req, res) => {
       transportCharge: transportCharge || 50,
       transportOption: transportOption || 'doorstep',
       promoCode: isPremiumUser ? 'FIXVO_PLUS' : (promoCode || null),
-      discountPercentage: isPremiumUser ? 15 : (discountPercentage || 0),
+      discountPercentage: isPremiumUser ? 5 : (discountPercentage || 0),
       isPremiumUser,
       areaSize: areaSize || null,
       houseType: houseType || null,
@@ -869,9 +869,11 @@ const updateTechnicianWallet = async (booking) => {
 
   let discount = 0;
   if (isPremium) {
-    discount = bookingAmount * 0.15;
+    discount = bookingAmount * 0.05;
     booking.isPremiumUser = true;
-    booking.discountPercentage = 15;
+    booking.discountPercentage = 5;
+  } else {
+    booking.discountPercentage = 0;
   }
 
   const customerPaid = bookingAmount - discount;
@@ -882,20 +884,42 @@ const updateTechnicianWallet = async (booking) => {
   booking.platformCommission = platformCommission;
   booking.membershipDiscount = discount;
   booking.finalTechnicianEarning = techShare;
-
-  if (booking.paymentMethod === 'cash') {
-    // Cash: Tech collects full cash directly. Deduct commission from their wallet balance.
-    tech.walletBalance = (tech.walletBalance || 0) - platformCommission;
-    tech.totalEarnings = (tech.totalEarnings || 0) + techShare;
-  } else {
-    // Razorpay: Client pays platform. Credit tech's wallet balance.
-    tech.walletBalance = (tech.walletBalance || 0) + techShare;
-    tech.totalEarnings = (tech.totalEarnings || 0) + techShare;
-  }
-
-  await tech.save();
   booking.walletUpdated = true;
   await booking.save();
+
+  // Recalculate wallet stats dynamically using completed bookings logs
+  const Booking = require('../models/Booking');
+  const WithdrawalRequest = require('../models/WithdrawalRequest');
+  
+  const bookings = await Booking.find({ providerId: tech.userId });
+  const completedBookings = bookings.filter(b => b.status === 'completed');
+  
+  const grossEarnings = completedBookings.reduce((sum, b) => sum + (b.finalQuote || b.amount || 0), 0);
+  const platformFee = grossEarnings * 0.10;
+  const netEarnings = grossEarnings - platformFee;
+
+  const cashBookings = completedBookings.filter(b => b.paymentMethod === 'cash');
+  const cashCollected = cashBookings.reduce((sum, b) => sum + (b.finalQuote || b.amount || 0), 0);
+  const platformDue = cashCollected * 0.10;
+
+  const onlineBookings = completedBookings.filter(b => b.paymentMethod !== 'cash');
+  const onlinePayments = onlineBookings.reduce((sum, b) => sum + (b.finalQuote || b.amount || 0), 0);
+
+  const withdrawals = await WithdrawalRequest.find({ technicianId: tech.userId });
+  const withdrawn = withdrawals.filter(w => w.status === 'paid').reduce((sum, w) => sum + w.amount, 0);
+  const pendingWithdrawal = withdrawals.filter(w => w.status === 'pending' || w.status === 'approved').reduce((sum, w) => sum + w.amount, 0);
+
+  const pendingClearance = onlineBookings
+    .filter(b => b.paymentStatus !== 'completed')
+    .reduce((sum, b) => sum + ((b.finalQuote || b.amount || 0) * 0.90), 0);
+
+  const availableBalance = (onlinePayments * 0.90) - platformDue - withdrawn - pendingWithdrawal - pendingClearance;
+
+  tech.walletBalance = availableBalance;
+  tech.totalEarnings = netEarnings;
+  tech.withdrawnAmount = withdrawn;
+  tech.pendingWithdrawal = pendingWithdrawal;
+  await tech.save();
 };
 
 module.exports = { createBooking, getBookings, updateBookingStatus, assignBooking, processPayment, createPaymentIntent, submitQuote, approveQuote, cancelBooking, updateTechnicianWallet, triggerNotifications };

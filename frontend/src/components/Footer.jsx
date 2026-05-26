@@ -123,8 +123,8 @@ const Footer = () => {
                 </Link>
               </li>
               <li>
-                <Link to="/pricing" className={getLinkClass('/pricing')}>
-                  {isActive('/pricing') && <span className="w-1.5 h-1.5 rounded-full bg-blue-400 animate-pulse"></span>}
+                <Link to="/#pricing" className={getLinkClass('/#pricing')}>
+                  {isActive('/#pricing') && <span className="w-1.5 h-1.5 rounded-full bg-blue-400 animate-pulse"></span>}
                   Pricing
                 </Link>
               </li>

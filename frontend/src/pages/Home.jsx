@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { globalCategories, globalServices, getDbServices } from '../data/services';
 import SmartDiagnosis from '../components/SmartDiagnosis/SmartDiagnosis';
 import { motion, AnimatePresence, useMotionValue, useAnimationFrame } from 'framer-motion';
@@ -26,8 +26,20 @@ import AuthModal from '../components/AuthModal';
 const Home = () => {
   const navigate = useNavigate();
   const { user } = useAuth();
+  const location = useLocation();
   const [showAuthModal, setShowAuthModal] = useState(false);
   const [postAuthAction, setPostAuthAction] = useState(null);
+  const [highlightPricing, setHighlightPricing] = useState(false);
+
+  useEffect(() => {
+    if (location.hash === '#pricing') {
+      setHighlightPricing(true);
+      const timer = setTimeout(() => {
+        setHighlightPricing(false);
+      }, 3500);
+      return () => clearTimeout(timer);
+    }
+  }, [location.hash]);
   
   const handleBookingClick = (serviceId = '') => {
     const targetPath = `/dashboard?action=book${serviceId ? `&service=${serviceId}` : ''}`;
@@ -359,15 +371,15 @@ const Home = () => {
                       <span className="text-slate-300 font-semibold">₹250</span>
                     </div>
                     <div className="flex justify-between text-emerald-400 font-bold">
-                      <span>Plus Member Discount (15%):</span>
-                      <span>-₹165</span>
+                      <span>Plus Member Discount (5%):</span>
+                      <span>-₹55</span>
                     </div>
                   </div>
 
                   <div className="flex justify-between items-end border-t border-white/10 pt-3">
                      <div>
                        <p className="text-[10px] text-slate-500 uppercase font-bold tracking-wider">Fixed Total Invoice</p>
-                       <p className="text-xl sm:text-2xl font-black text-white">₹935</p>
+                       <p className="text-xl sm:text-2xl font-black text-white">₹1045</p>
                      </div>
                      <div className="flex gap-2">
                         <button type="button" className="p-2 border border-white/10 rounded-lg text-slate-400 hover:text-white" title="View before/after photo proof"><Camera size={18}/></button>
@@ -387,13 +399,17 @@ const Home = () => {
         </div>
 
         {/* Fixvo Plus Section */}
-        <div className="mt-24 sm:mt-32 border-t border-white/5 pt-24 sm:pt-32 px-4 sm:px-0">
+        <div id="pricing" className="mt-24 sm:mt-32 border-t border-white/5 pt-24 sm:pt-32 px-4 sm:px-0">
           <div className="text-center mb-12 sm:mb-16">
             <h2 className="text-3xl sm:text-4xl md:text-5xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-amber-200 via-amber-400 to-yellow-500 mb-4 inline-flex items-center gap-3"><Sparkles className="text-amber-400 w-8 h-8 md:w-10 md:h-10"/> Fixvo Plus</h2>
             <p className="text-base sm:text-lg text-slate-400 max-w-2xl mx-auto">Upgrade to our premium membership for an unparalleled home service experience.</p>
           </div>
           
-          <div className="max-w-4xl mx-auto bg-gradient-to-br from-[#1A2235] to-[#0B0F19] border-2 border-amber-500/30 rounded-[2rem] sm:rounded-[2.5rem] p-6 sm:p-10 md:p-14 shadow-[0_0_50px_rgba(245,158,11,0.1)] relative overflow-hidden group">
+          <div className={`max-w-4xl mx-auto bg-gradient-to-br from-[#1A2235] to-[#0B0F19] border-2 rounded-[2rem] sm:rounded-[2.5rem] p-6 sm:p-10 md:p-14 relative overflow-hidden group transition-all duration-1000 ${
+            highlightPricing 
+              ? 'border-amber-400 scale-[1.03] shadow-[0_0_60px_rgba(245,158,11,0.4)] ring-4 ring-amber-500/20' 
+              : 'border-amber-500/30 shadow-[0_0_50px_rgba(245,158,11,0.1)]'
+          }`}>
             <div className="absolute top-[-20%] right-[-10%] w-[50%] h-[50%] bg-amber-500/10 rounded-full blur-[80px] pointer-events-none group-hover:bg-amber-500/20 transition-all duration-700"></div>
             
             <div className="flex flex-col md:flex-row justify-between items-center gap-10 md:gap-12">
@@ -415,8 +431,8 @@ const Home = () => {
                  <div className="flex items-start gap-4">
                    <div className="mt-1 w-10 h-10 rounded-full bg-amber-500/20 flex items-center justify-center text-amber-400 shrink-0 border border-amber-500/30"><CheckCircle2 size={18}/></div>
                    <div>
-                     <h4 className="text-lg sm:text-xl font-bold text-white mb-1">Exclusive 15% Discount</h4>
-                     <p className="text-sm sm:text-base text-slate-400">Automatically save 15% on all repair quotes, parts, and maintenance services.</p>
+                     <h4 className="text-lg sm:text-xl font-bold text-white mb-1">Exclusive 5% Discount</h4>
+                     <p className="text-sm sm:text-base text-slate-400">Automatically save 5% on all repair quotes, parts, and maintenance services.</p>
                    </div>
                  </div>
                </div>

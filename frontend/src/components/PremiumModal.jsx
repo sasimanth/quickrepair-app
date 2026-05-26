@@ -116,7 +116,7 @@ const PremiumModal = ({ onClose, onSuccess }) => {
                     className={`px-4 py-2 text-xs font-bold rounded-full flex items-center gap-1 transition-all ${isYearly ? 'bg-amber-500 text-slate-900 shadow-md' : 'text-slate-400 hover:text-white'}`}
                   >
                     Yearly (₹499)
-                    <span className="bg-[#111827] text-amber-400 text-[9px] px-1.5 py-0.5 rounded-full border border-amber-400/30">Save 15%</span>
+                    <span className="bg-[#111827] text-amber-400 text-[9px] px-1.5 py-0.5 rounded-full border border-amber-400/30">Save 5%</span>
                   </button>
                 </div>
               </div>
@@ -126,7 +126,7 @@ const PremiumModal = ({ onClose, onSuccess }) => {
                 {[
                   { title: "Priority Dispatch", desc: "Skip the booking queue; instant technician routing." },
                   { title: "Zero Inspection Fees", desc: "Never pay the ₹99 diagnostic charge on bookings." },
-                  { title: "15% Extra Member Discount", desc: "Save flat 15% on all quotes, repairs, and spare parts." },
+                  { title: "5% Extra Member Discount", desc: "Save flat 5% on all quotes, repairs, and spare parts." },
                   { title: "Dedicated Support Panel", desc: "Access 24/7 VIP chat support for complex household faults." }
                 ].map((b, i) => (
                   <div key={i} className="flex items-start gap-3 bg-white/5 p-3 rounded-2xl border border-white/5 hover:border-white/10 transition-colors">
