@@ -117,6 +117,45 @@ const UserDashboard = () => {
     }, 6000);
   };
 
+  const handleShareLocation = (booking) => {
+    let rawPhone = booking.providerPhone || booking.providerId?.phone || '';
+    if (!rawPhone) {
+      showToast('Share Location Failed ❌', 'Technician contact unavailable.', 'error');
+      return;
+    }
+    
+    // Automatically remove spaces, + symbols, or invalid characters
+    let cleanPhone = rawPhone.toString().replace(/\D/g, '');
+    
+    // If it starts with 910, convert it to 91 (e.g. +91 09876543210 -> 9109876543210 -> 919876543210)
+    if (cleanPhone.startsWith('910')) {
+      cleanPhone = '91' + cleanPhone.substring(3);
+    }
+    
+    // Strip leading zero if any
+    if (cleanPhone.startsWith('0')) {
+      cleanPhone = cleanPhone.substring(1);
+    }
+    
+    // If it's a 10-digit number, prefix with Indian country code '91'
+    if (cleanPhone.length === 10) {
+      cleanPhone = '91' + cleanPhone;
+    }
+    
+    // Validate Indian phone number: starts with 91 followed by a digit 6-9 and then 9 more digits (12 digits total)
+    const isValidIndianPhone = /^91[6-9]\d{9}$/.test(cleanPhone);
+    
+    if (!isValidIndianPhone) {
+      showToast('Share Location Failed ❌', 'Technician contact unavailable.', 'error');
+      return;
+    }
+    
+    const message = encodeURIComponent('Hi, this is regarding my Fixvo booking. My exact location is: ');
+    const url = `https://wa.me/${cleanPhone}?text=${message}`;
+    
+    window.open(url, '_blank', 'noopener,noreferrer');
+  };
+
   const pendingStr = localStorage.getItem('pendingBooking');
   const pendingData = pendingStr ? JSON.parse(pendingStr) : null;
   
@@ -1443,9 +1482,12 @@ const UserDashboard = () => {
                         <a href={`tel:${formatPhoneLink(booking.providerPhone || booking.providerId?.phone)}`} className="flex items-center gap-2 bg-gradient-to-r from-emerald-500 to-emerald-600 hover:from-emerald-400 hover:to-emerald-500 text-white px-4 py-2 rounded-xl text-sm font-bold shadow-sm transition-all shadow-emerald-200 transform hover:-translate-y-0.5">
                           <PhoneCall size={16} /> Call Technician
                         </a>
-                        <a href={`https://wa.me/${(booking.providerPhone || booking.providerId?.phone || '').replace(/\D/g, '')}?text=Hi, this is regarding my Fixvo booking. My exact location is: `} target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 bg-[#25D366] hover:bg-[#1ebd5a] text-white px-4 py-2 rounded-xl text-sm font-bold shadow-sm transition-all shadow-emerald-200 transform hover:-translate-y-0.5">
+                        <button 
+                          onClick={() => handleShareLocation(booking)} 
+                          className="flex items-center gap-2 bg-[#25D366] hover:bg-[#1ebd5a] text-white px-4 py-2 rounded-xl text-sm font-bold shadow-sm transition-all shadow-emerald-200 transform hover:-translate-y-0.5 border-none cursor-pointer outline-none font-sans"
+                        >
                           <MapPin size={16} /> Share Location
-                        </a>
+                        </button>
                       </>
                     )}
 

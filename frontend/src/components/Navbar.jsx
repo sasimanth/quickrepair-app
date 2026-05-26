@@ -54,12 +54,6 @@ const Navbar = () => {
 
             {/* Navigation Links */}
             <div className="flex items-center gap-1 sm:gap-3 transition-all">
-              <Link 
-                to="/#pricing" 
-                className="text-slate-500 hover:text-indigo-600 font-bold transition-all px-2.5 py-2 text-sm select-none"
-              >
-                Pricing
-              </Link>
               {user ? (
                 <>
                   <NotificationsBell />

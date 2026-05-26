@@ -241,7 +241,9 @@ const createBooking = async (req, res) => {
       if (availableTech) {
         finalProviderId = availableTech.userId;
         assignedTechEmail = availableTech.email || assignedTechEmail;
-        assignedTechPhone = availableTech.phone || assignedTechPhone;
+        const User = require('../models/User');
+        const techUserDoc = await User.findById(availableTech.userId);
+        assignedTechPhone = availableTech.phone || techUserDoc?.phone || assignedTechPhone;
         bStatus = 'assigned'; 
       } else {
         // Fallback 3: Search for busy tech in matching area
@@ -252,7 +254,9 @@ const createBooking = async (req, res) => {
         let busyTech = await Technician.findOne(busyQuery).sort('expectedAvailableTime');
         if (busyTech) {
            finalProviderId = busyTech.userId;
-           assignedTechPhone = busyTech.phone || assignedTechPhone;
+           const User = require('../models/User');
+           const techUserDoc = await User.findById(busyTech.userId);
+           assignedTechPhone = busyTech.phone || techUserDoc?.phone || assignedTechPhone;
            bStatus = 'queued';
         } else {
            // Guarantee assignment using fallback offline technicians
@@ -270,7 +274,9 @@ const createBooking = async (req, res) => {
            
            if (fallbackTech) {
              finalProviderId = fallbackTech.userId;
-             assignedTechPhone = fallbackTech.phone || assignedTechPhone;
+             const User = require('../models/User');
+             const techUserDoc = await User.findById(fallbackTech.userId);
+             assignedTechPhone = fallbackTech.phone || techUserDoc?.phone || assignedTechPhone;
              bStatus = 'assigned';
              assignedTechEmail = fallbackTech.email;
            }
@@ -493,14 +499,16 @@ const updateBookingStatus = async (req, res) => {
     if (status === 'accepted' && req.user.role === 'technician') {
       booking.providerEmail = req.user.email;
       booking.providerId = req.user.id; // Fully bind technician
+      const User = require('../models/User');
+      const techUser = await User.findById(req.user.id);
       if (tech) {
         tech.currentStatus = 'busy';
         tech.currentJobId = booking._id;
         tech.expectedAvailableTime = new Date(Date.now() + 90 * 60000); 
         await tech.save();
-        if (tech.phone) {
-          booking.providerPhone = tech.phone;
-        }
+        booking.providerPhone = tech.phone || techUser?.phone || null;
+      } else {
+        booking.providerPhone = techUser?.phone || null;
       }
 
       notifyUser({

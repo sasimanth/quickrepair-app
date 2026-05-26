@@ -163,6 +163,7 @@ const updateProfile = async (req, res) => {
         userId: req.user.id,
         name: user ? user.name : 'Unknown Tech',
         email: user ? user.email : '',
+        phone: user ? user.phone : '',
         ...updateFields
       });
     }
