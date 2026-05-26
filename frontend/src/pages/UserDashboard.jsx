@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useMemo, useRef } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import api from '../services/api'; 
 import { globalCategories, globalServices, getDbServices } from '../data/services';
@@ -55,6 +55,7 @@ const UserDashboard = () => {
   const [liveLocations, setLiveLocations] = useState({}); // { techId: [lat, lng] }
   const [profile, setProfile] = useState(null);
   const [toasts, setToasts] = useState([]);
+  const techSectionRef = useRef(null);
   
   const [cancelBookingId, setCancelBookingId] = useState(null);
   const [cancellationReason, setCancellationReason] = useState('');
@@ -261,6 +262,10 @@ const UserDashboard = () => {
     e.preventDefault();
     setStep(2);
     setFetchingTechs(true);
+    
+    setTimeout(() => {
+      techSectionRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }, 100);
     
     const fetchTechnicians = async () => {
       try {
@@ -927,11 +932,21 @@ const UserDashboard = () => {
 
             {/* --- STEP 2: TECHNICIAN SELECTION --- */}
             {step === 2 && (
-              <div className="animate-in slide-in-from-right-4 fade-in duration-500">
+              <div ref={techSectionRef} className="scroll-mt-6 animate-in slide-in-from-right-4 fade-in duration-500">
                 {fetchingTechs ? (
-                  <div className="flex flex-col items-center py-12 space-y-4">
-                    <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-600"></div>
-                    <p className="font-semibold text-slate-600 animate-pulse">Scanning your area for top-rated technicians...</p>
+                  <div className="flex flex-col items-center py-16 space-y-6 text-center">
+                    <div className="relative flex items-center justify-center w-24 h-24">
+                      {/* Live scanning radar rings */}
+                      <span className="absolute inline-flex h-full w-full rounded-full bg-indigo-500/30 opacity-75 animate-ping"></span>
+                      <span className="absolute inline-flex h-20 w-20 rounded-full bg-indigo-400/20 opacity-50 animate-[ping_1.5s_infinite]"></span>
+                      <div className="relative z-10 w-16 h-16 bg-gradient-to-tr from-indigo-600 to-indigo-500 rounded-full flex items-center justify-center shadow-lg shadow-indigo-500/30 text-white font-extrabold animate-pulse">
+                        <Search className="w-7 h-7 animate-pulse text-indigo-100" />
+                      </div>
+                    </div>
+                    <div className="space-y-1.5 max-w-sm">
+                      <p className="font-extrabold text-slate-800 text-lg tracking-tight">Scanning Madanapalle Area...</p>
+                      <p className="text-xs text-slate-500 font-semibold leading-relaxed">Connecting with available, top-rated {globalServices.find(s => s.id === formData.serviceId)?.name || 'device'} experts nearby...</p>
+                    </div>
                   </div>
                 ) : (
                   <div className="space-y-6">
@@ -1092,19 +1107,30 @@ const UserDashboard = () => {
         {loading ? (
           <LoadingSkeleton count={2} />
         ) : filteredBookings.length === 0 ? (
-          <div className="flex flex-col items-center justify-center py-24 bg-white rounded-3xl border border-dashed border-slate-300">
-            <div className="w-24 h-24 bg-blue-50 rounded-full flex items-center justify-center mb-6">
-              <PackageSearch className="text-blue-500" size={48} />
+          <div className="flex flex-col items-center justify-center py-20 px-6 bg-white rounded-3xl border border-slate-100/80 shadow-[0_4px_25px_rgba(0,0,0,0.02)] text-center animate-in fade-in duration-300">
+            <div className="relative w-20 h-20 bg-indigo-50 rounded-2xl flex items-center justify-center mb-6 shadow-inner text-indigo-600">
+              <PackageSearch size={36} />
+              <div className="absolute top-0 right-0 w-3 h-3 bg-indigo-500 rounded-full animate-ping"></div>
             </div>
-            <h3 className="text-2xl font-bold text-slate-800 mb-2">No Bookings Found</h3>
-            <p className="text-slate-500 max-w-sm text-center">We couldn't find any bookings matching your search.</p>
+            <h3 className="text-xl font-extrabold text-slate-800 tracking-tight">No Bookings Found</h3>
+            <p className="text-sm text-slate-500 font-medium max-w-xs mt-2 leading-relaxed">
+              {searchQuery ? "We couldn't find any service requests matching your search query. Try typing something else." : "You haven't requested any repair services yet. Click 'Book Repair' to get started."}
+            </p>
+            {searchQuery && (
+              <button 
+                onClick={() => setSearchQuery('')}
+                className="mt-6 px-5 py-2.5 bg-indigo-50 text-indigo-600 hover:bg-indigo-100 hover:text-indigo-700 text-xs font-bold rounded-xl transition-all shadow-sm cursor-pointer"
+              >
+                Clear Search Filter
+              </button>
+            )}
           </div>
         ) : (
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
             {filteredBookings.map((booking) => {
               const isCompleted = booking.status === 'completed';
               return (
-              <div key={booking._id} className={`group bg-white rounded-[2rem] p-6 sm:p-8 border ${expandedBookings[booking._id] ? 'border-indigo-300 shadow-md' : 'border-slate-100/80 shadow-sm'} hover:border-indigo-200 transition-all duration-300 flex flex-col justify-between overflow-hidden relative`}>
+              <div key={booking._id} className={`group bg-white rounded-[2rem] p-6 sm:p-8 border ${expandedBookings[booking._id] ? 'border-indigo-300 shadow-md' : 'border-slate-100/80 shadow-sm'} hover:border-indigo-250 hover:-translate-y-1 hover:shadow-lg hover:shadow-slate-100/40 transition-all duration-300 flex flex-col justify-between overflow-hidden relative`}>
                 <div className="relative z-10">
                   <div 
                     className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-4 cursor-pointer"

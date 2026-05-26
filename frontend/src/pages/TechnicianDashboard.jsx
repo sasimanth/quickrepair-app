@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useMemo, useRef } from 'react';
 import api from '../services/api';
 import { Briefcase, MapPin, Smartphone, AlertCircle, Clock, CheckCircle, PackageSearch, XCircle, User, Wrench, RefreshCw, MessageSquare, Camera, HelpCircle, Hammer, Truck, Settings, Navigation, Copy, Map, PhoneCall, Loader2 } from 'lucide-react';
 import { globalServices } from '../data/services';
@@ -19,6 +19,10 @@ const TechnicianDashboard = () => {
   const [jobs, setJobs] = useState([]);
   const [reviews, setReviews] = useState([]);
   const [profile, setProfile] = useState(null);
+  const profileRef = useRef(null);
+  useEffect(() => {
+    profileRef.current = profile;
+  }, [profile]);
   const [loading, setLoading] = useState(true);
   const [toasts, setToasts] = useState([]);
   const [notifications, setNotifications] = useState([]);
@@ -277,7 +281,7 @@ const TechnicianDashboard = () => {
       fetchJobs(true);
 
       // Strict sender-role/ID validation to prevent self-notifications
-      const isSelfGenerated = updatedJob.initiatorId === profile?.userId || updatedJob.initiatorRole === 'technician';
+      const isSelfGenerated = updatedJob.initiatorId === profileRef.current?.userId || updatedJob.initiatorRole === 'technician';
 
       if (!isSelfGenerated) {
         showToast(
@@ -312,8 +316,8 @@ const TechnicianDashboard = () => {
 
   useEffect(() => {
     const handleReceiveMessage = (newMsg) => {
-      // Do not display toast/notification for messages sent by self
-      if (newMsg.senderId === profile?.userId) {
+      // Do not display toast/notification for messages sent by self or system status messages
+      if (newMsg.senderId === profileRef.current?.userId || newMsg.senderId === 'system') {
         return;
       }
       const isCurrentChatOpen = chatBookingId === newMsg.bookingId;
@@ -804,12 +808,15 @@ const TechnicianDashboard = () => {
             </div>
 
             {filteredJobs.length === 0 ? (
-              <div className="flex flex-col items-center justify-center py-20 bg-white rounded-3xl border border-dashed border-slate-300">
-                <div className="w-20 h-20 bg-amber-50 rounded-full flex items-center justify-center mb-5">
-                  <PackageSearch className="text-amber-500" size={38} />
+              <div className="flex flex-col items-center justify-center py-20 px-6 bg-white rounded-3xl border border-slate-100/80 shadow-[0_4px_25px_rgba(0,0,0,0.02)] text-center animate-in fade-in duration-300">
+                <div className="relative w-20 h-20 bg-amber-50 rounded-2xl flex items-center justify-center mb-6 shadow-inner text-amber-600">
+                  <PackageSearch size={36} />
+                  <div className="absolute top-0 right-0 w-3 h-3 bg-amber-500 rounded-full animate-ping"></div>
                 </div>
-                <h3 className="text-xl font-bold text-slate-800 mb-1">No Jobs Found</h3>
-                <p className="text-slate-500 max-w-xs text-center text-xs font-medium">There are no jobs matching this category currently.</p>
+                <h3 className="text-xl font-extrabold text-slate-800 tracking-tight">No Jobs Found</h3>
+                <p className="text-sm text-slate-500 font-medium max-w-xs mt-2 leading-relaxed">
+                  There are no repair requests in the <strong className="text-slate-700 capitalize">"{jobTab.replace(/_/g, ' ')}"</strong> tab currently. As soon as a matching customer order is received, it will appear here.
+                </p>
               </div>
             ) : (
               <div className="space-y-8">
@@ -1654,98 +1661,6 @@ const TechnicianDashboard = () => {
                 <div>
                   <label className="block text-xs font-bold text-slate-400 uppercase tracking-widest mb-1">Diagnosis / Explanation</label>
                   <textarea required value={quoteForm.quoteReason} onChange={(e) => setQuoteForm({...quoteForm, quoteReason: e.target.value})} className="w-full px-4 py-2.5 rounded-xl bg-slate-900 border border-white/5 focus:border-indigo-500 focus:ring-4 focus:ring-indigo-500/20 outline-none resize-none text-white text-xs font-semibold" rows="2" placeholder="Explain the required work scope..."></textarea>
-                </div>
-
-                <div className="space-y-3">
-                  <label className="block text-xs font-bold text-slate-400 uppercase tracking-widest mb-1">Upload Proof Images (Optional)</label>
-                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-                    {/* Damaged Part Slot */}
-                    <div className="flex flex-col items-center justify-center p-3 rounded-xl bg-slate-950/40 border border-dashed border-white/10 hover:border-indigo-500/50 transition-all relative min-h-[120px] text-center">
-                      {uploadedImages.damagedPart ? (
-                        <div className="w-full h-full flex flex-col items-center justify-between relative">
-                          <img src={uploadedImages.damagedPart} className="w-full h-20 object-cover rounded-lg" alt="Damaged Part" />
-                          <span className="text-[9px] font-black text-slate-400 mt-1.5 uppercase tracking-wider">Damaged Part</span>
-                          <button 
-                            type="button" 
-                            onClick={() => handleRemoveImage('damagedPart')}
-                            className="absolute -top-1.5 -right-1.5 bg-rose-600 hover:bg-rose-500 text-white rounded-full p-1 shadow-md transition-all cursor-pointer"
-                          >
-                            <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M6 18L18 6M6 6l12 12" /></svg>
-                          </button>
-                        </div>
-                      ) : (
-                        <label className="cursor-pointer w-full h-full flex flex-col items-center justify-center py-2">
-                          <svg className="w-6 h-6 text-slate-500 mb-1" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" /></svg>
-                          <span className="text-[9px] font-black text-slate-300 uppercase tracking-wider">Damaged Part</span>
-                          <span className="text-[8px] text-slate-500 mt-0.5">Click to upload</span>
-                          <input 
-                            type="file" 
-                            accept="image/*" 
-                            onChange={(e) => handleImageChange(e, 'damagedPart')}
-                            className="hidden" 
-                          />
-                        </label>
-                      )}
-                    </div>
-
-                    {/* Repair Proof Slot */}
-                    <div className="flex flex-col items-center justify-center p-3 rounded-xl bg-slate-950/40 border border-dashed border-white/10 hover:border-indigo-500/50 transition-all relative min-h-[120px] text-center">
-                      {uploadedImages.repairProof ? (
-                        <div className="w-full h-full flex flex-col items-center justify-between relative">
-                          <img src={uploadedImages.repairProof} className="w-full h-20 object-cover rounded-lg" alt="Repair Proof" />
-                          <span className="text-[9px] font-black text-slate-400 mt-1.5 uppercase tracking-wider">Repair Proof</span>
-                          <button 
-                            type="button" 
-                            onClick={() => handleRemoveImage('repairProof')}
-                            className="absolute -top-1.5 -right-1.5 bg-rose-600 hover:bg-rose-500 text-white rounded-full p-1 shadow-md transition-all cursor-pointer"
-                          >
-                            <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M6 18L18 6M6 6l12 12" /></svg>
-                          </button>
-                        </div>
-                      ) : (
-                        <label className="cursor-pointer w-full h-full flex flex-col items-center justify-center py-2">
-                          <svg className="w-6 h-6 text-slate-500 mb-1" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" /></svg>
-                          <span className="text-[9px] font-black text-slate-300 uppercase tracking-wider">Repair Proof</span>
-                          <span className="text-[8px] text-slate-500 mt-0.5">Click to upload</span>
-                          <input 
-                            type="file" 
-                            accept="image/*" 
-                            onChange={(e) => handleImageChange(e, 'repairProof')}
-                            className="hidden" 
-                          />
-                        </label>
-                      )}
-                    </div>
-
-                    {/* Completed Work Slot */}
-                    <div className="flex flex-col items-center justify-center p-3 rounded-xl bg-slate-950/40 border border-dashed border-white/10 hover:border-indigo-500/50 transition-all relative min-h-[120px] text-center">
-                      {uploadedImages.completedWork ? (
-                        <div className="w-full h-full flex flex-col items-center justify-between relative">
-                          <img src={uploadedImages.completedWork} className="w-full h-20 object-cover rounded-lg" alt="Completed Work" />
-                          <span className="text-[9px] font-black text-slate-400 mt-1.5 uppercase tracking-wider">Completed Work</span>
-                          <button 
-                            type="button" 
-                            onClick={() => handleRemoveImage('completedWork')}
-                            className="absolute -top-1.5 -right-1.5 bg-rose-600 hover:bg-rose-500 text-white rounded-full p-1 shadow-md transition-all cursor-pointer"
-                          >
-                            <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M6 18L18 6M6 6l12 12" /></svg>
-                          </button>
-                        </div>
-                      ) : (
-                        <label className="cursor-pointer w-full h-full flex flex-col items-center justify-center py-2">
-                          <svg className="w-6 h-6 text-slate-500 mb-1" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" /></svg>
-                          <span className="text-[9px] font-black text-slate-300 uppercase tracking-wider">Completed Work</span>
-                          <span className="text-[8px] text-slate-500 mt-0.5">Click to upload</span>
-                          <input 
-                            type="file" 
-                            accept="image/*" 
-                            onChange={(e) => handleImageChange(e, 'completedWork')}
-                            className="hidden" 
-                          />
-                        </label>
-                      )}
-                    </div>
-                  </div>
                 </div>
 
                 <button type="submit" className="w-full bg-indigo-600 hover:bg-indigo-500 text-white font-black py-4 rounded-xl shadow-lg transition-all text-xs uppercase tracking-widest outline-none active:scale-[0.98] mt-4">
