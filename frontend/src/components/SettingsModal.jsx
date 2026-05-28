@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { X, Save, Camera, MapPin, User, Phone, CheckCircle, Shield, Briefcase } from 'lucide-react';
+import { X, Save, Camera, MapPin, User, Phone, CheckCircle, Shield, Briefcase, Loader2 } from 'lucide-react';
 import api from '../services/api';
 
 const SettingsModal = ({ role, currentProfile, onClose, onSuccess }) => {

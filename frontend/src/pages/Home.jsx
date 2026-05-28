@@ -109,7 +109,7 @@ const Home = () => {
           >
             <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-white/5 border border-white/10 backdrop-blur-sm shadow-sm select-none mx-auto lg:mx-0">
               <span className="flex h-2.5 w-2.5 rounded-full bg-emerald-500 animate-pulse"></span>
-              <span className="text-[10px] sm:text-xs font-bold text-emerald-400 uppercase tracking-widest">60-Minute Arrival Guarantee</span>
+              <span className="text-[10px] sm:text-xs font-bold text-emerald-400 uppercase tracking-widest">30-Minute Arrival Guarantee</span>
             </div>
             
             <h1 className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-extrabold text-white tracking-tight leading-[1.15]">
@@ -120,7 +120,7 @@ const Home = () => {
             </h1>
             
             <p className="text-lg sm:text-xl text-slate-400 max-w-xl mx-auto lg:mx-0 leading-relaxed font-medium">
-              Experience hassle-free repairs, expert installations, and deep cleaning. Verified technicians, transparent upfront pricing, and a 60-Minute Arrival Guarantee.
+              Experience hassle-free repairs, expert installations, and deep cleaning. Verified technicians, transparent upfront pricing, and a 30-Minute Arrival Guarantee.
             </p>
             
             <div className="flex flex-col sm:flex-row gap-4 pt-2 lg:pt-4 justify-center lg:justify-start w-full sm:w-auto">
@@ -137,25 +137,6 @@ const Home = () => {
               >
                 <span>📞 Call Now</span>
               </a>
-            </div>
-            
-            <div className="flex flex-col sm:flex-row items-center gap-4 sm:gap-6 pt-8 border-t border-white/10 justify-center lg:justify-start">
-              <div className="flex -space-x-3">
-                {[1, 2, 3, 4].map((i) => (
-                   <img key={i} src={`https://i.pravatar.cc/100?img=${i+40}`} alt="User" className="w-10 h-10 sm:w-12 sm:h-12 rounded-full border-2 border-[#0B0F19] shadow-sm" />
-                ))}
-              </div>
-              <div className="text-center sm:text-left">
-                <div className="flex items-center justify-center sm:justify-start gap-1 text-amber-400">
-                  <Star size={16} className="fill-current"/>
-                  <Star size={16} className="fill-current"/>
-                  <Star size={16} className="fill-current"/>
-                  <Star size={16} className="fill-current"/>
-                  <Star size={16} className="fill-current"/>
-                  <span className="text-white font-bold ml-2">4.9/5</span>
-                </div>
-                <p className="text-xs sm:text-sm font-medium text-slate-400 mt-1">From 10,000+ verified reviews</p>
-              </div>
             </div>
           </motion.div>
           
@@ -327,8 +308,8 @@ const Home = () => {
                     <Clock size={24} />
                   </div>
                   <div>
-                    <h4 className="text-lg sm:text-xl font-bold text-white mb-2">60-Minute Arrival Guarantee</h4>
-                    <p className="text-sm sm:text-base text-slate-400 leading-relaxed">Water leaking? AC dead in summer? Select our premium emergency option and we guarantee a verified technician at your door within 60 minutes.</p>
+                    <h4 className="text-lg sm:text-xl font-bold text-white mb-2">30-Minute Arrival Guarantee</h4>
+                    <p className="text-sm sm:text-base text-slate-400 leading-relaxed">Water leaking? AC dead in summer? Select our premium emergency option and we guarantee a verified technician at your door within 30 minutes.</p>
                   </div>
                 </div>
               </div>
@@ -513,80 +494,7 @@ const Home = () => {
           </motion.div>
         </div>
 
-        {/* Customer Testimonials Section */}
-        <div className="mt-24 sm:mt-32 border-t border-white/5 pt-20 sm:pt-32 px-4 sm:px-0">
-          <div className="text-center mb-10 sm:mb-16">
-            <h2 className="text-3xl sm:text-4xl md:text-5xl font-extrabold text-white mb-4">What Our Users Say</h2>
-            <p className="text-base sm:text-lg text-slate-400">Real feedback from thousands of satisfied customers across the city.</p>
-          </div>
-          
-          <div className="relative w-full overflow-hidden py-4">
-            {/* Left and Right Fade Overlays for Premium Depth */}
-            <div className="absolute left-0 top-0 bottom-0 w-8 sm:w-24 bg-gradient-to-r from-[#0B0F19] to-transparent z-10 pointer-events-none"></div>
-            <div className="absolute right-0 top-0 bottom-0 w-8 sm:w-24 bg-gradient-to-l from-[#0B0F19] to-transparent z-10 pointer-events-none"></div>
-            
-            <motion.div 
-              style={{ x: marqueeX }}
-              drag="x"
-              dragConstraints={{ left: -wrapWidth * 2, right: 0 }}
-              dragElastic={0.05}
-              onDragStart={() => setIsDragging(true)}
-              onDragEnd={() => setIsDragging(false)}
-              onMouseEnter={() => setIsHovered(true)}
-              onMouseLeave={() => setIsHovered(false)}
-              className="flex gap-6 cursor-grab active:cursor-grabbing select-none"
-            >
-              {[
-                { name: "Srinivas Prasad", location: "Madanapalle", service: "Geyser Service", text: "Super fast resolution. Tech came within 45 minutes for geyser thermostat replacement in Madanapalle. Highly recommend Fixvo!", rating: 5, bg: "from-blue-500/10 to-transparent", avatar: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?q=80&w=150&auto=format&fit=crop" },
-                { name: "Mohammad Ali", location: "Galiveedu", service: "Submersible Pump", text: "Water supply was cut due to pump controller failure. Technicians came out and resolved the issue by replacing the starter capacitor. Reliable service in remote areas.", rating: 5, bg: "from-amber-500/10 to-transparent", avatar: "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?q=80&w=150&auto=format&fit=crop" },
-                { name: "Rafi Shaik", location: "Rayachoty", service: "Refrigerator Repair", text: "Refrigerator compressor had stopped working. The tech diagnosed a starter relay issue, replaced it on the spot, and charged exactly what was estimated.", rating: 5, bg: "from-emerald-500/10 to-transparent", avatar: "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?q=80&w=150&auto=format&fit=crop" },
-                { name: "Harish Reddy", location: "Kadiri", service: "Electrical Wiring", text: "Had a severe short circuit in our main DB box. The technician came within 40 minutes, replaced the damaged MCB, and tested all lines. Very professional.", rating: 5, bg: "from-purple-500/10 to-transparent", avatar: "https://images.unsplash.com/photo-1519085360753-af0119f7cbe7?q=80&w=150&auto=format&fit=crop" },
-                { name: "Divya N.", location: "Madanapalle", service: "Chimney Deep Clean", text: "Our kitchen chimney was completely choked with grease. The team cleaned it thoroughly with degreasers. No mess left behind.", rating: 5, bg: "from-blue-500/10 to-transparent", avatar: "https://images.unsplash.com/photo-1494790108377-be9c29b29330?q=80&w=150&auto=format&fit=crop" },
-                { name: "Mohammad Rafi", location: "Rayachoty", service: "Water Purifier Service", text: "Excellent service of our Kent RO water purifier. Replaced filters and verified TDS levels. Upfront pricing was extremely transparent.", rating: 5, bg: "from-amber-500/10 to-transparent", avatar: "https://images.unsplash.com/photo-1438761681033-6461ffad8d80?q=80&w=150&auto=format&fit=crop" },
-                { name: "Suresh B.", location: "Kadiri", service: "TV Wall Installation", text: "Needed multiple TV brackets and fans installed in our new home. Work completed neatly and cleanly.", rating: 5, bg: "from-emerald-500/10 to-transparent", avatar: "https://images.unsplash.com/photo-1544005313-94ddf0286df2?q=80&w=150&auto=format&fit=crop" },
-                { name: "Anil Kumar", location: "Galiveedu", service: "Electrical Repair", text: "Prompt emergency electrical assistance. Resolved switchboard burning fault in less than an hour.", rating: 5, bg: "from-purple-500/10 to-transparent", avatar: "https://images.unsplash.com/photo-1622253692010-333f2da6031d?q=80&w=150&auto=format&fit=crop" }
-              ].concat([
-                { name: "Srinivas Prasad", location: "Madanapalle", service: "Geyser Service", text: "Super fast resolution. Tech came within 45 minutes for geyser thermostat replacement in Madanapalle. Highly recommend Fixvo!", rating: 5, bg: "from-blue-500/10 to-transparent", avatar: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?q=80&w=150&auto=format&fit=crop" },
-                { name: "Mohammad Ali", location: "Galiveedu", service: "Submersible Pump", text: "Water supply was cut due to pump controller failure. Technicians came out and resolved the issue by replacing the starter capacitor. Reliable service in remote areas.", rating: 5, bg: "from-amber-500/10 to-transparent", avatar: "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?q=80&w=150&auto=format&fit=crop" },
-                { name: "Rafi Shaik", location: "Rayachoty", service: "Refrigerator Repair", text: "Refrigerator compressor had stopped working. The tech diagnosed a starter relay issue, replaced it on the spot, and charged exactly what was estimated.", rating: 5, bg: "from-emerald-500/10 to-transparent", avatar: "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?q=80&w=150&auto=format&fit=crop" },
-                { name: "Harish Reddy", location: "Kadiri", service: "Electrical Wiring", text: "Had a severe short circuit in our main DB box. The technician came within 40 minutes, replaced the damaged MCB, and tested all lines. Very professional.", rating: 5, bg: "from-purple-500/10 to-transparent", avatar: "https://images.unsplash.com/photo-1519085360753-af0119f7cbe7?q=80&w=150&auto=format&fit=crop" },
-                { name: "Divya N.", location: "Madanapalle", service: "Chimney Deep Clean", text: "Our kitchen chimney was completely choked with grease. The team cleaned it thoroughly with degreasers. No mess left behind.", rating: 5, bg: "from-blue-500/10 to-transparent", avatar: "https://images.unsplash.com/photo-1494790108377-be9c29b29330?q=80&w=150&auto=format&fit=crop" },
-                { name: "Mohammad Rafi", location: "Rayachoty", service: "Water Purifier Service", text: "Excellent service of our Kent RO water purifier. Replaced filters and verified TDS levels. Upfront pricing was extremely transparent.", rating: 5, bg: "from-amber-500/10 to-transparent", avatar: "https://images.unsplash.com/photo-1438761681033-6461ffad8d80?q=80&w=150&auto=format&fit=crop" },
-                { name: "Suresh B.", location: "Kadiri", service: "TV Wall Installation", text: "Needed multiple TV brackets and fans installed in our new home. Work completed neatly and cleanly.", rating: 5, bg: "from-emerald-500/10 to-transparent", avatar: "https://images.unsplash.com/photo-1544005313-94ddf0286df2?q=80&w=150&auto=format&fit=crop" },
-                { name: "Anil Kumar", location: "Galiveedu", service: "Electrical Repair", text: "Prompt emergency electrical assistance. Resolved switchboard burning fault in less than an hour.", rating: 5, bg: "from-purple-500/10 to-transparent", avatar: "https://images.unsplash.com/photo-1622253692010-333f2da6031d?q=80&w=150&auto=format&fit=crop" }
-              ]).map((testimonial, idx) => (
-                 <div 
-                   key={idx}
-                   className={`p-6 sm:p-8 rounded-[2rem] border border-white/10 bg-[#161D2E]/60 bg-gradient-to-b ${testimonial.bg} shadow-[0_8px_30px_rgb(0,0,0,0.3)] backdrop-blur-md relative w-[300px] sm:w-[320px] flex-shrink-0 flex flex-col group hover:-translate-y-2 transition-transform duration-300`}
-                 >
-                   <div className="absolute top-4 right-4 sm:top-6 sm:right-6 text-white/5 font-serif text-5xl sm:text-7xl pointer-events-none transition-transform group-hover:scale-110">"</div>
-                   
-                   <div className="flex items-center gap-4 mb-6">
-                     <img 
-                       src={testimonial.avatar} 
-                       alt={testimonial.name} 
-                       className="w-12 h-12 rounded-full object-cover border border-white/10 shadow-inner" 
-                     />
-                     <div>
-                       <p className="font-extrabold text-white text-base sm:text-lg">{testimonial.name}</p>
-                       <p className="text-[10px] text-slate-400 font-semibold mt-0.5">{testimonial.location}</p>
-                       <div className="flex items-center gap-1 text-amber-400 mt-1">
-                          {[...Array(testimonial.rating)].map((_, i) => <Star key={i} size={11} className="fill-current sm:w-2.5 sm:h-2.5" />)}
-                       </div>
-                     </div>
-                   </div>
-                   
-                   <p className="text-[13px] sm:text-[14px] text-slate-300 italic mb-6 relative z-10 leading-relaxed grow font-medium">"{testimonial.text}"</p>
-                   
-                   <div className="flex flex-wrap gap-2 justify-between items-center border-t border-white/5 pt-5 mt-auto">
-                      <span className="text-[10px] sm:text-xs text-emerald-400 flex items-center gap-1.5 font-bold bg-emerald-500/10 px-3 py-1 rounded-full border border-emerald-500/20"><CheckCircle2 size={12} className="text-emerald-400"/> Verified</span>
-                      <span className="text-[10px] sm:text-xs font-extrabold text-slate-300 bg-white/5 border border-white/5 px-3 py-1.5 rounded-full whitespace-nowrap shadow-sm">{testimonial.service}</span>
-                   </div>
-                 </div>
-              ))}
-            </motion.div>
-          </div>
-        </div>
+
         
         {/* CTA Section */}
         <div className="mt-24 sm:mt-32 pt-16 border-t border-white/5 text-center px-4 sm:px-0">

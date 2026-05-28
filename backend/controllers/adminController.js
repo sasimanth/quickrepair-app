@@ -182,23 +182,28 @@ const updateWithdrawalStatus = async (req, res) => {
       return res.status(404).json({ message: 'Technician profile not found for this request' });
     }
 
+    const { calculateTechnicianWallet } = require('./technicianController');
+
     if (status === 'paid') {
-      // Validate wallet balance
-      if (tech.walletBalance < payoutReq.amount) {
+      // Validate wallet balance (checking the real available balance before this request's pending deduction)
+      const realAvailable = (tech.walletBalance || 0) + payoutReq.amount;
+      if (realAvailable < payoutReq.amount) {
         return res.status(400).json({ message: 'Technician has insufficient wallet balance to complete this payout.' });
       }
-
-      // Deduct balance and pending withdrawal, add to withdrawnAmount
-      tech.walletBalance -= payoutReq.amount;
-      tech.pendingWithdrawal = Math.max(0, (tech.pendingWithdrawal || 0) - payoutReq.amount);
-      tech.withdrawnAmount = (tech.withdrawnAmount || 0) + payoutReq.amount;
-      await tech.save();
 
       payoutReq.status = 'paid';
       payoutReq.transactionId = transactionId || `TXN_${Date.now()}`;
       payoutReq.adminNotes = adminNotes || 'Payout completed successfully';
       payoutReq.processedAt = new Date();
       await payoutReq.save();
+
+      // Recalculate dynamic wallet stats to sync
+      const walletStats = await calculateTechnicianWallet(payoutReq.technicianId);
+      tech.walletBalance = walletStats.availableBalance;
+      tech.totalEarnings = walletStats.netEarnings;
+      tech.withdrawnAmount = walletStats.withdrawn;
+      tech.pendingWithdrawal = walletStats.pendingWithdrawal;
+      await tech.save();
 
       // Trigger user/notification alerts for the technician
       try {
@@ -214,14 +219,18 @@ const updateWithdrawalStatus = async (req, res) => {
       }
 
     } else if (status === 'rejected') {
-      // Refund pending withdrawal count
-      tech.pendingWithdrawal = Math.max(0, (tech.pendingWithdrawal || 0) - payoutReq.amount);
-      await tech.save();
-
       payoutReq.status = 'rejected';
       payoutReq.adminNotes = adminNotes || 'Payout request rejected by admin';
       payoutReq.processedAt = new Date();
       await payoutReq.save();
+
+      // Recalculate dynamic wallet stats to sync (this automatically refunds/adds payoutReq.amount back to tech.walletBalance since it's no longer pending or paid)
+      const walletStats = await calculateTechnicianWallet(payoutReq.technicianId);
+      tech.walletBalance = walletStats.availableBalance;
+      tech.totalEarnings = walletStats.netEarnings;
+      tech.withdrawnAmount = walletStats.withdrawn;
+      tech.pendingWithdrawal = walletStats.pendingWithdrawal;
+      await tech.save();
 
       try {
         const Notification = require('../models/Notification');
@@ -239,6 +248,14 @@ const updateWithdrawalStatus = async (req, res) => {
       payoutReq.adminNotes = adminNotes || 'Payout request approved by admin';
       payoutReq.processedAt = new Date();
       await payoutReq.save();
+
+      // Recalculate dynamic wallet stats to sync (approved keeps it as pending/approved in calculations)
+      const walletStats = await calculateTechnicianWallet(payoutReq.technicianId);
+      tech.walletBalance = walletStats.availableBalance;
+      tech.totalEarnings = walletStats.netEarnings;
+      tech.withdrawnAmount = walletStats.withdrawn;
+      tech.pendingWithdrawal = walletStats.pendingWithdrawal;
+      await tech.save();
     } else {
       return res.status(400).json({ message: 'Invalid status provided.' });
     }

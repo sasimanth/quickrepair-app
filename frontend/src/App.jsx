@@ -67,7 +67,7 @@ const PromoBanner = () => {
   const offers = [
     { text: "First repair? Use code", code: "FIXVO10", suffix: "for 10% off your direct repair!", icon: "🔥" },
     { text: "Priority dispatch & zero inspection fees with", code: "PLUS2026", suffix: "Get Fixvo Plus today!", icon: "✨" },
-    { text: "60-Minute Arrival Guarantee on all home services", code: "", suffix: "Call: +91 95159 80170", icon: "⚡" }
+    { text: "30-Minute Arrival Guarantee on all home services", code: "", suffix: "Call: +91 95159 80170", icon: "⚡" }
   ];
 
   useEffect(() => {

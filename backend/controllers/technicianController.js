@@ -23,14 +23,14 @@ const calculateTechnicianWallet = async (userId) => {
   // 3. Net Earnings (90% of gross)
   const netEarnings = grossEarnings - platformFee;
 
-  // 4. Cash Collected: Gross amount of completed bookings where paymentMethod === 'cash'
-  const cashBookings = completedBookings.filter(b => b.paymentMethod === 'cash');
+  // 4. Cash Collected: Gross amount of completed bookings where paymentMethod === 'cash' and paymentStatus === 'completed'
+  const cashBookings = completedBookings.filter(b => b.paymentMethod === 'cash' && b.paymentStatus === 'completed');
   const cashCollected = cashBookings.reduce((sum, b) => {
     return sum + (b.finalQuote || b.amount || 0);
   }, 0);
 
-  // 5. Online Payments: Gross amount of completed bookings where paymentMethod !== 'cash'
-  const onlineBookings = completedBookings.filter(b => b.paymentMethod !== 'cash');
+  // 5. Online Payments: Gross amount of completed bookings where paymentMethod !== 'cash' and paymentStatus === 'completed'
+  const onlineBookings = completedBookings.filter(b => b.paymentMethod !== 'cash' && b.paymentStatus === 'completed');
   const onlinePayments = onlineBookings.reduce((sum, b) => {
     return sum + (b.finalQuote || b.amount || 0);
   }, 0);
@@ -52,15 +52,15 @@ const calculateTechnicianWallet = async (userId) => {
     .reduce((sum, w) => sum + w.amount, 0);
 
   // 8. Pending Clearance: Net earnings (90%) of completed online bookings that are NOT paid yet (paymentStatus !== 'completed')
-  const pendingClearance = onlineBookings
-    .filter(b => b.paymentStatus !== 'completed')
+  const pendingClearance = completedBookings
+    .filter(b => b.paymentMethod !== 'cash' && b.paymentStatus !== 'completed')
     .reduce((sum, b) => {
       const grossVal = b.finalQuote || b.amount || 0;
       return sum + (grossVal * 0.90);
     }, 0);
 
-  // 9. Available Balance: (Online Payments * 0.90) - Platform Due - Withdrawn - Pending Withdrawal - Pending Clearance (clamped at 0)
-  const availableBalance = Math.max(0, (onlinePayments * 0.90) - platformDue - withdrawn - pendingWithdrawal - pendingClearance);
+  // 9. Available Balance: (Online Payments * 0.90) - Platform Due - Withdrawn - Pending Withdrawal (clamped at 0)
+  const availableBalance = Math.max(0, (onlinePayments * 0.90) - platformDue - withdrawn - pendingWithdrawal);
 
   return {
     grossEarnings,
@@ -373,4 +373,4 @@ const submitKyc = async (req, res) => {
   }
 };
 
-module.exports = { getProfile, updateProfile, getNearbyTechnicians, submitVerification, updateJobStatus, requestWithdrawal, submitKyc };
+module.exports = { getProfile, updateProfile, getNearbyTechnicians, submitVerification, updateJobStatus, requestWithdrawal, submitKyc, calculateTechnicianWallet };

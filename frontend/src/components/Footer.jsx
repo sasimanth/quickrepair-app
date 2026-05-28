@@ -1,6 +1,6 @@
 import React from 'react';
 import { Link, useLocation } from 'react-router-dom';
-import { FaInstagram, FaLinkedin, FaXTwitter, FaWhatsapp, FaYoutube } from 'react-icons/fa6';
+import { FaInstagram, FaLinkedin, FaXTwitter, FaYoutube } from 'react-icons/fa6';
 import fixvoLogo from '../assets/logos/fixvo-app-icon-dark.png';
 
 const Footer = () => {
@@ -73,15 +73,7 @@ const Footer = () => {
               >
                 <FaXTwitter size={18} />
               </a>
-              <a 
-                href="https://wa.me/9515980170" 
-                target="_blank" 
-                rel="noopener noreferrer" 
-                className="p-2 bg-slate-800/80 border border-white/5 rounded-xl text-slate-400 hover:text-emerald-400 hover:bg-emerald-400/10 hover:border-emerald-400/30 hover:shadow-[0_0_15px_rgba(16,185,129,0.3)] transition-all duration-300 transform hover:-translate-y-1 flex items-center justify-center cursor-pointer"
-                title="WhatsApp Contact"
-              >
-                <FaWhatsapp size={18} />
-              </a>
+
               <a 
                 href="https://youtube.com/@fixvo" 
                 target="_blank" 

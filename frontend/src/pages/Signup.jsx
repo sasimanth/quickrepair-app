@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
-import { Wrench, Mail, Lock, User, Phone, Briefcase, MapPin, ArrowRight, Loader2, X, Check } from 'lucide-react';
+import { Wrench, Mail, Lock, User, Phone, Briefcase, MapPin, ArrowRight, Loader2, X, Check, Search } from 'lucide-react';
 import { register } from '../services/auth';
 import { globalServices } from '../data/services';
 
@@ -21,6 +21,8 @@ const Signup = () => {
   const [loading, setLoading] = useState(false);
   const [showServiceDropdown, setShowServiceDropdown] = useState(false);
   const [serviceSearch, setServiceSearch] = useState('');
+  const [showAreaDropdown, setShowAreaDropdown] = useState(false);
+  const [areaSearch, setAreaSearch] = useState('');
   const navigate = useNavigate();
 
   const handleChange = (e) => {
@@ -173,93 +175,117 @@ const Signup = () => {
               <h4 className="font-extrabold text-indigo-900 border-b border-indigo-100 pb-2">Technician Onboarding</h4>
               <div className="space-y-4">
                 
-                {/* Services Multi-Select */}
-                <div className="space-y-2">
-                  <label className="text-xs font-bold text-indigo-400 uppercase tracking-widest ml-1">Services You Offer</label>
-                  <div className="relative">
-                    <button
-                      type="button"
-                      onClick={() => setShowServiceDropdown(!showServiceDropdown)}
-                      className="w-full px-4 py-3 bg-white border border-indigo-100 rounded-xl text-left text-sm font-medium text-slate-700 flex items-center justify-between hover:border-indigo-300 transition-colors"
-                    >
-                      <span>
-                        {formData.skills.length === 0
-                          ? 'Select services...'
-                          : `${formData.skills.length} service${formData.skills.length !== 1 ? 's' : ''} selected`}
-                      </span>
-                      <Briefcase size={16} className="text-indigo-400" />
-                    </button>
-
-                    {showServiceDropdown && (
-                      <div className="absolute top-full left-0 right-0 mt-2 bg-white border border-indigo-200 rounded-xl shadow-lg z-50 max-h-64 overflow-y-auto">
-                        <div className="sticky top-0 p-3 bg-indigo-50 border-b border-indigo-100">
-                          <input
-                            type="text"
-                            placeholder="Search services..."
-                            value={serviceSearch}
-                            onChange={(e) => setServiceSearch(e.target.value)}
-                            className="w-full px-3 py-2 text-sm border border-indigo-200 rounded-lg outline-none focus:ring-2 focus:ring-indigo-300"
-                          />
-                        </div>
-                        <div className="p-2 space-y-1">
-                          {filteredServices.length > 0 ? (
-                            filteredServices.map(service => (
-                              <label key={service.id} className="flex items-center gap-3 p-2.5 hover:bg-indigo-50 rounded-lg cursor-pointer transition-colors group">
-                                <input
-                                  type="checkbox"
-                                  checked={formData.skills.includes(service.id)}
-                                  onChange={() => toggleService(service.id)}
-                                  className="w-4 h-4 text-indigo-600 rounded cursor-pointer"
-                                />
-                                <span className="text-sm font-medium text-slate-700 flex-1">{service.name}</span>
-                                {formData.skills.includes(service.id) && (
-                                  <Check size={16} className="text-emerald-500" />
-                                )}
-                              </label>
-                            ))
-                          ) : (
-                            <p className="px-3 py-2 text-sm text-slate-500 italic">No services found</p>
-                          )}
-                        </div>
-                      </div>
-                    )}
-                  </div>
-
-                  {/* Selected Services Display */}
-                  {selectedServices.length > 0 && (
-                    <div className="flex flex-wrap gap-2 mt-3">
-                      {selectedServices.map(service => (
-                        <div
+                {/* Services Grid Multi-Select */}
+                <div className="space-y-3">
+                  <label className="text-xs font-extrabold text-indigo-900 uppercase tracking-widest ml-1 block">
+                    Services You Offer
+                  </label>
+                  
+                  <div className="grid grid-cols-2 gap-3 max-h-72 overflow-y-auto pr-1">
+                    {globalServices.map((service) => {
+                      const isSelected = formData.skills.includes(service.id);
+                      const Icon = service.icon || Wrench;
+                      return (
+                        <button
                           key={service.id}
-                          className="inline-flex items-center gap-2 px-3 py-1.5 bg-indigo-600 text-white rounded-full text-xs font-bold shadow-sm"
+                          type="button"
+                          onClick={() => toggleService(service.id)}
+                          className={`relative overflow-hidden p-4 rounded-2xl text-left border-2 transition-all duration-300 transform active:scale-95 flex flex-col justify-between h-28 cursor-pointer select-none ${
+                            isSelected
+                              ? 'border-indigo-600 bg-gradient-to-br from-indigo-50 to-indigo-100/50 shadow-md shadow-indigo-100'
+                              : 'border-slate-100 bg-white hover:border-slate-200 hover:bg-slate-50'
+                          }`}
                         >
-                          <span>{service.name}</span>
-                          <button
-                            type="button"
-                            onClick={() => toggleService(service.id)}
-                            className="hover:text-indigo-200 transition-colors"
-                          >
-                            <X size={14} />
-                          </button>
-                        </div>
-                      ))}
-                    </div>
-                  )}
+                          <div className="flex justify-between items-start w-full">
+                            <div className={`p-2 rounded-xl flex items-center justify-center ${isSelected ? 'bg-indigo-600 text-white' : 'bg-slate-100 text-slate-500'}`}>
+                              <Icon size={16} />
+                            </div>
+                            
+                            {/* Animated checkmark */}
+                            <div className={`w-5 h-5 rounded-full flex items-center justify-center border transition-all ${
+                              isSelected 
+                                ? 'bg-indigo-600 border-indigo-600 scale-100 opacity-100 rotate-0' 
+                                : 'border-slate-200 scale-75 opacity-0 rotate-45'
+                            }`}>
+                              <Check size={12} className="text-white" />
+                            </div>
+                          </div>
+                          
+                          <span className={`text-xs font-black leading-tight tracking-tight mt-auto ${isSelected ? 'text-indigo-950' : 'text-slate-700'}`}>
+                            {service.name}
+                          </span>
+                          
+                          {isSelected && (
+                            <div className="absolute inset-0 bg-indigo-500/5 blur-xl pointer-events-none rounded-2xl"></div>
+                          )}
+                        </button>
+                      );
+                    })}
+                  </div>
                 </div>
 
-                {/* Service Area */}
-                <div className="space-y-1">
-                  <label className="text-xs font-bold text-indigo-400 uppercase tracking-widest ml-1">Service Area</label>
-                  <div className="relative group">
-                    <MapPin className="absolute left-4 top-1/2 -translate-y-1/2 text-indigo-300 z-10" size={18} />
-                    <select name="location" className="w-full pl-11 pr-4 py-3 bg-white border border-indigo-100 rounded-xl focus:border-indigo-500 focus:ring-2 focus:ring-indigo-100 transition-all text-sm font-medium outline-none appearance-none cursor-pointer" value={formData.location} onChange={handleChange} required={formData.role === 'technician'}>
-                      <option value="" disabled>Select your service area</option>
-                      <option value="Madanapalle">📍 Madanapalle</option>
-                      <option value="Kadiri">📍 Kadiri</option>
-                      <option value="Rayachoty">📍 Rayachoty</option>
-                      <option value="Galiveedu">📍 Galiveedu</option>
-                    </select>
-                  </div>
+                {/* Searchable Service Area Selector */}
+                <div className="space-y-2 relative">
+                  <label className="text-xs font-extrabold text-indigo-900 uppercase tracking-widest ml-1 block">
+                    Service Area
+                  </label>
+                  
+                  <button
+                    type="button"
+                    onClick={() => setShowAreaDropdown(!showAreaDropdown)}
+                    className="w-full pl-11 pr-4 py-3.5 bg-white border-2 border-slate-100 rounded-2xl text-left text-sm font-bold text-slate-700 flex items-center justify-between hover:border-indigo-300 transition-all relative cursor-pointer outline-none"
+                  >
+                    <MapPin className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" size={18} />
+                    <span>{formData.location || 'Select your service area'}</span>
+                    <svg className={`w-4 h-4 text-slate-400 transition-transform duration-300 ${showAreaDropdown ? 'rotate-180' : ''}`} fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                    </svg>
+                  </button>
+
+                  {showAreaDropdown && (
+                    <div className="absolute left-0 right-0 mt-2 bg-white border border-slate-100 rounded-2xl shadow-xl z-50 overflow-hidden animate-in fade-in slide-in-from-top-2 duration-200">
+                      <div className="p-3 bg-slate-50/50 border-b border-slate-100 relative">
+                        <input
+                          type="text"
+                          placeholder="Search service area..."
+                          value={areaSearch}
+                          onChange={(e) => setAreaSearch(e.target.value)}
+                          className="w-full pl-9 pr-3 py-2 bg-white border border-slate-200 rounded-xl text-xs font-semibold text-slate-700 outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-50 transition-all"
+                        />
+                        <Search className="absolute left-6 top-1/2 -translate-y-1/2 text-slate-400" size={14} />
+                      </div>
+                      
+                      <div className="max-h-48 overflow-y-auto p-2 space-y-1">
+                        {['Madanapalle', 'Kadiri', 'Rayachoty', 'Galiveedu']
+                          .filter(area => area.toLowerCase().includes(areaSearch.toLowerCase()))
+                          .map((area) => {
+                            const isSelected = formData.location === area;
+                            return (
+                              <button
+                                key={area}
+                                type="button"
+                                onClick={() => {
+                                  setFormData(prev => ({ ...prev, location: area }));
+                                  setShowAreaDropdown(false);
+                                  setAreaSearch('');
+                                }}
+                                className={`w-full flex items-center justify-between px-3 py-2.5 rounded-xl text-xs font-bold text-left cursor-pointer transition-colors ${
+                                  isSelected 
+                                    ? 'bg-indigo-50 text-indigo-600' 
+                                    : 'text-slate-600 hover:bg-slate-50'
+                                }`}
+                              >
+                                <span>{area}</span>
+                                {isSelected && <Check size={14} className="text-indigo-600" />}
+                              </button>
+                            );
+                          })}
+                        {['Madanapalle', 'Kadiri', 'Rayachoty', 'Galiveedu'].filter(area => area.toLowerCase().includes(areaSearch.toLowerCase())).length === 0 && (
+                          <p className="p-3 text-xs text-slate-400 italic text-center">No service areas found</p>
+                        )}
+                      </div>
+                    </div>
+                  )}
                 </div>
 
                 {/* Availability Status */}

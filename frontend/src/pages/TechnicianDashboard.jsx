@@ -6,7 +6,7 @@ import ChatModal from '../components/ChatModal';
 import SettingsModal from '../components/SettingsModal';
 import VerificationModal from '../components/VerificationModal';
 import KycModal from '../components/KycModal';
-import { Star, ShieldAlert, ShieldCheck, Sparkles, IndianRupee, Wallet, Coins, ArrowUpRight, ArrowDownLeft, FileText, Bell, CreditCard, Banknote } from 'lucide-react';
+import { Star, ShieldAlert, ShieldCheck, Sparkles, IndianRupee, Wallet, Coins, ArrowUpRight, ArrowDownLeft, FileText, Bell, CreditCard, Banknote, ChevronRight } from 'lucide-react';
 import { socket } from '../services/socket';
 import { motion } from 'framer-motion';
 
@@ -25,6 +25,7 @@ const TechnicianDashboard = () => {
     profileRef.current = profile;
   }, [profile]);
   const [loading, setLoading] = useState(true);
+  const [showEarningsDetails, setShowEarningsDetails] = useState(false);
   const [toasts, setToasts] = useState([]);
   const [notifications, setNotifications] = useState([]);
   const [showNotifDropdown, setShowNotifDropdown] = useState(false);
@@ -705,72 +706,94 @@ const TechnicianDashboard = () => {
               initial={{ opacity: 0, y: 15 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.4 }}
-              className="bg-gradient-to-br from-slate-950 via-[#0e1628] to-slate-900 border border-cyan-500/30 p-4 sm:p-5 rounded-[1.5rem] sm:rounded-[2rem] shadow-[0_0_20px_rgba(6,182,212,0.12)] relative overflow-hidden transition-all duration-300 hover:shadow-[0_0_30px_rgba(6,182,212,0.22)] hover:border-cyan-500/40 mb-2"
+              className="relative overflow-hidden rounded-3xl bg-slate-950/90 border border-cyan-500/30 p-6 sm:p-8 shadow-[0_0_50px_-12px_rgba(6,182,212,0.35)] backdrop-blur-xl transition-all duration-300 hover:shadow-[0_0_50px_-6px_rgba(6,182,212,0.5)] mb-4"
             >
               <div className="absolute top-[-30%] right-[-10%] w-[35%] h-[150%] bg-[radial-gradient(circle_at_center,_rgba(6,182,212,0.15),_transparent_65%)] rounded-full pointer-events-none animate-pulse" style={{ animationDuration: '4s' }}></div>
               
-              <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 relative z-10">
+              <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-6 relative z-10">
                 <div className="flex items-center gap-4">
-                  <div className="p-3 bg-cyan-950/40 text-cyan-400 rounded-2xl border border-cyan-500/20 shadow-[0_0_15px_rgba(6,182,212,0.15)]"><Wallet size={24} /></div>
+                  <div className="p-3.5 bg-gradient-to-br from-cyan-950/60 to-slate-900 text-cyan-400 rounded-2xl border border-cyan-500/30 shadow-[0_0_15px_rgba(6,182,212,0.2)]">
+                    <Wallet size={28} className="animate-pulse" />
+                  </div>
                   <div>
-                    <span className="text-[9px] bg-cyan-950/50 text-cyan-400 font-extrabold px-2.5 py-0.5 rounded-full uppercase tracking-wider border border-cyan-500/15 select-none">
+                    <span className="text-[10px] bg-cyan-950/60 text-cyan-400 font-extrabold px-3 py-1 rounded-full uppercase tracking-widest border border-cyan-500/20 select-none">
                       Available Balance
                     </span>
-                    <p className="text-3xl font-black text-white mt-1.5 tracking-tight">₹{(profile?.walletBalance || 0).toFixed(2)}</p>
-                    <p className="text-[9px] text-slate-400 font-semibold mt-1">
-                      Formula: (Online Payments × 90%) - Platform Due - Withdrawals
-                    </p>
+                    <p className="text-3xl sm:text-4xl font-black text-white mt-2 tracking-tight">₹{(profile?.walletBalance || 0).toFixed(2)}</p>
                   </div>
                 </div>
 
-                <div className="flex flex-col sm:items-end gap-2 w-full sm:w-auto">
+                <div className="flex flex-col sm:flex-row sm:items-center gap-4 w-full sm:w-auto shrink-0 justify-between sm:justify-start">
                   {profile?.pendingWithdrawal > 0 && (
-                    <span className="text-[9px] bg-amber-500/10 text-amber-400 border border-amber-500/20 font-bold px-2.5 py-0.5 rounded-lg uppercase tracking-wide inline-flex items-center gap-1.5 self-start sm:self-auto shadow-[0_0_10px_rgba(245,158,11,0.05)]">
-                      <span className="w-1.5 h-1.5 rounded-full bg-amber-400 animate-pulse"></span>
+                    <span className="text-[10px] bg-amber-500/10 text-amber-400 border border-amber-500/20 font-extrabold px-3 py-1 rounded-full uppercase tracking-wider inline-flex items-center gap-1.5 self-start sm:self-auto shadow-[0_0_15px_rgba(245,158,11,0.1)]">
+                      <span className="w-2 h-2 rounded-full bg-amber-400 animate-pulse"></span>
                       Pending Payout: ₹{profile.pendingWithdrawal}
                     </span>
                   )}
                   <button 
                     onClick={handleOpenWithdrawModal}
-                    className="w-full sm:w-auto bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-400 hover:to-blue-500 text-white font-extrabold py-3 px-5 rounded-xl text-xs transition-all duration-300 flex items-center justify-center gap-1.5 outline-none cursor-pointer border-none shadow-[0_0_15px_rgba(6,182,212,0.25)] hover:shadow-[0_0_20px_rgba(6,182,212,0.45)] active:scale-[0.98] transform hover:-translate-y-0.5"
+                    className="w-full sm:w-auto bg-gradient-to-r from-cyan-400 via-blue-500 to-indigo-600 hover:from-cyan-300 hover:via-blue-400 hover:to-indigo-500 text-white font-black py-4 px-6 rounded-2xl text-xs uppercase tracking-wider transition-all duration-300 flex items-center justify-center gap-2 outline-none cursor-pointer border-none shadow-[0_0_20px_rgba(6,182,212,0.3)] hover:shadow-[0_0_30px_rgba(6,182,212,0.5)] active:scale-[0.98] transform hover:-translate-y-0.5"
                   >
-                    Request Payout <ArrowUpRight size={14} />
+                    Request Payout <ArrowUpRight size={16} />
                   </button>
                 </div>
               </div>
             </motion.div>
 
-            {/* Grid of other 8 metrics */}
-            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-2.5 sm:gap-3.5">
-              {[
-                { label: 'Gross Earnings', value: profile?.grossEarnings || 0, desc: 'Completed service volume', icon: Coins, color: 'text-indigo-400 bg-indigo-950/40 border-indigo-900/30', gradient: 'from-indigo-950/20 via-indigo-900/10 to-transparent' },
-                { label: 'Platform Fee (10%)', value: profile?.platformFee || 0, desc: 'Fixvo commission rate', icon: ArrowDownLeft, color: 'text-rose-400 bg-rose-950/40 border-rose-900/30', gradient: 'from-rose-950/20 via-rose-900/10 to-transparent' },
-                { label: 'Net Earnings', value: profile?.netEarnings || 0, desc: 'Your 90% revenue share', icon: CheckCircle, color: 'text-teal-400 bg-teal-950/40 border-teal-900/30', gradient: 'from-teal-950/20 via-teal-900/10 to-transparent' },
-                { label: 'Cash Collected', value: profile?.cashCollected || 0, desc: 'Cash kept physically by you', icon: Banknote, color: 'text-amber-400 bg-amber-950/40 border-amber-900/30', gradient: 'from-amber-950/20 via-amber-900/10 to-transparent' },
-                { label: 'Online Payments', value: profile?.onlinePayments || 0, desc: 'Processed via payment gateways', icon: CreditCard, color: 'text-sky-400 bg-sky-950/40 border-sky-900/30', gradient: 'from-sky-950/20 via-sky-900/10 to-transparent' },
-                { label: 'Platform Due', value: profile?.platformDue || 0, desc: 'Fee owed from cash bookings', icon: AlertCircle, color: 'text-orange-400 bg-orange-950/40 border-orange-900/30', gradient: 'from-orange-950/20 via-orange-900/10 to-transparent' },
-                { label: 'Pending Clearance', value: profile?.pendingClearance || 0, desc: 'Awaiting customer checkout', icon: Clock, color: 'text-yellow-400 bg-yellow-950/40 border-yellow-900/30', gradient: 'from-yellow-950/20 via-yellow-900/10 to-transparent' },
-                { label: 'Withdrawn Amount', value: profile?.withdrawn || 0, desc: 'Paid out to your bank account', icon: FileText, color: 'text-slate-400 bg-slate-800/40 border-slate-700/30', gradient: 'from-slate-800/20 via-slate-750/10 to-transparent' }
-              ].map((card, idx) => (
-                <motion.div 
-                  key={idx}
-                  initial={{ opacity: 0, y: 10 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ duration: 0.3, delay: idx * 0.03 }}
-                  whileHover={{ scale: 1.02, translateY: -2 }}
-                  className={`group bg-gradient-to-br ${card.gradient} bg-[#0b0f19]/90 backdrop-blur-md p-3 sm:p-4 rounded-xl sm:rounded-2xl border border-white/5 shadow-sm hover:border-cyan-500/30 hover:shadow-[0_0_15px_rgba(6,182,212,0.1)] transition-all duration-300 flex flex-col justify-between`}
-                >
-                  <div className="flex justify-between items-start">
-                    <div className={`p-1.5 sm:p-2 rounded-lg sm:rounded-xl border ${card.color}`}><card.icon size={14} className="sm:w-4 sm:h-4" /></div>
-                  </div>
-                  <div className="mt-2.5">
-                    <p className="text-[8px] sm:text-[9px] font-extrabold uppercase tracking-wider text-slate-400">{card.label}</p>
-                    <p className="text-base sm:text-lg font-black text-white mt-0.5">₹{card.value.toFixed(2)}</p>
-                    <p className="text-[8px] sm:text-[9px] text-slate-500 font-semibold mt-0.5 line-clamp-1 select-none">{card.desc}</p>
-                  </div>
-                </motion.div>
-              ))}
+            {/* Collapsible View Earnings Details Trigger */}
+            <div className="flex justify-center mb-4">
+              <button 
+                type="button"
+                onClick={() => setShowEarningsDetails(!showEarningsDetails)}
+                className="flex items-center gap-2 px-5 py-2.5 bg-slate-950/80 hover:bg-slate-900 border border-white/10 text-slate-300 hover:text-white font-extrabold text-[10px] sm:text-xs uppercase tracking-wider rounded-full shadow-lg transition-all duration-300 transform active:scale-95 cursor-pointer outline-none"
+              >
+                <span>{showEarningsDetails ? "Hide Earnings Details" : "View Earnings Details"}</span>
+                <ChevronRight 
+                  size={14} 
+                  className={`transform transition-transform duration-300 ${showEarningsDetails ? 'rotate-270' : 'rotate-90'}`} 
+                />
+              </button>
             </div>
+
+            {/* Collapsible Detailed Grid */}
+            <motion.div
+              initial={false}
+              animate={{ height: showEarningsDetails ? "auto" : 0, opacity: showEarningsDetails ? 1 : 0 }}
+              transition={{ duration: 0.4, ease: "easeInOut" }}
+              className="overflow-hidden"
+            >
+              <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 pb-4">
+                {[
+                  { label: 'Gross Earnings', value: profile?.grossEarnings || 0, desc: 'Completed service volume', icon: Coins, color: 'text-indigo-400 bg-indigo-950/40 border-indigo-900/20', gradient: 'from-indigo-500/5 to-transparent' },
+                  { label: 'Platform Fee (10%)', value: profile?.platformFee || 0, desc: 'Fixvo commission rate', icon: ArrowDownLeft, color: 'text-rose-400 bg-rose-950/40 border-rose-900/20', gradient: 'from-rose-500/5 to-transparent' },
+                  { label: 'Net Earnings', value: profile?.netEarnings || 0, desc: 'Your 90% revenue share', icon: CheckCircle, color: 'text-teal-400 bg-teal-950/40 border-teal-900/20', gradient: 'from-teal-500/5 to-transparent' },
+                  { label: 'Cash Collected', value: profile?.cashCollected || 0, desc: 'Cash kept physically by you', icon: Banknote, color: 'text-amber-400 bg-amber-950/40 border-amber-900/20', gradient: 'from-amber-500/5 to-transparent' },
+                  { label: 'Online Payments', value: profile?.onlinePayments || 0, desc: 'Processed via payment gateways', icon: CreditCard, color: 'text-sky-400 bg-sky-950/40 border-sky-900/20', gradient: 'from-sky-500/5 to-transparent' },
+                  { label: 'Platform Due', value: profile?.platformDue || 0, desc: 'Fee owed from cash bookings', icon: AlertCircle, color: 'text-orange-400 bg-orange-950/40 border-orange-900/20', gradient: 'from-orange-500/5 to-transparent' },
+                  { label: 'Pending Clearance', value: profile?.pendingClearance || 0, desc: 'Awaiting customer checkout', icon: Clock, color: 'text-yellow-400 bg-yellow-950/40 border-yellow-900/20', gradient: 'from-yellow-500/5 to-transparent' },
+                  { label: 'Withdrawn Amount', value: profile?.withdrawn || 0, desc: 'Paid out to your bank account', icon: FileText, color: 'text-slate-400 bg-slate-800/40 border-slate-700/20', gradient: 'from-slate-500/5 to-transparent' }
+                ].map((card, idx) => (
+                  <motion.div 
+                    key={idx}
+                    whileHover={{ scale: 1.02, translateY: -2 }}
+                    className="group relative overflow-hidden bg-slate-950/70 backdrop-blur-md p-4 sm:p-5 rounded-2xl border border-white/5 shadow-md hover:border-slate-800 transition-all duration-300 flex flex-col justify-between"
+                  >
+                    <div className={`absolute inset-0 bg-gradient-to-br ${card.gradient} opacity-40 pointer-events-none`}></div>
+                    
+                    <div className="flex justify-between items-start relative z-10">
+                      <div className={`p-2 rounded-xl border ${card.color} flex items-center justify-center shrink-0`}>
+                        <card.icon size={16} className="w-4 h-4" />
+                      </div>
+                    </div>
+                    <div className="mt-4 relative z-10 text-left">
+                      <p className="text-[9px] sm:text-[10px] font-extrabold uppercase tracking-wider text-slate-500">{card.label}</p>
+                      <p className="text-base sm:text-lg font-black text-white mt-1">₹{card.value.toFixed(2)}</p>
+                      <p className="text-[8px] sm:text-[9px] text-slate-400/80 font-medium mt-1 line-clamp-2 select-none leading-normal">{card.desc}</p>
+                    </div>
+                  </motion.div>
+                ))}
+              </div>
+            </motion.div>
           </div>
         )}
 
@@ -832,7 +855,7 @@ const TechnicianDashboard = () => {
                             {getStatusBadge(job.status)}
                           </div>
                           <h4 className="text-xl font-black text-slate-900 tracking-tight">
-                            Earned: ₹{job.finalTechnicianEarning ? job.finalTechnicianEarning.toFixed(2) : (((job.finalQuote || job.amount || job.serviceId?.price || 0) - (job.membershipDiscount || 0)) * 0.8).toFixed(2)} 
+                            Earned: ₹{job.finalTechnicianEarning ? job.finalTechnicianEarning.toFixed(2) : (((job.finalQuote || job.amount || job.serviceId?.price || 0) - (job.membershipDiscount || 0)) * 0.9).toFixed(2)} 
                             <span className="text-xs font-semibold text-slate-400 ml-1.5 border-l border-slate-200 pl-1.5">Gross Invoice: ₹{job.finalQuote || job.serviceId?.price || 0}</span>
                           </h4>
                           <p className="text-xs text-slate-500 font-medium">
@@ -1291,6 +1314,7 @@ const TechnicianDashboard = () => {
           onSuccess={() => {
             setShowSettings(false);
             fetchJobs();
+            showToast("Settings Updated ✅", "Settings updated successfully", "success");
           }}
         />
       )}

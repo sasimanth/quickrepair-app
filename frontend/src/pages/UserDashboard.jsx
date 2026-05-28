@@ -54,6 +54,7 @@ const UserDashboard = () => {
   const [showSettings, setShowSettings] = useState(false);
   const [liveLocations, setLiveLocations] = useState({}); // { techId: [lat, lng] }
   const [profile, setProfile] = useState(null);
+  const [isPlusDismissed, setIsPlusDismissed] = useState(localStorage.getItem('fixvo_plus_dismissed') === 'true');
   const [toasts, setToasts] = useState([]);
   const techSectionRef = useRef(null);
   
@@ -243,6 +244,17 @@ const UserDashboard = () => {
       });
     }
   }, [bookings.length]);
+
+  useEffect(() => {
+    const handleScroll = () => {
+      if (window.scrollY > 250) {
+        localStorage.setItem('fixvo_plus_dismissed', 'true');
+        setIsPlusDismissed(true);
+      }
+    };
+    window.addEventListener('scroll', handleScroll);
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, []);
 
   useEffect(() => {
     const handleReceiveMessage = (newMsg) => {
@@ -649,30 +661,42 @@ const UserDashboard = () => {
               </div>
             </div>
           </div>
-        ) : (
-          <div className="bg-gradient-to-br from-[#161D2E]/90 to-[#0B0F19]/90 border border-amber-500/20 rounded-3xl p-6 flex flex-col sm:flex-row items-center justify-between gap-4 shadow-[0_4px_20px_rgba(0,0,0,0.2)] relative overflow-hidden group">
-            <div className="absolute top-[-20%] right-[-10%] w-[50%] h-[150%] bg-gradient-to-br from-amber-500/10 to-transparent rounded-full blur-[60px] pointer-events-none"></div>
-            <div className="flex flex-col sm:flex-row items-center gap-4 relative z-10 text-center sm:text-left">
-              <div className="w-12 h-12 bg-gradient-to-br from-amber-400 to-yellow-500 text-slate-900 rounded-2xl flex items-center justify-center shrink-0 shadow-lg shadow-amber-500/10">
-                <Sparkles size={22} className="animate-pulse" />
+        ) : !isPlusDismissed ? (
+          <div className="bg-gradient-to-br from-[#161D2E]/95 via-[#1E293B]/95 to-[#0B0F19]/95 border border-amber-500/30 rounded-3xl p-5 flex flex-col sm:flex-row items-center justify-between gap-4 shadow-[0_8px_32px_rgba(245,158,11,0.08)] relative overflow-hidden group transition-all duration-300">
+            <div className="absolute top-[-40%] right-[-10%] w-[45%] h-[180%] bg-gradient-to-br from-amber-500/15 to-transparent rounded-full blur-[50px] pointer-events-none group-hover:from-amber-500/25 transition-all duration-500"></div>
+            
+            <button 
+              onClick={() => {
+                localStorage.setItem('fixvo_plus_dismissed', 'true');
+                setIsPlusDismissed(true);
+              }}
+              className="absolute top-3 right-3 text-slate-400 hover:text-white bg-white/5 hover:bg-white/10 rounded-full p-1.5 transition-all cursor-pointer z-[25] border-none outline-none"
+              title="Dismiss"
+            >
+              <X size={12} />
+            </button>
+            
+            <div className="flex flex-col sm:flex-row items-center gap-4 relative z-10 text-center sm:text-left pr-4 sm:pr-0">
+              <div className="w-12 h-12 bg-gradient-to-br from-amber-400 to-yellow-500 text-slate-950 rounded-2xl flex items-center justify-center shrink-0 shadow-lg shadow-amber-500/20">
+                <Sparkles size={20} className="animate-pulse" />
               </div>
-              <div className="space-y-1">
+              <div className="space-y-0.5">
                 <h3 className="text-base font-extrabold text-white tracking-tight flex items-center justify-center sm:justify-start gap-2">
                   Upgrade to Fixvo Plus
                 </h3>
-                <p className="text-xs text-slate-400 font-semibold max-w-md">
-                   Get 5% discount on all quotes, zero inspection fees (save ₹99), and priority dispatch.
-                 </p>
+                <p className="text-[11px] text-slate-400 font-semibold max-w-md leading-relaxed">
+                   Get 5% discount on all quotes, zero inspection fees (save ₹99), and priority technician dispatch.
+                </p>
               </div>
             </div>
             <button 
               onClick={() => setShowPremiumModal(true)}
-              className="relative z-10 w-full sm:w-auto px-5 py-3 bg-gradient-to-r from-amber-400 to-yellow-500 hover:from-amber-300 hover:to-yellow-400 text-slate-950 font-black text-xs rounded-xl shadow-lg shadow-amber-500/10 transition-all duration-300 transform hover:-translate-y-0.5 whitespace-nowrap cursor-pointer border-none outline-none"
+              className="relative z-10 w-full sm:w-auto px-5 py-3 bg-gradient-to-r from-amber-400 to-yellow-500 hover:from-amber-300 hover:to-yellow-450 text-slate-950 font-black text-xs uppercase tracking-wider rounded-xl shadow-lg shadow-amber-500/20 hover:shadow-amber-500/35 transition-all duration-300 transform hover:-translate-y-0.5 whitespace-nowrap cursor-pointer border-none outline-none"
             >
               Upgrade to Plus
             </button>
           </div>
-        )}
+        ) : null}
 
         {/* Workflow container */}
         <div className={`transition-all duration-500 ease-in-out overflow-hidden ${showForm ? 'max-h-[2000px] opacity-100' : 'max-h-0 opacity-0'}`}>
@@ -1622,6 +1646,7 @@ const UserDashboard = () => {
           onSuccess={() => {
             setShowSettings(false);
             fetchData();
+            showToast("Settings Updated ✅", "Settings updated successfully", "success");
           }}
         />
       )}

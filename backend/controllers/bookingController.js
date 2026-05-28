@@ -545,6 +545,10 @@ const updateBookingStatus = async (req, res) => {
     const updatedBooking = await booking.save();
     await updatedBooking.populate('serviceId', 'name price');
     
+    if (status === 'completed' && req.user.role === 'technician') {
+      await updateTechnicianWallet(updatedBooking);
+    }
+    
     // Call Automated Notification System
     await triggerNotifications(req, updatedBooking, status);
 
@@ -857,43 +861,43 @@ const cancelBooking = async (req, res) => {
 
 // Helper to credit/debit technician wallet upon completed payment
 const updateTechnicianWallet = async (booking) => {
-  if (booking.walletUpdated) return;
-
   const Technician = require('../models/Technician');
   const tech = await Technician.findOne({ userId: booking.providerId });
   if (!tech) return;
 
-  const bookingAmount = booking.finalQuote || (booking.serviceId?.price || 0);
-  
-  // Calculate discount if premium
-  let isPremium = booking.isPremiumUser;
-  if (booking.userId) {
-    const User = require('../models/User');
-    const userDoc = await User.findById(booking.userId);
-    if (userDoc && userDoc.isPremium) {
-      isPremium = true;
+  if (!booking.walletUpdated) {
+    const bookingAmount = booking.finalQuote || (booking.serviceId?.price || 0);
+    
+    // Calculate discount if premium
+    let isPremium = booking.isPremiumUser;
+    if (booking.userId) {
+      const User = require('../models/User');
+      const userDoc = await User.findById(booking.userId);
+      if (userDoc && userDoc.isPremium) {
+        isPremium = true;
+      }
     }
+
+    let discount = 0;
+    if (isPremium) {
+      discount = bookingAmount * 0.05;
+      booking.isPremiumUser = true;
+      booking.discountPercentage = 5;
+    } else {
+      booking.discountPercentage = 0;
+    }
+
+    const customerPaid = bookingAmount - discount;
+    const platformCommission = customerPaid * 0.10;
+    const techShare = customerPaid * 0.90;
+
+    booking.amount = customerPaid;
+    booking.platformCommission = platformCommission;
+    booking.membershipDiscount = discount;
+    booking.finalTechnicianEarning = techShare;
+    booking.walletUpdated = true;
+    await booking.save();
   }
-
-  let discount = 0;
-  if (isPremium) {
-    discount = bookingAmount * 0.05;
-    booking.isPremiumUser = true;
-    booking.discountPercentage = 5;
-  } else {
-    booking.discountPercentage = 0;
-  }
-
-  const customerPaid = bookingAmount - discount;
-  const platformCommission = customerPaid * 0.10;
-  const techShare = customerPaid * 0.90;
-
-  booking.amount = customerPaid;
-  booking.platformCommission = platformCommission;
-  booking.membershipDiscount = discount;
-  booking.finalTechnicianEarning = techShare;
-  booking.walletUpdated = true;
-  await booking.save();
 
   // Recalculate wallet stats dynamically using completed bookings logs
   const Booking = require('../models/Booking');
@@ -906,22 +910,18 @@ const updateTechnicianWallet = async (booking) => {
   const platformFee = grossEarnings * 0.10;
   const netEarnings = grossEarnings - platformFee;
 
-  const cashBookings = completedBookings.filter(b => b.paymentMethod === 'cash');
+  const cashBookings = completedBookings.filter(b => b.paymentMethod === 'cash' && b.paymentStatus === 'completed');
   const cashCollected = cashBookings.reduce((sum, b) => sum + (b.finalQuote || b.amount || 0), 0);
   const platformDue = cashCollected * 0.10;
 
-  const onlineBookings = completedBookings.filter(b => b.paymentMethod !== 'cash');
+  const onlineBookings = completedBookings.filter(b => b.paymentMethod !== 'cash' && b.paymentStatus === 'completed');
   const onlinePayments = onlineBookings.reduce((sum, b) => sum + (b.finalQuote || b.amount || 0), 0);
 
   const withdrawals = await WithdrawalRequest.find({ technicianId: tech.userId });
   const withdrawn = withdrawals.filter(w => w.status === 'paid').reduce((sum, w) => sum + w.amount, 0);
   const pendingWithdrawal = withdrawals.filter(w => w.status === 'pending' || w.status === 'approved').reduce((sum, w) => sum + w.amount, 0);
 
-  const pendingClearance = onlineBookings
-    .filter(b => b.paymentStatus !== 'completed')
-    .reduce((sum, b) => sum + ((b.finalQuote || b.amount || 0) * 0.90), 0);
-
-  const availableBalance = (onlinePayments * 0.90) - platformDue - withdrawn - pendingWithdrawal - pendingClearance;
+  const availableBalance = Math.max(0, (onlinePayments * 0.90) - platformDue - withdrawn - pendingWithdrawal);
 
   tech.walletBalance = availableBalance;
   tech.totalEarnings = netEarnings;
