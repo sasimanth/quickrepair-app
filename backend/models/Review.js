@@ -21,6 +21,30 @@ const reviewSchema = new mongoose.Schema({
     min: 1,
     max: 5
   },
+  ratingQuality: {
+    type: Number,
+    required: true,
+    min: 1,
+    max: 5
+  },
+  ratingCommunication: {
+    type: Number,
+    required: true,
+    min: 1,
+    max: 5
+  },
+  ratingTimeliness: {
+    type: Number,
+    required: true,
+    min: 1,
+    max: 5
+  },
+  ratingValue: {
+    type: Number,
+    required: true,
+    min: 1,
+    max: 5
+  },
   comment: {
     type: String,
     default: ''

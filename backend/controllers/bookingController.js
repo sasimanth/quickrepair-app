@@ -8,12 +8,130 @@ const normalizePhone = (phone) => {
   return phone.replace(/\D/g, "").slice(-10);
 };
 
+// Auto-Reassignment Timeout (60 Seconds)
+const startResponseTimeout = (bookingId, techUserId) => {
+  setTimeout(async () => {
+    try {
+      const freshBooking = await Booking.findById(bookingId);
+      if (freshBooking && freshBooking.status === 'assigned' && freshBooking.providerId === techUserId) {
+        console.log(`⏰ Assignment Timeout (60s) for Booking ${bookingId} with Tech ${techUserId}. Re-assigning...`);
+        
+        freshBooking.providerId = null;
+        freshBooking.providerPhone = null;
+        freshBooking.providerEmail = null;
+        freshBooking.status = 'pending';
+        await freshBooking.save();
+
+        if (global.io) {
+          global.io.to(`user_${techUserId}`).emit('job_expired', { bookingId });
+        }
+
+        // Add a notification to the technician that the job assignment expired
+        const Notification = require('../models/Notification');
+        const expireNotif = await Notification.create({
+          userId: techUserId,
+          title: 'Request Expired ⏰',
+          message: `The assigned request for ${freshBooking.serviceName} expired because it was not accepted within 60s.`,
+          type: 'booking',
+          bookingId: freshBooking._id.toString()
+        });
+
+        if (global.io) {
+          global.io.to(`user_${techUserId}`).emit('new_notification', expireNotif);
+          // Refresh user dashboard
+          global.io.to(`user_${freshBooking.userId}`).emit('job_update', freshBooking.toObject());
+        }
+
+        // Run auto assignment to find next tech
+        await autoAssignBooking(freshBooking._id);
+      }
+    } catch (err) {
+      console.error('Error in response timeout handler:', err);
+    }
+  }, 60 * 1000);
+};
+
+// Smart Auto-Assignment Helper
+const autoAssignBooking = async (bookingId) => {
+  try {
+    const booking = await Booking.findById(bookingId);
+    if (!booking || booking.status !== 'pending') return;
+
+    const Technician = require('../models/Technician');
+    let matchedArea = null;
+    const locationLower = (booking.location || '').toLowerCase();
+    if (locationLower.includes('madanapalle')) matchedArea = 'Madanapalle';
+    else if (locationLower.includes('kadiri')) matchedArea = 'Kadiri';
+    else if (locationLower.includes('rayachoty')) matchedArea = 'Rayachoty';
+    else if (locationLower.includes('galiveedu')) matchedArea = 'Galiveedu';
+
+    // Query online technicians (currentStatus: 'online') who are online
+    const techQuery = { currentStatus: 'online', isOnline: true };
+    if (matchedArea) {
+      techQuery.area = matchedArea;
+    }
+    if (booking.serviceId) {
+      techQuery.services = booking.serviceId;
+    }
+
+    let availableTech = await Technician.findOne(techQuery).sort('-rating');
+
+    // Fallback 1: Online tech in matching area regardless of category
+    if (!availableTech && matchedArea) {
+      availableTech = await Technician.findOne({ currentStatus: 'online', isOnline: true, area: matchedArea }).sort('-rating');
+    }
+
+    // Fallback 2: Any online tech
+    if (!availableTech) {
+      availableTech = await Technician.findOne({ currentStatus: 'online', isOnline: true }).sort('-rating');
+    }
+
+    if (availableTech) {
+      const User = require('../models/User');
+      const techUserDoc = await User.findById(availableTech.userId);
+      
+      booking.providerId = availableTech.userId;
+      booking.providerPhone = availableTech.phone || techUserDoc?.phone || null;
+      booking.providerEmail = availableTech.email;
+      booking.status = 'assigned';
+      
+      const updatedBooking = await booking.save();
+      console.log(`📡 Auto-assigned booking ${bookingId} to technician ${availableTech.userId}`);
+
+      // Emit new job event
+      if (global.io) {
+        global.io.to(`user_${availableTech.userId}`).emit('new_job', updatedBooking.toObject());
+      }
+
+      // Seed notification
+      const Notification = require('../models/Notification');
+      const techNotif = await Notification.create({
+        userId: availableTech.userId,
+        title: 'New Job Assigned! 💼',
+        message: `New repair request for ${booking.serviceName} at ${booking.location}.`,
+        type: 'booking',
+        bookingId: booking._id.toString()
+      });
+
+      if (global.io) {
+        global.io.to(`user_${availableTech.userId}`).emit('new_notification', techNotif);
+        global.io.to(`user_${booking.userId}`).emit('job_update', updatedBooking.toObject());
+      }
+
+      // Start 60-second response timeout
+      startResponseTimeout(booking._id, availableTech.userId);
+    }
+  } catch (err) {
+    console.error('Error in autoAssignBooking:', err);
+  }
+};
+
 // AUTOMATED NOTIFICATION & CHAT MESSAGE HELPER
 const triggerNotifications = async (req, booking, type) => {
   try {
     const Notification = require('../models/Notification');
     const Message = require('../models/Message');
-    const io = req.app.get('io');
+    const io = global.io || (req && req.app ? req.app.get('io') : null);
     
     let title = '';
     let message = '';
@@ -46,7 +164,7 @@ const triggerNotifications = async (req, booking, type) => {
       case 'on_the_way':
         title = 'Technician On The Way! 🚀';
         message = `Technician ${techName} has started their journey to your location.`;
-        chatText = `📢 System: Technician ${techName} is on the way.`;
+        chatText = `📢 System: Technician ${techName} is en route.`;
         recipientId = booking.userId;
         break;
       case 'arrived':
@@ -55,22 +173,47 @@ const triggerNotifications = async (req, booking, type) => {
         chatText = `📢 System: Technician ${techName} has arrived at the location.`;
         recipientId = booking.userId;
         break;
+      case 'inspection_started':
+        title = 'Inspection Started! 🔍';
+        message = `Technician ${techName} has started inspecting your device.`;
+        chatText = `📢 System: Technician ${techName} has started the diagnostic inspection.`;
+        recipientId = booking.userId;
+        break;
       case 'quote_pending':
-        title = 'Action Required: Final Quote Received 📋';
-        message = `Technician ${techName} has submitted a final quote of ₹${booking.finalQuote}. Please approve to proceed.`;
-        chatText = `📢 System: Technician ${techName} submitted a final quote of ₹${booking.finalQuote}. Please review and approve.`;
+        // Check if there is more than 1 revision to distinguish between first quote vs revision
+        const isRevision = booking.quoteRevisions && booking.quoteRevisions.length > 1;
+        title = isRevision ? 'Quote Updated – Please Review' : 'Action Required: Final Quote Received 📋';
+        message = isRevision 
+          ? `Technician ${techName} updated the quote to ₹${booking.finalQuote}. Reason: "${booking.quoteReason}"`
+          : `Technician ${techName} has submitted a final quote of ₹${booking.finalQuote}. Please approve to proceed.`;
+        chatText = isRevision
+          ? `📢 System: Technician ${techName} sent quote revision V${booking.quoteRevisions.length} of ₹${booking.finalQuote}. Reason: "${booking.quoteReason}". Awaiting your approval.`
+          : `📢 System: Technician ${techName} submitted a final quote of ₹${booking.finalQuote}. Please review and approve.`;
         recipientId = booking.userId;
         break;
       case 'quote_approved':
         title = 'Quote Approved! 🛠️';
         message = `You approved the quote. Repair work is now in progress.`;
-        chatText = `📢 System: Customer approved the final quote of ₹${booking.finalQuote}. Work in progress.`;
+        chatText = `📢 System: Customer approved the quote of ₹${booking.finalQuote}. Work in progress.`;
+        recipientId = booking.providerId; // Notify tech
+        break;
+      case 'quote_rejected':
+        title = 'Quote Proposal Declined ❌';
+        message = `You declined the quote proposal. Repair work is suspended.`;
+        chatText = `📢 System: Customer declined the quote proposal. Work is suspended until resolved.`;
+        recipientId = booking.providerId; // Notify tech
+        break;
+      case 'quote_clarification':
+        const lastRev = booking.quoteRevisions && booking.quoteRevisions[booking.quoteRevisions.length - 1];
+        title = 'Clarification Requested 💬';
+        message = `Customer requested details: "${lastRev ? lastRev.clarificationText : ''}"`;
+        chatText = `📢 System: Customer requested clarification: "${lastRev ? lastRev.clarificationText : ''}"`;
         recipientId = booking.providerId; // Notify tech
         break;
       case 'completed':
         title = 'Repair Job Completed! 🎉';
         message = `Your technician marked the job as completed. Thank you!`;
-        chatText = `📢 System: Technician marked the service as completed.`;
+        chatText = `📢 System: Service marked as completed. Awaiting payment checkout.`;
         recipientId = booking.userId;
         break;
       case 'cash_pending':
@@ -97,7 +240,7 @@ const triggerNotifications = async (req, booking, type) => {
 
     // 1. Create DB Notification for recipient (if valid user ID)
     if (recipientId && !recipientId.startsWith('tech-')) {
-      const notifType = ['accepted', 'rejected', 'on_the_way', 'arrived'].includes(type) ? 'booking' : 'system';
+      const notifType = ['accepted', 'rejected', 'on_the_way', 'arrived', 'inspection_started'].includes(type) ? 'booking' : 'system';
       const createdNotif = await Notification.create({
         userId: recipientId,
         title,
@@ -200,90 +343,24 @@ const createBooking = async (req, res) => {
        inspectionFee = isPremiumUser ? 0 : 99; // Standard ₹99 inspection fee, ₹0 for premium members
     }
 
-    const Technician = require('../models/Technician');
+    const reqTimeSlot = timeSlot || 'ASAP';
     let finalProviderId = providerId || null;
     let bStatus = 'pending';
     let assignedTechEmail = 'technician@fixvo.com';
     let assignedTechPhone = null;
 
-    let reqTimeSlot = timeSlot || 'ASAP';
     if (reqTimeSlot !== 'ASAP') {
-      bStatus = "pending"; // Scheduled for later
-    } else if (!finalProviderId) {
-      // SMART AUTO-ASSIGNMENT WITH AREA & SERVICE CATEGORY FILTERING
-      let matchedArea = null;
-      const locationLower = (location || address || '').toLowerCase();
-      if (locationLower.includes('madanapalle')) matchedArea = 'Madanapalle';
-      else if (locationLower.includes('kadiri')) matchedArea = 'Kadiri';
-      else if (locationLower.includes('rayachoty')) matchedArea = 'Rayachoty';
-      else if (locationLower.includes('galiveedu')) matchedArea = 'Galiveedu';
-
-      const techQuery = { currentStatus: 'available', isOnline: true };
-      if (matchedArea) {
-        techQuery.area = matchedArea;
-      }
-      if (serviceId) {
-        techQuery.services = serviceId;
-      }
-
-      let availableTech = await Technician.findOne(techQuery);
-      
-      // Fallback 1: Available tech in the same area regardless of category
-      if (!availableTech && matchedArea) {
-        availableTech = await Technician.findOne({ currentStatus: 'available', isOnline: true, area: matchedArea });
-      }
-
-      // Fallback 2: Any available online tech
-      if (!availableTech) {
-        availableTech = await Technician.findOne({ currentStatus: 'available', isOnline: true });
-      }
-
-      if (availableTech) {
-        finalProviderId = availableTech.userId;
-        assignedTechEmail = availableTech.email || assignedTechEmail;
-        const User = require('../models/User');
-        const techUserDoc = await User.findById(availableTech.userId);
-        assignedTechPhone = availableTech.phone || techUserDoc?.phone || assignedTechPhone;
-        bStatus = 'assigned'; 
-      } else {
-        // Fallback 3: Search for busy tech in matching area
-        const busyQuery = { currentStatus: { $in: ['busy', 'on_the_way'] }, isOnline: true };
-        if (matchedArea) busyQuery.area = matchedArea;
-        if (serviceId) busyQuery.services = serviceId;
-        
-        let busyTech = await Technician.findOne(busyQuery).sort('expectedAvailableTime');
-        if (busyTech) {
-           finalProviderId = busyTech.userId;
-           const User = require('../models/User');
-           const techUserDoc = await User.findById(busyTech.userId);
-           assignedTechPhone = busyTech.phone || techUserDoc?.phone || assignedTechPhone;
-           bStatus = 'queued';
-        } else {
-           // Guarantee assignment using fallback offline technicians
-           const fallbackQuery = {};
-           if (matchedArea) fallbackQuery.area = matchedArea;
-           if (serviceId) fallbackQuery.services = serviceId;
-           
-           let fallbackTech = await Technician.findOne(fallbackQuery);
-           if (!fallbackTech && matchedArea) {
-             fallbackTech = await Technician.findOne({ area: matchedArea });
-           }
-           if (!fallbackTech) {
-             fallbackTech = await Technician.findOne({});
-           }
-           
-           if (fallbackTech) {
-             finalProviderId = fallbackTech.userId;
-             const User = require('../models/User');
-             const techUserDoc = await User.findById(fallbackTech.userId);
-             assignedTechPhone = fallbackTech.phone || techUserDoc?.phone || assignedTechPhone;
-             bStatus = 'assigned';
-             assignedTechEmail = fallbackTech.email;
-           }
-        }
-      }
-    } else {
+      bStatus = 'pending'; // Scheduled for later
+    } else if (finalProviderId) {
       bStatus = 'assigned'; // Manually assigned -> pending acceptance
+      const Technician = require('../models/Technician');
+      const assignedTech = await Technician.findOne({ userId: finalProviderId });
+      if (assignedTech) {
+        assignedTechEmail = assignedTech.email;
+        const User = require('../models/User');
+        const techUserDoc = await User.findById(finalProviderId);
+        assignedTechPhone = assignedTech.phone || techUserDoc?.phone || null;
+      }
     }
 
     if (!location && !address) {
@@ -345,37 +422,40 @@ const createBooking = async (req, res) => {
     });
     const createdBooking = await booking.save();
 
-    // Send real-time Socket Alert to Assigned Tech
-    const io = req.app.get('io');
-    if (finalProviderId && io) {
-      io.to(`user_${finalProviderId}`).emit('new_job', createdBooking);
-    }
-
+    // If manually assigned (technician selected by user)
     if (finalProviderId && !finalProviderId.startsWith('tech-')) {
+      if (global.io) {
+        global.io.to(`user_${finalProviderId}`).emit('new_job', createdBooking.toObject());
+      }
+      
       notifyUser({
         userId: finalProviderId,
         email: assignedTechEmail,
         phone: assignedTechPhone,
         type: 'both',
-        subject: bStatus === 'queued' ? 'New Job Added To Your Queue!' : 'New Job Assigned!',
-        text: `Hey Technician, you have a new ${booking.serviceName} request. Open the app to check your pending/queued jobs!`,
+        subject: 'New Job Assigned!',
+        text: `Hey Technician, you have a new ${booking.serviceName} request. Open the app to check your assigned jobs!`,
         notifType: 'booking',
         bookingId: booking._id.toString()
       });
       
-      // Seed initial DB notification for tech
       const Notification = require('../models/Notification');
       const techNotif = await Notification.create({
         userId: finalProviderId,
-        title: bStatus === 'queued' ? 'New Job Queued' : 'New Job Assigned! 💼',
+        title: 'New Job Assigned! 💼',
         message: `New repair request for ${booking.serviceName} at ${finalAddress}.`,
         type: 'booking',
         bookingId: booking._id.toString()
       });
-      const io = req.app.get('io');
-      if (io) {
-        io.to(`user_${finalProviderId}`).emit('new_notification', techNotif);
+      if (global.io) {
+        global.io.to(`user_${finalProviderId}`).emit('new_notification', techNotif);
       }
+
+      // Start 60-second timeout for manual assignment acceptance
+      startResponseTimeout(createdBooking._id, finalProviderId);
+    } else if (reqTimeSlot === 'ASAP') {
+      // Run smart auto-assignment asynchronously
+      autoAssignBooking(createdBooking._id);
     }
 
     // Google Sheets integration
@@ -404,6 +484,7 @@ const createBooking = async (req, res) => {
     res.status(400).json({ message: error.message });
   }
 };
+
 
 const enrichBookingsWithChat = async (bookings, userId) => {
   const Message = require('../models/Message');
@@ -502,7 +583,7 @@ const updateBookingStatus = async (req, res) => {
       const User = require('../models/User');
       const techUser = await User.findById(req.user.id);
       if (tech) {
-        tech.currentStatus = 'busy';
+        tech.currentStatus = 'on_job'; // Auto-set status to On Job
         tech.currentJobId = booking._id;
         tech.expectedAvailableTime = new Date(Date.now() + 90 * 60000); 
         await tech.save();
@@ -524,7 +605,7 @@ const updateBookingStatus = async (req, res) => {
 
     if (status === 'completed' && req.user.role === 'technician') {
       if (tech) {
-        tech.currentStatus = 'available';
+        tech.currentStatus = 'online'; // Return to Online
         tech.currentJobId = null;
         tech.expectedAvailableTime = null;
         tech.jobsCompleted = (tech.jobsCompleted || 0) + 1;
@@ -540,6 +621,11 @@ const updateBookingStatus = async (req, res) => {
        booking.providerId = null;
        booking.providerPhone = null;
        booking.status = 'pending';
+       if (tech) {
+         tech.currentStatus = 'online'; // Return to Online
+         tech.currentJobId = null;
+         await tech.save();
+       }
     }
 
     const updatedBooking = await booking.save();
@@ -729,6 +815,44 @@ const submitQuote = async (req, res) => {
     const tCharge = transportCharge !== undefined ? Number(transportCharge) : (booking.transportCharge || 50);
     const total = sCharge + pCost + tCharge;
 
+    const existingRevisions = booking.quoteRevisions || [];
+    const isRevision = existingRevisions.length > 0 || booking.finalQuote !== null;
+
+    if (isRevision) {
+      // 1. Revision notes are mandatory
+      if (!quoteReason || !quoteReason.trim()) {
+        return res.status(400).json({ message: 'Revision reason/notes are mandatory for modifying an existing quote.' });
+      }
+
+      // 2. Maximum revision count is 3
+      if (existingRevisions.length >= 3) {
+        return res.status(400).json({ message: 'Maximum quote revision limit (3) reached. Cannot modify further.' });
+      }
+    }
+
+    const nextVersion = existingRevisions.length + 1;
+
+    // Push new revision to log
+    booking.quoteRevisions.push({
+      version: nextVersion,
+      serviceCharge: sCharge,
+      sparePartsCost: pCost,
+      transportCharge: tCharge,
+      finalQuote: total,
+      quoteReason: quoteReason || 'Initial diagnostic quote',
+      detectedIssues,
+      quotePhoto,
+      status: 'pending',
+      createdAt: new Date()
+    });
+
+    // Save previous status to preRevisionStatus if we are currently working
+    if (booking.status === 'in_progress') {
+      booking.preRevisionStatus = 'in_progress';
+    } else if (booking.status === 'quote_approved') {
+      booking.preRevisionStatus = 'quote_approved';
+    }
+
     booking.serviceCharge = sCharge;
     booking.sparePartsCost = pCost;
     booking.transportCharge = tCharge;
@@ -736,6 +860,8 @@ const submitQuote = async (req, res) => {
     booking.quoteReason = quoteReason;
     booking.detectedIssues = detectedIssues;
     booking.quotePhoto = quotePhoto;
+    
+    // Move booking back to quote_pending
     booking.status = 'quote_pending';
     booking.quoteApproved = false;
 
@@ -746,8 +872,10 @@ const submitQuote = async (req, res) => {
       userId: booking.userId,
       email: booking.userEmail,
       type: 'both',
-      subject: 'Action Required: Approve Final Quote',
-      text: `Your technician has diagnosed the issue and provided a final quote of ₹${total}. Please review and approve in the app.`,
+      subject: isRevision ? `Quote Updated – Please Review` : 'Action Required: Approve Final Quote',
+      text: isRevision 
+        ? `Your technician updated the quote to ₹${total} (Reason: ${quoteReason}). Please review and approve.`
+        : `Your technician has diagnosed the issue and provided a final quote of ₹${total}. Please review and approve in the app.`,
       notifType: 'booking',
       bookingId: booking._id.toString()
     });
@@ -770,17 +898,31 @@ const approveQuote = async (req, res) => {
     if (!booking) return res.status(404).json({ message: 'Booking not found' });
     
     const isOwnerById = booking.userId && booking.userId.toString() === req.user.id.toString();
-    
     if (!isOwnerById) {
        return res.status(403).json({ message: 'Not authorized to approve quote' });
     }
 
+    const lastRevision = booking.quoteRevisions && booking.quoteRevisions.length > 0
+      ? booking.quoteRevisions[booking.quoteRevisions.length - 1]
+      : null;
+
     if (approved) {
       booking.quoteApproved = true;
-      booking.status = 'quote_approved';
+      booking.status = booking.preRevisionStatus || 'quote_approved';
+      booking.preRevisionStatus = null;
+
+      if (lastRevision) {
+        lastRevision.status = 'approved';
+        lastRevision.approvedAt = new Date();
+      }
     } else {
       booking.quoteApproved = false;
-      booking.status = 'rejected';
+      booking.status = 'quote_rejected';
+
+      if (lastRevision) {
+        lastRevision.status = 'rejected';
+        lastRevision.rejectedAt = new Date();
+      }
     }
 
     const updatedBooking = await booking.save();
@@ -791,15 +933,144 @@ const approveQuote = async (req, res) => {
         userId: booking.providerId,
         email: booking.providerEmail,
         type: 'both',
-        subject: approved ? 'Quote Approved!' : 'Quote Rejected',
-        text: approved ? 'The customer approved the quote. You may start the repair.' : 'The customer rejected your quote.',
+        subject: approved ? 'Quote Approved!' : 'Quote Rejected by Customer',
+        text: approved 
+          ? 'The customer approved the quote. You may start/continue the repair.' 
+          : 'The customer rejected your quote. Work is suspended until resolved.',
         notifType: 'booking',
         bookingId: booking._id.toString()
       });
     }
 
     // Call Automated Notification System
-    await triggerNotifications(req, updatedBooking, approved ? 'quote_approved' : 'rejected');
+    await triggerNotifications(req, updatedBooking, approved ? 'quote_approved' : 'quote_rejected');
+
+    res.json(updatedBooking);
+  } catch (error) {
+    res.status(400).json({ message: error.message });
+  }
+};
+
+// @desc    Request quote clarification (Customer)
+// @route   PUT /api/bookings/:id/clarify-quote
+const requestQuoteClarification = async (req, res) => {
+  const { clarificationText } = req.body;
+  if (!clarificationText || !clarificationText.trim()) {
+    return res.status(400).json({ message: 'Clarification text is required' });
+  }
+
+  try {
+    const booking = await Booking.findById(req.params.id);
+    if (!booking) return res.status(404).json({ message: 'Booking not found' });
+
+    const isOwnerById = booking.userId && booking.userId.toString() === req.user.id.toString();
+    if (!isOwnerById) return res.status(403).json({ message: 'Not authorized' });
+
+    const lastRevision = booking.quoteRevisions && booking.quoteRevisions.length > 0
+      ? booking.quoteRevisions[booking.quoteRevisions.length - 1]
+      : null;
+
+    if (!lastRevision || (lastRevision.status !== 'pending' && lastRevision.status !== 'clarification_requested')) {
+      return res.status(400).json({ message: 'No pending quote version found to clarify.' });
+    }
+
+    lastRevision.status = 'clarification_requested';
+    lastRevision.clarificationText = clarificationText;
+    booking.status = 'quote_clarification';
+
+    const Message = require('../models/Message');
+    const io = global.io;
+
+    const chatMsg = await Message.create({
+      bookingId: booking._id,
+      senderId: 'system',
+      senderName: 'System',
+      text: `📢 Clarification Query: Customer requested explanation on the quote revision: "${clarificationText}"`
+    });
+
+    if (io) {
+      io.to(`chat_${booking._id}`).emit('receive_message', chatMsg);
+    }
+
+    const updatedBooking = await booking.save();
+    await updatedBooking.populate('serviceId', 'name price');
+
+    if (booking.providerEmail) {
+      notifyUser({
+        userId: booking.providerId,
+        email: booking.providerEmail,
+        type: 'both',
+        subject: 'Action Required: Clarification Requested',
+        text: `Customer requested clarification on your quote: "${clarificationText}". Please review and respond.`,
+        notifType: 'booking',
+        bookingId: booking._id.toString()
+      });
+    }
+
+    await triggerNotifications(req, updatedBooking, 'quote_clarification');
+
+    res.json(updatedBooking);
+  } catch (error) {
+    res.status(400).json({ message: error.message });
+  }
+};
+
+// @desc    Respond to quote clarification (Technician)
+// @route   PUT /api/bookings/:id/respond-quote
+const respondQuoteClarification = async (req, res) => {
+  const { responseText } = req.body;
+  if (!responseText || !responseText.trim()) {
+    return res.status(400).json({ message: 'Response text is required' });
+  }
+
+  try {
+    const booking = await Booking.findById(req.params.id);
+    if (!booking) return res.status(404).json({ message: 'Booking not found' });
+
+    if (booking.providerId !== req.user.id) {
+      return res.status(403).json({ message: 'Not authorized' });
+    }
+
+    const lastRevision = booking.quoteRevisions && booking.quoteRevisions.length > 0
+      ? booking.quoteRevisions[booking.quoteRevisions.length - 1]
+      : null;
+
+    if (!lastRevision || lastRevision.status !== 'clarification_requested') {
+      return res.status(400).json({ message: 'No active clarification request found.' });
+    }
+
+    lastRevision.status = 'pending';
+    lastRevision.clarificationResponse = responseText;
+    booking.status = 'quote_pending';
+
+    const Message = require('../models/Message');
+    const io = global.io;
+
+    const chatMsg = await Message.create({
+      bookingId: booking._id,
+      senderId: 'system',
+      senderName: 'System',
+      text: `📢 Tech Response: "${responseText}"`
+    });
+
+    if (io) {
+      io.to(`chat_${booking._id}`).emit('receive_message', chatMsg);
+    }
+
+    const updatedBooking = await booking.save();
+    await updatedBooking.populate('serviceId', 'name price');
+
+    notifyUser({
+      userId: booking.userId,
+      email: booking.userEmail,
+      type: 'both',
+      subject: 'Quote Explanation Received',
+      text: `Your technician responded to your clarification query: "${responseText}". Please review the quote again.`,
+      notifType: 'booking',
+      bookingId: booking._id.toString()
+    });
+
+    await triggerNotifications(req, updatedBooking, 'quote_pending');
 
     res.json(updatedBooking);
   } catch (error) {
@@ -930,4 +1201,4 @@ const updateTechnicianWallet = async (booking) => {
   await tech.save();
 };
 
-module.exports = { createBooking, getBookings, updateBookingStatus, assignBooking, processPayment, createPaymentIntent, submitQuote, approveQuote, cancelBooking, updateTechnicianWallet, triggerNotifications };
+module.exports = { createBooking, getBookings, updateBookingStatus, assignBooking, processPayment, createPaymentIntent, submitQuote, approveQuote, cancelBooking, updateTechnicianWallet, triggerNotifications, requestQuoteClarification, respondQuoteClarification };

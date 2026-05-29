@@ -17,6 +17,7 @@ const io = new Server(server, {
   cors: { origin: '*', methods: ['GET', 'POST'] }
 });
 
+global.io = io;
 // Pass IO to requests explicitly (optional if we want cross-file emits later)
 app.set('io', io);
 
@@ -42,6 +43,7 @@ app.use('/api/whatsapp', require('./routes/whatsappRoutes'));
 app.use('/api/book-service', require('./routes/quickBookingRoutes'));
 app.use('/api/payment', require('./routes/payment'));
 app.use('/api/contact', require('./routes/contactRoutes'));
+app.use('/api/legal', require('./routes/legalRoutes'));
 
 app.get('/api/health', (req, res) => {
   res.json({ status: 'ok', message: 'Fixvo API is running' });

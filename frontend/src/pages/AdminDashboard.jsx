@@ -16,6 +16,60 @@ const AdminDashboard = () => {
   // Navigation state
   const [activeTab, setActiveTab] = useState('bookings');
 
+  // Legal & Compliance states
+  const [legalDocs, setLegalDocs] = useState([]);
+  const [complianceLogs, setComplianceLogs] = useState([]);
+  const [selectedDoc, setSelectedDoc] = useState(null);
+  const [docContent, setDocContent] = useState('');
+  const [docTitle, setDocTitle] = useState('');
+  const [isSavingDoc, setIsSavingDoc] = useState(false);
+  const [isLoadingLegal, setIsLoadingLegal] = useState(false);
+
+  const fetchLegalData = async () => {
+    setIsLoadingLegal(true);
+    try {
+      const docsRes = await api.get('/legal/documents');
+      setLegalDocs(docsRes.data);
+      if (docsRes.data.length > 0 && !selectedDoc) {
+        setSelectedDoc(docsRes.data[0]);
+        setDocTitle(docsRes.data[0].title);
+        setDocContent(docsRes.data[0].content);
+      }
+      const logsRes = await api.get('/legal/logs');
+      setComplianceLogs(logsRes.data);
+    } catch (err) {
+      console.error("Failed to load legal compliance data", err);
+    } finally {
+      setIsLoadingLegal(false);
+    }
+  };
+
+  useEffect(() => {
+    if (activeTab === 'legal') {
+      fetchLegalData();
+    }
+  }, [activeTab]);
+
+  const handleUpdateDocument = async (e) => {
+    e.preventDefault();
+    if (!selectedDoc) return;
+    setIsSavingDoc(true);
+    try {
+      const res = await api.put(`/legal/document/${selectedDoc.type}`, {
+        title: docTitle,
+        content: docContent
+      });
+      alert('Document template updated and version incremented successfully!');
+      setLegalDocs(prev => prev.map(doc => doc.type === selectedDoc.type ? res.data.document : doc));
+      setSelectedDoc(res.data.document);
+    } catch (err) {
+      console.error(err);
+      alert(err.response?.data?.message || 'Failed to update document template');
+    } finally {
+      setIsSavingDoc(false);
+    }
+  };
+
   // Booking Filter & Search & Sort states
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
@@ -310,6 +364,7 @@ const AdminDashboard = () => {
             { id: 'withdrawals', label: 'Withdrawal Requests', icon: CreditCard },
             { id: 'analytics', label: 'Growth & Demands', icon: Sparkles },
             { id: 'users', label: 'User Directory', icon: Users },
+            { id: 'legal', label: 'Compliance & Legal', icon: Shield },
           ].map(tab => (
             <button
               key={tab.id}
@@ -954,6 +1009,178 @@ const AdminDashboard = () => {
                         </td>
                       </tr>
                     ))}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+        )}
+        {activeTab === 'legal' && (
+          <div className="space-y-6">
+            {/* Template Editor Grid */}
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+              {/* Document Templates List */}
+              <div className="bg-slate-900/40 rounded-[2rem] border border-white/5 p-6 shadow-2xl space-y-4">
+                <div className="flex items-center gap-2 border-b border-white/5 pb-3">
+                  <Shield className="text-indigo-400" size={18} />
+                  <h3 className="font-extrabold text-sm text-white uppercase tracking-wider">Document Templates</h3>
+                </div>
+                {isLoadingLegal && legalDocs.length === 0 ? (
+                  <div className="py-8 flex justify-center"><Loader2 className="animate-spin text-indigo-400" /></div>
+                ) : (
+                  <div className="space-y-2">
+                    {legalDocs.map(doc => {
+                      const active = selectedDoc?.type === doc.type;
+                      return (
+                        <button
+                          key={doc.type}
+                          onClick={() => {
+                            setSelectedDoc(doc);
+                            setDocTitle(doc.title);
+                            setDocContent(doc.content);
+                          }}
+                          className={`w-full text-left p-4 rounded-xl font-bold text-xs uppercase tracking-wider transition-all border cursor-pointer ${
+                            active
+                              ? 'bg-indigo-600 border-indigo-500 text-white shadow-lg shadow-indigo-600/10'
+                              : 'bg-slate-800/60 border-white/5 text-slate-400 hover:bg-slate-850 hover:text-white'
+                          }`}
+                        >
+                          <div className="flex justify-between items-center">
+                            <span>{doc.title || doc.type}</span>
+                            <span className={`px-1.5 py-0.5 rounded text-[8px] font-black ${
+                              active ? 'bg-indigo-700 text-white' : 'bg-slate-950/40 text-slate-500'
+                            }`}>
+                              V{doc.version}
+                            </span>
+                          </div>
+                        </button>
+                      );
+                    })}
+                    {legalDocs.length === 0 && (
+                      <p className="text-xs text-slate-500 italic text-center py-4">No templates loaded. Run seed script first.</p>
+                    )}
+                  </div>
+                )}
+              </div>
+
+              {/* Template Text Editor */}
+              <div className="lg:col-span-2 bg-slate-900/40 rounded-[2rem] border border-white/5 p-6 shadow-2xl">
+                {selectedDoc ? (
+                  <form onSubmit={handleUpdateDocument} className="space-y-4">
+                    <div className="flex justify-between items-center border-b border-white/5 pb-3">
+                      <h4 className="font-extrabold text-sm text-white uppercase tracking-wider">Template Editor</h4>
+                      <span className="text-xs font-bold text-indigo-400 bg-indigo-500/10 px-3 py-1 rounded-full border border-indigo-500/20">
+                        Active Version: V{selectedDoc.version}
+                      </span>
+                    </div>
+
+                    <div className="space-y-1">
+                      <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-widest ml-1">Document Title</label>
+                      <input
+                        required
+                        type="text"
+                        value={docTitle}
+                        onChange={(e) => setDocTitle(e.target.value)}
+                        className="w-full px-4 py-3 rounded-xl bg-slate-950 border border-white/10 text-white text-xs font-bold focus:border-indigo-500 transition-all outline-none"
+                      />
+                    </div>
+
+                    <div className="space-y-1">
+                      <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-widest ml-1">Template HTML / Markdown Content</label>
+                      <textarea
+                        required
+                        value={docContent}
+                        onChange={(e) => setDocContent(e.target.value)}
+                        className="w-full p-4 rounded-xl bg-slate-950 border border-white/10 text-white font-mono text-xs focus:border-indigo-500 transition-all outline-none h-60 resize-y"
+                        placeholder="Type policy terms details here..."
+                      />
+                    </div>
+
+                    <button
+                      type="submit"
+                      disabled={isSavingDoc}
+                      className="w-full bg-indigo-600 hover:bg-indigo-500 disabled:bg-slate-800 text-white disabled:text-slate-500 font-extrabold py-3 rounded-xl shadow-lg transition-all text-xs uppercase tracking-widest outline-none active:scale-[0.98] cursor-pointer"
+                    >
+                      {isSavingDoc ? <Loader2 className="animate-spin inline-block mr-1" size={14} /> : 'Save Template & Increment Version'}
+                    </button>
+                  </form>
+                ) : (
+                  <div className="h-full flex flex-col items-center justify-center text-slate-500 py-16">
+                    <Shield size={36} className="text-slate-600 mb-2 animate-pulse" />
+                    <p className="text-xs italic">Select a template from the left to start editing</p>
+                  </div>
+                )}
+              </div>
+            </div>
+
+            {/* Compliance Acceptance Logs */}
+            <div className="bg-slate-900/40 rounded-[2rem] border border-white/5 overflow-hidden shadow-2xl">
+              <div className="p-6 border-b border-white/5 bg-slate-900/60 flex items-center justify-between">
+                <div>
+                  <h3 className="font-extrabold text-white text-sm uppercase tracking-wider">Compliance Acceptance Logs</h3>
+                  <p className="text-[10px] text-slate-500 mt-0.5 font-semibold">Audit trail of customer & technician agreements</p>
+                </div>
+                <button
+                  type="button"
+                  onClick={fetchLegalData}
+                  className="bg-slate-800 hover:bg-slate-750 text-slate-200 border border-white/5 px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer flex items-center gap-1.5 outline-none"
+                >
+                  <RefreshCw size={12} /> Sync Logs
+                </button>
+              </div>
+
+              <div className="overflow-x-auto">
+                <table className="w-full text-left border-collapse">
+                  <thead>
+                    <tr className="border-b border-white/5 bg-slate-950/40 text-[10px] font-black uppercase tracking-wider text-slate-400">
+                      <th className="p-5">User Account</th>
+                      <th className="p-5">System Role</th>
+                      <th className="p-5">Document Agreed</th>
+                      <th className="p-5">Consent Version</th>
+                      <th className="p-5 text-right">Agreed Timestamp</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {complianceLogs.map((log) => {
+                      const docTypeMap = {
+                        terms_conditions: 'Terms & Conditions',
+                        privacy_policy: 'Privacy Policy',
+                        technician_terms: 'Technician Agreement'
+                      };
+                      return (
+                        <tr key={log._id} className="border-b border-white/5 hover:bg-white/5 transition-colors font-semibold text-xs text-white">
+                          <td className="p-5">
+                            <div className="font-black text-slate-100">{log.userName}</div>
+                            <div className="text-[10px] text-slate-500 mt-0.5">{log.userEmail}</div>
+                          </td>
+                          <td className="p-5">
+                            <span className={`px-2 py-0.5 rounded text-[10px] uppercase font-bold ${
+                              log.userRole === 'technician' ? 'bg-indigo-500/10 text-indigo-400 border border-indigo-500/20' : 'bg-blue-500/10 text-blue-400 border border-blue-500/20'
+                            }`}>
+                              {log.userRole}
+                            </span>
+                          </td>
+                          <td className="p-5 text-slate-300">
+                            {docTypeMap[log.documentType] || log.documentType}
+                          </td>
+                          <td className="p-5">
+                            <span className="font-mono bg-slate-950/60 text-slate-400 px-2 py-0.5 rounded border border-white/5">
+                              V{log.version}
+                            </span>
+                          </td>
+                          <td className="p-5 text-right text-slate-400 text-xs">
+                            {log.acceptedAt ? new Date(log.acceptedAt).toLocaleString() : 'N/A'}
+                          </td>
+                        </tr>
+                      );
+                    })}
+                    {complianceLogs.length === 0 && (
+                      <tr>
+                        <td colSpan="5" className="p-8 text-center text-xs text-slate-500 italic">
+                          No legal consent logs recorded yet.
+                        </td>
+                      </tr>
+                    )}
                   </tbody>
                 </table>
               </div>

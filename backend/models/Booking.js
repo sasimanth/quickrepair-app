@@ -39,7 +39,7 @@ const bookingSchema = new mongoose.Schema({
   },
   status: {
     type: String,
-    enum: ['pending', 'queued', 'assigned', 'accepted', 'on_the_way', 'arrived', 'quote_pending', 'quote_approved', 'in_progress', 'completed', 'rejected', 'cancelled'],
+    enum: ['pending', 'queued', 'assigned', 'accepted', 'on_the_way', 'arrived', 'inspection_started', 'quote_pending', 'quote_approved', 'quote_rejected', 'quote_clarification', 'in_progress', 'completed', 'rejected', 'cancelled'],
     default: 'pending',
   },
   date: {
@@ -245,7 +245,30 @@ const bookingSchema = new mongoose.Schema({
   // Cancellation tracking
   cancellationReason: { type: String, default: null },
   cancelledBy: { type: String, enum: ['customer', 'technician', 'admin', null], default: null },
-  cancelledAt: { type: Date, default: null }
+  cancelledAt: { type: Date, default: null },
+  quoteRevisions: [
+    {
+      version: Number,
+      serviceCharge: Number,
+      sparePartsCost: Number,
+      transportCharge: Number,
+      finalQuote: Number,
+      quoteReason: String,
+      detectedIssues: String,
+      quotePhoto: String,
+      status: {
+        type: String,
+        enum: ['pending', 'approved', 'rejected', 'clarification_requested'],
+        default: 'pending'
+      },
+      clarificationText: String,
+      clarificationResponse: String,
+      approvedAt: Date,
+      rejectedAt: Date,
+      createdAt: { type: Date, default: Date.now }
+    }
+  ],
+  preRevisionStatus: { type: String, default: null }
 }, { timestamps: true });
 
 bookingSchema.index({ userId: 1 });

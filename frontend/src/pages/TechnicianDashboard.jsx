@@ -1,12 +1,13 @@
 import { useState, useEffect, useMemo, useRef } from 'react';
+import { Link, useLocation } from 'react-router-dom';
 import api from '../services/api';
-import { Briefcase, MapPin, Smartphone, AlertCircle, Clock, CheckCircle, PackageSearch, XCircle, User, Wrench, RefreshCw, MessageSquare, Camera, HelpCircle, Hammer, Truck, Settings, Navigation, Copy, Map, PhoneCall, Loader2 } from 'lucide-react';
 import { globalServices } from '../data/services';
+import { subscribeToPushNotifications } from '../services/pushNotification';
+import { Calendar, MapPin, Smartphone, AlertCircle, Clock, CheckCircle, PackageSearch, XCircle, Plus, LayoutDashboard, Wrench, Settings, Star, User, ChevronRight, MessageSquare, Camera, UploadCloud, Loader2, Shield, ShieldCheck, ShieldAlert, Sparkles, IndianRupee, Wallet, Coins, ArrowUpRight, ArrowDownLeft, FileText, Bell, CreditCard, Banknote, HelpCircle, Truck, Home, Search, Eye, Zap, Maximize2, Hash, Layers, Paintbrush, Tv, X, RefreshCw, PhoneCall } from 'lucide-react';
 import ChatModal from '../components/ChatModal';
 import SettingsModal from '../components/SettingsModal';
 import VerificationModal from '../components/VerificationModal';
 import KycModal from '../components/KycModal';
-import { Star, ShieldAlert, ShieldCheck, Sparkles, IndianRupee, Wallet, Coins, ArrowUpRight, ArrowDownLeft, FileText, Bell, CreditCard, Banknote, ChevronRight } from 'lucide-react';
 import { socket } from '../services/socket';
 import { motion } from 'framer-motion';
 
@@ -112,6 +113,76 @@ const TechnicianDashboard = () => {
   const [showKyc, setShowKyc] = useState(false);
   const [chatBookingId, setChatBookingId] = useState(null);
   const [quoteModalJob, setQuoteModalJob] = useState(null);
+  const [activeAlertJob, setActiveAlertJob] = useState(null);
+  const [alertCountdown, setAlertCountdown] = useState(60);
+  const [clarificationResponse, setClarificationResponse] = useState('');
+  const alarmIntervalRef = useRef(null);
+
+  const startAlarm = () => {
+    stopAlarm();
+    const playSingleAlarmBeep = () => {
+      try {
+        const AudioContextClass = window.AudioContext || window.webkitAudioContext;
+        if (!AudioContextClass) return;
+        const ctx = new AudioContextClass();
+        const osc = ctx.createOscillator();
+        const gain = ctx.createGain();
+        osc.connect(gain);
+        gain.connect(ctx.destination);
+        osc.type = 'sawtooth';
+        osc.frequency.setValueAtTime(880, ctx.currentTime);
+        gain.gain.setValueAtTime(0, ctx.currentTime);
+        gain.gain.linearRampToValueAtTime(0.4, ctx.currentTime + 0.05);
+        gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.5);
+        osc.start(ctx.currentTime);
+        osc.stop(ctx.currentTime + 0.6);
+      } catch (error) {
+        console.warn('Alarm audio Context failed', error);
+      }
+    };
+    playSingleAlarmBeep();
+    alarmIntervalRef.current = setInterval(playSingleAlarmBeep, 1500);
+  };
+
+  const stopAlarm = () => {
+    if (alarmIntervalRef.current) {
+      clearInterval(alarmIntervalRef.current);
+      alarmIntervalRef.current = null;
+    }
+  };
+
+  // Alarm timer effect
+  useEffect(() => {
+    let timer;
+    if (activeAlertJob) {
+      const createdTime = new Date(activeAlertJob.createdAt).getTime();
+      const now = Date.now();
+      const elapsed = Math.floor((now - createdTime) / 1000);
+      const remaining = Math.max(0, 60 - elapsed);
+      setAlertCountdown(remaining);
+      
+      timer = setInterval(() => {
+        setAlertCountdown(prev => {
+          if (prev <= 1) {
+            clearInterval(timer);
+            stopAlarm();
+            setActiveAlertJob(null);
+            showToast('⚠️ Job Timeout', 'Urgent ASAP job reassigned due to response timeout.', 'error');
+            fetchJobs(true);
+            return 0;
+          }
+          return prev - 1;
+        });
+      }, 1000);
+    } else {
+      setAlertCountdown(60);
+      stopAlarm();
+    }
+    
+    return () => {
+      if (timer) clearInterval(timer);
+    };
+  }, [activeAlertJob]);
   const [quoteForm, setQuoteForm] = useState({ serviceCharge: '', sparePartsCost: '', transportCharge: '50', quoteReason: '', quotePhoto: '', detectedIssues: '' });
   const [uploadedImages, setUploadedImages] = useState({
     damagedPart: '',
@@ -219,9 +290,9 @@ const TechnicianDashboard = () => {
       if (jobTab === 'new') {
         return ['pending', 'assigned', 'queued'].includes(job.status);
       } else if (jobTab === 'active') {
-        return ['accepted', 'on_the_way', 'arrived', 'quote_approved', 'in_progress'].includes(job.status);
+        return ['accepted', 'on_the_way', 'arrived', 'inspection_started', 'quote_approved', 'in_progress'].includes(job.status);
       } else if (jobTab === 'quote_pending') {
-        return job.status === 'quote_pending';
+        return ['quote_pending', 'quote_clarification', 'quote_rejected'].includes(job.status);
       } else if (jobTab === 'completed') {
         return job.status === 'completed';
       } else if (jobTab === 'cancelled') {
@@ -231,7 +302,10 @@ const TechnicianDashboard = () => {
     });
   }, [jobs, jobTab]);
 
-  useEffect(() => { fetchJobs(); }, []);
+  useEffect(() => { 
+    fetchJobs(); 
+    subscribeToPushNotifications(); // PWA background push notifications
+  }, []);
 
   // Live Location Broadcasting via WebSockets
   useEffect(() => {
@@ -277,12 +351,13 @@ const TechnicianDashboard = () => {
         if (prev.some(j => j._id === newJob._id)) return prev;
         return [newJob, ...prev];
       });
+      setActiveAlertJob(newJob);
+      startAlarm();
     };
 
     const handleJobUpdate = (updatedJob) => {
       fetchJobs(true);
 
-      // Strict sender-role/ID validation to prevent self-notifications
       const isSelfGenerated = updatedJob.initiatorId === profileRef.current?.userId || updatedJob.initiatorRole === 'technician';
 
       if (!isSelfGenerated) {
@@ -296,6 +371,15 @@ const TechnicianDashboard = () => {
           data: { url: `/dashboard?jobId=${updatedJob._id}` }
         });
       }
+      
+      // If the alarm job is no longer assigned to us
+      if (activeAlertJob && updatedJob._id === activeAlertJob._id) {
+        if (updatedJob.providerId !== profileRef.current?.userId) {
+          setActiveAlertJob(null);
+          stopAlarm();
+          showToast('⚠️ ASAP Job Reassigned', 'The ASAP job response window closed.', 'error');
+        }
+      }
     };
 
     socket.on('new_job', handleNewJob);
@@ -305,7 +389,7 @@ const TechnicianDashboard = () => {
       socket.off('new_job', handleNewJob);
       socket.off('job_update', handleJobUpdate);
     };
-  }, [profile?.userId]);
+  }, [profile?.userId, activeAlertJob]);
 
   // WebSocket Chat Event Handlers
   useEffect(() => {
@@ -414,8 +498,8 @@ const TechnicianDashboard = () => {
         const foundJob = jobs.find(j => j._id === jobId);
         if (foundJob) {
           if (['pending', 'assigned', 'queued'].includes(foundJob.status)) setJobTab('new');
-          else if (['accepted', 'on_the_way', 'arrived', 'quote_approved', 'in_progress'].includes(foundJob.status)) setJobTab('active');
-          else if (foundJob.status === 'quote_pending') setJobTab('quote_pending');
+          else if (['accepted', 'on_the_way', 'arrived', 'inspection_started', 'quote_approved', 'in_progress'].includes(foundJob.status)) setJobTab('active');
+          else if (['quote_pending', 'quote_clarification', 'quote_rejected'].includes(foundJob.status)) setJobTab('quote_pending');
           else if (foundJob.status === 'completed') {
             setJobTab('completed');
             setExpandedCompletedJobs(prev => ({ ...prev, [jobId]: true }));
@@ -553,6 +637,23 @@ const TechnicianDashboard = () => {
     }
   };
 
+  const handleRespondClarification = async (bookingId) => {
+    if (!clarificationResponse.trim()) return;
+    setUpdatingJobs(prev => ({ ...prev, [bookingId]: true }));
+    try {
+      await api.put(`/bookings/${bookingId}/respond-quote`, { responseText: clarificationResponse });
+      setClarificationResponse('');
+      showToast('Response Sent 📢', 'Quote response sent back to customer.', 'success');
+      fetchJobs();
+    } catch (error) {
+       const errorMsg = error.response?.data?.message || error.message || 'Unknown error';
+       alert(`Failed to respond: ${errorMsg}`);
+       console.error(error);
+    } finally {
+       setUpdatingJobs(prev => ({ ...prev, [bookingId]: false }));
+    }
+  };
+
   const handleWithdrawal = async (e) => {
     if (e && e.preventDefault) e.preventDefault();
     
@@ -636,15 +737,37 @@ const TechnicianDashboard = () => {
             </div>
           </div>
           <div className="grid grid-cols-2 md:flex md:items-center gap-3 w-full sm:w-auto mt-2 sm:mt-0">
-            {profile?.isProfileComplete && (
-              <button
-                onClick={toggleOnlineStatus}
-                className={`col-span-2 md:col-span-1 flex items-center justify-center gap-2 px-5 py-3 rounded-2xl font-bold transition-all shadow-sm border-2 ${profile?.isOnline ? 'bg-emerald-50 text-emerald-600 border-emerald-200 hover:bg-emerald-100' : 'bg-slate-100 text-slate-500 border-slate-200 hover:bg-slate-200'}`}
-              >
-                <div className={`w-3 h-3 rounded-full ${profile?.isOnline ? 'bg-emerald-500 animate-pulse' : 'bg-slate-400'}`}></div>
-                {profile?.isOnline ? 'Online (Accepting Jobs)' : 'Offline (Hidden)'}
-              </button>
-            )}
+            {profile?.isProfileComplete && (() => {
+              const status = profile?.currentStatus || (profile?.isOnline ? 'online' : 'offline');
+              let btnClass = 'bg-slate-800 text-slate-400 border-white/5 hover:bg-slate-700/80';
+              let dotClass = 'bg-slate-500';
+              let label = 'Offline (Hidden)';
+              
+              if (status === 'online' || status === 'available') {
+                btnClass = 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20 hover:bg-emerald-500/15';
+                dotClass = 'bg-emerald-500 animate-pulse';
+                label = 'Online (Accepting Jobs)';
+              } else if (status === 'on_job') {
+                btnClass = 'bg-blue-500/10 text-blue-400 border-blue-500/20 cursor-not-allowed';
+                dotClass = 'bg-blue-500 animate-ping';
+                label = 'On Active Job';
+              } else if (status === 'busy') {
+                btnClass = 'bg-amber-500/10 text-amber-400 border-amber-500/20 hover:bg-amber-500/15';
+                dotClass = 'bg-amber-500 animate-pulse';
+                label = 'Busy';
+              }
+
+              return (
+                <button
+                  onClick={status === 'on_job' ? null : toggleOnlineStatus}
+                  disabled={status === 'on_job'}
+                  className={`col-span-2 md:col-span-1 flex items-center justify-center gap-2 px-5 py-3 rounded-2xl font-bold transition-all shadow-sm border-2 ${btnClass}`}
+                >
+                  <div className={`w-2.5 h-2.5 rounded-full ${dotClass}`}></div>
+                  <span className="text-xs uppercase tracking-wider">{label}</span>
+                </button>
+              );
+            })()}
             <button
                onClick={() => setShowSettings(true)}
                className="col-span-1 flex items-center justify-center gap-2 px-5 py-3.5 bg-slate-100 hover:bg-slate-200 border border-slate-200 text-slate-700 font-bold rounded-2xl transition-all shadow-sm text-sm"
@@ -1072,11 +1195,62 @@ const TechnicianDashboard = () => {
                         )}
                         {job.status === 'arrived' && (
                             <button
+                              disabled={updatingJobs[job._id]}
+                              onClick={() => updateJobStatus(job._id, 'inspection_started')}
+                              className="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-4 px-4 rounded-2xl shadow-xl hover:shadow-indigo-500/30 transition-all duration-300 transform hover:-translate-y-1 flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50"
+                            >
+                              {updatingJobs[job._id] ? <Loader2 size={18} className="animate-spin" /> : <><Wrench size={18} /> Start Diagnosis & Inspection</>}
+                            </button>
+                        )}
+                        {job.status === 'inspection_started' && (
+                            <button
                               onClick={() => handleOpenQuoteModal(job)}
-                              className="w-full bg-indigo-500 hover:bg-indigo-600 text-white font-bold py-4 px-4 rounded-2xl shadow-xl hover:shadow-indigo-500/30 transition-all duration-300 transform hover:-translate-y-1 flex items-center justify-center gap-2"
+                              className="w-full bg-indigo-500 hover:bg-indigo-600 text-white font-bold py-4 px-4 rounded-2xl shadow-xl hover:shadow-indigo-500/30 transition-all duration-300 transform hover:-translate-y-1 flex items-center justify-center gap-2 cursor-pointer"
                             >
                               <Wrench size={18} /> Inspection Done - Send Quote
                             </button>
+                        )}
+                        {job.status === 'quote_rejected' && (
+                            <div className="w-full space-y-2.5">
+                              <div className="p-4 bg-rose-500/10 border border-rose-500/25 rounded-xl text-rose-300 text-xs">
+                                ⚠️ Customer rejected your quote proposal. Revisions are limited to 3 max. You must submit a revised quote to resume work.
+                              </div>
+                              <button
+                                onClick={() => handleOpenQuoteModal(job)}
+                                className="w-full bg-indigo-500 hover:bg-indigo-600 text-white font-bold py-4 px-4 rounded-2xl shadow-xl hover:shadow-indigo-500/30 transition-all duration-300 transform hover:-translate-y-1 flex items-center justify-center gap-2 cursor-pointer"
+                              >
+                                <Wrench size={18} /> Submit Revised Quote Proposal
+                              </button>
+                            </div>
+                        )}
+                        {job.status === 'quote_clarification' && (
+                            <div className="w-full bg-slate-900 border border-purple-500/30 rounded-2xl p-4 space-y-3">
+                              <div className="flex items-center gap-2 text-purple-400 font-extrabold text-xs uppercase tracking-wider">
+                                <span className="flex h-2 w-2 rounded-full bg-purple-500 animate-ping"></span>
+                                <span>📢 Clarification Requested</span>
+                              </div>
+                              {job.quoteRevisions && job.quoteRevisions.length > 0 && (
+                                <p className="text-slate-300 text-xs italic bg-white/5 p-3 rounded-xl border border-white/5">
+                                  "{job.quoteRevisions[job.quoteRevisions.length - 1].clarificationText}"
+                                </p>
+                              )}
+                              <div className="space-y-2">
+                                <textarea
+                                  value={clarificationResponse}
+                                  onChange={(e) => setClarificationResponse(e.target.value)}
+                                  placeholder="Provide clarification details (e.g. explaining spare parts details)..."
+                                  className="w-full p-3 bg-slate-950 border border-white/10 rounded-xl outline-none text-slate-100 text-xs focus:border-indigo-500 transition-all resize-none"
+                                  rows={2.5}
+                                />
+                                <button
+                                  disabled={updatingJobs[job._id] || !clarificationResponse.trim()}
+                                  onClick={() => handleRespondClarification(job._id)}
+                                  className="w-full bg-purple-600 hover:bg-purple-500 disabled:bg-slate-800 text-white disabled:text-slate-500 font-black py-2 rounded-xl text-xs transition-all flex justify-center items-center gap-2 cursor-pointer"
+                                >
+                                  {updatingJobs[job._id] ? <Loader2 size={12} className="animate-spin"/> : 'Send Explanation Response'}
+                                </button>
+                              </div>
+                            </div>
                         )}
                         {job.status === 'quote_approved' && (
                             <button
@@ -1096,7 +1270,7 @@ const TechnicianDashboard = () => {
                               {updatingJobs[job._id] ? <Loader2 size={18} className="animate-spin" /> : <><CheckCircle size={18} /> Mark Completed</>}
                             </button>
                         )}
-                        {['accepted', 'quote_approved', 'on_the_way', 'arrived', 'in_progress'].includes(job.status) && (
+                        {['accepted', 'quote_approved', 'on_the_way', 'arrived', 'inspection_started', 'quote_pending', 'quote_clarification', 'quote_rejected', 'in_progress'].includes(job.status) && (
                             <div className="space-y-2 w-full">
                               <div className="flex gap-2">
                                 {(job.customerPhone || job.phone) && (
@@ -1130,8 +1304,8 @@ const TechnicianDashboard = () => {
                             </div>
                         )}
                         {job.status === 'quote_pending' && (
-                           <div className="flex items-center justify-center gap-2 p-4 rounded-xl font-bold border bg-blue-50 text-blue-600 border-blue-200 shadow-sm">
-                             <Clock size={18} /> Awaiting Approval
+                           <div className="flex items-center justify-center gap-2 p-4 rounded-xl font-bold border bg-blue-50 text-blue-600 border-blue-200 shadow-sm w-full">
+                             <Clock size={18} /> Awaiting Quote Approval
                            </div>
                         )}
                         {job.status === 'completed' && (
@@ -1543,13 +1717,30 @@ const TechnicianDashboard = () => {
             <div className="bg-[#111827] border border-white/5 rounded-3xl w-full max-w-md overflow-hidden shadow-2xl text-white">
               <div className="p-6 border-b border-white/5 flex justify-between items-center bg-slate-900/60">
                 <div>
-                  <h3 className="text-lg font-extrabold text-white tracking-tight">Submit Final Quote</h3>
+                  <h3 className="text-lg font-extrabold text-white tracking-tight">
+                    {quoteModalJob.quoteRevisions && quoteModalJob.quoteRevisions.length > 0
+                      ? `Submit Quote Revision (V${quoteModalJob.quoteRevisions.length + 1})`
+                      : 'Submit Final Quote'
+                    }
+                  </h3>
                   <p className="text-[10px] text-indigo-400 font-bold uppercase tracking-wider mt-0.5">Category: {categoryId}</p>
                 </div>
                 <button onClick={() => setQuoteModalJob(null)} className="text-slate-400 hover:text-white bg-white/5 hover:bg-white/10 rounded-full p-2 transition-all hover:rotate-95"><XCircle size={18} /></button>
               </div>
               <form onSubmit={handleSubmitQuote} className="p-6 space-y-4 max-h-[80vh] overflow-y-auto">
                 
+                {quoteModalJob.quoteRevisions && quoteModalJob.quoteRevisions.length > 0 && (
+                  <div className="p-3 bg-amber-500/10 border border-amber-500/25 rounded-xl text-amber-300 text-xs font-semibold animate-pulse">
+                    ⚠️ Revision {quoteModalJob.quoteRevisions.length + 1} of 3. Explanation is mandatory.
+                  </div>
+                )}
+
+                {quoteModalJob.quoteRevisions && quoteModalJob.quoteRevisions.length >= 3 && (
+                  <div className="p-3 bg-rose-500/10 border border-rose-500/25 rounded-xl text-rose-400 text-xs font-semibold">
+                    ❌ Maximum revision count (3) reached. You cannot revise the quote further.
+                  </div>
+                )}
+
                 {/* Category-Specific Inputs */}
                 {(() => {
                   switch (categoryId) {
@@ -1683,14 +1874,93 @@ const TechnicianDashboard = () => {
                   <textarea required value={quoteForm.quoteReason} onChange={(e) => setQuoteForm({...quoteForm, quoteReason: e.target.value})} className="w-full px-4 py-2.5 rounded-xl bg-slate-900 border border-white/5 focus:border-indigo-500 focus:ring-4 focus:ring-indigo-500/20 outline-none resize-none text-white text-xs font-semibold" rows="2" placeholder="Explain the required work scope..."></textarea>
                 </div>
 
-                <button type="submit" className="w-full bg-indigo-600 hover:bg-indigo-500 text-white font-black py-4 rounded-xl shadow-lg transition-all text-xs uppercase tracking-widest outline-none active:scale-[0.98] mt-4">
-                  Send Quote for Approval
+                <button 
+                  type="submit" 
+                  disabled={quoteModalJob.quoteRevisions && quoteModalJob.quoteRevisions.length >= 3}
+                  className="w-full bg-indigo-600 hover:bg-indigo-500 disabled:bg-slate-800 text-white disabled:text-slate-500 font-black py-4 rounded-xl shadow-lg transition-all text-xs uppercase tracking-widest outline-none active:scale-[0.98] mt-4 cursor-pointer"
+                >
+                  {quoteModalJob.quoteRevisions && quoteModalJob.quoteRevisions.length >= 3
+                    ? 'Maximum Revisions Reached'
+                    : 'Send Quote for Approval'
+                  }
                 </button>
               </form>
             </div>
           </div>
         );
       })()}
+
+      {/* Urgent Alarm/Alert Modal */}
+      {activeAlertJob && (
+        <div className="fixed inset-0 bg-[#0B0F19]/90 backdrop-blur-md z-[110] flex items-center justify-center p-4 animate-in fade-in duration-200">
+          <div className="bg-[#111827] border-2 border-amber-500/50 rounded-3xl w-full max-w-md overflow-hidden shadow-2xl text-white p-6 space-y-6 text-center animate-in zoom-in-95 duration-200">
+            <div className="flex flex-col items-center">
+              <div className="w-16 h-16 bg-amber-500/20 text-amber-500 rounded-full flex items-center justify-center border-2 border-amber-500 animate-pulse mb-4">
+                <AlertCircle size={36} />
+              </div>
+              <h2 className="text-2xl font-black text-white tracking-tight uppercase">Urgent ASAP Job</h2>
+              <p className="text-xs text-amber-400 font-bold uppercase tracking-wider mt-1 animate-pulse">Action Required: Response Timeout in Progress</p>
+            </div>
+
+            <div className="bg-white/5 border border-white/5 rounded-2xl p-5 space-y-3.5 text-left">
+              <div className="flex justify-between items-center text-sm border-b border-white/5 pb-2">
+                <span className="text-slate-400 font-semibold">Service Required:</span>
+                <span className="font-extrabold text-white">{activeAlertJob.serviceName}</span>
+              </div>
+              <div className="flex justify-between items-center text-sm border-b border-white/5 pb-2">
+                <span className="text-slate-400 font-semibold">Location Area:</span>
+                <span className="font-extrabold text-indigo-400">{activeAlertJob.location || 'N/A'}</span>
+              </div>
+              {activeAlertJob.deviceType && (
+                <div className="flex justify-between items-center text-sm border-b border-white/5 pb-2">
+                  <span className="text-slate-400 font-semibold">Device Info:</span>
+                  <span className="font-extrabold text-white">{activeAlertJob.deviceType}</span>
+                </div>
+              )}
+              {activeAlertJob.problemDescription && (
+                <div className="text-xs text-slate-300 italic pt-1">
+                  "{activeAlertJob.problemDescription}"
+                </div>
+              )}
+            </div>
+
+            {/* Countdown Display */}
+            <div className="flex flex-col items-center justify-center py-2">
+              <span className="text-[10px] text-slate-400 uppercase font-black tracking-widest">Time Remaining to Accept</span>
+              <span className={`text-5xl font-black font-mono tracking-tight mt-1 ${alertCountdown <= 15 ? 'text-rose-500 animate-pulse' : 'text-amber-400'}`}>
+                {alertCountdown}s
+              </span>
+            </div>
+
+            <div className="flex gap-3">
+              <button
+                disabled={updatingJobs[activeAlertJob._id]}
+                onClick={async () => {
+                  const jobId = activeAlertJob._id;
+                  setActiveAlertJob(null);
+                  stopAlarm();
+                  await updateJobStatus(jobId, 'cancelled');
+                }}
+                className="flex-1 bg-white/5 hover:bg-rose-500/10 border border-white/10 hover:border-rose-500/30 text-slate-300 hover:text-rose-400 font-extrabold py-3.5 rounded-xl transition-all uppercase tracking-wider text-xs cursor-pointer animate-in fade-in"
+              >
+                Decline
+              </button>
+              <button
+                disabled={updatingJobs[activeAlertJob._id]}
+                onClick={async () => {
+                  const jobId = activeAlertJob._id;
+                  setActiveAlertJob(null);
+                  stopAlarm();
+                  await updateJobStatus(jobId, 'accepted');
+                }}
+                className="flex-1 bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-400 hover:to-teal-400 text-white font-black py-3.5 rounded-xl shadow-lg hover:shadow-emerald-500/20 transition-all uppercase tracking-wider text-xs cursor-pointer animate-in fade-in"
+              >
+                Accept Job
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Toast Alerts Stack */}
       <div className="fixed bottom-5 right-5 z-[100] flex flex-col gap-3 w-full max-w-sm pointer-events-none px-4 sm:px-0">

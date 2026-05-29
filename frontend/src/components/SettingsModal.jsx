@@ -1,6 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { X, Save, Camera, MapPin, User, Phone, CheckCircle, Shield, Briefcase, Loader2 } from 'lucide-react';
 import api from '../services/api';
+import SearchableServiceSelector from './SearchableServiceSelector';
+import SearchableAreaSelector from './SearchableAreaSelector';
 
 const SettingsModal = ({ role, currentProfile, onClose, onSuccess }) => {
   const [formData, setFormData] = useState({
@@ -24,7 +26,7 @@ const SettingsModal = ({ role, currentProfile, onClose, onSuccess }) => {
         phone: currentProfile.phone || '',
         avatar: currentProfile.avatar || '👤',
         address: currentProfile.address || '',
-        skills: currentProfile.skills ? currentProfile.skills.join(', ') : '',
+        skills: currentProfile.services || [],
         experience: currentProfile.experience || ''
       });
       setInitialLoaded(true);
@@ -41,7 +43,7 @@ const SettingsModal = ({ role, currentProfile, onClose, onSuccess }) => {
       const endpoint = role === 'technician' ? '/technicians/profile' : '/users/profile';
       const payload = { ...formData };
       if (role === 'technician') {
-        payload.skills = formData.skills.split(',').map(s => s.trim()).filter(Boolean);
+        payload.skills = Array.isArray(formData.skills) ? formData.skills : [];
       }
       
       await api.put(endpoint, payload);
@@ -157,12 +159,11 @@ const SettingsModal = ({ role, currentProfile, onClose, onSuccess }) => {
               <label className="text-xs font-bold text-slate-400 uppercase tracking-widest ml-1 flex items-center gap-1.5">
                 <MapPin size={14} className="text-slate-500"/> Service Area / Address
               </label>
-              <input 
-                type="text" 
-                placeholder="Enter your town/address (e.g. Madanapalle)"
+              <SearchableAreaSelector
                 value={formData.address}
-                onChange={(e) => setFormData({...formData, address: e.target.value})}
-                className="w-full px-4 py-3 bg-slate-900 border border-white/5 rounded-xl focus:border-indigo-500 focus:ring-4 focus:ring-indigo-500/20 transition-all font-semibold text-slate-100 outline-none text-sm"
+                onChange={(address) => setFormData({...formData, address})}
+                theme="dark"
+                placeholder="Search and select city..."
               />
             </div>
 
@@ -172,7 +173,7 @@ const SettingsModal = ({ role, currentProfile, onClose, onSuccess }) => {
                    <Shield size={12} /> Technical Professional Credentials
                  </div>
                  
-                 <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+                 <div className="grid grid-cols-1 gap-5">
                    <div className="space-y-1.5">
                      <label className="text-xs font-bold text-slate-400 uppercase tracking-widest ml-1 flex items-center gap-1.5">
                        <Briefcase size={14} className="text-slate-500"/> Experience
@@ -189,12 +190,12 @@ const SettingsModal = ({ role, currentProfile, onClose, onSuccess }) => {
                      <label className="text-xs font-bold text-slate-400 uppercase tracking-widest ml-1 flex items-center gap-1.5">
                        🛡️ Core Skills
                      </label>
-                     <input 
-                       type="text" 
-                       placeholder="Comma separated, e.g. AC, CCTV, Fan"
+                     <SearchableServiceSelector
                        value={formData.skills}
-                       onChange={(e) => setFormData({...formData, skills: e.target.value})}
-                       className="w-full px-4 py-3 bg-slate-900 border border-white/5 rounded-xl focus:border-indigo-500 focus:ring-4 focus:ring-indigo-500/20 transition-all font-semibold text-slate-100 outline-none text-sm"
+                       onChange={(skills) => setFormData({...formData, skills})}
+                       multiSelect={true}
+                       theme="dark"
+                       placeholder="Select service skills..."
                      />
                    </div>
                  </div>

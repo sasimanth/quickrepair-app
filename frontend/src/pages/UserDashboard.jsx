@@ -2,6 +2,8 @@ import { useState, useEffect, useMemo, useRef } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import api from '../services/api'; 
 import { globalCategories, globalServices, getDbServices } from '../data/services';
+import SearchableServiceSelector from '../components/SearchableServiceSelector';
+import { subscribeToPushNotifications } from '../services/pushNotification';
 import { Calendar, MapPin, Smartphone, AlertCircle, Clock, CheckCircle, PackageSearch, XCircle, Plus, LayoutDashboard, Wrench, Settings, Star, User, ChevronRight, MessageSquare, Camera, UploadCloud, Loader2, Shield, ShieldCheck, HelpCircle, Truck, Home, Search, Eye, Zap, Maximize2, Hash, Layers, Paintbrush, Tv, X } from 'lucide-react';
 import ChatModal from '../components/ChatModal';
 import ReviewModal from '../components/ReviewModal';
@@ -175,6 +177,7 @@ const UserDashboard = () => {
   useEffect(() => {
     getDbServices().then(setServices);
     fetchData(true);
+    subscribeToPushNotifications(); // PWA background push notifications
     const interval = setInterval(() => fetchData(false), 5000);
 
     const handleLocationUpdate = (data) => {
@@ -226,6 +229,15 @@ const UserDashboard = () => {
           `Your ${updatedJob.serviceName} status is now: ${updatedJob.status.replace(/_/g, ' ').toUpperCase()}`, 
           'info'
         );
+        fetchData(false);
+        if (Notification.permission === 'granted') {
+          new Notification('🔄 Repair Status Updated', {
+            body: `Your ${updatedJob.serviceName} status is now: ${updatedJob.status.replace(/_/g, ' ').toUpperCase()}`,
+            icon: '/icon.svg'
+          });
+        }
+      } else {
+        fetchData(false);
       }
     };
 
@@ -429,15 +441,41 @@ const UserDashboard = () => {
   };
 
   const [updatingJobs, setUpdatingJobs] = useState({});
+  const [clarificationText, setClarificationText] = useState('');
+  const [showClarifyInput, setShowClarifyInput] = useState({});
+
+  const handleQuoteClarification = async (bookingId) => {
+    if (!clarificationText.trim()) return;
+    setUpdatingJobs(prev => ({ ...prev, [bookingId]: true }));
+    try {
+      await api.put(`/bookings/${bookingId}/clarify-quote`, { clarificationText });
+      setClarificationText('');
+      setShowClarifyInput(prev => ({ ...prev, [bookingId]: false }));
+      showToast('Clarification Sent 📢', 'Clarification request sent to technician.', 'success');
+      fetchData();
+    } catch (error) {
+       const errorMsg = error.response?.data?.message || error.message || 'Unknown error';
+       alert(`Failed to request clarification: ${errorMsg}`);
+       console.error(error);
+    } finally {
+       setUpdatingJobs(prev => ({ ...prev, [bookingId]: false }));
+    }
+  };
 
   const handleQuoteApproval = async (bookingId, approved) => {
     if (updatingJobs[bookingId]) return;
     // Optimistic update
-    setBookings(prev => prev.map(b => b._id === bookingId ? { ...b, status: approved ? 'in_progress' : 'cancelled' } : b));
+    setBookings(prev => prev.map(b => b._id === bookingId ? { ...b, status: approved ? 'in_progress' : 'quote_rejected' } : b));
     setUpdatingJobs(prev => ({ ...prev, [bookingId]: true }));
     
     try {
       await api.put(`/bookings/${bookingId}/approve-quote`, { approved });
+      showToast(
+        approved ? 'Quote Approved! ✅' : 'Quote Declined ❌',
+        approved ? 'Technician has been notified to resume work.' : 'Work suspended until technician submits a revised quote.',
+        approved ? 'success' : 'warning'
+      );
+      fetchData();
     } catch (error) {
        const errorMsg = error.response?.data?.message || error.message || 'Unknown error';
        alert(`Failed to update quote status: ${errorMsg}`);
@@ -737,20 +775,12 @@ const UserDashboard = () => {
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <div className="space-y-2">
                       <label className="text-sm font-bold text-slate-700 flex items-center gap-2"><Settings size={16} className="text-slate-400"/> Select Service</label>
-                      <select
+                      <SearchableServiceSelector
                         value={formData.serviceId}
-                        onChange={(e) => setFormData({ ...formData, serviceId: e.target.value })}
-                        className="w-full px-5 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:ring-4 focus:ring-blue-100 focus:border-blue-500 transition-all font-medium text-slate-700"
-                        required
-                      >
-                        {globalCategories.map(cat => (
-                          <optgroup key={cat.id} label={cat.name}>
-                            {globalServices.filter(s => s.categoryId === cat.id).map(service => (
-                              <option key={service.id} value={service.id}>{service.name}</option>
-                            ))}
-                          </optgroup>
-                        ))}
-                      </select>
+                        onChange={(serviceId) => setFormData({ ...formData, serviceId })}
+                        theme="light"
+                        placeholder="Search and select a service..."
+                      />
                     </div>
                     <div className="space-y-2">
                       <label className="text-sm font-bold text-slate-700 flex items-center gap-2"><Calendar size={16} className="text-slate-400"/> Preferred Date</label>
@@ -1385,15 +1415,21 @@ const UserDashboard = () => {
                         </div>
                       )}
 
-                      {/* Quote Approval UI */}
-                      {booking.status === 'quote_pending' && (
+                      {/* Quote negotiation and revision UI */}
+                      {['quote_pending', 'quote_clarification', 'quote_rejected'].includes(booking.status) && (
                         <div className="mt-4 p-6 bg-slate-900 text-white rounded-2xl border border-indigo-500/50 shadow-xl animate-in fade-in zoom-in-95">
                           <div className="flex justify-between items-center mb-4 border-b border-white/10 pb-3">
                             <h4 className="text-white font-extrabold text-lg flex items-center gap-2">
                               <CreditCard size={20} className="text-emerald-400"/> Quote Proposal
                             </h4>
-                            <span className="text-rose-400 text-xs font-bold uppercase tracking-wider bg-rose-500/10 px-2.5 py-1 rounded-full border border-rose-500/20 animate-pulse">
-                              Approval Needed
+                            <span className={`text-xs font-bold uppercase tracking-wider px-2.5 py-1 rounded-full border ${
+                              booking.status === 'quote_pending' ? 'bg-amber-500/10 text-amber-400 border-amber-500/20' :
+                              booking.status === 'quote_clarification' ? 'bg-purple-500/10 text-purple-400 border-purple-500/20 animate-pulse' :
+                              'bg-rose-500/10 text-rose-400 border-rose-500/20'
+                            }`}>
+                              {booking.status === 'quote_pending' ? 'Approval Needed' :
+                               booking.status === 'quote_clarification' ? 'Clarification Requested' :
+                               'Rejected - Suspended'}
                             </span>
                           </div>
                           
@@ -1471,14 +1507,105 @@ const UserDashboard = () => {
                             })()}
                           </div>
 
-                          <div className="flex gap-3">
-                            <button disabled={updatingJobs[booking._id]} onClick={() => handleQuoteApproval(booking._id, false)} className="flex-1 bg-white/5 hover:bg-rose-500/10 border border-white/10 hover:border-rose-500/30 text-slate-300 hover:text-rose-400 font-bold py-3 rounded-xl transition-all flex justify-center items-center gap-2">
-                              {updatingJobs[booking._id] ? <Loader2 size={16} className="animate-spin"/> : 'Decline'}
-                            </button>
-                            <button disabled={updatingJobs[booking._id]} onClick={() => handleQuoteApproval(booking._id, true)} className="flex-1 bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-400 hover:to-teal-400 text-white font-bold py-3 rounded-xl shadow-lg hover:shadow-emerald-500/20 transition-all flex justify-center items-center gap-2">
-                              {updatingJobs[booking._id] ? <Loader2 size={16} className="animate-spin"/> : 'Approve & Start Work'}
-                            </button>
-                          </div>
+                          {/* Negotiation Feedback Context */}
+                          {booking.status === 'quote_clarification' && (
+                            <div className="mb-4 p-4 bg-purple-500/10 border border-purple-500/20 text-purple-200 text-xs rounded-xl flex items-center gap-2">
+                              <span className="flex h-2.5 w-2.5 rounded-full bg-purple-400 animate-ping"></span>
+                              <span>Waiting for the technician to address your clarification request.</span>
+                            </div>
+                          )}
+
+                          {booking.status === 'quote_rejected' && (
+                            <div className="mb-4 p-4 bg-rose-500/10 border border-rose-500/20 text-rose-300 text-xs rounded-xl flex items-center gap-2">
+                              <AlertCircle size={16} className="text-rose-400 shrink-0" />
+                              <span>Work is suspended. The technician must submit a revised quote to resume.</span>
+                            </div>
+                          )}
+
+                          {/* Action Buttons */}
+                          {booking.status === 'quote_pending' && (
+                            <div className="flex flex-col gap-3">
+                              <div className="flex gap-3">
+                                <button disabled={updatingJobs[booking._id]} onClick={() => handleQuoteApproval(booking._id, false)} className="flex-1 bg-white/5 hover:bg-rose-500/10 border border-white/10 hover:border-rose-500/30 text-slate-300 hover:text-rose-400 font-bold py-3 rounded-xl transition-all flex justify-center items-center gap-2 cursor-pointer">
+                                  {updatingJobs[booking._id] ? <Loader2 size={16} className="animate-spin"/> : 'Decline Quote'}
+                                </button>
+                                <button disabled={updatingJobs[booking._id]} onClick={() => handleQuoteApproval(booking._id, true)} className="flex-1 bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-400 hover:to-teal-400 text-white font-bold py-3 rounded-xl shadow-lg hover:shadow-emerald-500/20 transition-all flex justify-center items-center gap-2 cursor-pointer">
+                                  {updatingJobs[booking._id] ? <Loader2 size={16} className="animate-spin"/> : 'Approve & Start Work'}
+                                </button>
+                              </div>
+                              <button
+                                disabled={updatingJobs[booking._id]}
+                                onClick={() => setShowClarifyInput(prev => ({ ...prev, [booking._id]: !prev[booking._id] }))}
+                                className="w-full bg-indigo-500/10 hover:bg-indigo-500/20 border border-indigo-500/25 text-indigo-300 font-bold py-2.5 rounded-xl transition-all flex justify-center items-center gap-2 cursor-pointer text-xs"
+                              >
+                                {showClarifyInput[booking._id] ? 'Hide Clarification Input' : '📢 Request Quote Clarification'}
+                              </button>
+
+                              {showClarifyInput[booking._id] && (
+                                <div className="mt-2 space-y-2 p-3 bg-white/5 border border-white/5 rounded-xl animate-in slide-in-from-top-2 duration-300">
+                                  <textarea
+                                    value={clarificationText}
+                                    onChange={(e) => setClarificationText(e.target.value)}
+                                    placeholder="Ask for clarification details (e.g. why are spare parts costing ₹800?)..."
+                                    className="w-full p-3 bg-slate-950 border border-white/10 rounded-lg text-xs outline-none text-slate-100 placeholder-slate-500 focus:border-indigo-500 transition-all resize-none"
+                                    rows={2.5}
+                                  />
+                                  <button
+                                    disabled={updatingJobs[booking._id] || !clarificationText.trim()}
+                                    onClick={() => handleQuoteClarification(booking._id)}
+                                    className="w-full bg-indigo-600 hover:bg-indigo-500 disabled:bg-slate-800 text-white font-black py-2 rounded-lg text-xs transition-all flex justify-center items-center gap-2 cursor-pointer"
+                                  >
+                                    {updatingJobs[booking._id] ? <Loader2 size={12} className="animate-spin"/> : 'Submit Clarification Request'}
+                                  </button>
+                                </div>
+                              )}
+                            </div>
+                          )}
+
+                          {/* Historical Revision Log Card */}
+                          {booking.quoteRevisions && booking.quoteRevisions.length > 0 && (
+                            <div className="mt-6 border-t border-white/10 pt-4">
+                              <p className="text-xs font-black uppercase tracking-wider text-slate-400 mb-3">Quote History & Revision Logs</p>
+                              <div className="space-y-3">
+                                {booking.quoteRevisions.map((rev, idx) => (
+                                  <div key={rev._id || idx} className="bg-white/5 border border-white/5 rounded-xl p-4 text-xs">
+                                    <div className="flex justify-between items-center mb-2">
+                                      <span className="font-extrabold text-indigo-400">Quote Version V{rev.version || (idx + 1)}</span>
+                                      <span className={`px-2 py-0.5 rounded-full font-black text-[9px] uppercase tracking-wider ${
+                                        rev.status === 'approved' ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20' :
+                                        rev.status === 'rejected' ? 'bg-rose-500/10 text-rose-400 border border-rose-500/20' :
+                                        rev.status === 'clarification_requested' ? 'bg-purple-500/10 text-purple-400 border border-purple-500/20' :
+                                        'bg-amber-500/10 text-amber-400 border border-amber-500/20'
+                                      }`}>
+                                        {rev.status}
+                                      </span>
+                                    </div>
+                                    <div className="grid grid-cols-3 gap-2 mb-2 text-slate-400">
+                                      <div>Service: <span className="text-white font-semibold">₹{rev.serviceCharge || 0}</span></div>
+                                      <div>Parts: <span className="text-white font-semibold">₹{rev.sparePartsCost || 0}</span></div>
+                                      <div>Transport: <span className="text-white font-semibold">₹{rev.transportCharge || 0}</span></div>
+                                    </div>
+                                    <div className="text-slate-300 font-bold mb-1">Total: <span className="text-emerald-400 font-black text-sm">₹{rev.finalQuote || 0}</span></div>
+                                    {rev.quoteReason && (
+                                      <p className="text-slate-400 italic">"Reason: {rev.quoteReason}"</p>
+                                    )}
+                                    {rev.clarificationText && (
+                                      <div className="mt-2 bg-purple-500/5 border border-purple-500/10 rounded-lg p-2.5 text-purple-200">
+                                        <p className="font-black uppercase tracking-wider text-[9px] text-purple-400">Clarification Request:</p>
+                                        <p className="italic">"{rev.clarificationText}"</p>
+                                        {rev.clarificationResponse && (
+                                          <div className="mt-1.5 border-t border-purple-500/10 pt-1 text-slate-300">
+                                            <p className="font-black uppercase tracking-wider text-[9px] text-indigo-400">Technician Response:</p>
+                                            <p className="italic">"{rev.clarificationResponse}"</p>
+                                          </div>
+                                        )}
+                                      </div>
+                                    )}
+                                  </div>
+                                ))}
+                              </div>
+                            </div>
+                          )}
                         </div>
                       )}
                       

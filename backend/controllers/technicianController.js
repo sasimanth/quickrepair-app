@@ -131,16 +131,64 @@ const getProfile = async (req, res) => {
 // @desc    Update technician profile (Location, Skills, etc)
 // @route   PUT /api/technicians/profile
 const updateProfile = async (req, res) => {
-  const { address, lat, lng, skills, experience, avatar, isOnline } = req.body;
+  const { address, area, lat, lng, skills, experience, avatar, isOnline } = req.body;
   try {
     let tech = await Technician.findOne({ userId: req.user.id });
     
     // Convert array components if skills is string
-    const skillsArray = Array.isArray(skills) ? skills : (skills ? skills.split(',').map(s => s.trim()) : tech?.skills);
+    const skillsArray = Array.isArray(skills) ? skills : (skills ? skills.split(',').map(s => s.trim()) : null);
+
+    const serviceIdToName = {
+      'ac_repair': 'AC Repair',
+      'washing_machine': 'Washing Machine Repair',
+      'refrigerator': 'Refrigerator Repair',
+      'microwave': 'Microwave Repair',
+      'tv_repair': 'TV Repair',
+      'laptop_repair': 'Laptop Repair',
+      'mobile_repair': 'Mobile Repair',
+      'ac_install': 'AC Installation',
+      'cctv_install': 'CCTV Installation',
+      'ro_install': 'RO Installation',
+      'inverter_install': 'Inverter Installation',
+      'fan_install': 'Ceiling Fan Installation',
+      'lock_install': 'Door Lock Installation',
+      'furniture': 'Furniture Assembly',
+      'sofa_clean': 'Sofa Cleaning',
+      'bathroom_clean': 'Bathroom Deep Cleaning',
+      'water_tank_clean': 'Water Tank Cleaning',
+      'carpet_clean': 'Carpet Cleaning',
+      'kitchen_clean': 'Kitchen Cleaning',
+      'home_clean': 'Full Home Cleaning',
+      'pest_control': 'Pest Control',
+      'electric_wiring': 'Electric Wiring',
+      'plumbing_work': 'Plumbing Work',
+      'furniture_repair': 'Furniture Repair',
+      'painting': 'Painting'
+    };
+
+    const isServiceId = (s) => Object.keys(serviceIdToName).includes(s);
+    let selectedServices = tech?.services || [];
+    let selectedSkills = tech?.skills || [];
+    
+    if (skillsArray && skillsArray.length > 0) {
+      if (skillsArray.every(s => isServiceId(s))) {
+        selectedServices = skillsArray;
+        selectedSkills = skillsArray.map(s => serviceIdToName[s] || s);
+      } else {
+        selectedSkills = skillsArray;
+        const nameToServiceId = Object.entries(serviceIdToName).reduce((acc, [k, v]) => {
+          acc[v.toLowerCase()] = k;
+          return acc;
+        }, {});
+        selectedServices = skillsArray.map(s => nameToServiceId[s.toLowerCase()] || s).filter(Boolean);
+      }
+    }
 
     const updateFields = {
       address: address || tech?.address,
-      skills: skillsArray,
+      area: area || tech?.area || address,
+      skills: selectedSkills,
+      services: selectedServices,
       experience: experience || tech?.experience,
       avatar: avatar || tech?.avatar,
       isProfileComplete: true,

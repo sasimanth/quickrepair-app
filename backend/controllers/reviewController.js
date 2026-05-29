@@ -7,7 +7,13 @@ const Booking = require('../models/Booking');
 const createReview = async (req, res) => {
   try {
     const { bookingId } = req.params;
-    const { rating, comment } = req.body;
+    const { ratingQuality, ratingCommunication, ratingTimeliness, ratingValue, comment } = req.body;
+
+    if (!ratingQuality || !ratingCommunication || !ratingTimeliness || !ratingValue) {
+      return res.status(400).json({ message: 'All rating categories (Quality, Communication, Timeliness, Value) are required' });
+    }
+
+    const overallRating = Math.round(((Number(ratingQuality) + Number(ratingCommunication) + Number(ratingTimeliness) + Number(ratingValue)) / 4) * 10) / 10;
 
     // Check if booking exists
     const booking = await Booking.findById(bookingId);
@@ -49,11 +55,15 @@ const createReview = async (req, res) => {
       bookingId,
       userId: req.user.id,
       technicianId: booking.providerId,
-      rating: Number(rating),
+      rating: overallRating,
+      ratingQuality: Number(ratingQuality),
+      ratingCommunication: Number(ratingCommunication),
+      ratingTimeliness: Number(ratingTimeliness),
+      ratingValue: Number(ratingValue),
       comment
     });
 
-    // Import Technician inside the function to avoid circular dependency issues if any
+    // Import Technician inside the function to avoid circular dependency issues
     const Technician = require('../models/Technician');
     
     // Find technician and update rating
@@ -64,7 +74,7 @@ const createReview = async (req, res) => {
        const currentCount = technician.reviewCount || 0;
        const currentTotalRating = (technician.rating || 5) * currentCount;
        const newCount = currentCount + 1;
-       const newRating = (currentTotalRating + Number(rating)) / newCount;
+       const newRating = (currentTotalRating + overallRating) / newCount;
        
        technician.reviewCount = newCount;
        technician.rating = Math.round(newRating * 10) / 10; // keep one decimal

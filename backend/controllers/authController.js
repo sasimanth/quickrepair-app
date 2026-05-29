@@ -47,6 +47,31 @@ const signup = async (req, res) => {
     });
 
     if (user) {
+      // Log legal acceptances for compliance
+      try {
+        const LegalDocument = require('../models/LegalDocument');
+        const LegalAcceptance = require('../models/LegalAcceptance');
+        
+        const logAcceptance = async (type) => {
+          const doc = await LegalDocument.findOne({ type });
+          const version = doc ? doc.version : 1;
+          await LegalAcceptance.create({
+            userId: user._id,
+            documentType: type,
+            version,
+            acceptedAt: new Date()
+          });
+        };
+
+        await logAcceptance('terms_conditions');
+        await logAcceptance('privacy_policy');
+        if (user.role === 'technician') {
+          await logAcceptance('technician_terms');
+        }
+      } catch (err) {
+        console.error('Failed to log legal acceptance compliance:', err.message);
+      }
+
       // If role is technician, create a technician profile
       if (user.role === 'technician') {
         if (!skills || skills.length === 0 || !location) {

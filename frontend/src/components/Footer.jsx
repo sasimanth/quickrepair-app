@@ -75,7 +75,7 @@ const Footer = () => {
               </a>
 
               <a 
-                href="https://youtube.com/@fixvo" 
+                href="https://www.youtube.com/@G.SasimanthReddy" 
                 target="_blank" 
                 rel="noopener noreferrer" 
                 className="p-2 bg-slate-800/80 border border-white/5 rounded-xl text-slate-400 hover:text-red-500 hover:bg-red-500/10 hover:border-red-500/30 hover:shadow-[0_0_15px_rgba(239,68,68,0.3)] transition-all duration-300 transform hover:-translate-y-1 flex items-center justify-center cursor-pointer"

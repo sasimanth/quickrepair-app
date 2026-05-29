@@ -1,4 +1,6 @@
 const Notification = require('../models/Notification');
+const PushSubscription = require('../models/PushSubscription');
+const { getVapidKeys } = require('../utils/vapidHelper');
 
 // @desc    Get all notifications for logged-in user
 // @route   GET /api/notifications
@@ -32,4 +34,37 @@ const markRead = async (req, res) => {
   }
 };
 
-module.exports = { getNotifications, markRead };
+// @desc    Get VAPID Public Key
+// @route   GET /api/notifications/vapid-public-key
+const getVapidPublicKey = async (req, res) => {
+  try {
+    const keys = getVapidKeys();
+    res.json({ publicKey: keys.publicKey });
+  } catch (err) {
+    res.status(500).json({ message: err.message });
+  }
+};
+
+// @desc    Subscribe to push notifications
+// @route   POST /api/notifications/subscribe
+const subscribe = async (req, res) => {
+  try {
+    const { subscription } = req.body;
+    if (!subscription || !subscription.endpoint) {
+      return res.status(400).json({ message: 'Invalid subscription object' });
+    }
+
+    // Upsert the subscription for this user
+    await PushSubscription.findOneAndUpdate(
+      { userId: req.user.id, 'subscription.endpoint': subscription.endpoint },
+      { userId: req.user.id, subscription },
+      { upsert: true, new: true }
+    );
+
+    res.status(201).json({ success: true, message: 'Subscribed to push notifications successfully' });
+  } catch (err) {
+    res.status(500).json({ message: err.message });
+  }
+};
+
+module.exports = { getNotifications, markRead, getVapidPublicKey, subscribe };

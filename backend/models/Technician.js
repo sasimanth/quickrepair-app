@@ -26,7 +26,7 @@ const technicianSchema = new mongoose.Schema({
   isOnline: { type: Boolean, default: true },
   isVerified: { type: Boolean, default: false },
   backgroundCheckStatus: { type: String, enum: ['pending', 'approved', 'rejected', 'none'], default: 'none' },
-  currentStatus: { type: String, enum: ['available', 'busy', 'on_the_way', 'offline'], default: 'available' },
+  currentStatus: { type: String, enum: ['online', 'offline', 'busy', 'on_job', 'available', 'on_the_way'], default: 'online' },
   currentJobId: { type: mongoose.Schema.Types.ObjectId, ref: 'QuickBooking', default: null },
   expectedAvailableTime: { type: Date, default: null },
   withdrawnAmount: { type: Number, default: 0 },

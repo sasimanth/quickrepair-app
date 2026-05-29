@@ -1,4 +1,18 @@
 const Notification = require('../models/Notification');
+const webpush = require('web-push');
+const { getVapidKeys } = require('../utils/vapidHelper');
+
+// Configure Web Push VAPID keys
+try {
+  const keys = getVapidKeys();
+  webpush.setVapidDetails(
+    'mailto:support@fixvo.com',
+    keys.publicKey,
+    keys.privateKey
+  );
+} catch (e) {
+  console.error('Error initializing web-push VAPID details:', e);
+}
 
 // Actual external service dispatcher via Resend API
 const dispatchExternal = async (email, phone, type, subject, message) => {
@@ -101,13 +115,49 @@ const sendInAppPush = async (userId, title, message, type = 'system', bookingId 
   }
 };
 
+// Background Web Push Dispatcher
+const sendWebPush = async (userId, title, message, bookingId = null) => {
+  try {
+    const PushSubscription = require('../models/PushSubscription');
+    const subscriptions = await PushSubscription.find({ userId });
+    if (!subscriptions || subscriptions.length === 0) return;
+
+    const payload = JSON.stringify({
+      title,
+      body: message,
+      data: {
+        url: bookingId ? `/dashboard?jobId=${bookingId}` : '/dashboard',
+        bookingId
+      }
+    });
+
+    const sendPromises = subscriptions.map(async (sub) => {
+      try {
+        await webpush.sendNotification(sub.subscription, payload);
+      } catch (err) {
+        if (err.statusCode === 410 || err.statusCode === 404) {
+          console.log(`❌ Removing invalid push subscription for user ${userId}`);
+          await PushSubscription.deleteOne({ _id: sub._id });
+        } else {
+          console.error(`Error sending push notification:`, err);
+        }
+      }
+    });
+
+    await Promise.all(sendPromises);
+  } catch (err) {
+    console.error('Failed to send web push:', err.message);
+  }
+};
+
 /**
  * Main dispatcher to handle Email + SMS + In-App Push instantly.
  */
 const notifyUser = async ({ userId, email, phone, type = 'email', subject, text, notifType = 'system', bookingId = null }) => {
-  // Fire In-App DB Notification
+  // Fire In-App DB Notification & Web Push
   if (userId) {
     await sendInAppPush(userId, subject, text, notifType, bookingId);
+    await sendWebPush(userId, subject, text, bookingId);
   }
 
   // Simulate remote external (Twilio / SendGrid)
