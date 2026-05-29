@@ -3,7 +3,7 @@ import api from '../services/api';
 import { 
   Users, Briefcase, LayoutDashboard, Settings, Search, SlidersHorizontal, 
   ChevronDown, ChevronUp, Calendar, MapPin, CheckCircle, Clock, XCircle, 
-  ChevronLeft, ChevronRight, AlertCircle, CreditCard, UserCheck, Eye, Sparkles, Star
+  ChevronLeft, ChevronRight, AlertCircle, CreditCard, UserCheck, Eye, Sparkles, Star, Shield, Loader2
 } from 'lucide-react';
 
 const AdminDashboard = () => {
