@@ -1,23 +1,53 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
+import api from '../services/api';
 
 const Refund = () => {
+  const [doc, setDoc] = useState(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchDoc = async () => {
+      try {
+        const { data } = await api.get('/legal/document/refund_policy');
+        setDoc(data);
+      } catch (err) {
+        console.error("Failed to load refund dynamic template", err);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchDoc();
+  }, []);
+
+  const defaultContent = `
+    <h2>1. Refund Eligibility</h2>
+    <p>Refunds are evaluated for bookings where the technician failed to resolve the agreed issue, caused damage, or failed to arrive.</p>
+    
+    <h2>2. Process</h2>
+    <p>To request a refund, submit details through customer support within 48 hours of service completion. Approved refunds clear to the original payment method in 5-7 business days.</p>
+  `;
+
   return (
-    <div className="container mx-auto px-4 py-12 max-w-4xl">
-      <h1 className="text-4xl font-bold font-heading mb-8">Refund &amp; Warranty Policy</h1>
-      <p className="text-gray-500 mb-8 italic">Last Updated: April 2026</p>
-      
-      <div className="prose max-w-none text-gray-700">
-        <h2 className="text-2xl font-semibold mt-8 mb-4">Cancellations</h2>
-        <p className="mb-4">You may cancel a booking free of charge up to 2 hours before the technician arrives. Late cancellations or cancellations when the technician is already en-route will incur a $15 cancellation fee to compensate the technician for their time.</p>
-        
-        <h2 className="text-2xl font-semibold mt-8 mb-4">The Fixvo Guarantee</h2>
-        <p className="mb-4">We stand by our professionals. If the original issue persists within 7 days of the repair, we will send a technician back to fix it for free. This guarantee applies to the specific workmanship performed and not to separate or new issues.</p>
-        
-        <h2 className="text-2xl font-semibold mt-8 mb-4">Refunds</h2>
-        <p className="mb-4">Refunds are issued to the original payment method within 5-7 business days. A refund is granted if a repair cannot be completed for reasons outside of your control or if parts are unavailable.</p>
-        
-        <h2 className="text-2xl font-semibold mt-8 mb-4">Non-Refundable Items</h2>
-        <p className="mb-4">Any spare parts or components purchased specifically for your repair and installed in your appliance are non-refundable. The initial inspection fee is also non-refundable if you decide not to proceed with the repair after diagnosis.</p>
+    <div className="min-h-screen bg-slate-50 py-12 px-4 sm:px-6 lg:px-8 mt-10">
+      <div className="max-w-4xl mx-auto bg-white p-8 md:p-12 rounded-[2rem] shadow-[0_8px_30px_rgb(0,0,0,0.04)] border border-slate-100/60 relative overflow-hidden">
+        <div className="absolute top-0 left-0 h-2 bg-gradient-to-r from-blue-500 via-indigo-500 to-purple-500 w-full"></div>
+        {loading ? (
+          <div className="py-20 flex justify-center items-center">
+            <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-indigo-500"></div>
+          </div>
+        ) : (
+          <>
+            <h1 className="text-4xl font-extrabold text-slate-900 mb-2">{doc?.title || 'Refund Policy'}</h1>
+            <p className="text-slate-500 mb-10 font-medium">
+              Last Updated: {doc?.updatedAt ? new Date(doc.updatedAt).toLocaleDateString(undefined, { month: 'long', year: 'numeric' }) : 'May 2026'} | Version V{doc?.version || 1}
+            </p>
+            
+            <div 
+              className="prose max-w-none text-slate-700 space-y-6"
+              dangerouslySetInnerHTML={{ __html: doc?.content || defaultContent }}
+            />
+          </>
+        )}
       </div>
     </div>
   );

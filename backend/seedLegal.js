@@ -90,6 +90,21 @@ const initialDocuments = [
       <p>Users may not attempt to bypass the platform by directly hiring matched technicians. Doing so voids all service warranties and results in account suspension.</p>
     `,
     version: 1
+  },
+  {
+    type: 'user_safety',
+    title: 'User Safety Guidelines',
+    content: `
+      <h2>1. Verified Technicians</h2>
+      <p>All technicians on Fixvo undergo rigorous identity and background checks. Always verify the technician's identity card when they arrive.</p>
+      
+      <h2>2. Safe Environment</h2>
+      <p>Ensure that an adult is present during the service and the work area is safe and accessible. Report any suspicious behavior immediately.</p>
+      
+      <h2>3. Secure Transactions</h2>
+      <p>All bookings and payments must be processed through the platform. Off-platform transactions violate our guidelines and void all safety guarantees.</p>
+    `,
+    version: 1
   }
 ];
 

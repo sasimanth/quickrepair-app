@@ -164,6 +164,18 @@ const Footer = () => {
                 </Link>
               </li>
               <li>
+                <Link to="/technician-agreement" className={getLinkClass('/technician-agreement')}>
+                  {isActive('/technician-agreement') && <span className="w-1.5 h-1.5 rounded-full bg-blue-400 animate-pulse"></span>}
+                  Technician Agreement
+                </Link>
+              </li>
+              <li>
+                <Link to="/safety" className={getLinkClass('/safety')}>
+                  {isActive('/safety') && <span className="w-1.5 h-1.5 rounded-full bg-blue-400 animate-pulse"></span>}
+                  Safety Guidelines
+                </Link>
+              </li>
+              <li>
                 <Link to="/disclaimer" className={getLinkClass('/disclaimer')}>
                   {isActive('/disclaimer') && <span className="w-1.5 h-1.5 rounded-full bg-blue-400 animate-pulse"></span>}
                   Disclaimer

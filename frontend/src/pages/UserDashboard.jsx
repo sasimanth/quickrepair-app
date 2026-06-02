@@ -207,11 +207,20 @@ const UserDashboard = () => {
     }
   }, [location.search]);
 
-  // Register private room for customer notification/alerts & handle status updates
+  // Register private room for customer notification/alerts & sync on reconnects
   useEffect(() => {
-    if (profile?.userId) {
+    if (!profile?.userId) return;
+
+    const registerSocket = () => {
       socket.emit('register_user', profile.userId);
-    }
+    };
+
+    registerSocket();
+    socket.on('connect', registerSocket);
+
+    return () => {
+      socket.off('connect', registerSocket);
+    };
   }, [profile?.userId]);
 
   useEffect(() => {

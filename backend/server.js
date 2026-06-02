@@ -104,9 +104,29 @@ io.on('connection', (socket) => {
     io.to(`chat_${data.bookingId}`).emit('receive_message', data.messageObj);
   });
 
-  socket.on('read_messages', (data) => {
-    // data: { bookingId, readerId }
-    io.to(`chat_${data.bookingId}`).emit('read_messages', data);
+  socket.on('message_delivered', async (data) => {
+    // data: { messageId, bookingId }
+    try {
+      const Message = require('./models/Message');
+      await Message.findByIdAndUpdate(data.messageId, { isDelivered: true });
+      io.to(`chat_${data.bookingId}`).emit('message_delivered', data);
+    } catch (e) {
+      console.error('Error marking message as delivered in socket:', e);
+    }
+  });
+
+  socket.on('read_messages', async (data) => {
+    // data: { bookingId, userId }
+    try {
+      const Message = require('./models/Message');
+      await Message.updateMany(
+        { bookingId: data.bookingId, senderId: { $ne: data.userId }, isRead: false },
+        { isRead: true, isDelivered: true }
+      );
+      io.to(`chat_${data.bookingId}`).emit('messages_read', { bookingId: data.bookingId, readerId: data.userId });
+    } catch (e) {
+      console.error('Error marking messages as read in socket:', e);
+    }
   });
 
   socket.on('disconnect', () => {

@@ -16,6 +16,8 @@ import Contact from './pages/Contact';
 import NotFound from './pages/NotFound';
 import Cancellation from './pages/Cancellation';
 import Referrals from './pages/Referrals';
+import TechnicianAgreement from './pages/TechnicianAgreement';
+import UserSafety from './pages/UserSafety';
 import LoadingSpinner from './components/LoadingSpinner';
 import { AuthProvider, useAuth } from './contexts/AuthContext';
 
@@ -160,6 +162,8 @@ const AppContent = () => {
             <Route path="/cancellation" element={<Cancellation />} />
             <Route path="/disclaimer" element={<Disclaimer />} />
             <Route path="/referrals" element={<Referrals />} />
+            <Route path="/technician-agreement" element={<TechnicianAgreement />} />
+            <Route path="/safety" element={<UserSafety />} />
             <Route path="*" element={<NotFound />} />
           </Routes>
         </Suspense>

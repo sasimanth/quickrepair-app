@@ -122,11 +122,19 @@ const sendWebPush = async (userId, title, message, bookingId = null) => {
     const subscriptions = await PushSubscription.find({ userId });
     if (!subscriptions || subscriptions.length === 0) return;
 
+    // Fetch the recipient's role dynamically to set the correct dashboard url
+    const User = require('../models/User');
+    const recipientUser = await User.findById(userId);
+    const role = recipientUser ? recipientUser.role : 'user';
+    const redirectUrl = role === 'technician'
+      ? (bookingId ? `/technician-dashboard?jobId=${bookingId}` : '/technician-dashboard')
+      : (bookingId ? `/dashboard?jobId=${bookingId}` : '/dashboard');
+
     const payload = JSON.stringify({
       title,
       body: message,
       data: {
-        url: bookingId ? `/dashboard?jobId=${bookingId}` : '/dashboard',
+        url: redirectUrl,
         bookingId
       }
     });

@@ -3,7 +3,7 @@ import api from '../services/api';
 import { 
   Users, Briefcase, LayoutDashboard, Settings, Search, SlidersHorizontal, 
   ChevronDown, ChevronUp, Calendar, MapPin, CheckCircle, Clock, XCircle, 
-  ChevronLeft, ChevronRight, AlertCircle, CreditCard, UserCheck, Eye, Sparkles, Star, Shield, Loader2
+  ChevronLeft, ChevronRight, AlertCircle, CreditCard, UserCheck, Eye, Sparkles, Star, Shield, Loader2, RefreshCw
 } from 'lucide-react';
 
 const AdminDashboard = () => {
@@ -1142,10 +1142,14 @@ const AdminDashboard = () => {
                   </thead>
                   <tbody>
                     {complianceLogs.map((log) => {
-                      const docTypeMap = {
+                       const docTypeMap = {
                         terms_conditions: 'Terms & Conditions',
                         privacy_policy: 'Privacy Policy',
-                        technician_terms: 'Technician Agreement'
+                        refund_policy: 'Refund Policy',
+                        cancellation_policy: 'Cancellation Policy',
+                        technician_terms: 'Technician Agreement',
+                        user_agreement: 'User Agreement',
+                        user_safety: 'User Safety Guidelines'
                       };
                       return (
                         <tr key={log._id} className="border-b border-white/5 hover:bg-white/5 transition-colors font-semibold text-xs text-white">

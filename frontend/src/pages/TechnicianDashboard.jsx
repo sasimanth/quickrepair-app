@@ -30,6 +30,20 @@ const TechnicianDashboard = () => {
   const [toasts, setToasts] = useState([]);
   const [notifications, setNotifications] = useState([]);
   const [showNotifDropdown, setShowNotifDropdown] = useState(false);
+  const [refreshing, setRefreshing] = useState(false);
+  const [notifPermission, setNotifPermission] = useState(
+    typeof Notification !== 'undefined' ? Notification.permission : 'granted'
+  );
+
+  const handleEnableNotifications = async () => {
+    if (typeof Notification === 'undefined') return;
+    const permission = await Notification.requestPermission();
+    setNotifPermission(permission);
+    if (permission === 'granted') {
+      await subscribeToPushNotifications();
+      showToast('Notifications Enabled 🔔', 'You will now receive job alerts instantly.', 'success');
+    }
+  };
 
   const playChime = () => {
     if (navigator.vibrate) {
@@ -65,7 +79,7 @@ const TechnicianDashboard = () => {
     if ('Notification' in window && Notification.permission === 'granted') {
       const defaultOptions = {
         body: message,
-        icon: '/icon.svg',
+        icon: '/fixvo-icon.png',
         tag: options.tag || 'fixvo-general',
         vibrate: [200, 100, 200],
         renotify: true,
@@ -327,11 +341,21 @@ const TechnicianDashboard = () => {
     };
   }, [profile?.isOnline, profile?.userId]);
 
-  // Register private user room for job alerts and status updates
+  // Register private user & tech room and sync on connection reconnects
   useEffect(() => {
-    if (profile?.userId) {
+    if (!profile?.userId) return;
+
+    const registerSocket = () => {
       socket.emit('register_user', profile.userId);
-    }
+      socket.emit('register_tech', profile.userId);
+    };
+
+    registerSocket();
+    socket.on('connect', registerSocket);
+
+    return () => {
+      socket.off('connect', registerSocket);
+    };
   }, [profile?.userId]);
 
   useEffect(() => {
@@ -382,12 +406,21 @@ const TechnicianDashboard = () => {
       }
     };
 
+    const handleNewNotification = (notif) => {
+      setNotifications(prev => [notif, ...prev]);
+      if (notif.type === 'payout' || notif.type === 'system') {
+        showToast(notif.title, notif.message, 'info');
+      }
+    };
+
     socket.on('new_job', handleNewJob);
     socket.on('job_update', handleJobUpdate);
+    socket.on('new_notification', handleNewNotification);
 
     return () => {
       socket.off('new_job', handleNewJob);
       socket.off('job_update', handleJobUpdate);
+      socket.off('new_notification', handleNewNotification);
     };
   }, [profile?.userId, activeAlertJob]);
 
@@ -453,7 +486,11 @@ const TechnicianDashboard = () => {
 
   const fetchJobs = async (silent = false) => {
     try {
-      if (!silent) setLoading(true);
+      if (!silent) {
+        setLoading(true);
+      } else {
+        setRefreshing(true);
+      }
       const profileRes = await api.get('/technicians/profile');
       setProfile(profileRes.data);
 
@@ -466,15 +503,21 @@ const TechnicianDashboard = () => {
         setReviews(reviewsRes.data);
         await fetchNotifications();
       }
-    } catch (error) { console.error('Error fetching dashboard data', error); }
-    finally { if (!silent) setLoading(false); }
+    } catch (error) { 
+      console.error('Error fetching dashboard data', error); 
+    } finally { 
+      if (!silent) {
+        setLoading(false);
+      } else {
+        setRefreshing(false);
+      }
+    }
   };
 
   useEffect(() => {
-    if ('Notification' in window) {
-      if (Notification.permission === 'default') {
-        Notification.requestPermission();
-      }
+    // Keep permission state fresh
+    if (typeof Notification !== 'undefined') {
+      setNotifPermission(Notification.permission);
     }
   }, []);
 
@@ -775,10 +818,11 @@ const TechnicianDashboard = () => {
               <Settings size={18} /> Settings
             </button>
             <button
-              onClick={fetchJobs}
-              className="col-span-1 flex items-center justify-center gap-2 bg-slate-100 hover:bg-slate-200 text-slate-700 px-5 py-3.5 rounded-2xl font-bold transition-all duration-300 shadow-sm text-sm"
+              onClick={() => fetchJobs(true)}
+              disabled={refreshing}
+              className="col-span-1 flex items-center justify-center gap-2 bg-slate-100 hover:bg-slate-200 text-slate-700 px-5 py-3.5 rounded-2xl font-bold transition-all duration-300 shadow-sm text-sm disabled:opacity-60"
             >
-              <RefreshCw size={18} /> Refresh
+              <RefreshCw size={18} className={refreshing ? "animate-spin" : ""} /> Refresh
             </button>
           </div>
         </div>
@@ -799,6 +843,41 @@ const TechnicianDashboard = () => {
               {setupLoading ? <RefreshCw className="animate-spin" size={20}/> : <MapPin size={20}/>}
               {setupLoading ? 'Locating...' : 'Share Location & Go Active'}
             </button>
+          </div>
+        )}
+
+        {/* Notification Permission Onboarding Banner */}
+        {!loading && profile?.isProfileComplete && notifPermission !== 'granted' && (
+          <div className={`p-6 rounded-3xl border flex flex-col md:flex-row items-center justify-between gap-4 shadow-sm animate-in fade-in slide-in-from-top-4 duration-300 ${
+            notifPermission === 'denied' 
+              ? 'bg-rose-50 border-rose-100 text-rose-800' 
+              : 'bg-indigo-50 border-indigo-100 text-indigo-900'
+          }`}>
+            <div className="flex items-center gap-4 text-center md:text-left flex-col md:flex-row">
+              <div className={`p-3 rounded-2xl shrink-0 ${
+                notifPermission === 'denied' ? 'bg-rose-100 text-rose-600' : 'bg-indigo-100 text-indigo-600'
+              }`}>
+                <Bell size={24} className={notifPermission === 'default' ? 'animate-bounce' : ''} />
+              </div>
+              <div className="space-y-1">
+                <h3 className="text-base font-extrabold tracking-tight">
+                  {notifPermission === 'denied' ? 'Action Required: Notifications Blocked' : 'Enable Real-Time Job Alerts'}
+                </h3>
+                <p className="text-xs font-medium max-w-xl leading-relaxed opacity-90">
+                  {notifPermission === 'denied' 
+                    ? 'You have disabled notifications for Fixvo. To receive sound, vibrate, and background alerts for new jobs, click the lock/settings icon in your browser address bar and set Notifications to "Allow".'
+                    : 'Get instant alerts on your lock screen for new bookings, customer messages, and payments, even when using other apps or outside the website.'}
+                </p>
+              </div>
+            </div>
+            {notifPermission !== 'denied' && (
+              <button
+                onClick={handleEnableNotifications}
+                className="w-full md:w-auto px-6 py-3 bg-indigo-600 hover:bg-indigo-700 text-white font-extrabold text-xs uppercase tracking-wider rounded-xl shadow-md transition-all shrink-0 active:scale-95 cursor-pointer border-none outline-none"
+              >
+                Enable Notifications
+              </button>
+            )}
           </div>
         )}
 
@@ -1467,6 +1546,17 @@ const TechnicianDashboard = () => {
                 </table>
               </div>
             )}
+          </div>
+        )}
+
+        {loading && (
+          <div className="space-y-6">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+              <div className="h-44 bg-white border border-slate-100 rounded-3xl animate-pulse"></div>
+              <div className="h-44 bg-white border border-slate-100 rounded-3xl animate-pulse"></div>
+              <div className="h-44 bg-white border border-slate-100 rounded-3xl animate-pulse"></div>
+            </div>
+            <div className="bg-white border border-slate-100 rounded-3xl p-6 h-96 animate-pulse"></div>
           </div>
         )}
 

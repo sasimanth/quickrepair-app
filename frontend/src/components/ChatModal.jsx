@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
 import api from '../services/api';
-import { X, Send, User, Wrench, CheckCheck, MessageCircle } from 'lucide-react';
+import { X, Send, User, Wrench, Check, CheckCheck, MessageCircle, CheckCircle, Truck, Sparkles, XCircle, CreditCard } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 import { socket } from '../services/socket';
 
@@ -24,6 +24,11 @@ const ChatModal = ({ booking, onClose, currentRole }) => {
       const { data } = await api.get(`/messages/${bookingId}`);
       setMessages(data);
       socket.emit('read_messages', { bookingId, userId: user?._id || user?.id });
+      // Send delivery receipts for loaded unread/undelivered messages
+      const otherUndelivered = data.filter(m => m.senderId !== (user?._id || user?.id) && !m.isDelivered);
+      otherUndelivered.forEach(m => {
+        socket.emit('message_delivered', { messageId: m._id, bookingId });
+      });
     } catch (error) {
       console.error('Failed to load messages', error);
     } finally {
@@ -51,23 +56,32 @@ const ChatModal = ({ booking, onClose, currentRole }) => {
         
         return [...prev, newMsg];
       });
+      
+      // If we are the recipient, send delivery and read signals
       if (newMsg.senderId !== (user?._id || user?.id)) {
+        socket.emit('message_delivered', { messageId: newMsg._id, bookingId });
         socket.emit('read_messages', { bookingId, userId: user?._id || user?.id });
       }
     };
 
     const handleMessagesRead = ({ readerId }) => {
       if (readerId !== (user?._id || user?.id)) {
-        setMessages(prev => prev.map(m => m.senderId === (user?._id || user?.id) ? { ...m, isRead: true } : m));
+        setMessages(prev => prev.map(m => m.senderId === (user?._id || user?.id) ? { ...m, isRead: true, isDelivered: true } : m));
       }
+    };
+
+    const handleMessageDelivered = ({ messageId }) => {
+      setMessages(prev => prev.map(m => m._id === messageId ? { ...m, isDelivered: true } : m));
     };
 
     socket.on('receive_message', handleReceiveMessage);
     socket.on('messages_read', handleMessagesRead);
+    socket.on('message_delivered', handleMessageDelivered);
 
     return () => {
       socket.off('receive_message', handleReceiveMessage);
       socket.off('messages_read', handleMessagesRead);
+      socket.off('message_delivered', handleMessageDelivered);
     };
   }, [bookingId]);
 
@@ -169,12 +183,39 @@ const ChatModal = ({ booking, onClose, currentRole }) => {
                 const isMyMsg = !isSystemMsg && msg.senderId === activeUserId;
                 
                 if (isSystemMsg) {
+                  const cleanText = msg.text.replace(/^📢 System:\s*/, '');
+                  
+                  let StatusIcon = MessageCircle;
+                  let iconColor = 'text-slate-400';
+                  let cardBg = 'bg-slate-100/80 border-slate-200 text-slate-650';
+                  
+                  if (cleanText.includes('accepted') || cleanText.includes('approved')) {
+                    StatusIcon = CheckCircle;
+                    iconColor = 'text-emerald-500';
+                    cardBg = 'bg-emerald-500/10 border-emerald-500/20 text-emerald-450';
+                  } else if (cleanText.includes('en route') || cleanText.includes('arrived')) {
+                    StatusIcon = Truck;
+                    iconColor = 'text-blue-500';
+                    cardBg = 'bg-blue-500/10 border-blue-500/20 text-blue-450';
+                  } else if (cleanText.includes('quote') || cleanText.includes('revision') || cleanText.includes('clarification') || cleanText.includes('inspection')) {
+                    StatusIcon = CreditCard;
+                    iconColor = 'text-amber-500';
+                    cardBg = 'bg-amber-500/10 border-amber-500/20 text-amber-450';
+                  } else if (cleanText.includes('completed') || cleanText.includes('paid') || cleanText.includes('Payment')) {
+                    StatusIcon = Sparkles;
+                    iconColor = 'text-emerald-500';
+                    cardBg = 'bg-emerald-500/10 border-emerald-500/20 text-emerald-450';
+                  } else if (cleanText.includes('cancelled') || cleanText.includes('declined')) {
+                    StatusIcon = XCircle;
+                    iconColor = 'text-rose-500';
+                    cardBg = 'bg-rose-500/10 border-rose-500/20 text-rose-450';
+                  }
+
                   return (
-                    <div key={msg._id || i} className="flex justify-center my-3 animate-in fade-in zoom-in duration-300">
-                      <div className="bg-slate-100 border border-slate-200/60 rounded-2xl px-4 py-2 text-center max-w-[90%] shadow-sm">
-                        <p className="text-[10px] font-extrabold text-slate-500 uppercase tracking-widest leading-none mb-1">System Update</p>
-                        <p className="text-xs font-semibold text-slate-700 leading-normal">{msg.text.replace(/^📢 System:\s*/, '')}</p>
-                        <p className="text-[9px] text-slate-400 font-semibold mt-1 uppercase tracking-wider">{formatMessageTimestamp(msg.createdAt)}</p>
+                    <div key={msg._id || i} className="flex justify-center my-3.5 animate-in fade-in zoom-in-95 duration-300">
+                      <div className={`flex items-center gap-2 border rounded-full px-4 py-1.5 shadow-sm text-[11px] font-semibold tracking-wide ${cardBg}`}>
+                        <StatusIcon size={12} className={`${iconColor} shrink-0`} />
+                        <span>{cleanText}</span>
                       </div>
                     </div>
                   );
@@ -198,7 +239,13 @@ const ChatModal = ({ booking, onClose, currentRole }) => {
                       <span>{formatMessageTimestamp(msg.createdAt)}</span>
                       {isMyMsg && (
                         <span className="inline-flex items-center gap-0.5 ml-1">
-                          <CheckCheck size={12} className={msg.isRead ? "text-sky-400" : "text-slate-400"} />
+                          {msg.isRead ? (
+                            <CheckCheck size={12} className="text-sky-400" />
+                          ) : msg.isDelivered ? (
+                            <CheckCheck size={12} className="text-slate-400" />
+                          ) : (
+                            <Check size={12} className="text-slate-400" />
+                          )}
                         </span>
                       )}
                     </div>

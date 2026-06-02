@@ -3,7 +3,7 @@ const mongoose = require('mongoose');
 const legalDocumentSchema = new mongoose.Schema({
   type: {
     type: String,
-    enum: ['privacy_policy', 'terms_conditions', 'refund_policy', 'cancellation_policy', 'technician_terms', 'user_agreement'],
+    enum: ['privacy_policy', 'terms_conditions', 'refund_policy', 'cancellation_policy', 'technician_terms', 'user_agreement', 'user_safety'],
     required: true,
     unique: true
   },

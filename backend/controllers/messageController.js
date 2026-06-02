@@ -19,10 +19,10 @@ const getMessages = async (req, res) => {
       return res.status(403).json({ message: 'Not authorized to view this private chat' });
     }
 
-    // Mark messages sent by the other party as read
+    // Mark messages sent by the other party as read and delivered
     await Message.updateMany(
-      { bookingId, senderId: { $ne: req.user.id }, isRead: false },
-      { isRead: true }
+      { bookingId, senderId: { $ne: req.user.id } },
+      { $set: { isRead: true, isDelivered: true } }
     );
 
     const messages = await Message.find({ bookingId }).sort({ createdAt: 1 });

@@ -1,17 +1,17 @@
 import React, { useState, useEffect } from 'react';
 import api from '../services/api';
 
-const Terms = () => {
+const TechnicianAgreement = () => {
   const [doc, setDoc] = useState(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     const fetchDoc = async () => {
       try {
-        const { data } = await api.get('/legal/document/terms_conditions');
+        const { data } = await api.get('/legal/document/technician_terms');
         setDoc(data);
       } catch (err) {
-        console.error("Failed to load terms dynamic template", err);
+        console.error("Failed to load technician agreement dynamic template", err);
       } finally {
         setLoading(false);
       }
@@ -20,17 +20,14 @@ const Terms = () => {
   }, []);
 
   const defaultContent = `
-    <h2>1. Introduction</h2>
-    <p>Welcome to Fixvo. By using our platform, you agree to comply with and be bound by these Terms & Conditions. Please read them carefully.</p>
+    <h2>1. Professional Standard</h2>
+    <p>As a verified technician on Fixvo, you agree to maintain high professional standards, complete jobs successfully, and maintain a rating above 4.2.</p>
     
-    <h2>2. Services</h2>
-    <p>Fixvo acts as an on-demand marketplace connecting customers with independent, qualified repair technicians. We do not provide physical repair services directly.</p>
+    <h2>2. Commission and Fees</h2>
+    <p>Fixvo retains a 10% platform commission on all booking earnings. The remaining 90% is cleared to your wallet balance upon successful payment confirmation.</p>
     
-    <h2>3. Quote Approval & Payments</h2>
-    <p>All quotes are subject to user approval before work begins. Payments must be processed through the platform or verified cash exchange. Technicians cannot increase prices directly without a customer-approved quote revision.</p>
-    
-    <h2>4. User Responsibilities</h2>
-    <p>You agree to provide accurate information regarding your service needs and location. You must ensure a safe working environment for the technician.</p>
+    <h2>3. Revisions & Timeouts</h2>
+    <p>ASAP job requests must be accepted within 60 seconds. All quotes and revisions must be approved by the customer before starting work.</p>
   `;
 
   return (
@@ -43,7 +40,7 @@ const Terms = () => {
           </div>
         ) : (
           <>
-            <h1 className="text-4xl font-extrabold text-slate-900 mb-2">{doc?.title || 'Terms & Conditions'}</h1>
+            <h1 className="text-4xl font-extrabold text-slate-900 mb-2">{doc?.title || 'Technician Agreement'}</h1>
             <p className="text-slate-500 mb-10 font-medium">
               Last Updated: {doc?.updatedAt ? new Date(doc.updatedAt).toLocaleDateString(undefined, { month: 'long', year: 'numeric' }) : 'May 2026'} | Version V{doc?.version || 1}
             </p>
@@ -59,4 +56,4 @@ const Terms = () => {
   );
 };
 
-export default Terms;
+export default TechnicianAgreement;

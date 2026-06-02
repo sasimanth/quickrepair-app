@@ -17,7 +17,7 @@ self.addEventListener('push', (event) => {
       body: payload.body || 'New marketplace activity detected.',
       icon: '/fixvo-icon.png',
       badge: '/fixvo-icon.png',
-      vibrate: [100, 50, 100],
+      vibrate: [200, 100, 200],
       data: payload.data || {}
     };
 
