@@ -1,10 +1,15 @@
 const mongoose = require('mongoose');
 
-const pushSubscriptionSchema = new mongoose.Schema({
+const deviceSessionSchema = new mongoose.Schema({
   userId: {
     type: String,
     required: true,
     index: true
+  },
+  technicianId: {
+    type: String,
+    index: true,
+    default: null
   },
   role: {
     type: String,
@@ -16,14 +21,13 @@ const pushSubscriptionSchema = new mongoose.Schema({
     required: true,
     index: true
   },
-  endpoint: {
+  browser: {
     type: String,
-    required: true,
-    index: true
+    default: 'Unknown'
   },
-  keys: {
-    p256dh: { type: String, required: true },
-    auth: { type: String, required: true }
+  platform: {
+    type: String,
+    default: 'Unknown'
   },
   lastSeen: {
     type: Date,
@@ -34,14 +38,10 @@ const pushSubscriptionSchema = new mongoose.Schema({
     default: true,
     index: true
   },
-  browser: {
-    type: String,
-    default: 'Unknown'
-  },
-  platform: {
-    type: String,
-    default: 'Unknown'
+  loginTimestamp: {
+    type: Date,
+    default: Date.now
   }
 }, { timestamps: true });
 
-module.exports = mongoose.model('PushSubscription', pushSubscriptionSchema);
+module.exports = mongoose.model('DeviceSession', deviceSessionSchema);

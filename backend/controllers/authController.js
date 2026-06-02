@@ -73,6 +73,7 @@ const signup = async (req, res) => {
       }
 
       // If role is technician, create a technician profile
+      let techProfile = null;
       if (user.role === 'technician') {
         if (!skills || skills.length === 0 || !location) {
           await User.findByIdAndDelete(user._id);
@@ -114,7 +115,7 @@ const signup = async (req, res) => {
         const isOnline = availability === 'offline' ? false : true;
         const currentStatus = availability === 'offline' ? 'offline' : 'available';
 
-        await Technician.create({
+        techProfile = await Technician.create({
           userId: user._id,
           name: user.name,
           email: user.email,
@@ -128,6 +129,26 @@ const signup = async (req, res) => {
           isVerified: true,
           currentStatus: currentStatus
         });
+      }
+
+      // Handle DeviceSession creation if deviceId is provided
+      if (req.body.deviceId) {
+        const DeviceSession = require('../models/DeviceSession');
+        await DeviceSession.findOneAndUpdate(
+          { userId: user._id.toString(), deviceId: req.body.deviceId },
+          {
+            userId: user._id.toString(),
+            technicianId: techProfile ? techProfile._id.toString() : null,
+            role: user.role,
+            deviceId: req.body.deviceId,
+            browser: req.body.browser || 'Unknown',
+            platform: req.body.platform || 'Unknown',
+            lastSeen: new Date(),
+            isActive: true,
+            loginTimestamp: new Date()
+          },
+          { upsert: true, new: true }
+        );
       }
 
       res.status(201).json({
@@ -151,12 +172,36 @@ const signup = async (req, res) => {
 // @route   POST /api/auth/login
 // @access  Public
 const login = async (req, res) => {
-  const { email, password } = req.body;
+  const { email, password, deviceId, browser, platform } = req.body;
 
   try {
     const user = await User.findOne({ email });
 
     if (user && (await bcrypt.compare(password, user.password))) {
+      // Create or update device session if deviceId is provided
+      if (deviceId) {
+        const DeviceSession = require('../models/DeviceSession');
+        let techProfile = null;
+        if (user.role === 'technician') {
+          techProfile = await Technician.findOne({ userId: user._id });
+        }
+        await DeviceSession.findOneAndUpdate(
+          { userId: user._id.toString(), deviceId },
+          {
+            userId: user._id.toString(),
+            technicianId: techProfile ? techProfile._id.toString() : null,
+            role: user.role,
+            deviceId,
+            browser: browser || 'Unknown',
+            platform: platform || 'Unknown',
+            lastSeen: new Date(),
+            isActive: true,
+            loginTimestamp: new Date()
+          },
+          { upsert: true, new: true }
+        );
+      }
+
       res.json({
         _id: user._id,
         name: user.name,
@@ -168,6 +213,49 @@ const login = async (req, res) => {
     } else {
       res.status(401).json({ message: 'Invalid email or password' });
     }
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
+// @desc    Logout user and deactivate device session
+// @route   POST /api/auth/logout
+// @access  Public (Gracefully handles token presence)
+const logoutUser = async (req, res) => {
+  try {
+    const { deviceId } = req.body;
+    let userId = null;
+
+    if (req.headers.authorization && req.headers.authorization.startsWith('Bearer')) {
+      try {
+        const token = req.headers.authorization.split(' ')[2] || req.headers.authorization.split(' ')[1];
+        const decoded = jwt.verify(token, process.env.JWT_SECRET || 'secret123');
+        userId = decoded.id;
+      } catch (err) {
+        // Continue if token verification fails
+      }
+    }
+
+    if (deviceId) {
+      const DeviceSession = require('../models/DeviceSession');
+      const PushSubscription = require('../models/PushSubscription');
+
+      if (userId) {
+        await DeviceSession.updateMany(
+          { userId: userId.toString(), deviceId },
+          { $set: { isActive: false } }
+        );
+        await PushSubscription.deleteMany({ userId: userId.toString(), deviceId });
+      } else {
+        await DeviceSession.updateMany(
+          { deviceId },
+          { $set: { isActive: false } }
+        );
+        await PushSubscription.deleteMany({ deviceId });
+      }
+    }
+
+    res.json({ success: true, message: 'Logged out successfully' });
   } catch (error) {
     res.status(500).json({ message: error.message });
   }
@@ -241,4 +329,4 @@ const createAdmin = async (req, res) => {
   }
 };
 
-module.exports = { signup, login, getMe, createAdmin };
+module.exports = { signup, login, logoutUser, getMe, createAdmin };

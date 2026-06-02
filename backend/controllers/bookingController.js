@@ -103,17 +103,26 @@ const autoAssignBooking = async (bookingId) => {
         global.io.to(`user_${availableTech.userId}`).emit('new_job', updatedBooking.toObject());
       }
 
-      // Seed notification
-      const Notification = require('../models/Notification');
-      const techNotif = await Notification.create({
+      // Dispatch targeted push notification, email, SMS, and create in-app notification
+      const { notifyUser } = require('../services/NotificationService');
+      await notifyUser({
         userId: availableTech.userId,
-        title: 'New Job Assigned! 💼',
-        message: `New repair request for ${booking.serviceName} at ${booking.location}.`,
-        type: 'booking',
+        email: availableTech.email,
+        phone: availableTech.phone || techUserDoc?.phone || null,
+        type: 'both',
+        subject: 'New Job Assigned! 💼',
+        text: `New repair request for ${booking.serviceName} at ${booking.location}.`,
+        notifType: 'booking',
         bookingId: booking._id.toString()
       });
 
-      if (global.io) {
+      const Notification = require('../models/Notification');
+      const techNotif = await Notification.findOne({
+        userId: availableTech.userId,
+        bookingId: booking._id.toString()
+      }).sort({ createdAt: -1 });
+
+      if (global.io && techNotif) {
         global.io.to(`user_${availableTech.userId}`).emit('new_notification', techNotif);
         global.io.to(`user_${booking.userId}`).emit('job_update', updatedBooking.toObject());
       }
@@ -428,27 +437,26 @@ const createBooking = async (req, res) => {
         global.io.to(`user_${finalProviderId}`).emit('new_job', createdBooking.toObject());
       }
       
-      notifyUser({
+      await notifyUser({
         userId: finalProviderId,
         email: assignedTechEmail,
         phone: assignedTechPhone,
         type: 'both',
-        subject: 'New Job Assigned!',
-        text: `Hey Technician, you have a new ${booking.serviceName} request. Open the app to check your assigned jobs!`,
+        subject: 'New Job Assigned! 💼',
+        text: `New repair request for ${booking.serviceName} at ${finalAddress}.`,
         notifType: 'booking',
         bookingId: booking._id.toString()
       });
       
       const Notification = require('../models/Notification');
-      const techNotif = await Notification.create({
+      const techNotif = await Notification.findOne({
         userId: finalProviderId,
-        title: 'New Job Assigned! 💼',
-        message: `New repair request for ${booking.serviceName} at ${finalAddress}.`,
-        type: 'booking',
         bookingId: booking._id.toString()
-      });
-      if (global.io) {
+      }).sort({ createdAt: -1 });
+
+      if (global.io && techNotif) {
         global.io.to(`user_${finalProviderId}`).emit('new_notification', techNotif);
+        global.io.to(`user_${bookingUserId}`).emit('job_update', createdBooking.toObject());
       }
 
       // Start 60-second timeout for manual assignment acceptance

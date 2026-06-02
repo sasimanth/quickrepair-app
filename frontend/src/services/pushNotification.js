@@ -15,6 +15,30 @@ function urlBase64ToUint8Array(base64String) {
   return outputArray;
 }
 
+export const getDeviceDetails = () => {
+  let deviceId = localStorage.getItem('deviceId');
+  if (!deviceId) {
+    deviceId = 'dev_' + Math.random().toString(36).substring(2, 15) + Math.random().toString(36).substring(2, 15);
+    localStorage.setItem('deviceId', deviceId);
+  }
+  
+  const ua = navigator.userAgent;
+  let browser = 'Unknown';
+  if (ua.indexOf('Chrome') > -1) browser = 'Chrome';
+  else if (ua.indexOf('Safari') > -1 && ua.indexOf('Chrome') === -1) browser = 'Safari';
+  else if (ua.indexOf('Firefox') > -1) browser = 'Firefox';
+  else if (ua.indexOf('Edge') > -1) browser = 'Edge';
+
+  let platform = 'Unknown';
+  if (navigator.platform.indexOf('Win') > -1) platform = 'Windows';
+  else if (navigator.platform.indexOf('Mac') > -1) platform = 'macOS';
+  else if (navigator.platform.indexOf('Linux') > -1) platform = 'Linux';
+  else if (/Android/.test(ua)) platform = 'Android';
+  else if (/iPhone|iPad|iPod/.test(ua)) platform = 'iOS';
+
+  return { deviceId, browser, platform };
+};
+
 export const subscribeToPushNotifications = async () => {
   if (!('serviceWorker' in navigator) || !('PushManager' in window)) {
     console.log('Push messaging is not supported in this browser');
@@ -46,8 +70,12 @@ export const subscribeToPushNotifications = async () => {
       applicationServerKey
     });
 
-    // Send subscription object to backend
-    await api.post('/notifications/subscribe', { subscription });
+    // Send subscription object to backend along with device/session info
+    const deviceDetails = getDeviceDetails();
+    await api.post('/notifications/subscribe', {
+      subscription,
+      ...deviceDetails
+    });
     console.log('✅ Registered for background push alerts');
   } catch (error) {
     console.error('Failed subscribing for push notifications:', error);

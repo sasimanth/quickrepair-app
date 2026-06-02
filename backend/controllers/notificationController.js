@@ -49,15 +49,57 @@ const getVapidPublicKey = async (req, res) => {
 // @route   POST /api/notifications/subscribe
 const subscribe = async (req, res) => {
   try {
-    const { subscription } = req.body;
-    if (!subscription || !subscription.endpoint) {
-      return res.status(400).json({ message: 'Invalid subscription object' });
+    const { subscription, deviceId, browser, platform } = req.body;
+    if (!subscription || !subscription.endpoint || !subscription.keys || !subscription.keys.p256dh || !subscription.keys.auth) {
+      return res.status(400).json({ message: 'Invalid subscription object or missing keys' });
+    }
+    if (!deviceId) {
+      return res.status(400).json({ message: 'Missing deviceId parameter' });
     }
 
-    // Upsert the subscription for this user
+    // Clean up any stale subscription for this device to prevent duplicate deliveries
+    await PushSubscription.deleteMany({ deviceId });
+
+    // Upsert the subscription for this user & device
     await PushSubscription.findOneAndUpdate(
-      { userId: req.user.id, 'subscription.endpoint': subscription.endpoint },
-      { userId: req.user.id, subscription },
+      { userId: req.user.id, deviceId, endpoint: subscription.endpoint },
+      {
+        userId: req.user.id,
+        role: req.user.role,
+        deviceId,
+        endpoint: subscription.endpoint,
+        keys: {
+          p256dh: subscription.keys.p256dh,
+          auth: subscription.keys.auth
+        },
+        browser: browser || 'Unknown',
+        platform: platform || 'Unknown',
+        lastSeen: new Date(),
+        isActive: true
+      },
+      { upsert: true, new: true }
+    );
+
+    // Upsert corresponding DeviceSession for verification check
+    const DeviceSession = require('../models/DeviceSession');
+    let techProfile = null;
+    if (req.user.role === 'technician') {
+      const Technician = require('../models/Technician');
+      techProfile = await Technician.findOne({ userId: req.user.id });
+    }
+    
+    await DeviceSession.findOneAndUpdate(
+      { userId: req.user.id, deviceId },
+      {
+        userId: req.user.id,
+        technicianId: techProfile ? techProfile._id.toString() : null,
+        role: req.user.role,
+        deviceId,
+        browser: browser || 'Unknown',
+        platform: platform || 'Unknown',
+        lastSeen: new Date(),
+        isActive: true
+      },
       { upsert: true, new: true }
     );
 

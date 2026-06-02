@@ -39,8 +39,8 @@ export const AuthProvider = ({ children }) => {
     setSession({ token, user: data.user });
   };
 
-  const logout = () => {
-    authLogout();
+  const logout = async () => {
+    await authLogout();
     setUser(null);
     setSession(null);
     window.location.reload();

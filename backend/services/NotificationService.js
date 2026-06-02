@@ -119,13 +119,27 @@ const sendInAppPush = async (userId, title, message, type = 'system', bookingId 
 const sendWebPush = async (userId, title, message, bookingId = null) => {
   try {
     const PushSubscription = require('../models/PushSubscription');
-    const subscriptions = await PushSubscription.find({ userId });
+    const DeviceSession = require('../models/DeviceSession');
+
+    // Find active push subscriptions for this user
+    const subscriptions = await PushSubscription.find({ userId, isActive: true });
     if (!subscriptions || subscriptions.length === 0) return;
 
     // Fetch the recipient's role dynamically to set the correct dashboard url
     const User = require('../models/User');
     const recipientUser = await User.findById(userId);
     const role = recipientUser ? recipientUser.role : 'user';
+
+    // Suppression logic: If recipient is a technician, only notify if they are online/available
+    if (role === 'technician') {
+      const Technician = require('../models/Technician');
+      const techProfile = await Technician.findOne({ userId });
+      if (!techProfile || !techProfile.isOnline || techProfile.currentStatus === 'offline') {
+        console.log(`⚠️ Skipping push notification for technician user ${userId} because technician profile is offline/inactive`);
+        return;
+      }
+    }
+
     const redirectUrl = role === 'technician'
       ? (bookingId ? `/technician-dashboard?jobId=${bookingId}` : '/technician-dashboard')
       : (bookingId ? `/dashboard?jobId=${bookingId}` : '/dashboard');
@@ -141,13 +155,35 @@ const sendWebPush = async (userId, title, message, bookingId = null) => {
 
     const sendPromises = subscriptions.map(async (sub) => {
       try {
-        await webpush.sendNotification(sub.subscription, payload);
+        // Only send push notifications to active, logged-in device sessions
+        const session = await DeviceSession.findOne({ userId, deviceId: sub.deviceId, isActive: true });
+        if (!session) {
+          console.log(`⚠️ Skipping push notification for user ${userId} on device ${sub.deviceId} because device session is inactive`);
+          return;
+        }
+
+        const subObject = {
+          endpoint: sub.endpoint,
+          keys: {
+            p256dh: sub.keys.p256dh,
+            auth: sub.keys.auth
+          }
+        };
+
+        await webpush.sendNotification(subObject, payload);
+
+        // Update timestamps on successful push delivery
+        sub.lastSeen = new Date();
+        await sub.save();
+        session.lastSeen = new Date();
+        await session.save();
       } catch (err) {
-        if (err.statusCode === 410 || err.statusCode === 404) {
-          console.log(`❌ Removing invalid push subscription for user ${userId}`);
+        if (err.statusCode === 410 || err.statusCode === 404 || err.message.includes('expired') || err.message.includes('permission')) {
+          console.log(`❌ Removing invalid push subscription for user ${userId} on device ${sub.deviceId}`);
           await PushSubscription.deleteOne({ _id: sub._id });
+          await DeviceSession.updateMany({ userId, deviceId: sub.deviceId }, { $set: { isActive: false } });
         } else {
-          console.error(`Error sending push notification:`, err);
+          console.error(`Error sending push notification to user ${userId} on device ${sub.deviceId}:`, err.message);
         }
       }
     });
