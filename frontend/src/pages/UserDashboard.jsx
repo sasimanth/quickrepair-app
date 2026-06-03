@@ -13,6 +13,7 @@ import SettingsModal from '../components/SettingsModal';
 import PremiumModal from '../components/PremiumModal';
 import { CreditCard, Sparkles, PhoneCall } from 'lucide-react';
 import { socket } from '../services/socket';
+import { playNotificationSound } from '../services/soundEffects';
 import LoadingSkeleton from '../components/LoadingSkeleton';
 
 const formatPhoneLink = (phone) => {
@@ -250,6 +251,7 @@ const UserDashboard = () => {
           `Your ${updatedJob.serviceName} status is now: ${updatedJob.status.replace(/_/g, ' ').toUpperCase()}`, 
           'info'
         );
+        playNotificationSound('low');
         if (Notification.permission === 'granted') {
           new Notification('🔄 Repair Status Updated', {
             body: `Your ${updatedJob.serviceName} status is now: ${updatedJob.status.replace(/_/g, ' ').toUpperCase()}`,
@@ -279,33 +281,11 @@ const UserDashboard = () => {
 
       showToast(
         '⚠️ Technician Declined Request',
-        `Technician ${data.rejectedByTechName} declined your request (Reason: ${data.rejectionReason}). Reassigning to another expert...`,
+        `Technician ${data.rejectedByTechName || 'Saniya'} declined your request (Reason: ${data.rejectionReason}). Reassigning to another expert...`,
         'error'
       );
 
-      // Sound and vibration
-      try {
-        const AudioContextClass = window.AudioContext || window.webkitAudioContext;
-        if (AudioContextClass) {
-          const ctx = new AudioContextClass();
-          const osc = ctx.createOscillator();
-          const gain = ctx.createGain();
-          osc.connect(gain);
-          gain.connect(ctx.destination);
-          osc.type = 'sawtooth';
-          osc.frequency.setValueAtTime(150, ctx.currentTime);
-          gain.gain.setValueAtTime(0, ctx.currentTime);
-          gain.gain.linearRampToValueAtTime(0.3, ctx.currentTime + 0.05);
-          gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.35);
-          osc.start(ctx.currentTime);
-          osc.stop(ctx.currentTime + 0.4);
-        }
-        if ('vibrate' in navigator) {
-          navigator.vibrate([100, 50, 100]);
-        }
-      } catch (e) {
-        console.warn("Audio/Vibrate fail", e);
-      }
+      playNotificationSound('high');
     };
 
     const handleJobReassigned = (updatedJob) => {
@@ -318,30 +298,7 @@ const UserDashboard = () => {
         'success'
       );
 
-      // Sound and vibration
-      try {
-        const AudioContextClass = window.AudioContext || window.webkitAudioContext;
-        if (AudioContextClass) {
-          const ctx = new AudioContextClass();
-          const osc = ctx.createOscillator();
-          const gain = ctx.createGain();
-          osc.connect(gain);
-          gain.connect(ctx.destination);
-          osc.type = 'sine';
-          osc.frequency.setValueAtTime(587.33, ctx.currentTime); // D5
-          osc.frequency.exponentialRampToValueAtTime(880.00, ctx.currentTime + 0.15); // A5
-          gain.gain.setValueAtTime(0, ctx.currentTime);
-          gain.gain.linearRampToValueAtTime(0.2, ctx.currentTime + 0.02);
-          gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.4);
-          osc.start(ctx.currentTime);
-          osc.stop(ctx.currentTime + 0.45);
-        }
-        if ('vibrate' in navigator) {
-          navigator.vibrate([200, 100, 200]);
-        }
-      } catch (e) {
-        console.warn("Audio/Vibrate fail", e);
-      }
+      playNotificationSound('high');
     };
 
     socket.on('job_update', handleJobUpdate);
@@ -377,6 +334,12 @@ const UserDashboard = () => {
 
   useEffect(() => {
     const handleReceiveMessage = (newMsg) => {
+      if (newMsg.senderId !== 'system' && newMsg.senderId !== profile?.userId) {
+        const isCurrentChatOpen = chatBookingId === newMsg.bookingId;
+        if (!isCurrentChatOpen) {
+          playNotificationSound('low');
+        }
+      }
       setBookings(prev => prev.map(b => {
         if (b._id === newMsg.bookingId) {
           const isCurrentChatOpen = chatBookingId === newMsg.bookingId;
@@ -400,7 +363,7 @@ const UserDashboard = () => {
     return () => {
       socket.off('receive_message', handleReceiveMessage);
     };
-  }, [chatBookingId]);
+  }, [chatBookingId, profile?.userId]);
 
   const fetchData = async (showLoading = true) => {
     try {
@@ -1395,23 +1358,25 @@ const UserDashboard = () => {
 
                       {/* Premium Live Rejection Scanner Banner */}
                       {['pending', 'assigned'].includes(booking.status) && booking.rejectionReason && (
-                        <div className="mt-4 p-4.5 bg-amber-50/40 backdrop-blur-sm border border-amber-250/50 rounded-2xl flex gap-3.5 text-amber-900 text-xs sm:text-sm font-semibold shadow-sm animate-in fade-in slide-in-from-top-2 duration-300">
-                          <div className="p-2.5 bg-amber-100/70 rounded-xl text-amber-600 shrink-0 flex items-center justify-center h-10 w-10">
-                            <Clock size={20} className="animate-pulse" />
+                        <div className="mt-4 p-4.5 bg-rose-50/40 backdrop-blur-sm border border-rose-200/50 rounded-2xl flex gap-3.5 text-rose-900 text-xs sm:text-sm font-semibold shadow-sm animate-in fade-in slide-in-from-top-2 duration-300">
+                          <div className="p-2.5 bg-rose-100/70 rounded-xl text-rose-650 shrink-0 flex items-center justify-center h-10 w-10">
+                            <Clock size={20} className="animate-pulse text-rose-500" />
                           </div>
-                          <div className="space-y-1 flex-1">
-                            <p className="text-xs sm:text-sm font-extrabold text-amber-950">
-                              Searching for another available technician nearby.
+                          <div className="space-y-1.5 flex-1">
+                            <p className="text-xs sm:text-sm font-extrabold text-rose-950">
+                              {booking.rejectionReason.toLowerCase().includes('timeout')
+                                ? `Technician ${booking.rejectedByTechName || 'Technician'} did not respond to your request in time.`
+                                : `Technician ${booking.rejectedByTechName || 'Technician'} declined your booking request.`}
                             </p>
                             <p className="text-[11px] text-slate-500 font-medium leading-relaxed">
-                              The previously assigned technician was busy (Reason: {booking.rejectionReason}). We are matching your booking with another expert.
+                              <span className="font-semibold text-slate-700">Reason:</span> {booking.rejectionReason}
                             </p>
-                            <div className="flex items-center gap-2 text-indigo-600 text-[11px] font-black uppercase tracking-wider mt-2">
+                            <div className="flex items-center gap-2 text-indigo-650 text-[11px] font-black uppercase tracking-wider mt-2.5">
                               <span className="flex h-2 w-2 relative">
                                 <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-indigo-400 opacity-75"></span>
                                 <span className="relative inline-flex rounded-full h-2 w-2 bg-indigo-500"></span>
                               </span>
-                              <span>Finding the best available technician...</span>
+                              <span>Searching for another nearby technician...</span>
                             </div>
                           </div>
                         </div>

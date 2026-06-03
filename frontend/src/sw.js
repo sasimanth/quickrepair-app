@@ -54,6 +54,7 @@ self.addEventListener('push', (event) => {
           icon: '/fixvo-icon.png',
           badge: '/fixvo-icon.png',
           vibrate: vibratePattern,
+          sound: priority === 'high' ? '/sounds/booking_request.wav' : '/sounds/subtle_notification.wav',
           tag: bookingId ? `booking-${bookingId}` : 'fixvo-push-alert',
           renotify: true,
           data: payload.data || {},

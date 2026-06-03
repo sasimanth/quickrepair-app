@@ -26,9 +26,9 @@ const startResponseTimeout = (bookingId, techUserId) => {
         const techProfile = await Technician.findOne({ userId: techUserId });
         const techName = techProfile ? techProfile.name : 'Technician';
 
-        // Log response timeout as rejection details for customer dashboard (silent reassignment)
-        freshBooking.rejectionReason = null;
-        freshBooking.rejectedByTechName = null;
+        // Log response timeout as rejection details for customer dashboard
+        freshBooking.rejectionReason = 'Response timeout (60 seconds exceeded)';
+        freshBooking.rejectedByTechName = techName;
         freshBooking.providerId = null;
         freshBooking.providerPhone = null;
         freshBooking.providerEmail = null;
@@ -44,6 +44,11 @@ const startResponseTimeout = (bookingId, techUserId) => {
 
         if (global.io) {
           global.io.to(`user_${techUserId}`).emit('job_expired', { bookingId });
+          global.io.to(`user_${freshBooking.userId}`).emit('job_rejected', {
+            bookingId: freshBooking._id.toString(),
+            rejectedByTechName: freshBooking.rejectedByTechName,
+            rejectionReason: freshBooking.rejectionReason
+          });
         }
 
         // Add a notification to the technician that the job assignment expired
@@ -91,6 +96,20 @@ const autoAssignBooking = async (bookingId) => {
     if (!booking || booking.status !== 'pending') return;
 
     const Technician = require('../models/Technician');
+    const DeviceSession = require('../models/DeviceSession');
+
+    // 1. Find all active/busy technicians (who currently have jobs assigned, accepted, in journey, or work in progress)
+    const busyTechIds = await Booking.find({
+      providerId: { $ne: null },
+      status: { $in: ['assigned', 'accepted', 'on_the_way', 'arrived', 'inspection_started', 'quote_pending', 'quote_approved', 'in_progress'] }
+    }).distinct('providerId');
+
+    // 2. Find all technicians who are currently logged in with an active device session
+    const activeSessionUserIds = await DeviceSession.find({
+      role: 'technician',
+      isActive: true
+    }).distinct('userId');
+
     let matchedArea = null;
     const locationLower = (booking.location || '').toLowerCase();
     if (locationLower.includes('madanapalle')) matchedArea = 'Madanapalle';
@@ -98,14 +117,14 @@ const autoAssignBooking = async (bookingId) => {
     else if (locationLower.includes('rayachoty')) matchedArea = 'Rayachoty';
     else if (locationLower.includes('galiveedu')) matchedArea = 'Galiveedu';
 
-    // Query online technicians (currentStatus: 'online' or 'available') who are online and not blacklisted
+    // Query online technicians (currentStatus: 'online' or 'available') who are online, active, not busy, and not blacklisted
+    const excludedTechs = [...(booking.rejectedTechnicians || []), ...busyTechIds];
     const techQuery = { 
+      userId: { $in: activeSessionUserIds, $nin: excludedTechs },
       currentStatus: { $in: ['online', 'available'] }, 
       isOnline: true 
     };
-    if (booking.rejectedTechnicians && booking.rejectedTechnicians.length > 0) {
-      techQuery.userId = { $nin: booking.rejectedTechnicians };
-    }
+
     if (matchedArea) {
       techQuery.area = matchedArea;
     }
@@ -115,28 +134,24 @@ const autoAssignBooking = async (bookingId) => {
 
     let availableTech = await Technician.findOne(techQuery).sort('-rating');
 
-    // Fallback 1: Online tech in matching area regardless of category
+    // Fallback 1: Online/active/non-busy tech in matching area regardless of category
     if (!availableTech && matchedArea) {
       const fallbackQuery1 = { 
+        userId: { $in: activeSessionUserIds, $nin: excludedTechs },
         currentStatus: { $in: ['online', 'available'] }, 
         isOnline: true, 
         area: matchedArea 
       };
-      if (booking.rejectedTechnicians && booking.rejectedTechnicians.length > 0) {
-        fallbackQuery1.userId = { $nin: booking.rejectedTechnicians };
-      }
       availableTech = await Technician.findOne(fallbackQuery1).sort('-rating');
     }
 
-    // Fallback 2: Any online tech
+    // Fallback 2: Any online/active/non-busy tech
     if (!availableTech) {
       const fallbackQuery2 = { 
+        userId: { $in: activeSessionUserIds, $nin: excludedTechs },
         currentStatus: { $in: ['online', 'available'] }, 
         isOnline: true 
       };
-      if (booking.rejectedTechnicians && booking.rejectedTechnicians.length > 0) {
-        fallbackQuery2.userId = { $nin: booking.rejectedTechnicians };
-      }
       availableTech = await Technician.findOne(fallbackQuery2).sort('-rating');
     }
 

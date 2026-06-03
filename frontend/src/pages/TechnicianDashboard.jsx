@@ -10,6 +10,7 @@ import VerificationModal from '../components/VerificationModal';
 import KycModal from '../components/KycModal';
 import { socket } from '../services/socket';
 import { motion } from 'framer-motion';
+import { playNotificationSound } from '../services/soundEffects';
 
 const formatPhoneLink = (phone) => {
   if (!phone) return '';
@@ -46,33 +47,7 @@ const TechnicianDashboard = () => {
   };
 
   const playChime = () => {
-    if (navigator.vibrate) {
-      navigator.vibrate([200, 100, 200]);
-    }
-    try {
-      const AudioContextClass = window.AudioContext || window.webkitAudioContext;
-      if (!AudioContextClass) return;
-      const ctx = new AudioContextClass();
-      
-      const osc = ctx.createOscillator();
-      const gain = ctx.createGain();
-      osc.connect(gain);
-      gain.connect(ctx.destination);
-      
-      osc.frequency.setValueAtTime(587.33, ctx.currentTime);
-      gain.gain.setValueAtTime(0, ctx.currentTime);
-      gain.gain.linearRampToValueAtTime(0.3, ctx.currentTime + 0.05);
-      gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.3);
-      
-      osc.frequency.setValueAtTime(880.00, ctx.currentTime + 0.2);
-      gain.gain.setValueAtTime(0.3, ctx.currentTime + 0.2);
-      gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.5);
-      
-      osc.start(ctx.currentTime);
-      osc.stop(ctx.currentTime + 0.6);
-    } catch (error) {
-      console.warn('AudioContext failed to synthesize chime', error);
-    }
+    playNotificationSound('low');
   };
 
   const triggerBrowserNotification = (title, message, options = {}) => {
@@ -137,32 +112,11 @@ const TechnicianDashboard = () => {
 
   const startAlarm = () => {
     stopAlarm();
-    const playSingleAlarmBeep = () => {
-      try {
-        const AudioContextClass = window.AudioContext || window.webkitAudioContext;
-        if (!AudioContextClass) return;
-        const ctx = new AudioContextClass();
-        const osc = ctx.createOscillator();
-        const gain = ctx.createGain();
-        osc.connect(gain);
-        gain.connect(ctx.destination);
-        osc.type = 'sawtooth';
-        osc.frequency.setValueAtTime(880, ctx.currentTime);
-        gain.gain.setValueAtTime(0, ctx.currentTime);
-        gain.gain.linearRampToValueAtTime(0.4, ctx.currentTime + 0.05);
-        gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.5);
-        osc.start(ctx.currentTime);
-        osc.stop(ctx.currentTime + 0.6);
-        
-        if ('vibrate' in navigator) {
-          navigator.vibrate([400, 200, 400]);
-        }
-      } catch (error) {
-        console.warn('Alarm audio Context failed', error);
-      }
+    const playSingleAlarm = () => {
+      playNotificationSound('high');
     };
-    playSingleAlarmBeep();
-    alarmIntervalRef.current = setInterval(playSingleAlarmBeep, 1500);
+    playSingleAlarm();
+    alarmIntervalRef.current = setInterval(playSingleAlarm, 3000);
   };
 
   const stopAlarm = () => {
@@ -430,15 +384,26 @@ const TechnicianDashboard = () => {
       }
     };
 
+    const handleJobExpired = (data) => {
+      if (activeAlertJob && activeAlertJob._id === data.bookingId) {
+        setActiveAlertJob(null);
+        stopAlarm();
+        showToast('⚠️ Request Expired', 'The incoming job request has expired.', 'warning');
+        fetchJobs(true);
+      }
+    };
+
     socket.on('new_job', handleNewJob);
     socket.on('new_job_request', handleNewJob);
     socket.on('job_update', handleJobUpdate);
+    socket.on('job_expired', handleJobExpired);
     socket.on('new_notification', handleNewNotification);
 
     return () => {
       socket.off('new_job', handleNewJob);
       socket.off('new_job_request', handleNewJob);
       socket.off('job_update', handleJobUpdate);
+      socket.off('job_expired', handleJobExpired);
       socket.off('new_notification', handleNewNotification);
     };
   }, [profile?.userId, activeAlertJob]);
