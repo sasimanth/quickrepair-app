@@ -246,6 +246,15 @@ const logoutUser = async (req, res) => {
           { $set: { isActive: false } }
         );
         await PushSubscription.deleteMany({ userId: userId.toString(), deviceId });
+
+        // Set technician offline on logout
+        const userDoc = await User.findById(userId);
+        if (userDoc && userDoc.role === 'technician') {
+          await Technician.findOneAndUpdate(
+            { userId: userId.toString() },
+            { $set: { isOnline: false, currentStatus: 'offline' } }
+          );
+        }
       } else {
         await DeviceSession.updateMany(
           { deviceId },

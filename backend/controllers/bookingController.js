@@ -16,10 +16,30 @@ const startResponseTimeout = (bookingId, techUserId) => {
       if (freshBooking && freshBooking.status === 'assigned' && freshBooking.providerId === techUserId) {
         console.log(`⏰ Assignment Timeout (60s) for Booking ${bookingId} with Tech ${techUserId}. Re-assigning...`);
         
+        // Exclude this tech from future matches on this booking
+        freshBooking.rejectedTechnicians = freshBooking.rejectedTechnicians || [];
+        if (!freshBooking.rejectedTechnicians.includes(techUserId)) {
+          freshBooking.rejectedTechnicians.push(techUserId);
+        }
+
+        const Technician = require('../models/Technician');
+        const techProfile = await Technician.findOne({ userId: techUserId });
+        const techName = techProfile ? techProfile.name : 'Technician';
+
+        // Log response timeout as rejection details for customer dashboard
+        freshBooking.rejectionReason = 'Request response timeout (60 seconds)';
+        freshBooking.rejectedByTechName = techName;
         freshBooking.providerId = null;
         freshBooking.providerPhone = null;
         freshBooking.providerEmail = null;
         freshBooking.status = 'pending';
+        
+        if (techProfile) {
+          techProfile.currentStatus = 'online';
+          techProfile.currentJobId = null;
+          await techProfile.save();
+        }
+
         await freshBooking.save();
 
         if (global.io) {
@@ -38,9 +58,29 @@ const startResponseTimeout = (bookingId, techUserId) => {
 
         if (global.io) {
           global.io.to(`user_${techUserId}`).emit('new_notification', expireNotif);
+          
+          // Emit job_rejected to customer so the decline banner renders live
+          global.io.to(`user_${freshBooking.userId}`).emit('job_rejected', {
+            bookingId: freshBooking._id.toString(),
+            rejectedByTechName: freshBooking.rejectedByTechName,
+            rejectionReason: freshBooking.rejectionReason
+          });
+
           // Refresh user dashboard
           global.io.to(`user_${freshBooking.userId}`).emit('job_update', freshBooking.toObject());
         }
+
+        // Send a push notification + email + SMS to customer about reassignment
+        const { notifyUser } = require('../services/NotificationService');
+        await notifyUser({
+          userId: freshBooking.userId,
+          email: freshBooking.userEmail,
+          type: 'both',
+          subject: 'Technician Response Timeout – Reassigning 🔄',
+          text: `Technician ${freshBooking.rejectedByTechName} did not respond within 60 seconds. Reassigning your booking to another technician...`,
+          notifType: 'booking',
+          bookingId: freshBooking._id.toString()
+        });
 
         // Run auto assignment to find next tech
         await autoAssignBooking(freshBooking._id);
@@ -65,8 +105,14 @@ const autoAssignBooking = async (bookingId) => {
     else if (locationLower.includes('rayachoty')) matchedArea = 'Rayachoty';
     else if (locationLower.includes('galiveedu')) matchedArea = 'Galiveedu';
 
-    // Query online technicians (currentStatus: 'online') who are online
-    const techQuery = { currentStatus: 'online', isOnline: true };
+    // Query online technicians (currentStatus: 'online' or 'available') who are online and not blacklisted
+    const techQuery = { 
+      currentStatus: { $in: ['online', 'available'] }, 
+      isOnline: true 
+    };
+    if (booking.rejectedTechnicians && booking.rejectedTechnicians.length > 0) {
+      techQuery.userId = { $nin: booking.rejectedTechnicians };
+    }
     if (matchedArea) {
       techQuery.area = matchedArea;
     }
@@ -78,12 +124,27 @@ const autoAssignBooking = async (bookingId) => {
 
     // Fallback 1: Online tech in matching area regardless of category
     if (!availableTech && matchedArea) {
-      availableTech = await Technician.findOne({ currentStatus: 'online', isOnline: true, area: matchedArea }).sort('-rating');
+      const fallbackQuery1 = { 
+        currentStatus: { $in: ['online', 'available'] }, 
+        isOnline: true, 
+        area: matchedArea 
+      };
+      if (booking.rejectedTechnicians && booking.rejectedTechnicians.length > 0) {
+        fallbackQuery1.userId = { $nin: booking.rejectedTechnicians };
+      }
+      availableTech = await Technician.findOne(fallbackQuery1).sort('-rating');
     }
 
     // Fallback 2: Any online tech
     if (!availableTech) {
-      availableTech = await Technician.findOne({ currentStatus: 'online', isOnline: true }).sort('-rating');
+      const fallbackQuery2 = { 
+        currentStatus: { $in: ['online', 'available'] }, 
+        isOnline: true 
+      };
+      if (booking.rejectedTechnicians && booking.rejectedTechnicians.length > 0) {
+        fallbackQuery2.userId = { $nin: booking.rejectedTechnicians };
+      }
+      availableTech = await Technician.findOne(fallbackQuery2).sort('-rating');
     }
 
     if (availableTech) {
@@ -98,9 +159,17 @@ const autoAssignBooking = async (bookingId) => {
       const updatedBooking = await booking.save();
       console.log(`📡 Auto-assigned booking ${bookingId} to technician ${availableTech.userId}`);
 
-      // Emit new job event
+      // Emit new_job & new_job_request events
       if (global.io) {
         global.io.to(`user_${availableTech.userId}`).emit('new_job', updatedBooking.toObject());
+        global.io.to(`user_${availableTech.userId}`).emit('new_job_request', updatedBooking.toObject());
+        
+        // Notify customer dashboard of reassignment
+        const techName = availableTech.name;
+        const payload = updatedBooking.toObject();
+        payload.technicianName = techName;
+        global.io.to(`user_${booking.userId}`).emit('job_reassigned', payload);
+        global.io.to(`user_${booking.userId}`).emit('job_update', payload);
       }
 
       // Dispatch targeted push notification, email, SMS, and create in-app notification
@@ -124,7 +193,6 @@ const autoAssignBooking = async (bookingId) => {
 
       if (global.io && techNotif) {
         global.io.to(`user_${availableTech.userId}`).emit('new_notification', techNotif);
-        global.io.to(`user_${booking.userId}`).emit('job_update', updatedBooking.toObject());
       }
 
       // Start 60-second response timeout
@@ -588,6 +656,8 @@ const updateBookingStatus = async (req, res) => {
     if (status === 'accepted' && req.user.role === 'technician') {
       booking.providerEmail = req.user.email;
       booking.providerId = req.user.id; // Fully bind technician
+      booking.rejectionReason = null;
+      booking.rejectedByTechName = null;
       const User = require('../models/User');
       const techUser = await User.findById(req.user.id);
       if (tech) {
@@ -626,14 +696,51 @@ const updateBookingStatus = async (req, res) => {
     }
 
     if (status === 'rejected' && req.user.role === 'technician') {
+       const reason = req.body.rejectionReason || 'No reason specified';
+       booking.rejectedTechnicians = booking.rejectedTechnicians || [];
+       if (!booking.rejectedTechnicians.includes(req.user.id)) {
+         booking.rejectedTechnicians.push(req.user.id);
+       }
+       booking.rejectionReason = reason;
+       booking.rejectedByTechName = tech ? tech.name : (req.user.name || 'Technician');
        booking.providerId = null;
        booking.providerPhone = null;
+       booking.providerEmail = null;
        booking.status = 'pending';
        if (tech) {
          tech.currentStatus = 'online'; // Return to Online
          tech.currentJobId = null;
          await tech.save();
        }
+
+       const savedBooking = await booking.save();
+       
+       if (global.io) {
+         global.io.to(`user_${booking.userId}`).emit('job_rejected', {
+           bookingId: booking._id.toString(),
+           rejectedByTechName: booking.rejectedByTechName,
+           rejectionReason: booking.rejectionReason
+         });
+         global.io.to(`user_${booking.userId}`).emit('job_update', savedBooking.toObject());
+       }
+
+       const { notifyUser } = require('../services/NotificationService');
+       await notifyUser({
+         userId: booking.userId,
+         email: booking.userEmail,
+         type: 'both',
+         subject: 'Technician Declined – Reassigning 🔄',
+         text: `Technician ${booking.rejectedByTechName} declined your booking request (Reason: ${booking.rejectionReason}). Reassigning to another nearby technician...`,
+         notifType: 'booking',
+         bookingId: booking._id.toString()
+       });
+
+       await autoAssignBooking(booking._id);
+
+       const finalBooking = await Booking.findById(booking._id).populate('serviceId', 'name price');
+       await triggerNotifications(req, finalBooking, 'rejected');
+
+       return res.json(finalBooking);
     }
 
     const updatedBooking = await booking.save();

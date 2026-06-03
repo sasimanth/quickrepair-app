@@ -116,7 +116,7 @@ const sendInAppPush = async (userId, title, message, type = 'system', bookingId 
 };
 
 // Background Web Push Dispatcher
-const sendWebPush = async (userId, title, message, bookingId = null) => {
+const sendWebPush = async (userId, title, message, bookingId = null, priority = null) => {
   try {
     const PushSubscription = require('../models/PushSubscription');
     const DeviceSession = require('../models/DeviceSession');
@@ -144,12 +144,36 @@ const sendWebPush = async (userId, title, message, bookingId = null) => {
       ? (bookingId ? `/technician-dashboard?jobId=${bookingId}` : '/technician-dashboard')
       : (bookingId ? `/dashboard?jobId=${bookingId}` : '/dashboard');
 
+    // Determine priority
+    let finalPriority = priority;
+    if (!finalPriority) {
+      const lowerTitle = (title || '').toLowerCase();
+      const lowerMsg = (message || '').toLowerCase();
+      if (
+        lowerTitle.includes('new') || 
+        lowerTitle.includes('assigned') || 
+        lowerTitle.includes('payment') || 
+        lowerTitle.includes('payout') || 
+        lowerTitle.includes('timeout') || 
+        lowerTitle.includes('declined') ||
+        lowerTitle.includes('rejected') ||
+        lowerMsg.includes('new') ||
+        lowerMsg.includes('assigned') ||
+        lowerMsg.includes('urgent')
+      ) {
+        finalPriority = 'high';
+      } else {
+        finalPriority = 'low';
+      }
+    }
+
     const payload = JSON.stringify({
       title,
       body: message,
       data: {
         url: redirectUrl,
-        bookingId
+        bookingId,
+        priority: finalPriority
       }
     });
 
@@ -197,11 +221,11 @@ const sendWebPush = async (userId, title, message, bookingId = null) => {
 /**
  * Main dispatcher to handle Email + SMS + In-App Push instantly.
  */
-const notifyUser = async ({ userId, email, phone, type = 'email', subject, text, notifType = 'system', bookingId = null }) => {
+const notifyUser = async ({ userId, email, phone, type = 'email', subject, text, notifType = 'system', bookingId = null, priority = null }) => {
   // Fire In-App DB Notification & Web Push
   if (userId) {
     await sendInAppPush(userId, subject, text, notifType, bookingId);
-    await sendWebPush(userId, subject, text, bookingId);
+    await sendWebPush(userId, subject, text, bookingId, priority);
   }
 
   // Simulate remote external (Twilio / SendGrid)

@@ -130,6 +130,9 @@ const TechnicianDashboard = () => {
   const [activeAlertJob, setActiveAlertJob] = useState(null);
   const [alertCountdown, setAlertCountdown] = useState(60);
   const [clarificationResponse, setClarificationResponse] = useState('');
+  const [declineJobId, setDeclineJobId] = useState(null);
+  const [selectedDeclineReason, setSelectedDeclineReason] = useState('');
+  const [customDeclineReason, setCustomDeclineReason] = useState('');
   const alarmIntervalRef = useRef(null);
 
   const startAlarm = () => {
@@ -150,6 +153,10 @@ const TechnicianDashboard = () => {
         gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.5);
         osc.start(ctx.currentTime);
         osc.stop(ctx.currentTime + 0.6);
+        
+        if ('vibrate' in navigator) {
+          navigator.vibrate([400, 200, 400]);
+        }
       } catch (error) {
         console.warn('Alarm audio Context failed', error);
       }
@@ -414,11 +421,13 @@ const TechnicianDashboard = () => {
     };
 
     socket.on('new_job', handleNewJob);
+    socket.on('new_job_request', handleNewJob);
     socket.on('job_update', handleJobUpdate);
     socket.on('new_notification', handleNewNotification);
 
     return () => {
       socket.off('new_job', handleNewJob);
+      socket.off('new_job_request', handleNewJob);
       socket.off('job_update', handleJobUpdate);
       socket.off('new_notification', handleNewNotification);
     };
@@ -529,6 +538,8 @@ const TechnicianDashboard = () => {
     const params = new URLSearchParams(window.location.search);
     const jobId = params.get('jobId');
     const chatId = params.get('chatId');
+    const decline = params.get('decline') === 'true';
+    const accept = params.get('accept') === 'true';
 
     if (jobs.length > 0) {
       if (chatId) {
@@ -540,6 +551,11 @@ const TechnicianDashboard = () => {
       } else if (jobId) {
         const foundJob = jobs.find(j => j._id === jobId);
         if (foundJob) {
+          if (decline) {
+            setDeclineJobId(jobId);
+          } else if (accept) {
+            updateJobStatus(jobId, 'accepted');
+          }
           if (['pending', 'assigned', 'queued'].includes(foundJob.status)) setJobTab('new');
           else if (['accepted', 'on_the_way', 'arrived', 'inspection_started', 'quote_approved', 'in_progress'].includes(foundJob.status)) setJobTab('active');
           else if (['quote_pending', 'quote_clarification', 'quote_rejected'].includes(foundJob.status)) setJobTab('quote_pending');
@@ -560,14 +576,14 @@ const TechnicianDashboard = () => {
     return () => window.removeEventListener('click', closeDropdown);
   }, [showNotifDropdown]);
 
-  const updateJobStatus = async (id, status) => {
+  const updateJobStatus = async (id, status, rejectionReason = '') => {
     if (updatingJobs[id]) return;
     // Optimistic update
     setJobs(prevJobs => prevJobs.map(job => job._id === id ? { ...job, status } : job));
     setUpdatingJobs(prev => ({ ...prev, [id]: true }));
     
     try {
-      await api.put(`/bookings/${id}/status`, { status });
+      await api.put(`/bookings/${id}/status`, { status, rejectionReason });
       await fetchJobs(true); // Refetch profile metrics in real-time
     } catch (error) { 
       // Revert on failure
@@ -1240,7 +1256,7 @@ const TechnicianDashboard = () => {
                             </button>
                             <button
                               disabled={updatingJobs[job._id]}
-                              onClick={() => updateJobStatus(job._id, 'rejected')}
+                              onClick={() => setDeclineJobId(job._id)}
                               className="w-full bg-white hover:bg-red-50 text-red-600 border border-red-200 font-bold py-3 p-4 rounded-xl transition-colors flex items-center justify-center gap-2 disabled:opacity-50"
                             >
                               {updatingJobs[job._id] ? <Loader2 size={18} className="animate-spin" /> : <><XCircle size={18} /> Decline</>}
@@ -2025,11 +2041,11 @@ const TechnicianDashboard = () => {
             <div className="flex gap-3">
               <button
                 disabled={updatingJobs[activeAlertJob._id]}
-                onClick={async () => {
+                onClick={() => {
                   const jobId = activeAlertJob._id;
                   setActiveAlertJob(null);
                   stopAlarm();
-                  await updateJobStatus(jobId, 'cancelled');
+                  setDeclineJobId(jobId);
                 }}
                 className="flex-1 bg-white/5 hover:bg-rose-500/10 border border-white/10 hover:border-rose-500/30 text-slate-300 hover:text-rose-400 font-extrabold py-3.5 rounded-xl transition-all uppercase tracking-wider text-xs cursor-pointer animate-in fade-in"
               >
@@ -2046,6 +2062,103 @@ const TechnicianDashboard = () => {
                 className="flex-1 bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-400 hover:to-teal-400 text-white font-black py-3.5 rounded-xl shadow-lg hover:shadow-emerald-500/20 transition-all uppercase tracking-wider text-xs cursor-pointer animate-in fade-in"
               >
                 Accept Job
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Decline/Rejection Modal */}
+      {declineJobId && (
+        <div className="fixed inset-0 bg-[#0B0F19]/90 backdrop-blur-md z-[120] flex items-center justify-center p-4 animate-in fade-in duration-200">
+          <div className="bg-[#111827] border border-white/10 rounded-3xl w-full max-w-md overflow-hidden shadow-2xl text-white p-6 space-y-5 animate-in zoom-in-95 duration-200">
+            <div>
+              <h3 className="text-xl font-bold text-white mb-2">Decline Service Request</h3>
+              <p className="text-xs text-slate-400">
+                Please select a reason for declining this repair request. This helps us match the customer with another technician faster.
+              </p>
+            </div>
+
+            <div className="space-y-2.5 max-h-60 overflow-y-auto pr-1">
+              {[
+                'Too far from my location',
+                'Currently busy',
+                'Service unavailable',
+                'Outside service area',
+                'Timing issue',
+                'Technical issue',
+                'Cannot handle this repair',
+                'Other reason'
+              ].map((reason) => (
+                <label
+                  key={reason}
+                  className={`flex items-center gap-3 p-3 rounded-xl border cursor-pointer transition-all ${
+                    selectedDeclineReason === reason
+                      ? 'bg-rose-500/10 border-rose-500/50 text-rose-300'
+                      : 'bg-white/5 border-white/5 hover:bg-white/10 text-slate-300'
+                  }`}
+                  onClick={() => setSelectedDeclineReason(reason)}
+                >
+                  <input
+                    type="radio"
+                    name="declineReason"
+                    checked={selectedDeclineReason === reason}
+                    onChange={() => setSelectedDeclineReason(reason)}
+                    className="accent-rose-500 cursor-pointer"
+                  />
+                  <span className="text-xs font-bold">{reason}</span>
+                </label>
+              ))}
+            </div>
+
+            {selectedDeclineReason === 'Other reason' && (
+              <div className="space-y-1.5 animate-in slide-in-from-top-2 duration-200">
+                <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-widest">
+                  Custom Decline Reason
+                </label>
+                <textarea
+                  value={customDeclineReason}
+                  onChange={(e) => setCustomDeclineReason(e.target.value)}
+                  placeholder="Tell us why you are declining this job..."
+                  className="w-full p-3 bg-slate-950 border border-white/10 rounded-xl outline-none text-slate-100 text-xs focus:border-rose-500 transition-all resize-none"
+                  rows={3}
+                />
+              </div>
+            )}
+
+            <div className="flex gap-3 pt-2">
+              <button
+                type="button"
+                onClick={() => {
+                  setDeclineJobId(null);
+                  setSelectedDeclineReason('');
+                  setCustomDeclineReason('');
+                }}
+                className="flex-1 bg-white/5 hover:bg-white/10 border border-white/5 text-slate-300 font-extrabold py-3.5 rounded-xl transition-all uppercase tracking-wider text-xs cursor-pointer"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                disabled={
+                  !selectedDeclineReason ||
+                  (selectedDeclineReason === 'Other reason' && !customDeclineReason.trim()) ||
+                  updatingJobs[declineJobId]
+                }
+                onClick={async () => {
+                  const finalReason =
+                    selectedDeclineReason === 'Other reason'
+                      ? customDeclineReason
+                      : selectedDeclineReason;
+                  const jobId = declineJobId;
+                  setDeclineJobId(null);
+                  setSelectedDeclineReason('');
+                  setCustomDeclineReason('');
+                  await updateJobStatus(jobId, 'rejected', finalReason);
+                }}
+                className="flex-1 bg-rose-600 hover:bg-rose-500 disabled:bg-slate-800 disabled:text-slate-500 text-white font-black py-3.5 rounded-xl shadow-lg hover:shadow-rose-600/20 transition-all uppercase tracking-wider text-xs cursor-pointer flex justify-center items-center gap-2"
+              >
+                {updatingJobs[declineJobId] ? <Loader2 size={16} className="animate-spin" /> : 'Confirm Decline'}
               </button>
             </div>
           </div>

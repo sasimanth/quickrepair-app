@@ -227,6 +227,7 @@ const UserDashboard = () => {
     if (!profile?.userId) return;
 
     const handleJobUpdate = (updatedJob) => {
+      setBookings(prev => prev.map(b => b._id === updatedJob._id ? { ...b, ...updatedJob } : b));
       fetchData(false);
 
       // Strict sender-role/ID validation to prevent self-notifications
@@ -238,22 +239,108 @@ const UserDashboard = () => {
           `Your ${updatedJob.serviceName} status is now: ${updatedJob.status.replace(/_/g, ' ').toUpperCase()}`, 
           'info'
         );
-        fetchData(false);
         if (Notification.permission === 'granted') {
           new Notification('🔄 Repair Status Updated', {
             body: `Your ${updatedJob.serviceName} status is now: ${updatedJob.status.replace(/_/g, ' ').toUpperCase()}`,
-            icon: '/icon.svg'
+            icon: '/fixvo-icon.png'
           });
         }
-      } else {
-        fetchData(false);
+      }
+    };
+
+    const handleJobRejected = (data) => {
+      setBookings(prev => prev.map(b => {
+        if (b._id === data.bookingId) {
+          return {
+            ...b,
+            rejectedByTechName: data.rejectedByTechName,
+            rejectionReason: data.rejectionReason,
+            status: 'pending', // Reverts to finding tech
+            providerId: null,
+            providerPhone: null,
+            providerEmail: null,
+            technicianName: 'Unassigned'
+          };
+        }
+        return b;
+      }));
+      fetchData(false);
+
+      showToast(
+        '⚠️ Technician Declined Request',
+        `Technician ${data.rejectedByTechName} declined your request (Reason: ${data.rejectionReason}). Reassigning to another expert...`,
+        'error'
+      );
+
+      // Sound and vibration
+      try {
+        const AudioContextClass = window.AudioContext || window.webkitAudioContext;
+        if (AudioContextClass) {
+          const ctx = new AudioContextClass();
+          const osc = ctx.createOscillator();
+          const gain = ctx.createGain();
+          osc.connect(gain);
+          gain.connect(ctx.destination);
+          osc.type = 'sawtooth';
+          osc.frequency.setValueAtTime(150, ctx.currentTime);
+          gain.gain.setValueAtTime(0, ctx.currentTime);
+          gain.gain.linearRampToValueAtTime(0.3, ctx.currentTime + 0.05);
+          gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.35);
+          osc.start(ctx.currentTime);
+          osc.stop(ctx.currentTime + 0.4);
+        }
+        if ('vibrate' in navigator) {
+          navigator.vibrate([100, 50, 100]);
+        }
+      } catch (e) {
+        console.warn("Audio/Vibrate fail", e);
+      }
+    };
+
+    const handleJobReassigned = (updatedJob) => {
+      setBookings(prev => prev.map(b => b._id === updatedJob._id ? { ...b, ...updatedJob } : b));
+      fetchData(false);
+
+      showToast(
+        '🔄 Technician Reassigned',
+        `Your booking has been reassigned to technician ${updatedJob.technicianName || 'another nearby expert'}.`,
+        'success'
+      );
+
+      // Sound and vibration
+      try {
+        const AudioContextClass = window.AudioContext || window.webkitAudioContext;
+        if (AudioContextClass) {
+          const ctx = new AudioContextClass();
+          const osc = ctx.createOscillator();
+          const gain = ctx.createGain();
+          osc.connect(gain);
+          gain.connect(ctx.destination);
+          osc.type = 'sine';
+          osc.frequency.setValueAtTime(587.33, ctx.currentTime); // D5
+          osc.frequency.exponentialRampToValueAtTime(880.00, ctx.currentTime + 0.15); // A5
+          gain.gain.setValueAtTime(0, ctx.currentTime);
+          gain.gain.linearRampToValueAtTime(0.2, ctx.currentTime + 0.02);
+          gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.4);
+          osc.start(ctx.currentTime);
+          osc.stop(ctx.currentTime + 0.45);
+        }
+        if ('vibrate' in navigator) {
+          navigator.vibrate([200, 100, 200]);
+        }
+      } catch (e) {
+        console.warn("Audio/Vibrate fail", e);
       }
     };
 
     socket.on('job_update', handleJobUpdate);
+    socket.on('job_rejected', handleJobRejected);
+    socket.on('job_reassigned', handleJobReassigned);
 
     return () => {
       socket.off('job_update', handleJobUpdate);
+      socket.off('job_rejected', handleJobRejected);
+      socket.off('job_reassigned', handleJobReassigned);
     };
   }, [profile?.userId]);
 
@@ -1257,6 +1344,27 @@ const UserDashboard = () => {
                           <div className="text-[11px] text-slate-500 truncate">
                             <span className="font-semibold">{booking.lastMessage.senderId === profile?.userId ? 'You: ' : 'Tech: '}</span>
                             {booking.lastMessage.text}
+                          </div>
+                        </div>
+                      )}
+
+                      {/* Premium Live Rejection Scanner Banner */}
+                      {['pending', 'assigned'].includes(booking.status) && booking.rejectionReason && (
+                        <div className="mt-4 p-4 bg-rose-50 border border-rose-100 rounded-2xl flex gap-3 text-rose-900 text-xs sm:text-sm font-semibold shadow-sm animate-in fade-in slide-in-from-top-2 duration-300">
+                          <div className="p-2.5 bg-rose-100 rounded-xl text-rose-600 shrink-0 flex items-center justify-center">
+                            <AlertCircle size={20} className="animate-pulse" />
+                          </div>
+                          <div className="space-y-1">
+                            <p className="text-xs sm:text-sm font-extrabold text-rose-950">
+                              Technician {booking.rejectedByTechName || 'Assigned'} declined your booking request.
+                            </p>
+                            <p className="text-xs text-rose-800/80 font-semibold leading-relaxed">
+                              <strong>Reason:</strong> {booking.rejectionReason}
+                            </p>
+                            <div className="flex items-center gap-1.5 text-indigo-600 text-xs font-black uppercase tracking-wider mt-2.5">
+                              <span className="flex h-2.5 w-2.5 rounded-full bg-indigo-500 animate-ping"></span>
+                              <span>Searching for another nearby technician...</span>
+                            </div>
                           </div>
                         </div>
                       )}

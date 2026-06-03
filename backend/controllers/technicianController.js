@@ -192,7 +192,10 @@ const updateProfile = async (req, res) => {
       experience: experience || tech?.experience,
       avatar: avatar || tech?.avatar,
       isProfileComplete: true,
-      ...(isOnline !== undefined && { isOnline })
+      ...(isOnline !== undefined && { 
+        isOnline,
+        currentStatus: isOnline ? 'online' : 'offline'
+      })
     };
 
     if (lat && lng) {

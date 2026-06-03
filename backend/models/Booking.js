@@ -246,6 +246,10 @@ const bookingSchema = new mongoose.Schema({
   cancellationReason: { type: String, default: null },
   cancelledBy: { type: String, enum: ['customer', 'technician', 'admin', null], default: null },
   cancelledAt: { type: Date, default: null },
+  // Rejection tracking
+  rejectionReason: { type: String, default: null },
+  rejectedByTechName: { type: String, default: null },
+  rejectedTechnicians: { type: [String], default: [] },
   quoteRevisions: [
     {
       version: Number,
