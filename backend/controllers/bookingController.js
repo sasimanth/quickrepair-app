@@ -426,9 +426,7 @@ const createBooking = async (req, res) => {
     let assignedTechEmail = 'technician@fixvo.com';
     let assignedTechPhone = null;
 
-    if (reqTimeSlot !== 'ASAP') {
-      bStatus = 'pending'; // Scheduled for later
-    } else if (finalProviderId) {
+    if (finalProviderId) {
       bStatus = 'assigned'; // Manually assigned -> pending acceptance
       const Technician = require('../models/Technician');
       const assignedTech = await Technician.findOne({ userId: finalProviderId });
