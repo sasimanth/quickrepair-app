@@ -23,32 +23,28 @@ router.post('/', async (req, res) => {
     let isQueued = false;
     let reqTimeSlot = req.body.timeSlot || 'ASAP';
 
-    if (reqTimeSlot !== 'ASAP') {
-      bookingStatus = "Pending"; // Scheduled for later
+    // Find available technicians
+    const availableTech = await Technician.findOne({ currentStatus: { $in: ['online', 'available'] }, isOnline: true });
+    
+    if (availableTech) {
+      techName = availableTech.name;
+      techPhone = availableTech.phone || "+15551234567"; // Fallback phone format
+      bookingStatus = "Assigned";
+      estArrival = new Date(Date.now() + 30 * 60000); // Expect in ~30 mins
     } else {
-      // Find available technicians
-      const availableTech = await Technician.findOne({ currentStatus: 'available', isOnline: true });
+      // Queue System: Find busy tech finishing earliest
+      const busyTech = await Technician.findOne({ currentStatus: { $in: ['busy', 'on_the_way', 'on_job'] }, isOnline: true }).sort('expectedAvailableTime');
       
-      if (availableTech) {
-        techName = availableTech.name;
-        techPhone = availableTech.phone || "+15551234567"; // Fallback phone format
-        bookingStatus = "Assigned";
-        estArrival = new Date(Date.now() + 30 * 60000); // Expect in ~30 mins
+      if (busyTech) {
+        techName = busyTech.name;
+        techPhone = busyTech.phone || "+15551234567";
+        bookingStatus = "Queued";
+        isQueued = true;
+        // Calculate when they are free + 30 mins travel
+        const baseTime = busyTech.expectedAvailableTime ? busyTech.expectedAvailableTime.getTime() : Date.now() + 60 * 60000;
+        estArrival = new Date(baseTime + 30 * 60000);
       } else {
-        // Queue System: Find busy tech finishing earliest
-        const busyTech = await Technician.findOne({ currentStatus: { $in: ['busy', 'on_the_way'] }, isOnline: true }).sort('expectedAvailableTime');
-        
-        if (busyTech) {
-          techName = busyTech.name;
-          techPhone = busyTech.phone || "+15551234567";
-          bookingStatus = "Queued";
-          isQueued = true;
-          // Calculate when they are free + 30 mins travel
-          const baseTime = busyTech.expectedAvailableTime ? busyTech.expectedAvailableTime.getTime() : Date.now() + 60 * 60000;
-          estArrival = new Date(baseTime + 30 * 60000);
-        } else {
-          bookingStatus = "Pending"; // No one online
-        }
+        bookingStatus = "Pending"; // No one online
       }
     }
 

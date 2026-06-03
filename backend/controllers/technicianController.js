@@ -194,7 +194,7 @@ const updateProfile = async (req, res) => {
       isProfileComplete: true,
       ...(isOnline !== undefined && { 
         isOnline,
-        currentStatus: isOnline ? 'online' : 'offline'
+        currentStatus: isOnline ? 'available' : 'offline'
       })
     };
 

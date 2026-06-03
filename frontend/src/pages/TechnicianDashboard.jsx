@@ -355,13 +355,23 @@ const TechnicianDashboard = () => {
     const registerSocket = () => {
       socket.emit('register_user', profile.userId);
       socket.emit('register_tech', profile.userId);
+      fetchJobs(true); // Refetch jobs on reconnect
     };
 
     registerSocket();
     socket.on('connect', registerSocket);
 
+    // Sync when tab gets focused/foregrounded on mobile
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === 'visible') {
+        fetchJobs(true);
+      }
+    };
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+
     return () => {
       socket.off('connect', registerSocket);
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
     };
   }, [profile?.userId]);
 
@@ -1998,47 +2008,50 @@ const TechnicianDashboard = () => {
 
       {/* Urgent Alarm/Alert Modal */}
       {activeAlertJob && (
-        <div className="fixed inset-0 bg-[#0B0F19]/90 backdrop-blur-md z-[110] flex items-center justify-center p-4 animate-in fade-in duration-200">
-          <div className="bg-[#111827] border-2 border-amber-500/50 rounded-3xl w-full max-w-md overflow-hidden shadow-2xl text-white p-6 space-y-6 text-center animate-in zoom-in-95 duration-200">
-            <div className="flex flex-col items-center">
-              <div className="w-16 h-16 bg-amber-500/20 text-amber-500 rounded-full flex items-center justify-center border-2 border-amber-500 animate-pulse mb-4">
-                <AlertCircle size={36} />
+        <div className="fixed inset-0 bg-[#0B0F19]/92 backdrop-blur-md z-[110] flex items-center justify-center p-4 animate-in fade-in duration-300">
+          <div className="relative bg-gradient-to-b from-[#111827] to-[#0d131f] border-2 border-indigo-500/40 rounded-[2.5rem] w-full max-w-md overflow-hidden shadow-[0_0_60px_rgba(99,102,241,0.25)] text-white p-7 space-y-6 flex flex-col items-center animate-in slide-in-from-bottom-12 duration-500">
+            {/* Pulsing neon highlight */}
+            <div className="absolute inset-0 bg-gradient-to-r from-indigo-500/5 to-purple-500/5 pointer-events-none rounded-[2.5rem]"></div>
+            
+            <div className="flex flex-col items-center relative z-10">
+              <div className="w-20 h-20 bg-indigo-500/10 text-indigo-400 rounded-full flex items-center justify-center border border-indigo-500/30 animate-[pulse_1.5s_infinite] mb-4">
+                <Sparkles size={36} className="text-indigo-300" />
               </div>
-              <h2 className="text-2xl font-black text-white tracking-tight uppercase">Urgent ASAP Job</h2>
-              <p className="text-xs text-amber-400 font-bold uppercase tracking-wider mt-1 animate-pulse">Action Required: Response Timeout in Progress</p>
+              <h2 className="text-2xl font-black text-white tracking-tight uppercase bg-gradient-to-r from-indigo-200 to-indigo-400 bg-clip-text text-transparent">New Job Offer ⚡</h2>
+              <p className="text-[10px] text-indigo-400 font-extrabold uppercase tracking-widest mt-1.5 animate-pulse">ASAP Request Incoming</p>
             </div>
 
-            <div className="bg-white/5 border border-white/5 rounded-2xl p-5 space-y-3.5 text-left">
-              <div className="flex justify-between items-center text-sm border-b border-white/5 pb-2">
-                <span className="text-slate-400 font-semibold">Service Required:</span>
+            <div className="w-full bg-white/5 border border-white/5 rounded-3xl p-6 space-y-4 text-left relative z-10">
+              <div className="flex justify-between items-center text-sm border-b border-white/5 pb-2.5">
+                <span className="text-slate-400 font-semibold">Service:</span>
                 <span className="font-extrabold text-white">{activeAlertJob.serviceName}</span>
               </div>
-              <div className="flex justify-between items-center text-sm border-b border-white/5 pb-2">
+              <div className="flex justify-between items-center text-sm border-b border-white/5 pb-2.5">
                 <span className="text-slate-400 font-semibold">Location Area:</span>
-                <span className="font-extrabold text-indigo-400">{activeAlertJob.location || 'N/A'}</span>
+                <span className="font-extrabold text-indigo-300">{activeAlertJob.location || 'N/A'}</span>
               </div>
               {activeAlertJob.deviceType && (
-                <div className="flex justify-between items-center text-sm border-b border-white/5 pb-2">
+                <div className="flex justify-between items-center text-sm border-b border-white/5 pb-2.5">
                   <span className="text-slate-400 font-semibold">Device Info:</span>
                   <span className="font-extrabold text-white">{activeAlertJob.deviceType}</span>
                 </div>
               )}
               {activeAlertJob.problemDescription && (
-                <div className="text-xs text-slate-300 italic pt-1">
+                <div className="text-xs text-slate-355 italic pt-1.5 leading-relaxed">
                   "{activeAlertJob.problemDescription}"
                 </div>
               )}
             </div>
 
             {/* Countdown Display */}
-            <div className="flex flex-col items-center justify-center py-2">
-              <span className="text-[10px] text-slate-400 uppercase font-black tracking-widest">Time Remaining to Accept</span>
-              <span className={`text-5xl font-black font-mono tracking-tight mt-1 ${alertCountdown <= 15 ? 'text-rose-500 animate-pulse' : 'text-amber-400'}`}>
+            <div className="flex flex-col items-center justify-center py-1 relative z-10">
+              <span className="text-[9px] text-slate-450 uppercase font-black tracking-widest">Time to Accept Offer</span>
+              <span className={`text-4xl font-black font-mono tracking-tight mt-1 ${alertCountdown <= 15 ? 'text-rose-500 animate-pulse' : 'text-indigo-350'}`}>
                 {alertCountdown}s
               </span>
             </div>
 
-            <div className="flex gap-3">
+            <div className="flex gap-4 w-full relative z-10">
               <button
                 disabled={updatingJobs[activeAlertJob._id]}
                 onClick={() => {
@@ -2047,7 +2060,7 @@ const TechnicianDashboard = () => {
                   stopAlarm();
                   setDeclineJobId(jobId);
                 }}
-                className="flex-1 bg-white/5 hover:bg-rose-500/10 border border-white/10 hover:border-rose-500/30 text-slate-300 hover:text-rose-400 font-extrabold py-3.5 rounded-xl transition-all uppercase tracking-wider text-xs cursor-pointer animate-in fade-in"
+                className="flex-1 bg-white/5 hover:bg-rose-500/10 border border-white/10 hover:border-rose-500/20 text-slate-350 hover:text-rose-400 font-extrabold py-4 rounded-2xl transition-all uppercase tracking-wider text-xs cursor-pointer animate-in fade-in"
               >
                 Decline
               </button>
@@ -2059,7 +2072,7 @@ const TechnicianDashboard = () => {
                   stopAlarm();
                   await updateJobStatus(jobId, 'accepted');
                 }}
-                className="flex-1 bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-400 hover:to-teal-400 text-white font-black py-3.5 rounded-xl shadow-lg hover:shadow-emerald-500/20 transition-all uppercase tracking-wider text-xs cursor-pointer animate-in fade-in"
+                className="flex-1 bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-450 hover:to-teal-500 text-white font-black py-4 rounded-2xl shadow-xl shadow-emerald-500/20 transition-all transform hover:-translate-y-0.5 uppercase tracking-wider text-xs cursor-pointer animate-in fade-in"
               >
                 Accept Job
               </button>

@@ -26,16 +26,16 @@ const startResponseTimeout = (bookingId, techUserId) => {
         const techProfile = await Technician.findOne({ userId: techUserId });
         const techName = techProfile ? techProfile.name : 'Technician';
 
-        // Log response timeout as rejection details for customer dashboard
-        freshBooking.rejectionReason = 'Request response timeout (60 seconds)';
-        freshBooking.rejectedByTechName = techName;
+        // Log response timeout as rejection details for customer dashboard (silent reassignment)
+        freshBooking.rejectionReason = null;
+        freshBooking.rejectedByTechName = null;
         freshBooking.providerId = null;
         freshBooking.providerPhone = null;
         freshBooking.providerEmail = null;
         freshBooking.status = 'pending';
         
         if (techProfile) {
-          techProfile.currentStatus = 'online';
+          techProfile.currentStatus = 'available';
           techProfile.currentJobId = null;
           await techProfile.save();
         }
@@ -59,14 +59,7 @@ const startResponseTimeout = (bookingId, techUserId) => {
         if (global.io) {
           global.io.to(`user_${techUserId}`).emit('new_notification', expireNotif);
           
-          // Emit job_rejected to customer so the decline banner renders live
-          global.io.to(`user_${freshBooking.userId}`).emit('job_rejected', {
-            bookingId: freshBooking._id.toString(),
-            rejectedByTechName: freshBooking.rejectedByTechName,
-            rejectionReason: freshBooking.rejectionReason
-          });
-
-          // Refresh user dashboard
+          // Refresh user dashboard smoothly
           global.io.to(`user_${freshBooking.userId}`).emit('job_update', freshBooking.toObject());
         }
 
@@ -76,8 +69,8 @@ const startResponseTimeout = (bookingId, techUserId) => {
           userId: freshBooking.userId,
           email: freshBooking.userEmail,
           type: 'both',
-          subject: 'Technician Response Timeout – Reassigning 🔄',
-          text: `Technician ${freshBooking.rejectedByTechName} did not respond within 60 seconds. Reassigning your booking to another technician...`,
+          subject: 'Searching for nearby technicians... 🔄',
+          text: `Finding the best available technician for your request. We are matching your booking with another expert.`,
           notifType: 'booking',
           bookingId: freshBooking._id.toString()
         });
@@ -527,7 +520,7 @@ const createBooking = async (req, res) => {
 
       // Start 60-second timeout for manual assignment acceptance
       startResponseTimeout(createdBooking._id, finalProviderId);
-    } else if (reqTimeSlot === 'ASAP') {
+    } else {
       // Run smart auto-assignment asynchronously
       autoAssignBooking(createdBooking._id);
     }
@@ -681,7 +674,7 @@ const updateBookingStatus = async (req, res) => {
 
     if (status === 'completed' && req.user.role === 'technician') {
       if (tech) {
-        tech.currentStatus = 'online'; // Return to Online
+        tech.currentStatus = 'available'; // Return to Available
         tech.currentJobId = null;
         tech.expectedAvailableTime = null;
         tech.jobsCompleted = (tech.jobsCompleted || 0) + 1;
@@ -706,7 +699,7 @@ const updateBookingStatus = async (req, res) => {
        booking.providerEmail = null;
        booking.status = 'pending';
        if (tech) {
-         tech.currentStatus = 'online'; // Return to Online
+          tech.currentStatus = 'available'; // Return to Available
          tech.currentJobId = null;
          await tech.save();
        }

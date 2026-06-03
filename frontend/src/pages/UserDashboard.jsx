@@ -3,6 +3,7 @@ import { Link, useLocation } from 'react-router-dom';
 import api from '../services/api'; 
 import { globalCategories, globalServices, getDbServices } from '../data/services';
 import SearchableServiceSelector from '../components/SearchableServiceSelector';
+import SearchableAreaSelector from '../components/SearchableAreaSelector';
 import { subscribeToPushNotifications } from '../services/pushNotification';
 import { Calendar, MapPin, Smartphone, AlertCircle, Clock, CheckCircle, PackageSearch, XCircle, Plus, LayoutDashboard, Wrench, Settings, Star, User, ChevronRight, MessageSquare, Camera, UploadCloud, Loader2, Shield, ShieldCheck, HelpCircle, Truck, Home, Search, Eye, Zap, Maximize2, Hash, Layers, Paintbrush, Tv, X } from 'lucide-react';
 import ChatModal from '../components/ChatModal';
@@ -213,13 +214,23 @@ const UserDashboard = () => {
 
     const registerSocket = () => {
       socket.emit('register_user', profile.userId);
+      fetchData(false); // Refetch bookings on reconnect
     };
 
     registerSocket();
     socket.on('connect', registerSocket);
 
+    // Sync when tab gets focused/foregrounded on mobile
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === 'visible') {
+        fetchData(false);
+      }
+    };
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+
     return () => {
       socket.off('connect', registerSocket);
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
     };
   }, [profile?.userId]);
 
@@ -989,24 +1000,18 @@ const UserDashboard = () => {
                     {/* Standard Town/Area selection */}
                     <div className="space-y-2">
                       <label className="text-sm font-bold text-slate-700 flex items-center gap-2"><MapPin size={16} className="text-slate-400"/> Town / Area</label>
-                      <select 
-                        required 
-                        className="w-full px-5 py-3 bg-white border border-slate-200 rounded-xl focus:ring-4 focus:ring-blue-100 focus:border-blue-500 transition-all font-medium text-slate-700" 
-                        value={formData.location || ''} 
-                        onChange={(e) => setFormData({ ...formData, location: e.target.value })}
-                      >
-                        <option value="">Select your area</option>
-                        <option value="Madanapalle">Madanapalle</option>
-                        <option value="Kadiri">Kadiri</option>
-                        <option value="Rayachoty">Rayachoty</option>
-                        <option value="Galiveedu">Galiveedu</option>
-                      </select>
+                      <SearchableAreaSelector
+                        value={formData.location || ''}
+                        onChange={(areaName) => setFormData({ ...formData, location: areaName })}
+                        theme="light"
+                        placeholder="Search your area..."
+                      />
                     </div>
                   </div>
 
                   <div className="space-y-2">
-                    <label className="text-sm font-bold text-slate-700 flex items-center gap-2"><Camera size={16} className="text-slate-400"/> Device Photo (Optional)</label>
-                    <div className="relative group border-2 border-dashed border-slate-300 rounded-xl p-4 transition-all hover:border-blue-400 hover:bg-blue-50/50 flex flex-col items-center justify-center min-h-[100px] bg-slate-50 cursor-pointer overflow-hidden">
+                    <label className="text-sm font-bold text-slate-700 flex items-center gap-2"><Camera size={16} className="text-slate-400"/> Device Media / Photo (Optional)</label>
+                    <div className="relative group border-2 border-dashed border-slate-200 hover:border-indigo-400 rounded-2xl p-6 transition-all duration-300 hover:bg-indigo-50/30 flex flex-col items-center justify-center min-h-[130px] bg-slate-50 cursor-pointer overflow-hidden hover:shadow-lg hover:shadow-indigo-500/5">
                       <input 
                         type="file" 
                         accept="image/*,video/mp4,video/quicktime" 
@@ -1015,35 +1020,37 @@ const UserDashboard = () => {
                         className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10" 
                       />
                       {uploadingImage ? (
-                        <div className="flex flex-col items-center text-blue-500">
-                          <Loader2 className="animate-spin mb-2" size={24} />
-                          <span className="text-sm font-bold">Uploading...</span>
+                        <div className="flex flex-col items-center gap-2 text-indigo-650">
+                          <Loader2 size={28} className="animate-spin text-indigo-500" />
+                          <span className="text-xs font-bold uppercase tracking-wider animate-pulse">Uploading Media...</span>
                         </div>
                       ) : formData.mediaUrl ? (
-                        <div className="flex flex-col items-center text-emerald-600">
-                          <CheckCircle className="mb-2" size={28} />
-                          <span className="text-sm font-bold">Media Uploaded Successfully!</span>
+                        <div className="flex flex-col items-center text-emerald-600 relative z-20">
+                          <CheckCircle className="mb-2 text-emerald-500" size={28} />
+                          <span className="text-xs font-bold uppercase tracking-wider">Media Uploaded!</span>
                           {formData.mediaType?.startsWith('video') ? (
-                            <video src={formData.mediaUrl} className="mt-3 w-16 h-16 object-cover rounded-lg border border-emerald-200 shadow-sm" />
+                            <video src={formData.mediaUrl} className="mt-3 w-16 h-16 object-cover rounded-xl border-2 border-emerald-250 shadow-md" />
                           ) : (
-                            <img src={formData.mediaUrl} alt="Preview" className="mt-3 w-16 h-16 object-cover rounded-lg border border-emerald-200 shadow-sm" />
+                            <img src={formData.mediaUrl} alt="Preview" className="mt-3 w-16 h-16 object-cover rounded-xl border-2 border-emerald-250 shadow-md" />
                           )}
                         </div>
                       ) : (
-                        <div className="flex flex-col items-center text-slate-500 group-hover:text-blue-600 transition-colors">
-                          <UploadCloud className="mb-2" size={28} />
-                          <span className="text-sm font-bold">Click or drag a photo here</span>
-                          <span className="text-xs mt-1 text-slate-400">JPG, PNG, MP4 up to 20MB</span>
+                        <div className="flex flex-col items-center text-center gap-2 text-slate-450 group-hover:text-indigo-600 transition-colors">
+                          <UploadCloud size={32} className="text-slate-350 group-hover:text-indigo-400 transition-colors" />
+                          <div>
+                            <p className="text-xs font-extrabold text-slate-700">Drag & drop or click to upload</p>
+                            <p className="text-[10px] text-slate-400 font-semibold mt-0.5">Supports images & videos (Max 10MB)</p>
+                          </div>
                         </div>
                       )}
                     </div>
                   </div>
                   
 
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6 pt-4 border-t border-slate-100">
-                    <div className="space-y-3">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-8 pt-6 border-t border-slate-100 items-stretch">
+                    <div className="flex flex-col h-full space-y-3">
                       <label className="text-sm font-bold text-slate-700 flex items-center gap-2"><HelpCircle size={16} className="text-slate-400"/> Describe the problem</label>
-                      <div className="flex items-start gap-2 mb-2 p-3 bg-slate-50 border border-slate-200 rounded-xl">
+                      <div className="flex items-start gap-2.5 p-4 bg-slate-50 border border-slate-200 rounded-2xl transition-all hover:bg-slate-100/50">
                         <input 
                           type="checkbox" 
                           id="unknownProblem" 
@@ -1056,33 +1063,40 @@ const UserDashboard = () => {
                               serviceOption: checked ? 'inspection' : 'direct'
                             });
                           }} 
-                          className="mt-1 w-4 h-4 text-blue-600 rounded focus:ring-blue-500 cursor-pointer" 
+                          className="mt-1 w-4 h-4 text-indigo-600 rounded border-slate-350 focus:ring-indigo-500 cursor-pointer" 
                         />
-                        <label htmlFor="unknownProblem" className="text-sm text-slate-700 font-bold cursor-pointer">I don't know the exact issue (Technician will diagnose)</label>
+                        <label htmlFor="unknownProblem" className="text-xs text-slate-700 font-extrabold cursor-pointer leading-tight select-none">I don't know the exact issue (Technician will diagnose)</label>
                       </div>
-                      <textarea rows="3" placeholder={formData.unknownProblem ? "Tell us what happened (e.g., screen went black, strange noise)..." : "Describe the issue you're facing in detail..."} required className="w-full px-5 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:ring-4 focus:ring-blue-100 focus:border-blue-500 transition-all font-medium resize-none" value={formData.problemDescription} onChange={(e) => setFormData({ ...formData, problemDescription: e.target.value })}></textarea>
+                      <textarea 
+                        rows="7" 
+                        placeholder={formData.unknownProblem ? "Tell us what happened (e.g., screen went black, strange noise)..." : "Describe the issue you're facing in detail..."} 
+                        required 
+                        className="w-full flex-grow px-5 py-4 bg-slate-50 border border-slate-250 rounded-2xl focus:ring-4 focus:ring-indigo-50/50 focus:border-indigo-500 transition-all font-medium text-slate-700 resize-none md:min-h-[220px]" 
+                        value={formData.problemDescription} 
+                        onChange={(e) => setFormData({ ...formData, problemDescription: e.target.value })}
+                      ></textarea>
                     </div>
                     
-                    <div className="space-y-3">
+                    <div className="flex flex-col h-full space-y-3">
                       <label className="text-sm font-bold text-slate-700 flex items-center gap-2">
                         <Wrench size={16} className="text-slate-400"/> Service Visit Type
                       </label>
                       
-                      <div className="space-y-3">
+                      <div className="flex-grow flex flex-col gap-4">
                         {/* Inspection Visit Card */}
-                        <label className={`relative block p-4 rounded-2xl border-2 cursor-pointer transition-all duration-300 transform hover:scale-[1.01] ${formData.serviceOption === 'inspection' ? 'border-indigo-600 bg-indigo-50/50 ring-4 ring-indigo-50 shadow-md' : 'border-slate-200 bg-white hover:border-indigo-200 hover:bg-slate-50/50'}`}>
-                           <div className="flex items-start gap-3">
-                             <input type="radio" name="serviceOption" checked={formData.serviceOption === 'inspection'} onChange={() => setFormData({...formData, serviceOption: 'inspection'})} className="mt-1 w-4 h-4 text-indigo-600 focus:ring-indigo-500 cursor-pointer" />
+                        <label className={`relative flex-1 block p-5 rounded-[2rem] border-2 cursor-pointer transition-all duration-300 transform hover:scale-[1.01] ${formData.serviceOption === 'inspection' ? 'border-indigo-600 bg-indigo-50/40 ring-4 ring-indigo-50/50 shadow-md shadow-indigo-600/5' : 'border-slate-200 bg-white hover:border-indigo-200 hover:bg-slate-50/50'}`}>
+                           <div className="flex items-start gap-4">
+                             <input type="radio" name="serviceOption" checked={formData.serviceOption === 'inspection'} onChange={() => setFormData({...formData, serviceOption: 'inspection'})} className="mt-1 w-4.5 h-4.5 text-indigo-600 focus:ring-indigo-500 cursor-pointer" />
                              <div className="flex-grow">
                                <div className="flex items-center gap-2 flex-wrap">
                                  <span className="font-extrabold text-slate-800 flex items-center gap-1.5"><Eye size={16} className="text-indigo-600" /> Inspection Visit</span>
                                  {formData.unknownProblem && (
-                                   <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-black bg-indigo-600 text-white animate-pulse shadow-sm">
+                                   <span className="inline-flex items-center gap-1.5 px-3 py-0.5 rounded-full text-[10px] font-black bg-indigo-650 text-white animate-pulse shadow-sm shadow-indigo-500/10">
                                      ✨ Recommended for Unknown Issues
                                    </span>
                                  )}
                                </div>
-                               <span className="block text-xs text-slate-600 mt-1 font-medium leading-relaxed">
+                               <span className="block text-xs text-slate-600 mt-2 font-medium leading-relaxed">
                                  Recommended when issue is unknown or complex. Technician visits first to diagnose and provides a quote. Free booking – pay only after approving the final quote.
                                </span>
                              </div>
@@ -1090,19 +1104,19 @@ const UserDashboard = () => {
                         </label>
                         
                         {/* Direct Repair Visit Card */}
-                        <label className={`relative block p-4 rounded-2xl border-2 cursor-pointer transition-all duration-300 transform hover:scale-[1.01] ${formData.serviceOption === 'direct' ? 'border-indigo-600 bg-indigo-50/50 ring-4 ring-indigo-50 shadow-md' : 'border-slate-200 bg-white hover:border-indigo-200 hover:bg-slate-50/50'}`}>
-                           <div className="flex items-start gap-3">
-                             <input type="radio" name="serviceOption" checked={formData.serviceOption === 'direct'} onChange={() => setFormData({...formData, serviceOption: 'direct'})} className="mt-1 w-4 h-4 text-indigo-600 focus:ring-indigo-500 cursor-pointer" />
+                        <label className={`relative flex-1 block p-5 rounded-[2rem] border-2 cursor-pointer transition-all duration-300 transform hover:scale-[1.01] ${formData.serviceOption === 'direct' ? 'border-indigo-600 bg-indigo-50/40 ring-4 ring-indigo-50/50 shadow-md shadow-indigo-600/5' : 'border-slate-200 bg-white hover:border-indigo-200 hover:bg-slate-50/50'}`}>
+                           <div className="flex items-start gap-4">
+                             <input type="radio" name="serviceOption" checked={formData.serviceOption === 'direct'} onChange={() => setFormData({...formData, serviceOption: 'direct'})} className="mt-1 w-4.5 h-4.5 text-indigo-600 focus:ring-indigo-500 cursor-pointer" />
                              <div className="flex-grow">
                                <div className="flex items-center gap-2 flex-wrap">
                                  <span className="font-extrabold text-slate-800 flex items-center gap-1.5"><Zap size={16} className="text-amber-500" /> Direct Repair Visit</span>
                                  {!formData.unknownProblem && (
-                                   <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-black bg-emerald-600 text-white shadow-sm">
+                                   <span className="inline-flex items-center gap-1.5 px-3 py-0.5 rounded-full text-[10px] font-black bg-emerald-650 text-white shadow-sm shadow-emerald-500/10">
                                      ⚡ Faster for Known Repairs
                                    </span>
                                  )}
                                </div>
-                               <span className="block text-xs text-slate-600 mt-1 font-medium leading-relaxed">
+                               <span className="block text-xs text-slate-600 mt-2 font-medium leading-relaxed">
                                  For simple, known services like cleaning, minor repairs, or installation. Technician comes fully prepared with the necessary tools to fix it immediately.
                                </span>
                              </div>
@@ -1112,8 +1126,22 @@ const UserDashboard = () => {
                     </div>
                   </div>
 
-                  <button type="submit" className="w-full bg-slate-900 hover:bg-slate-800 text-white font-bold py-4 rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1">
-                    Find Nearby Technicians 🔍
+                  <button 
+                    type="submit" 
+                    disabled={isBooking}
+                    className="w-full relative overflow-hidden group bg-gradient-to-r from-slate-900 via-indigo-950 to-slate-900 hover:from-slate-850 hover:to-indigo-900 text-white font-black py-4.5 rounded-2xl shadow-xl hover:shadow-2xl hover:shadow-indigo-950/20 transition-all duration-300 transform hover:-translate-y-0.5 flex items-center justify-center gap-2.5 cursor-pointer uppercase tracking-wider text-xs sm:text-sm border border-white/5 active:scale-98"
+                  >
+                    {isBooking ? (
+                      <>
+                        <Loader2 size={18} className="animate-spin text-indigo-300" />
+                        <span>Finding Technicians...</span>
+                      </>
+                    ) : (
+                      <>
+                        <span>Find Nearby Technicians</span>
+                        <Sparkles size={16} className="text-indigo-400 group-hover:animate-pulse" />
+                      </>
+                    )}
                   </button>
                 </form>
               )
@@ -1348,22 +1376,42 @@ const UserDashboard = () => {
                         </div>
                       )}
 
+                      {/* Standard Searching Banner */}
+                      {['pending', 'assigned'].includes(booking.status) && !booking.rejectionReason && (
+                        <div className="mt-4 p-4.5 bg-indigo-50/30 backdrop-blur-sm border border-indigo-100/50 rounded-2xl flex gap-3.5 text-indigo-900 text-xs sm:text-sm font-semibold shadow-sm animate-in fade-in slide-in-from-top-2 duration-300">
+                          <div className="p-2.5 bg-indigo-100/50 rounded-xl text-indigo-600 shrink-0 flex items-center justify-center h-10 w-10">
+                            <Loader2 size={18} className="animate-spin text-indigo-500" />
+                          </div>
+                          <div className="space-y-1 flex-1">
+                            <p className="text-xs sm:text-sm font-extrabold text-indigo-950">
+                              Finding the best available technician for your request.
+                            </p>
+                            <p className="text-[11px] text-slate-500 font-medium leading-relaxed">
+                              Searching for nearby technicians... We are matching you with an expert who can handle your service immediately.
+                            </p>
+                          </div>
+                        </div>
+                      )}
+
                       {/* Premium Live Rejection Scanner Banner */}
                       {['pending', 'assigned'].includes(booking.status) && booking.rejectionReason && (
-                        <div className="mt-4 p-4 bg-rose-50 border border-rose-100 rounded-2xl flex gap-3 text-rose-900 text-xs sm:text-sm font-semibold shadow-sm animate-in fade-in slide-in-from-top-2 duration-300">
-                          <div className="p-2.5 bg-rose-100 rounded-xl text-rose-600 shrink-0 flex items-center justify-center">
-                            <AlertCircle size={20} className="animate-pulse" />
+                        <div className="mt-4 p-4.5 bg-amber-50/40 backdrop-blur-sm border border-amber-250/50 rounded-2xl flex gap-3.5 text-amber-900 text-xs sm:text-sm font-semibold shadow-sm animate-in fade-in slide-in-from-top-2 duration-300">
+                          <div className="p-2.5 bg-amber-100/70 rounded-xl text-amber-600 shrink-0 flex items-center justify-center h-10 w-10">
+                            <Clock size={20} className="animate-pulse" />
                           </div>
-                          <div className="space-y-1">
-                            <p className="text-xs sm:text-sm font-extrabold text-rose-950">
-                              Technician {booking.rejectedByTechName || 'Assigned'} declined your booking request.
+                          <div className="space-y-1 flex-1">
+                            <p className="text-xs sm:text-sm font-extrabold text-amber-950">
+                              Searching for another available technician nearby.
                             </p>
-                            <p className="text-xs text-rose-800/80 font-semibold leading-relaxed">
-                              <strong>Reason:</strong> {booking.rejectionReason}
+                            <p className="text-[11px] text-slate-500 font-medium leading-relaxed">
+                              The previously assigned technician was busy (Reason: {booking.rejectionReason}). We are matching your booking with another expert.
                             </p>
-                            <div className="flex items-center gap-1.5 text-indigo-600 text-xs font-black uppercase tracking-wider mt-2.5">
-                              <span className="flex h-2.5 w-2.5 rounded-full bg-indigo-500 animate-ping"></span>
-                              <span>Searching for another nearby technician...</span>
+                            <div className="flex items-center gap-2 text-indigo-600 text-[11px] font-black uppercase tracking-wider mt-2">
+                              <span className="flex h-2 w-2 relative">
+                                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-indigo-400 opacity-75"></span>
+                                <span className="relative inline-flex rounded-full h-2 w-2 bg-indigo-500"></span>
+                              </span>
+                              <span>Finding the best available technician...</span>
                             </div>
                           </div>
                         </div>
