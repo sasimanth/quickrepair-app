@@ -10,7 +10,9 @@ import VerificationModal from '../components/VerificationModal';
 import KycModal from '../components/KycModal';
 import { socket } from '../services/socket';
 import { motion } from 'framer-motion';
-import { playNotificationSound } from '../services/soundEffects';
+import { playNotificationSound, startDispatchRingtone, stopDispatchRingtone } from '../services/soundEffects';
+import DispatchOverlay from '../components/DispatchOverlay';
+import { queueOfflineAction, syncOfflineActions } from '../services/offlineSync';
 
 const formatPhoneLink = (phone) => {
   if (!phone) return '';
@@ -103,61 +105,18 @@ const TechnicianDashboard = () => {
   const [chatBookingId, setChatBookingId] = useState(null);
   const [quoteModalJob, setQuoteModalJob] = useState(null);
   const [activeAlertJob, setActiveAlertJob] = useState(null);
-  const [alertCountdown, setAlertCountdown] = useState(60);
   const [clarificationResponse, setClarificationResponse] = useState('');
   const [declineJobId, setDeclineJobId] = useState(null);
   const [selectedDeclineReason, setSelectedDeclineReason] = useState('');
   const [customDeclineReason, setCustomDeclineReason] = useState('');
-  const alarmIntervalRef = useRef(null);
 
   const startAlarm = () => {
-    stopAlarm();
-    const playSingleAlarm = () => {
-      playNotificationSound('high');
-    };
-    playSingleAlarm();
-    alarmIntervalRef.current = setInterval(playSingleAlarm, 3000);
+    startDispatchRingtone();
   };
 
   const stopAlarm = () => {
-    if (alarmIntervalRef.current) {
-      clearInterval(alarmIntervalRef.current);
-      alarmIntervalRef.current = null;
-    }
+    stopDispatchRingtone();
   };
-
-  // Alarm timer effect
-  useEffect(() => {
-    let timer;
-    if (activeAlertJob) {
-      const createdTime = new Date(activeAlertJob.createdAt).getTime();
-      const now = Date.now();
-      const elapsed = Math.floor((now - createdTime) / 1000);
-      const remaining = Math.max(0, 60 - elapsed);
-      setAlertCountdown(remaining);
-      
-      timer = setInterval(() => {
-        setAlertCountdown(prev => {
-          if (prev <= 1) {
-            clearInterval(timer);
-            stopAlarm();
-            setActiveAlertJob(null);
-            showToast('⚠️ Job Timeout', 'Urgent ASAP job reassigned due to response timeout.', 'error');
-            fetchJobs(true);
-            return 0;
-          }
-          return prev - 1;
-        });
-      }, 1000);
-    } else {
-      setAlertCountdown(60);
-      stopAlarm();
-    }
-    
-    return () => {
-      if (timer) clearInterval(timer);
-    };
-  }, [activeAlertJob]);
   const [quoteForm, setQuoteForm] = useState({ serviceCharge: '', sparePartsCost: '', transportCharge: '50', quoteReason: '', quotePhoto: '', detectedIssues: '' });
   const [uploadedImages, setUploadedImages] = useState({
     damagedPart: '',
@@ -321,11 +280,27 @@ const TechnicianDashboard = () => {
         fetchJobs(true);
       }
     };
+
+    const handleOnlineSync = () => {
+      syncOfflineActions((action) => {
+        showToast('🔄 Offline Sync Complete', `Status update synced successfully: ${action.status.replace(/_/g, ' ').toUpperCase()}`, 'success');
+        fetchJobs(true);
+      });
+    };
+
     document.addEventListener('visibilitychange', handleVisibilityChange);
+    window.addEventListener('online', handleOnlineSync);
+
+    // Trigger sync on dashboard load/mount
+    syncOfflineActions((action) => {
+      showToast('🔄 Offline Sync Complete', `Status update synced successfully: ${action.status.replace(/_/g, ' ').toUpperCase()}`, 'success');
+      fetchJobs(true);
+    });
 
     return () => {
       socket.off('connect', registerSocket);
       document.removeEventListener('visibilitychange', handleVisibilityChange);
+      window.removeEventListener('online', handleOnlineSync);
     };
   }, [profile?.userId]);
 
@@ -553,7 +528,22 @@ const TechnicianDashboard = () => {
 
   const updateJobStatus = async (id, status, rejectionReason = '') => {
     if (updatingJobs[id]) return;
-    // Optimistic update
+
+    // Check if network is offline
+    if (typeof navigator !== 'undefined' && !navigator.onLine) {
+      console.log(`[OfflineMode] Internet disconnected. Caching action: update status to '${status}' for Booking ${id}`);
+      
+      setJobs(prevJobs => prevJobs.map(job => job._id === id ? { ...job, status } : job));
+      
+      const queued = await queueOfflineAction({ bookingId: id, status, rejectionReason });
+      if (queued) {
+        showToast('⚠️ Offline Mode Activated', 'Connection lost. Status update cached locally and will sync once internet returns.', 'warning');
+      } else {
+        showToast('⚠️ Offline Queue Error', 'Failed to save offline action locally.', 'error');
+      }
+      return;
+    }
+
     setJobs(prevJobs => prevJobs.map(job => job._id === id ? { ...job, status } : job));
     setUpdatingJobs(prev => ({ ...prev, [id]: true }));
     
@@ -561,8 +551,7 @@ const TechnicianDashboard = () => {
       await api.put(`/bookings/${id}/status`, { status, rejectionReason });
       await fetchJobs(true); // Refetch profile metrics in real-time
     } catch (error) { 
-      // Revert on failure
-      alert(`Failed to update status to ${status}`);
+      showToast('❌ Update Failed', `Failed to update status to ${status.replace(/_/g, ' ').toUpperCase()}`, 'error');
       fetchJobs(); 
     } finally {
       setUpdatingJobs(prev => ({ ...prev, [id]: false }));
@@ -1971,79 +1960,23 @@ const TechnicianDashboard = () => {
         );
       })()}
 
-      {/* Urgent Alarm/Alert Modal */}
+      {/* Urgent Alarm/Alert Modal (Takeover Dispatch Overlay) */}
       {activeAlertJob && (
-        <div className="fixed inset-0 bg-[#0B0F19]/92 backdrop-blur-md z-[110] flex items-center justify-center p-4 animate-in fade-in duration-300">
-          <div className="relative bg-gradient-to-b from-[#111827] to-[#0d131f] border-2 border-indigo-500/40 rounded-[2.5rem] w-full max-w-md overflow-hidden shadow-[0_0_60px_rgba(99,102,241,0.25)] text-white p-7 space-y-6 flex flex-col items-center animate-in slide-in-from-bottom-12 duration-500">
-            {/* Pulsing neon highlight */}
-            <div className="absolute inset-0 bg-gradient-to-r from-indigo-500/5 to-purple-500/5 pointer-events-none rounded-[2.5rem]"></div>
-            
-            <div className="flex flex-col items-center relative z-10">
-              <div className="w-20 h-20 bg-indigo-500/10 text-indigo-400 rounded-full flex items-center justify-center border border-indigo-500/30 animate-[pulse_1.5s_infinite] mb-4">
-                <Sparkles size={36} className="text-indigo-300" />
-              </div>
-              <h2 className="text-2xl font-black text-white tracking-tight uppercase bg-gradient-to-r from-indigo-200 to-indigo-400 bg-clip-text text-transparent">New Job Offer ⚡</h2>
-              <p className="text-[10px] text-indigo-400 font-extrabold uppercase tracking-widest mt-1.5 animate-pulse">ASAP Request Incoming</p>
-            </div>
-
-            <div className="w-full bg-white/5 border border-white/5 rounded-3xl p-6 space-y-4 text-left relative z-10">
-              <div className="flex justify-between items-center text-sm border-b border-white/5 pb-2.5">
-                <span className="text-slate-400 font-semibold">Service:</span>
-                <span className="font-extrabold text-white">{activeAlertJob.serviceName}</span>
-              </div>
-              <div className="flex justify-between items-center text-sm border-b border-white/5 pb-2.5">
-                <span className="text-slate-400 font-semibold">Location Area:</span>
-                <span className="font-extrabold text-indigo-300">{activeAlertJob.location || 'N/A'}</span>
-              </div>
-              {activeAlertJob.deviceType && (
-                <div className="flex justify-between items-center text-sm border-b border-white/5 pb-2.5">
-                  <span className="text-slate-400 font-semibold">Device Info:</span>
-                  <span className="font-extrabold text-white">{activeAlertJob.deviceType}</span>
-                </div>
-              )}
-              {activeAlertJob.problemDescription && (
-                <div className="text-xs text-slate-355 italic pt-1.5 leading-relaxed">
-                  "{activeAlertJob.problemDescription}"
-                </div>
-              )}
-            </div>
-
-            {/* Countdown Display */}
-            <div className="flex flex-col items-center justify-center py-1 relative z-10">
-              <span className="text-[9px] text-slate-450 uppercase font-black tracking-widest">Time to Accept Offer</span>
-              <span className={`text-4xl font-black font-mono tracking-tight mt-1 ${alertCountdown <= 15 ? 'text-rose-500 animate-pulse' : 'text-indigo-350'}`}>
-                {alertCountdown}s
-              </span>
-            </div>
-
-            <div className="flex gap-4 w-full relative z-10">
-              <button
-                disabled={updatingJobs[activeAlertJob._id]}
-                onClick={() => {
-                  const jobId = activeAlertJob._id;
-                  setActiveAlertJob(null);
-                  stopAlarm();
-                  setDeclineJobId(jobId);
-                }}
-                className="flex-1 bg-white/5 hover:bg-rose-500/10 border border-white/10 hover:border-rose-500/20 text-slate-350 hover:text-rose-400 font-extrabold py-4 rounded-2xl transition-all uppercase tracking-wider text-xs cursor-pointer animate-in fade-in"
-              >
-                Decline
-              </button>
-              <button
-                disabled={updatingJobs[activeAlertJob._id]}
-                onClick={async () => {
-                  const jobId = activeAlertJob._id;
-                  setActiveAlertJob(null);
-                  stopAlarm();
-                  await updateJobStatus(jobId, 'accepted');
-                }}
-                className="flex-1 bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-450 hover:to-teal-500 text-white font-black py-4 rounded-2xl shadow-xl shadow-emerald-500/20 transition-all transform hover:-translate-y-0.5 uppercase tracking-wider text-xs cursor-pointer animate-in fade-in"
-              >
-                Accept Job
-              </button>
-            </div>
-          </div>
-        </div>
+        <DispatchOverlay
+          job={activeAlertJob}
+          onAccept={async () => {
+            const jobId = activeAlertJob._id;
+            setActiveAlertJob(null);
+            stopAlarm();
+            await updateJobStatus(jobId, 'accepted');
+          }}
+          onDecline={async (reason) => {
+            const jobId = activeAlertJob._id;
+            setActiveAlertJob(null);
+            stopAlarm();
+            setDeclineJobId(jobId);
+          }}
+        />
       )}
 
       {/* Decline/Rejection Modal */}

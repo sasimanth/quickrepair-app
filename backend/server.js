@@ -44,6 +44,7 @@ app.use('/api/book-service', require('./routes/quickBookingRoutes'));
 app.use('/api/payment', require('./routes/payment'));
 app.use('/api/contact', require('./routes/contactRoutes'));
 app.use('/api/legal', require('./routes/legalRoutes'));
+app.use('/api/payouts', require('./routes/payoutRoutes'));
 
 app.get('/api/health', (req, res) => {
   res.json({ status: 'ok', message: 'Fixvo API is running' });

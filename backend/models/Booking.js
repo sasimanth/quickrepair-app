@@ -272,8 +272,97 @@ const bookingSchema = new mongoose.Schema({
       createdAt: { type: Date, default: Date.now }
     }
   ],
-  preRevisionStatus: { type: String, default: null }
+  preRevisionStatus: { type: String, default: null },
+  timelineEvents: [
+    {
+      status: { type: String, required: true },
+      timestamp: { type: Date, default: Date.now },
+      description: { type: String, required: true }
+    }
+  ]
 }, { timestamps: true });
+
+// Pre-save hook to populate timeline events on status and paymentStatus changes
+bookingSchema.pre('save', function(next) {
+  if (this.isNew) {
+    if (!this.timelineEvents || this.timelineEvents.length === 0) {
+      this.timelineEvents = [{
+        status: this.status || 'pending',
+        timestamp: new Date(),
+        description: 'Booking created and submitted successfully.'
+      }];
+    }
+  } else {
+    if (this.isModified('status')) {
+      let desc = `Booking status updated to ${this.status}.`;
+      switch(this.status) {
+        case 'pending':
+          desc = 'Booking is pending technician matching.';
+          break;
+        case 'assigned':
+          desc = 'Matching technician found. Waiting for acceptance.';
+          break;
+        case 'accepted':
+          desc = 'Technician accepted the booking request.';
+          break;
+        case 'on_the_way':
+          desc = 'Technician is on the way to your location.';
+          break;
+        case 'arrived':
+          desc = 'Technician has arrived at your location.';
+          break;
+        case 'inspection_started':
+          desc = 'Technician has started inspecting the problem.';
+          break;
+        case 'quote_pending':
+          desc = 'Technician submitted a job quote for approval.';
+          break;
+        case 'quote_approved':
+          desc = 'Quote approved. Work is in progress.';
+          break;
+        case 'quote_rejected':
+          desc = 'Quote rejected by customer.';
+          break;
+        case 'quote_clarification':
+          desc = 'Clarification requested on the submitted quote.';
+          break;
+        case 'in_progress':
+          desc = 'Service repair work is in progress.';
+          break;
+        case 'completed':
+          desc = 'Service completed. Awaiting payment.';
+          break;
+        case 'cancelled':
+          desc = `Booking cancelled by ${this.cancelledBy || 'user'}.`;
+          if (this.cancellationReason) desc += ` Reason: ${this.cancellationReason}`;
+          break;
+        case 'rejected':
+          desc = 'Technician declined the booking request. Re-matching...';
+          break;
+      }
+      this.timelineEvents.push({
+        status: this.status,
+        timestamp: new Date(),
+        description: desc
+      });
+    }
+
+    if (this.isModified('paymentStatus')) {
+      let desc = `Payment status updated to ${this.paymentStatus}.`;
+      if (this.paymentStatus === 'completed') {
+        desc = `Payment of ₹${this.amount || 0} completed successfully via ${this.paymentMethod || 'cash'}.`;
+      } else if (this.paymentStatus === 'cash_pending') {
+        desc = 'Payment method selected: Cash. Awaiting technician confirmation.';
+      }
+      this.timelineEvents.push({
+        status: `payment_${this.paymentStatus}`,
+        timestamp: new Date(),
+        description: desc
+      });
+    }
+  }
+  next();
+});
 
 bookingSchema.index({ userId: 1 });
 bookingSchema.index({ providerId: 1 });
