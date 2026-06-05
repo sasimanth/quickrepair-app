@@ -110,48 +110,75 @@ const autoAssignBooking = async (bookingId) => {
       isActive: true
     }).distinct('userId');
 
+    // 2. Dynamic Area Extraction: Find distinct technician areas and check if booking location matches
+    const distinctAreas = await Technician.distinct('area');
     let matchedArea = null;
     const locationLower = (booking.location || '').toLowerCase();
-    if (locationLower.includes('madanapalle')) matchedArea = 'Madanapalle';
-    else if (locationLower.includes('kadiri')) matchedArea = 'Kadiri';
-    else if (locationLower.includes('rayachoty')) matchedArea = 'Rayachoty';
-    else if (locationLower.includes('galiveedu')) matchedArea = 'Galiveedu';
+    for (const area of distinctAreas) {
+      if (area && locationLower.includes(area.toLowerCase())) {
+        matchedArea = area;
+        break;
+      }
+    }
 
-    // Query online technicians (currentStatus: 'online' or 'available') who are online, active, not busy, and not blacklisted
+    // Base query for online/available technicians who are not busy or rejected
     const excludedTechs = [...(booking.rejectedTechnicians || []), ...busyTechIds];
-    const techQuery = { 
-      userId: { $in: activeSessionUserIds, $nin: excludedTechs },
+    const eligibleTechQuery = { 
+      userId: { $nin: excludedTechs },
       currentStatus: { $in: ['online', 'available'] }, 
       isOnline: true 
     };
 
-    if (matchedArea) {
-      techQuery.area = matchedArea;
-    }
-    if (booking.serviceId) {
-      techQuery.services = booking.serviceId;
+    let availableTech = null;
+
+    // 3. Proximity-Based Match: If booking has GPS coordinates, perform 2dsphere near search
+    if (booking.latitude !== null && booking.longitude !== null) {
+      const geoQuery = {
+        ...eligibleTechQuery,
+        location: {
+          $near: {
+            $geometry: {
+              type: 'Point',
+              coordinates: [parseFloat(booking.longitude), parseFloat(booking.latitude)] // [longitude, latitude]
+            },
+            $maxDistance: 50000 // 50km radius limit
+          }
+        }
+      };
+      if (booking.serviceId) {
+        geoQuery.services = booking.serviceId;
+      }
+      
+      availableTech = await Technician.findOne(geoQuery);
+      if (availableTech) {
+        console.log(`📍 Geospatial Match: Found nearest technician ${availableTech.name} within 50km.`);
+      }
     }
 
-    let availableTech = await Technician.findOne(techQuery).sort('-rating');
+    // 4. Area-Based Match: If no proximity match or no GPS data, match by dynamic area + category
+    if (!availableTech) {
+      const areaTechQuery = { ...eligibleTechQuery };
+      if (matchedArea) {
+        areaTechQuery.area = matchedArea;
+      }
+      if (booking.serviceId) {
+        areaTechQuery.services = booking.serviceId;
+      }
+      availableTech = await Technician.findOne(areaTechQuery).sort('-rating');
+    }
 
-    // Fallback 1: Online/active/non-busy tech in matching area regardless of category
+    // Fallback 1: Online tech in matching area regardless of service category
     if (!availableTech && matchedArea) {
       const fallbackQuery1 = { 
-        userId: { $in: activeSessionUserIds, $nin: excludedTechs },
-        currentStatus: { $in: ['online', 'available'] }, 
-        isOnline: true, 
+        ...eligibleTechQuery,
         area: matchedArea 
       };
       availableTech = await Technician.findOne(fallbackQuery1).sort('-rating');
     }
 
-    // Fallback 2: Any online/active/non-busy tech
+    // Fallback 2: Any online/active/non-busy tech sorted by rating
     if (!availableTech) {
-      const fallbackQuery2 = { 
-        userId: { $in: activeSessionUserIds, $nin: excludedTechs },
-        currentStatus: { $in: ['online', 'available'] }, 
-        isOnline: true 
-      };
+      const fallbackQuery2 = { ...eligibleTechQuery };
       availableTech = await Technician.findOne(fallbackQuery2).sort('-rating');
     }
 
@@ -471,8 +498,8 @@ const createBooking = async (req, res) => {
       problemIds: problemIds || [],
       location: finalAddress,
       landmark: landmark || null,
-      latitude: null,
-      longitude: null,
+      latitude: gpsLocation && gpsLocation.lat ? parseFloat(gpsLocation.lat) : null,
+      longitude: gpsLocation && gpsLocation.lng ? parseFloat(gpsLocation.lng) : null,
       mapsLink: mapsLink,
       timeSlot: reqTimeSlot,
       imageUrl: imageUrl || '',

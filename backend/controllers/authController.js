@@ -247,14 +247,8 @@ const logoutUser = async (req, res) => {
         );
         await PushSubscription.deleteMany({ userId: userId.toString(), deviceId });
 
-        // Set technician offline on logout
-        const userDoc = await User.findById(userId);
-        if (userDoc && userDoc.role === 'technician') {
-          await Technician.findOneAndUpdate(
-            { userId: userId.toString() },
-            { $set: { isOnline: false, currentStatus: 'offline' } }
-          );
-        }
+        // Note: Technician online status is preserved on logout as per real-time marketplace rules.
+        // Technician remains online until manually disabled.
       } else {
         await DeviceSession.updateMany(
           { deviceId },

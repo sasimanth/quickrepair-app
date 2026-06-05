@@ -174,6 +174,51 @@ const AppContent = () => {
 };
 
 function App() {
+  useEffect(() => {
+    // 1. Explicit Service Worker Registration
+    if ('serviceWorker' in navigator) {
+      const registerSW = async () => {
+        try {
+          const registration = await navigator.serviceWorker.register('/sw.js', { scope: '/' });
+          console.log('✅ Service Worker registered successfully with scope:', registration.scope);
+        } catch (err) {
+          console.error('❌ Service Worker registration failed:', err);
+        }
+      };
+
+      if (document.readyState === 'complete') {
+        registerSW();
+      } else {
+        window.addEventListener('load', registerSW);
+        return () => window.removeEventListener('load', registerSW);
+      }
+    }
+  }, []);
+
+  useEffect(() => {
+    // 2. Global listener for Service Worker messages to trigger notification chime
+    const handleSWMessage = (event) => {
+      if (event.data && event.data.type === 'push_received') {
+        const payload = event.data.payload;
+        const priority = payload.data?.priority || 'low';
+        
+        // Dynamically import sound effects to play correct notification chime
+        import('./services/soundEffects').then(({ playNotificationSound }) => {
+          playNotificationSound(priority);
+        });
+      }
+    };
+
+    if ('serviceWorker' in navigator) {
+      navigator.serviceWorker.addEventListener('message', handleSWMessage);
+    }
+    return () => {
+      if ('serviceWorker' in navigator) {
+        navigator.serviceWorker.removeEventListener('message', handleSWMessage);
+      }
+    };
+  }, []);
+
   return (
     <AuthProvider>
       <Router>

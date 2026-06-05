@@ -117,14 +117,14 @@ const NotificationsBell = () => {
   };
 
   const getNotifBg = (type, isRead) => {
-    if (isRead) return 'bg-white opacity-60';
+    if (isRead) return 'bg-transparent hover:bg-slate-50/50 opacity-75';
     switch (type) {
       case 'chat':
-        return 'bg-emerald-50/50 hover:bg-emerald-50';
+        return 'bg-gradient-to-r from-emerald-500/[0.04] to-transparent hover:from-emerald-500/[0.08] border-l-[4px] border-emerald-500';
       case 'booking':
-        return 'bg-amber-50/50 hover:bg-amber-50';
+        return 'bg-gradient-to-r from-amber-500/[0.04] to-transparent hover:from-amber-500/[0.08] border-l-[4px] border-amber-500';
       default:
-        return 'bg-indigo-50/50 hover:bg-indigo-50';
+        return 'bg-gradient-to-r from-indigo-500/[0.04] to-transparent hover:from-indigo-500/[0.08] border-l-[4px] border-indigo-500';
     }
   };
 
@@ -137,11 +137,11 @@ const NotificationsBell = () => {
     <div className="relative">
       <button
         onClick={() => setIsOpen(!isOpen)}
-        className="relative p-2 text-slate-500 hover:text-indigo-600 hover:bg-indigo-50 rounded-full transition-all focus:outline-none"
+        className="relative p-2.5 text-slate-500 hover:text-indigo-600 hover:bg-indigo-50 rounded-2xl transition-all focus:outline-none cursor-pointer"
       >
         <Bell size={22} />
         {unreadCount > 0 && (
-          <span className="absolute top-1 right-1 flex items-center justify-center min-w-4 h-4 px-1 bg-rose-500 text-white text-[9px] font-extrabold rounded-full border-2 border-white shadow-sm animate-pulse">
+          <span className="absolute top-1 right-1 flex items-center justify-center min-w-4 h-4 px-1 bg-rose-500 text-white text-[9px] font-black rounded-full border-2 border-white shadow-md animate-pulse">
             {unreadCount}
           </span>
         )}
@@ -152,84 +152,99 @@ const NotificationsBell = () => {
           {/* Backdrop for easy closing on mobile click-away */}
           <div className="fixed inset-0 z-40 bg-transparent" onClick={() => setIsOpen(false)}></div>
           
-          <div className="absolute right-[-70px] xs:right-[-45px] sm:right-0 mt-3 w-[calc(100vw-32px)] xs:w-[350px] sm:w-[420px] bg-white rounded-3xl shadow-2xl border border-slate-100 overflow-hidden z-50 animate-in slide-in-from-top-2 fade-in duration-200">
+          <div className="absolute right-[-70px] xs:right-[-45px] sm:right-0 mt-4 w-[calc(100vw-32px)] xs:w-[360px] sm:w-[440px] bg-white/95 backdrop-blur-xl rounded-[2rem] shadow-[0_20px_50px_rgba(0,0,0,0.12)] border border-slate-100/80 overflow-hidden z-50 animate-in slide-in-from-top-3 fade-in duration-200">
             {/* Header */}
-            <div className="flex items-center justify-between px-5 py-4 bg-slate-900 text-white">
-              <div className="flex items-center gap-2">
-                <h3 className="font-bold text-sm sm:text-base">Notifications</h3>
+            <div className="flex items-center justify-between px-6 py-5 bg-slate-900 text-white border-b border-white/5 relative">
+              <div className="absolute top-[-50%] left-[-10%] w-[50%] h-[150%] bg-indigo-500/10 rounded-full blur-[40px] pointer-events-none"></div>
+              
+              <div className="flex items-center gap-2 relative z-10">
+                <h3 className="font-extrabold text-sm sm:text-base tracking-tight">Notification Center</h3>
                 {unreadCount > 0 && (
-                  <span className="px-2 py-0.5 bg-rose-500 text-white text-[9px] font-black rounded-full uppercase tracking-wider animate-bounce">
+                  <span className="px-2 py-0.5 bg-rose-500 text-white text-[9px] font-black rounded-md uppercase tracking-wider shadow-sm animate-pulse">
                     {unreadCount} New
                   </span>
                 )}
               </div>
-              <div className="flex items-center gap-3">
+              <div className="flex items-center gap-3.5 relative z-10">
                 {unreadCount > 0 && (
                   <button 
                     onClick={markAllAsRead} 
-                    className="text-[10px] sm:text-xs font-bold text-indigo-300 hover:text-indigo-200 transition-colors flex items-center gap-1"
+                    className="text-[10px] sm:text-xs font-black text-indigo-300 hover:text-indigo-200 transition-colors flex items-center gap-1 cursor-pointer border-none bg-transparent outline-none uppercase tracking-wider"
                     title="Mark all as read"
                   >
-                    <CheckSquare size={13} /> Mark all read
+                    <CheckSquare size={13} /> Clear All
                   </button>
                 )}
-                <button onClick={() => setIsOpen(false)} className="text-slate-400 hover:text-white transition-colors">
+                <button onClick={() => setIsOpen(false)} className="text-slate-400 hover:text-white transition-colors cursor-pointer border-none bg-transparent outline-none">
                   <X size={18} />
                 </button>
               </div>
             </div>
 
             {/* Tabs Filter Bar */}
-            <div className="flex border-b border-slate-100 bg-slate-50 px-2 pt-1.5 overflow-x-auto scrollbar-none">
+            <div className="flex border-b border-slate-100 bg-slate-50/50 px-3 pt-2 overflow-x-auto scrollbar-none">
               {['all', 'system', 'booking', 'chat'].map(tab => (
                 <button
                   key={tab}
                   onClick={() => setActiveTab(tab)}
-                  className={`px-3 py-2 text-xs font-bold capitalize transition-all border-b-2 whitespace-nowrap ${
+                  className={`px-4 py-2.5 text-xs font-bold capitalize transition-all border-b-2 whitespace-nowrap outline-none cursor-pointer ${
                     activeTab === tab 
                       ? 'border-indigo-600 text-indigo-600' 
                       : 'border-transparent text-slate-400 hover:text-slate-600'
                   }`}
                 >
-                  {tab === 'all' ? 'All' : tab === 'booking' ? 'Bookings' : tab === 'chat' ? 'Chats' : 'System'}
+                  {tab === 'all' ? 'All Alerts' : tab === 'booking' ? 'Bookings' : tab === 'chat' ? 'Chats' : 'System'}
                 </button>
               ))}
             </div>
             
             {/* Notifications List */}
-            <div className="max-h-80 overflow-y-auto divide-y divide-slate-50">
+            <div className="max-h-[360px] overflow-y-auto divide-y divide-slate-100/50">
               {filteredNotifications.length === 0 ? (
-                <div className="p-10 text-center text-slate-400 font-medium text-sm">
-                  No {activeTab !== 'all' ? activeTab + ' ' : ''}notifications yet.
+                <div className="py-20 text-center text-slate-400 font-medium text-sm flex flex-col items-center justify-center gap-3">
+                  <div className="p-3 bg-slate-50 text-slate-400 rounded-full border border-slate-100">
+                    <Bell size={24} />
+                  </div>
+                  <span>No {activeTab !== 'all' ? activeTab + ' ' : ''}notifications yet</span>
                 </div>
               ) : (
                 filteredNotifications.map((notif) => (
-                  <div key={notif._id} className={`p-4 transition-colors ${getNotifBg(notif.type, notif.isRead)}`}>
-                    <div className="flex justify-between items-start gap-3">
-                      <div className="flex items-start gap-3 min-w-0">
-                        <div className={`p-2 rounded-xl mt-0.5 shrink-0 ${notif.isRead ? 'bg-slate-100' : 'bg-white shadow-sm border border-slate-100'}`}>
+                  <div 
+                    key={notif._id} 
+                    className={`p-5 transition-all duration-350 cursor-pointer ${getNotifBg(notif.type, notif.isRead)}`}
+                    onClick={() => !notif.isRead && markAsRead(notif._id)}
+                  >
+                    <div className="flex justify-between items-start gap-4">
+                      <div className="flex items-start gap-4 min-w-0">
+                        <div className={`p-2.5 rounded-2xl mt-0.5 shrink-0 transition-transform ${notif.isRead ? 'bg-slate-100 text-slate-500' : 'bg-white shadow-sm border border-slate-100 text-indigo-600'}`}>
                           {getNotifIcon(notif.type)}
                         </div>
-                        <div className="min-w-0">
-                          <h4 className={`text-xs sm:text-sm leading-tight truncate ${notif.isRead ? 'font-semibold text-slate-500' : 'font-extrabold text-indigo-950'}`}>
+                        <div className="min-w-0 text-left">
+                          <h4 className={`text-xs sm:text-sm leading-tight truncate tracking-tight ${notif.isRead ? 'font-semibold text-slate-500' : 'font-extrabold text-slate-900'}`}>
                             {notif.title}
                           </h4>
-                          <p className="text-xs sm:text-sm text-slate-600 mt-1 leading-relaxed break-words">
+                          <p className="text-xs sm:text-sm text-slate-600 mt-1 leading-relaxed break-words font-medium">
                             {notif.message}
                           </p>
-                          <span className="text-[9px] font-bold text-slate-400 uppercase tracking-widest mt-2 block">
+                          <span className="text-[9px] font-extrabold text-slate-400 uppercase tracking-widest mt-2 block">
                             {new Date(notif.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                           </span>
                         </div>
                       </div>
-                      {!notif.isRead && (
+                      
+                      {!notif.isRead ? (
                         <button
-                          onClick={() => markAsRead(notif._id)}
-                          className="shrink-0 p-1 bg-white text-emerald-500 border border-emerald-100 hover:bg-emerald-50 rounded-full shadow-sm transition-all"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            markAsRead(notif._id);
+                          }}
+                          className="shrink-0 p-1.5 bg-white text-emerald-500 border border-emerald-100 hover:bg-emerald-50 rounded-full shadow-sm transition-all cursor-pointer"
                           title="Mark as read"
                         >
                           <Check size={12} strokeWidth={3} />
                         </button>
+                      ) : (
+                        <div className="w-1.5 h-1.5 rounded-full bg-slate-300 mt-2.5 mr-2"></div>
                       )}
                     </div>
                   </div>

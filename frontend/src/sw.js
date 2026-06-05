@@ -57,6 +57,8 @@ self.addEventListener('push', (event) => {
           sound: priority === 'high' ? '/sounds/booking_request.wav' : '/sounds/subtle_notification.wav',
           tag: bookingId ? `booking-${bookingId}` : 'fixvo-push-alert',
           renotify: true,
+          requireInteraction: priority === 'high',
+          visibility: 'public',
           data: payload.data || {},
           actions: isTechRequest 
             ? [

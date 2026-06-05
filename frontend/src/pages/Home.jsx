@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { globalCategories, globalServices, getDbServices } from '../data/services';
 import SmartDiagnosis from '../components/SmartDiagnosis/SmartDiagnosis';
+import NearbyTechnicians from '../components/NearbyTechnicians';
 import { motion, AnimatePresence, useMotionValue, useAnimationFrame } from 'framer-motion';
 import { 
   Zap, 
@@ -253,6 +254,9 @@ const Home = () => {
             </motion.div>
           </div>
         </div>
+
+        {/* Available Technicians Nearby Discovery Section */}
+        <NearbyTechnicians />
 
         {/* AI Diagnosis Section */}
         <div className="mt-24 sm:mt-32 relative z-10 px-4 sm:px-0">

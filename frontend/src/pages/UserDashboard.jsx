@@ -197,14 +197,43 @@ const UserDashboard = () => {
 
   useEffect(() => {
     const params = new URLSearchParams(location.search);
-    if (params.get('action') === 'premium') {
+    const action = params.get('action');
+    const serviceId = params.get('service');
+    const techId = params.get('techId');
+
+    if (action === 'premium') {
       setShowPremiumModal(true);
     }
-    if (params.get('action') === 'book') {
+    
+    if (action === 'book') {
       setShowForm(true);
-      const serviceId = params.get('service');
       if (serviceId) {
         setFormData(prev => ({ ...prev, serviceId }));
+      }
+      
+      if (techId && serviceId) {
+        const selectTechDirectly = async () => {
+          try {
+            const res = await api.get(`/technicians/nearby?serviceId=${serviceId}`);
+            const matchingTechs = res.data || [];
+            const foundTech = matchingTechs.find(t => t.id === techId);
+            if (foundTech) {
+              setSelectedTech(foundTech);
+              setStep(2); // Skip directly to technician confirmation step
+              setFormData(prev => ({
+                ...prev,
+                serviceId: serviceId,
+                location: foundTech.area || prev.location
+              }));
+              showToast('Technician Pre-selected 👨‍🔧', `Ready to book ${foundTech.name} directly.`, 'success');
+              // Clean search params from URL to avoid re-triggering on navigate/re-render
+              window.history.replaceState({}, document.title, window.location.pathname);
+            }
+          } catch (err) {
+            console.error('Failed to pre-select technician', err);
+          }
+        };
+        selectTechDirectly();
       }
     }
   }, [location.search]);
