@@ -202,14 +202,21 @@ const createBooking = async (req, res) => {
 
     // DUPLICATE SUBMISSION CHECK (Within last 2 minutes)
     const twoMinutesAgo = new Date(Date.now() - 2 * 60 * 1000);
-    const duplicate = await Booking.findOne({
-      $or: [
-        { userId: bookingUserId, userId: { $ne: null } },
-        { phone: finalPhone }
-      ],
+    const duplicateQuery = {
       serviceId: serviceId || null,
       createdAt: { $gte: twoMinutesAgo }
-    });
+    };
+
+    if (bookingUserId) {
+      duplicateQuery.$or = [
+        { userId: bookingUserId },
+        { phone: finalPhone }
+      ];
+    } else {
+      duplicateQuery.phone = finalPhone;
+    }
+
+    const duplicate = await Booking.findOne(duplicateQuery);
 
     if (duplicate) {
       return res.status(409).json({ message: 'Duplicate booking detected. Please wait 2 minutes before resubmitting.' });
