@@ -15,8 +15,6 @@ import { CreditCard, Sparkles, PhoneCall } from 'lucide-react';
 import { socket } from '../services/socket';
 import { playNotificationSound } from '../services/soundEffects';
 import LoadingSkeleton from '../components/LoadingSkeleton';
-import TrackingMap from '../components/TrackingMap';
-import WorkProofGallery from '../components/WorkProofGallery';
 
 const formatPhoneLink = (phone) => {
   if (!phone) return '';
@@ -31,7 +29,6 @@ const formatPhoneLink = (phone) => {
 const UserDashboard = () => {
   const location = useLocation();
   const [bookings, setBookings] = useState([]);
-  const [dispatchStatus, setDispatchStatus] = useState({}); // bookingId -> { status, radius, technicianName, timeout }
   const [loading, setLoading] = useState(true);
   const queryParams = new URLSearchParams(location.search);
   const initialShowForm = queryParams.get('action') === 'book';
@@ -64,7 +61,6 @@ const UserDashboard = () => {
   const [isPlusDismissed, setIsPlusDismissed] = useState(localStorage.getItem('fixvo_plus_dismissed') === 'true');
   const [toasts, setToasts] = useState([]);
   const techSectionRef = useRef(null);
-  const lastFetchErrorRef = useRef(null);
   
   const [cancelBookingId, setCancelBookingId] = useState(null);
   const [cancellationReason, setCancellationReason] = useState('');
@@ -334,23 +330,14 @@ const UserDashboard = () => {
       playNotificationSound('high');
     };
 
-    const handleDispatchStatus = (data) => {
-      setDispatchStatus(prev => ({
-        ...prev,
-        [data.bookingId]: data
-      }));
-    };
-
     socket.on('job_update', handleJobUpdate);
     socket.on('job_rejected', handleJobRejected);
     socket.on('job_reassigned', handleJobReassigned);
-    socket.on('dispatch_status', handleDispatchStatus);
 
     return () => {
       socket.off('job_update', handleJobUpdate);
       socket.off('job_rejected', handleJobRejected);
       socket.off('job_reassigned', handleJobReassigned);
-      socket.off('dispatch_status', handleDispatchStatus);
     };
   }, [profile?.userId]);
 
@@ -427,18 +414,7 @@ const UserDashboard = () => {
           socket.emit('track_tech', b.providerId);
       });
 
-    } catch (error) {
-      const errorMsg = error.response?.data?.message || error.message || 'Unknown error fetching dashboard data';
-      if (lastFetchErrorRef.current !== errorMsg) {
-        console.error('Error fetching dashboard data:', {
-          message: error.message,
-          status: error.response?.status,
-          data: error.response?.data,
-          stack: error.stack
-        });
-        lastFetchErrorRef.current = errorMsg;
-      }
-    } 
+    } catch (error) { console.error('Error fetching dashboard data:', error); } 
     finally { 
       if (showLoading) setLoading(false); 
     }
@@ -556,15 +532,8 @@ const UserDashboard = () => {
       });
       fetchData(); 
     } catch (error) {
-      const errorMsg = error.response?.data?.message || error.message || 'Unknown error occurred while submitting booking request.';
-      alert(`Booking failed: ${errorMsg}`);
-      console.error('Booking submission failed:', {
-        message: error.message,
-        status: error.response?.status,
-        data: error.response?.data,
-        payload: payload,
-        stack: error.stack
-      });
+      alert('Failed to submit booking request. Check the console.');
+      console.error(error);
     } finally {
       setIsBooking(false);
     }
@@ -651,15 +620,7 @@ const UserDashboard = () => {
         });
         fetchData(); 
       } catch (error) {
-        const errorMsg = error.response?.data?.message || error.message || 'Unknown error occurred during auto-dispatch.';
-        alert(`Auto-dispatch failed: ${errorMsg}`);
-        console.error('Auto-dispatch booking creation failed:', {
-          message: error.message,
-          status: error.response?.status,
-          data: error.response?.data,
-          payload: payload,
-          stack: error.stack
-        });
+        alert('Failed to auto-dispatch. Check the console.');
       } finally {
         setIsBooking(false);
       }
@@ -1407,50 +1368,19 @@ const UserDashboard = () => {
                         </div>
                       )}
 
-                      {/* Premium Dynamic Dispatch Status Banner */}
+                      {/* Standard Searching Banner */}
                       {['pending', 'assigned'].includes(booking.status) && !booking.rejectionReason && (
-                        <div className="mt-4 p-5 bg-gradient-to-br from-indigo-50/40 to-violet-50/20 backdrop-blur-md border border-indigo-100/60 rounded-[1.5rem] flex flex-col sm:flex-row gap-4 text-indigo-900 text-xs sm:text-sm font-semibold shadow-md animate-in fade-in slide-in-from-top-2 duration-300 relative overflow-hidden">
-                          <div className="absolute inset-0 bg-indigo-500/5 animate-pulse pointer-events-none"></div>
-                          
-                          <div className="p-3 bg-indigo-150/50 rounded-2xl text-indigo-600 shrink-0 flex items-center justify-center h-12 w-12 border border-indigo-200/40 relative">
-                            <span className="absolute inset-0 rounded-2xl border-2 border-indigo-500 border-t-transparent animate-spin"></span>
-                            <span className="flex h-3 w-3 relative">
-                              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-indigo-400 opacity-75"></span>
-                              <span className="relative inline-flex rounded-full h-3 w-3 bg-indigo-600"></span>
-                            </span>
+                        <div className="mt-4 p-4.5 bg-indigo-50/30 backdrop-blur-sm border border-indigo-100/50 rounded-2xl flex gap-3.5 text-indigo-900 text-xs sm:text-sm font-semibold shadow-sm animate-in fade-in slide-in-from-top-2 duration-300">
+                          <div className="p-2.5 bg-indigo-100/50 rounded-xl text-indigo-600 shrink-0 flex items-center justify-center h-10 w-10">
+                            <Loader2 size={18} className="animate-spin text-indigo-500" />
                           </div>
-
-                          <div className="space-y-1.5 flex-1 relative z-10">
-                            {dispatchStatus[booking._id]?.status === 'assigned' ? (
-                              <>
-                                <p className="text-sm font-black text-slate-900 tracking-tight flex items-center gap-2">
-                                  <span>Technician Found!</span>
-                                  <span className="px-2 py-0.5 bg-green-100 text-green-700 text-[10px] font-black uppercase rounded border border-green-200 animate-pulse">Assigning...</span>
-                                </p>
-                                <p className="text-xs text-slate-600 font-semibold leading-relaxed">
-                                  We have matched you with <span className="text-indigo-600 font-extrabold">{dispatchStatus[booking._id]?.technicianName || 'a technician'}</span> within <span className="font-extrabold text-indigo-600">{dispatchStatus[booking._id]?.radius} KM</span>. Waiting for acceptance.
-                                </p>
-                              </>
-                            ) : dispatchStatus[booking._id]?.status === 'no_tech_found' ? (
-                              <>
-                                <p className="text-sm font-black text-rose-900 tracking-tight">
-                                  Busy Hours - Retrying Matching...
-                                </p>
-                                <p className="text-xs text-slate-500 font-medium leading-relaxed">
-                                  No nearby technicians are available right now. We are expanding search limits and trying again.
-                                </p>
-                              </>
-                            ) : (
-                              <>
-                                <p className="text-sm font-black text-slate-900 tracking-tight flex items-center gap-2">
-                                  <span>Searching for Technicians</span>
-                                  <span className="px-2 py-0.5 bg-indigo-50 text-indigo-600 text-[10px] font-black uppercase rounded border border-indigo-100 animate-pulse">Scanning...</span>
-                                </p>
-                                <p className="text-xs text-slate-500 font-medium leading-relaxed">
-                                  Scanning within <span className="text-indigo-600 font-extrabold">{dispatchStatus[booking._id]?.radius || 2} KM</span> radius. We are matching you with an expert who can handle your service immediately.
-                                </p>
-                              </>
-                            )}
+                          <div className="space-y-1 flex-1">
+                            <p className="text-xs sm:text-sm font-extrabold text-indigo-950">
+                              Finding the best available technician for your request.
+                            </p>
+                            <p className="text-[11px] text-slate-500 font-medium leading-relaxed">
+                              Searching for nearby technicians... We are matching you with an expert who can handle your service immediately.
+                            </p>
                           </div>
                         </div>
                       )}
@@ -1521,11 +1451,6 @@ const UserDashboard = () => {
                               <p className="text-slate-500 font-medium text-xs mt-1">Technician: <span className="font-semibold text-slate-700">{booking.technicianName || 'Verified Technician'}</span></p>
                             </div>
                           </div>
-
-                          {/* Before/After Work Proof Gallery */}
-                          {booking.quotePhoto && (
-                            <WorkProofGallery quotePhoto={booking.quotePhoto} />
-                          )}
 
                           {/* Payment Card */}
                           {(() => {
@@ -1636,77 +1561,16 @@ const UserDashboard = () => {
                         </div>
                       )}
 
-                      {['accepted', 'on_the_way', 'arrived'].includes(booking.status) && booking.serviceLocation !== 'off-site' && (
+                      {booking.status === 'accepted' && booking.serviceLocation !== 'off-site' && (
                         <div className="pt-2 border-t border-slate-100/80 space-y-3 mt-4">
                            <div className="flex items-center justify-between bg-indigo-50/50 p-4 rounded-xl border border-indigo-100">
                              <p className="font-bold text-sm text-indigo-900 flex items-center gap-2">
                                <Truck size={18} className="text-indigo-500"/> Tech Status
                              </p>
                              <span className="flex items-center gap-1.5 px-3 py-1 bg-white text-indigo-600 rounded-full text-xs font-bold border border-indigo-100 shadow-sm">
-                               <span className="w-2 h-2 bg-indigo-500 rounded-full animate-pulse"></span> {
-                                 booking.status === 'on_the_way' ? 'On the way' : 
-                                 booking.status === 'arrived' ? 'Arrived at location' : 
-                                 'Technician assigned'
-                               }
+                               <span className="w-2 h-2 bg-indigo-500 rounded-full animate-pulse"></span> {booking.status === 'in_progress' ? 'On the way' : 'Technician assigned'}
                              </span>
                            </div>
-                        </div>
-                      )}
-
-                      {/* Live Technician Location Tracking Map */}
-                      {['on_the_way', 'arrived'].includes(booking.status) && (
-                        <div className="mt-6 mb-6">
-                          <h4 className="text-xs font-black uppercase tracking-widest text-slate-400 mb-3 flex items-center gap-2">
-                            <Truck size={14} className="text-indigo-500" />
-                            <span>Live Technician Tracking</span>
-                          </h4>
-                          {(() => {
-                            const techLoc = liveLocations[booking.providerId];
-                            const techLat = techLoc ? techLoc[0] : null;
-                            const techLng = techLoc ? techLoc[1] : null;
-                            return (
-                              <TrackingMap
-                                customerLat={booking.latitude}
-                                customerLng={booking.longitude}
-                                techLat={techLat}
-                                techLng={techLng}
-                              />
-                            );
-                          })()}
-                        </div>
-                      )}
-
-                      {/* Booking Service Timeline */}
-                      {booking.timelineEvents && booking.timelineEvents.length > 0 && (
-                        <div className="mt-6 p-5 bg-slate-50 border border-slate-100 rounded-2xl mb-6">
-                          <h4 className="text-xs font-black uppercase tracking-widest text-slate-400 mb-4 flex items-center gap-2">
-                            <span>Activity History & Timeline</span>
-                          </h4>
-                          <div className="relative border-l border-indigo-200/80 ml-2.5 pl-5 space-y-4 text-xs font-medium">
-                            {booking.timelineEvents.map((evt, idx) => (
-                              <div key={evt._id || idx} className="relative group">
-                                <span className={`absolute -left-[26px] top-1.5 flex h-3.5 w-3.5 items-center justify-center rounded-full border bg-white shadow-sm transition-all duration-300 ${
-                                  idx === booking.timelineEvents.length - 1 
-                                    ? 'border-indigo-500 ring-4 ring-indigo-100 scale-110' 
-                                    : 'border-slate-300'
-                                }`}>
-                                  <span className={`h-1.5 w-1.5 rounded-full ${
-                                    idx === booking.timelineEvents.length - 1 
-                                      ? 'bg-indigo-600' 
-                                      : 'bg-slate-400'
-                                  }`}></span>
-                                </span>
-                                <div>
-                                  <p className={`text-slate-800 ${idx === booking.timelineEvents.length - 1 ? 'font-extrabold text-indigo-950' : 'text-slate-600 font-medium'}`}>
-                                    {evt.description}
-                                  </p>
-                                  <span className="text-[10px] text-slate-400 font-bold">
-                                    {new Date(evt.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })} • {new Date(evt.timestamp).toLocaleDateString()}
-                                  </span>
-                                </div>
-                              </div>
-                            ))}
-                          </div>
                         </div>
                       )}
 

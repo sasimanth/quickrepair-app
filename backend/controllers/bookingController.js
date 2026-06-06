@@ -8,17 +8,235 @@ const normalizePhone = (phone) => {
   return phone.replace(/\D/g, "").slice(-10);
 };
 
-const logControllerError = (action, req, error, statusCode = 400) => {
-  console.error(`[BookingController Error] Action "${action}" failed (HTTP ${statusCode}):`);
-  console.error(`Error message: ${error.message}`);
-  console.error(`Stack trace: ${error.stack}`);
-  console.error('Request Payload:', JSON.stringify(req.body, null, 2));
-  console.error('Request Query params:', JSON.stringify(req.query, null, 2));
-  console.error('Request URI params:', JSON.stringify(req.params, null, 2));
-  console.error('User Context:', req.user ? JSON.stringify(req.user, null, 2) : 'Unauthenticated');
+// Auto-Reassignment Timeout (60 Seconds)
+const startResponseTimeout = (bookingId, techUserId) => {
+  setTimeout(async () => {
+    try {
+      const freshBooking = await Booking.findById(bookingId);
+      if (freshBooking && freshBooking.status === 'assigned' && freshBooking.providerId === techUserId) {
+        console.log(`⏰ Assignment Timeout (60s) for Booking ${bookingId} with Tech ${techUserId}. Re-assigning...`);
+        
+        // Exclude this tech from future matches on this booking
+        freshBooking.rejectedTechnicians = freshBooking.rejectedTechnicians || [];
+        if (!freshBooking.rejectedTechnicians.includes(techUserId)) {
+          freshBooking.rejectedTechnicians.push(techUserId);
+        }
+
+        const Technician = require('../models/Technician');
+        const techProfile = await Technician.findOne({ userId: techUserId });
+        const techName = techProfile ? techProfile.name : 'Technician';
+
+        // Log response timeout as rejection details for customer dashboard
+        freshBooking.rejectionReason = 'Response timeout (60 seconds exceeded)';
+        freshBooking.rejectedByTechName = techName;
+        freshBooking.providerId = null;
+        freshBooking.providerPhone = null;
+        freshBooking.providerEmail = null;
+        freshBooking.status = 'pending';
+        
+        if (techProfile) {
+          techProfile.currentStatus = 'available';
+          techProfile.currentJobId = null;
+          await techProfile.save();
+        }
+
+        await freshBooking.save();
+
+        if (global.io) {
+          global.io.to(`user_${techUserId}`).emit('job_expired', { bookingId });
+          global.io.to(`user_${freshBooking.userId}`).emit('job_rejected', {
+            bookingId: freshBooking._id.toString(),
+            rejectedByTechName: freshBooking.rejectedByTechName,
+            rejectionReason: freshBooking.rejectionReason
+          });
+        }
+
+        // Add a notification to the technician that the job assignment expired
+        const Notification = require('../models/Notification');
+        const expireNotif = await Notification.create({
+          userId: techUserId,
+          title: 'Request Expired ⏰',
+          message: `The assigned request for ${freshBooking.serviceName} expired because it was not accepted within 60s.`,
+          type: 'booking',
+          bookingId: freshBooking._id.toString()
+        });
+
+        if (global.io) {
+          global.io.to(`user_${techUserId}`).emit('new_notification', expireNotif);
+          
+          // Refresh user dashboard smoothly
+          global.io.to(`user_${freshBooking.userId}`).emit('job_update', freshBooking.toObject());
+        }
+
+        // Send a push notification + email + SMS to customer about reassignment
+        const { notifyUser } = require('../services/NotificationService');
+        await notifyUser({
+          userId: freshBooking.userId,
+          email: freshBooking.userEmail,
+          type: 'both',
+          subject: 'Searching for nearby technicians... 🔄',
+          text: `Finding the best available technician for your request. We are matching your booking with another expert.`,
+          notifType: 'booking',
+          bookingId: freshBooking._id.toString()
+        });
+
+        // Run auto assignment to find next tech
+        await autoAssignBooking(freshBooking._id);
+      }
+    } catch (err) {
+      console.error('Error in response timeout handler:', err);
+    }
+  }, 60 * 1000);
 };
 
-const DispatchService = require('../services/DispatchService');
+// Smart Auto-Assignment Helper
+const autoAssignBooking = async (bookingId) => {
+  try {
+    const booking = await Booking.findById(bookingId);
+    if (!booking || booking.status !== 'pending') return;
+
+    const Technician = require('../models/Technician');
+    const DeviceSession = require('../models/DeviceSession');
+
+    // 1. Find all active/busy technicians (who currently have jobs assigned, accepted, in journey, or work in progress)
+    const busyTechIds = await Booking.find({
+      providerId: { $ne: null },
+      status: { $in: ['assigned', 'accepted', 'on_the_way', 'arrived', 'inspection_started', 'quote_pending', 'quote_approved', 'in_progress'] }
+    }).distinct('providerId');
+
+    // 2. Find all technicians who are currently logged in with an active device session
+    const activeSessionUserIds = await DeviceSession.find({
+      role: 'technician',
+      isActive: true
+    }).distinct('userId');
+
+    // 2. Dynamic Area Extraction: Find distinct technician areas and check if booking location matches
+    const distinctAreas = await Technician.distinct('area');
+    let matchedArea = null;
+    const locationLower = (booking.location || '').toLowerCase();
+    for (const area of distinctAreas) {
+      if (area && locationLower.includes(area.toLowerCase())) {
+        matchedArea = area;
+        break;
+      }
+    }
+
+    // Base query for online/available technicians who are not busy or rejected
+    const excludedTechs = [...(booking.rejectedTechnicians || []), ...busyTechIds];
+    const eligibleTechQuery = { 
+      userId: { $nin: excludedTechs },
+      currentStatus: { $in: ['online', 'available'] }, 
+      isOnline: true 
+    };
+
+    let availableTech = null;
+
+    // 3. Proximity-Based Match: If booking has GPS coordinates, perform 2dsphere near search
+    if (booking.latitude !== null && booking.longitude !== null) {
+      const geoQuery = {
+        ...eligibleTechQuery,
+        location: {
+          $near: {
+            $geometry: {
+              type: 'Point',
+              coordinates: [parseFloat(booking.longitude), parseFloat(booking.latitude)] // [longitude, latitude]
+            },
+            $maxDistance: 50000 // 50km radius limit
+          }
+        }
+      };
+      if (booking.serviceId) {
+        geoQuery.services = booking.serviceId;
+      }
+      
+      availableTech = await Technician.findOne(geoQuery);
+      if (availableTech) {
+        console.log(`📍 Geospatial Match: Found nearest technician ${availableTech.name} within 50km.`);
+      }
+    }
+
+    // 4. Area-Based Match: If no proximity match or no GPS data, match by dynamic area + category
+    if (!availableTech) {
+      const areaTechQuery = { ...eligibleTechQuery };
+      if (matchedArea) {
+        areaTechQuery.area = matchedArea;
+      }
+      if (booking.serviceId) {
+        areaTechQuery.services = booking.serviceId;
+      }
+      availableTech = await Technician.findOne(areaTechQuery).sort('-rating');
+    }
+
+    // Fallback 1: Online tech in matching area regardless of service category
+    if (!availableTech && matchedArea) {
+      const fallbackQuery1 = { 
+        ...eligibleTechQuery,
+        area: matchedArea 
+      };
+      availableTech = await Technician.findOne(fallbackQuery1).sort('-rating');
+    }
+
+    // Fallback 2: Any online/active/non-busy tech sorted by rating
+    if (!availableTech) {
+      const fallbackQuery2 = { ...eligibleTechQuery };
+      availableTech = await Technician.findOne(fallbackQuery2).sort('-rating');
+    }
+
+    if (availableTech) {
+      const User = require('../models/User');
+      const techUserDoc = await User.findById(availableTech.userId);
+      
+      booking.providerId = availableTech.userId;
+      booking.providerPhone = availableTech.phone || techUserDoc?.phone || null;
+      booking.providerEmail = availableTech.email;
+      booking.status = 'assigned';
+      
+      const updatedBooking = await booking.save();
+      console.log(`📡 Auto-assigned booking ${bookingId} to technician ${availableTech.userId}`);
+
+      // Emit new_job & new_job_request events
+      if (global.io) {
+        global.io.to(`user_${availableTech.userId}`).emit('new_job', updatedBooking.toObject());
+        global.io.to(`user_${availableTech.userId}`).emit('new_job_request', updatedBooking.toObject());
+        
+        // Notify customer dashboard of reassignment
+        const techName = availableTech.name;
+        const payload = updatedBooking.toObject();
+        payload.technicianName = techName;
+        global.io.to(`user_${booking.userId}`).emit('job_reassigned', payload);
+        global.io.to(`user_${booking.userId}`).emit('job_update', payload);
+      }
+
+      // Dispatch targeted push notification, email, SMS, and create in-app notification
+      const { notifyUser } = require('../services/NotificationService');
+      await notifyUser({
+        userId: availableTech.userId,
+        email: availableTech.email,
+        phone: availableTech.phone || techUserDoc?.phone || null,
+        type: 'both',
+        subject: 'New Job Assigned! 💼',
+        text: `New repair request for ${booking.serviceName} at ${booking.location}.`,
+        notifType: 'booking',
+        bookingId: booking._id.toString()
+      });
+
+      const Notification = require('../models/Notification');
+      const techNotif = await Notification.findOne({
+        userId: availableTech.userId,
+        bookingId: booking._id.toString()
+      }).sort({ createdAt: -1 });
+
+      if (global.io && techNotif) {
+        global.io.to(`user_${availableTech.userId}`).emit('new_notification', techNotif);
+      }
+
+      // Start 60-second response timeout
+      startResponseTimeout(booking._id, availableTech.userId);
+    }
+  } catch (err) {
+    console.error('Error in autoAssignBooking:', err);
+  }
+};
 
 // AUTOMATED NOTIFICATION & CHAT MESSAGE HELPER
 const triggerNotifications = async (req, booking, type) => {
@@ -35,12 +253,10 @@ const triggerNotifications = async (req, booking, type) => {
     // Fetch technician name
     let techName = 'Technician';
     if (booking.providerId) {
-      if (mongoose.Types.ObjectId.isValid(booking.providerId)) {
-        const User = require('../models/User');
-        const techUser = await User.findById(booking.providerId);
-        if (techUser) {
-          techName = techUser.name;
-        }
+      const User = require('../models/User');
+      const techUser = await User.findById(booking.providerId);
+      if (techUser) {
+        techName = techUser.name;
       }
     }
 
@@ -209,25 +425,17 @@ const createBooking = async (req, res) => {
       }
     }
     const finalPhone = normalizePhone(phone) || normalizePhone(userPhone) || '0000000000';
-    console.log(`[BookingController] createBooking request received. User: ${bookingUserId || 'Guest'}, Phone: ${finalPhone}, Service: ${service || deviceType || 'Unknown'}`);
 
     // DUPLICATE SUBMISSION CHECK (Within last 2 minutes)
     const twoMinutesAgo = new Date(Date.now() - 2 * 60 * 1000);
-    const duplicateQuery = {
+    const duplicate = await Booking.findOne({
+      $or: [
+        { userId: bookingUserId, userId: { $ne: null } },
+        { phone: finalPhone }
+      ],
       serviceId: serviceId || null,
       createdAt: { $gte: twoMinutesAgo }
-    };
-
-    if (bookingUserId) {
-      duplicateQuery.$or = [
-        { userId: bookingUserId },
-        { phone: finalPhone }
-      ];
-    } else {
-      duplicateQuery.phone = finalPhone;
-    }
-
-    const duplicate = await Booking.findOne(duplicateQuery);
+    });
 
     if (duplicate) {
       return res.status(409).json({ message: 'Duplicate booking detected. Please wait 2 minutes before resubmitting.' });
@@ -323,7 +531,6 @@ const createBooking = async (req, res) => {
       accessoriesNeeded: accessoriesNeeded || null
     });
     const createdBooking = await booking.save();
-    console.log(`[BookingController] Booking successfully created in database. ID: ${createdBooking._id}, Status: ${createdBooking.status}`);
 
     // If manually assigned (technician selected by user)
     if (finalProviderId && !finalProviderId.startsWith('tech-')) {
@@ -353,11 +560,11 @@ const createBooking = async (req, res) => {
         global.io.to(`user_${bookingUserId}`).emit('job_update', createdBooking.toObject());
       }
 
-      // Start dispatch loop with manual assignment
-      DispatchService.startDispatch(createdBooking._id);
+      // Start 60-second timeout for manual assignment acceptance
+      startResponseTimeout(createdBooking._id, finalProviderId);
     } else {
       // Run smart auto-assignment asynchronously
-      DispatchService.startDispatch(createdBooking._id);
+      autoAssignBooking(createdBooking._id);
     }
 
     // Google Sheets integration
@@ -383,7 +590,6 @@ const createBooking = async (req, res) => {
 
     res.status(201).json({ success: true, message: 'Booking created successfully', booking: createdBooking });
   } catch (error) {
-    logControllerError('createBooking', req, error, 400);
     res.status(400).json({ message: error.message });
   }
 };
@@ -398,21 +604,17 @@ const enrichBookingsWithChat = async (bookings, userId) => {
     
     let customerPhone = b.phone;
     if ((!customerPhone || customerPhone === '0000000000' || customerPhone === '1234567890') && b.userId) {
-      if (mongoose.Types.ObjectId.isValid(b.userId)) {
-        const customer = await User.findById(b.userId);
-        if (customer && customer.phone) {
-          customerPhone = customer.phone;
-        }
+      const customer = await User.findById(b.userId);
+      if (customer && customer.phone) {
+        customerPhone = customer.phone;
       }
     }
 
     let technicianName = 'Unassigned';
     if (b.providerId) {
-      if (mongoose.Types.ObjectId.isValid(b.providerId)) {
-        const techUser = await User.findById(b.providerId);
-        if (techUser) {
-          technicianName = techUser.name;
-        }
+      const techUser = await User.findById(b.providerId);
+      if (techUser) {
+        technicianName = techUser.name;
       }
     }
 
@@ -448,11 +650,10 @@ const getBookings = async (req, res) => {
         .populate('serviceId', 'name price')
         .sort('-createdAt');
     }
-
+    
     const enriched = await enrichBookingsWithChat(bookings, req.user.id);
     return res.json(enriched);
   } catch (error) {
-    logControllerError('getBookings', req, error, 500);
     res.status(500).json({ message: error.message });
   }
 };
@@ -486,7 +687,6 @@ const updateBookingStatus = async (req, res) => {
     }
     
     if (status === 'accepted' && req.user.role === 'technician') {
-      DispatchService.cancelDispatch(booking._id);
       booking.providerEmail = req.user.email;
       booking.providerId = req.user.id; // Fully bind technician
       booking.rejectionReason = null;
@@ -568,7 +768,7 @@ const updateBookingStatus = async (req, res) => {
          bookingId: booking._id.toString()
        });
 
-       await DispatchService.startDispatch(booking._id);
+       await autoAssignBooking(booking._id);
 
        const finalBooking = await Booking.findById(booking._id).populate('serviceId', 'name price');
        await triggerNotifications(req, finalBooking, 'rejected');
@@ -588,7 +788,6 @@ const updateBookingStatus = async (req, res) => {
 
     res.json(updatedBooking);
   } catch (error) {
-    logControllerError('updateBookingStatus', req, error, 400);
     res.status(400).json({ message: error.message });
   }
 };
@@ -597,7 +796,6 @@ const updateBookingStatus = async (req, res) => {
 // @route   PUT /api/bookings/:id/assign
 const assignBooking = async (req, res) => {
   const { providerId } = req.body;
-  console.log(`[BookingController] assignBooking request received. Booking: ${req.params.id}, Target Tech: ${providerId}`);
   try {
     const booking = await Booking.findById(req.params.id);
     if (!booking) {
@@ -614,14 +812,12 @@ const assignBooking = async (req, res) => {
     
     const updatedBooking = await booking.save();
     await updatedBooking.populate('serviceId', 'name price');
-    console.log(`[BookingController] Booking successfully assigned in database. ID: ${updatedBooking._id}, Provider ID: ${updatedBooking.providerId}`);
 
     // Call Automated Notification
     await triggerNotifications(req, updatedBooking, 'accepted');
 
     res.json(updatedBooking);
   } catch (error) {
-    logControllerError('assignBooking', req, error, 400);
     res.status(400).json({ message: error.message });
   }
 };
@@ -716,7 +912,6 @@ const processPayment = async (req, res) => {
       return res.json(updatedBooking);
     }
   } catch (error) {
-    logControllerError('processPayment', req, error, 400);
     res.status(400).json({ message: error.message });
   }
 };
@@ -746,7 +941,7 @@ const createPaymentIntent = async (req, res) => {
     
     res.json({ clientSecret: paymentIntent.client_secret });
   } catch (error) {
-    logControllerError('createPaymentIntent', req, error, 400);
+    console.error("Stripe Error:", error);
     res.status(400).json({ message: error.message });
   }
 };
@@ -838,7 +1033,6 @@ const submitQuote = async (req, res) => {
 
     res.json(updatedBooking);
   } catch (error) {
-    logControllerError('submitQuote', req, error, 400);
     res.status(400).json({ message: error.message });
   }
 };
@@ -901,7 +1095,6 @@ const approveQuote = async (req, res) => {
 
     res.json(updatedBooking);
   } catch (error) {
-    logControllerError('approveQuote', req, error, 400);
     res.status(400).json({ message: error.message });
   }
 };
@@ -966,7 +1159,6 @@ const requestQuoteClarification = async (req, res) => {
 
     res.json(updatedBooking);
   } catch (error) {
-    logControllerError('requestQuoteClarification', req, error, 400);
     res.status(400).json({ message: error.message });
   }
 };
@@ -1030,7 +1222,6 @@ const respondQuoteClarification = async (req, res) => {
 
     res.json(updatedBooking);
   } catch (error) {
-    logControllerError('respondQuoteClarification', req, error, 400);
     res.status(400).json({ message: error.message });
   }
 };
@@ -1059,7 +1250,6 @@ const cancelBooking = async (req, res) => {
     }
     
     booking.status = 'cancelled';
-    DispatchService.cancelDispatch(booking._id);
     booking.cancelledBy = req.user.role === 'user' ? 'customer' : (req.user.role === 'technician' ? 'technician' : 'admin');
     booking.cancellationReason = reason || 'No reason provided';
     booking.cancelledAt = new Date();
@@ -1084,7 +1274,6 @@ const cancelBooking = async (req, res) => {
     
     res.json(updatedBooking);
   } catch (error) {
-    logControllerError('cancelBooking', req, error, 400);
     res.status(400).json({ message: error.message });
   }
 };
@@ -1126,26 +1315,6 @@ const updateTechnicianWallet = async (booking) => {
     booking.membershipDiscount = discount;
     booking.finalTechnicianEarning = techShare;
     booking.walletUpdated = true;
-    
-    // Log split details to internal database payout ledger
-    const PayoutLog = require('../models/PayoutLog');
-    try {
-      await PayoutLog.create({
-        bookingId: booking._id,
-        technicianId: tech.userId,
-        totalAmount: customerPaid,
-        techShare,
-        platformFee: platformCommission,
-        paymentMethod: booking.paymentMethod || 'cash',
-        gatewayStatus: 'completed',
-        transactionId: booking.transactionId || `mock-tx-${Date.now()}`,
-        transferStatus: 'logged'
-      });
-      console.log(`[Ledger] Logged 90/10 split for booking ${booking._id}: techShare ₹${techShare}, platformFee ₹${platformCommission}`);
-    } catch (ledgerErr) {
-      console.error('[Ledger] Failed to write split to PayoutLog:', ledgerErr);
-    }
-
     await booking.save();
   }
 

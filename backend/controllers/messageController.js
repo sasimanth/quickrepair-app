@@ -37,7 +37,7 @@ const getMessages = async (req, res) => {
 const sendMessage = async (req, res) => {
   try {
     const { bookingId } = req.params;
-    const { text, senderName, mediaUrl, mediaType } = req.body;
+    const { text, senderName } = req.body;
 
     const booking = await Booking.findById(bookingId);
     if (!booking) return res.status(404).json({ message: 'Booking not found' });
@@ -55,9 +55,7 @@ const sendMessage = async (req, res) => {
       bookingId,
       senderId: req.user.id,
       senderName: senderName || req.user.email.split('@')[0],
-      text: text || '',
-      mediaUrl: mediaUrl || null,
-      mediaType: mediaType || 'text'
+      text
     });
 
     // Push live message to Chat room via Socket
@@ -70,14 +68,10 @@ const sendMessage = async (req, res) => {
     const recipientId = isOwner ? booking.providerId : booking.userId;
     if (recipientId && !recipientId.startsWith('tech-')) {
       const Notification = require('../models/Notification');
-      let displayMsg = text || '';
-      if (mediaType === 'image') displayMsg = '📷 [Image Attachment]';
-      else if (mediaType === 'audio') displayMsg = '🎵 [Voice Note]';
-
       const chatNotif = await Notification.create({
         userId: recipientId,
         title: `💬 New Message from ${senderName || req.user.email.split('@')[0]}`,
-        message: displayMsg,
+        message: text,
         isRead: false,
         type: 'chat',
         bookingId: bookingId
