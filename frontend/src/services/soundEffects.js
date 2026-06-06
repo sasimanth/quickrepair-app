@@ -170,3 +170,28 @@ export const stopDispatchRingtone = () => {
     } catch (err) {}
   }
 };
+
+/**
+ * Programmatically unlocks the Web Audio API and HTMLAudioElement autoplay policies
+ * upon the first user interaction (click/touch).
+ */
+export const unlockAudio = () => {
+  try {
+    const AudioContextClass = window.AudioContext || window.webkitAudioContext;
+    if (AudioContextClass) {
+      const ctx = new AudioContextClass();
+      if (ctx.state === 'suspended') {
+        ctx.resume();
+      }
+    }
+    // Play a tiny silent audio file to unlock the HTML5 Audio element
+    const audio = new Audio('data:audio/wav;base64,UklGRigAAABXQVZFZm10IBIAAAABAAEARKwAAIhYAQACABAAAABkYXRhAgAAAAAA');
+    const playPromise = audio.play();
+    if (playPromise !== undefined) {
+      playPromise.catch(() => {});
+    }
+    console.log('[SoundService] Audio and AudioContext programmatically unlocked by user gesture.');
+  } catch (err) {
+    console.warn('[SoundService] Failed to unlock audio context:', err);
+  }
+};

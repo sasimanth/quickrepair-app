@@ -440,21 +440,15 @@ const getBookings = async (req, res) => {
       bookings = await Booking.find({})
         .populate('serviceId', 'name price');
     } else if (req.user.role === 'technician') {
-      if (!mongoose.Types.ObjectId.isValid(req.user.id)) {
-        return res.status(400).json({ message: 'Invalid Technician ID format' });
-      }
       bookings = await Booking.find({ providerId: req.user.id })
         .populate('serviceId', 'name price');
     } else {
       // Regular User - Strictly filter by logged-in user ID to prevent cross-user access
-      if (!mongoose.Types.ObjectId.isValid(req.user.id)) {
-        return res.status(400).json({ message: 'Invalid User ID format' });
-      }
       bookings = await Booking.find({ userId: req.user.id })
         .populate('serviceId', 'name price')
         .sort('-createdAt');
     }
-    
+
     const enriched = await enrichBookingsWithChat(bookings, req.user.id);
     return res.json(enriched);
   } catch (error) {

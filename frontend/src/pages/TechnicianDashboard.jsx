@@ -10,7 +10,7 @@ import VerificationModal from '../components/VerificationModal';
 import KycModal from '../components/KycModal';
 import { socket } from '../services/socket';
 import { motion } from 'framer-motion';
-import { playNotificationSound, startDispatchRingtone, stopDispatchRingtone } from '../services/soundEffects';
+import { playNotificationSound, startDispatchRingtone, stopDispatchRingtone, unlockAudio } from '../services/soundEffects';
 import DispatchOverlay from '../components/DispatchOverlay';
 import { queueOfflineAction, syncOfflineActions } from '../services/offlineSync';
 
@@ -22,6 +22,23 @@ const formatPhoneLink = (phone) => {
 
 const TechnicianDashboard = () => {
   const [jobs, setJobs] = useState([]);
+  const [audioUnlocked, setAudioUnlocked] = useState(false);
+
+  useEffect(() => {
+    const handleUnlock = () => {
+      if (!audioUnlocked) {
+        unlockAudio();
+        setAudioUnlocked(true);
+      }
+    };
+    window.addEventListener('click', handleUnlock, { once: true });
+    window.addEventListener('touchstart', handleUnlock, { once: true });
+    return () => {
+      window.removeEventListener('click', handleUnlock);
+      window.removeEventListener('touchstart', handleUnlock);
+    };
+  }, [audioUnlocked]);
+
   const [reviews, setReviews] = useState([]);
   const [profile, setProfile] = useState(null);
   const profileRef = useRef(null);
@@ -741,6 +758,26 @@ const TechnicianDashboard = () => {
     <div className="min-h-screen bg-slate-50/50 py-6 sm:py-12 px-4 sm:px-6 lg:px-8 mt-4 sm:mt-10">
       <div className="max-w-6xl mx-auto space-y-6 sm:space-y-10">
         
+        {!audioUnlocked && (
+          <div 
+            onClick={() => setAudioUnlocked(true)}
+            className="bg-amber-500/10 border-2 border-amber-500/20 text-amber-600 px-6 py-4 rounded-3xl flex items-center justify-between gap-4 cursor-pointer hover:bg-amber-500/15 transition-all"
+          >
+            <div className="flex items-center gap-3">
+              <div className="w-8 h-8 rounded-xl bg-amber-500/20 flex items-center justify-center text-amber-500 shrink-0">
+                <Bell size={16} className="animate-bounce" />
+              </div>
+              <div className="text-left">
+                <p className="text-xs sm:text-sm font-extrabold tracking-tight">Sound Alerts Suspended</p>
+                <p className="text-[10px] sm:text-xs font-semibold text-amber-600/80 mt-0.5">Your browser blocks autoplay audio. Click anywhere on this page to enable sound ringtones for incoming jobs.</p>
+              </div>
+            </div>
+            <button className="px-4 py-2 bg-amber-500 text-white rounded-xl text-xs font-black uppercase tracking-wider shadow-md active:scale-95 transition-all shrink-0 border-none cursor-pointer">
+              Enable Sound
+            </button>
+          </div>
+        )}
+
         {/* Header Section */}
         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 sm:gap-6 bg-white p-5 sm:p-8 rounded-3xl sm:rounded-[2rem] shadow-[0_2px_20px_rgb(0,0,0,0.04)] border border-slate-100/80">
           <div className="flex items-center gap-4 sm:gap-5">
