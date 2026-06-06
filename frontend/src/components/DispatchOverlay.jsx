@@ -1,27 +1,6 @@
-import { useState, useEffect } from 'react';
-import { Play, X, MapPin, Navigation, Info, AlertTriangle, Check } from 'lucide-react';
+import { Play, X, MapPin, Navigation, Info, AlertTriangle, Check, Bell } from 'lucide-react';
 
 export default function DispatchOverlay({ job, onAccept, onDecline }) {
-  const [timeLeft, setTimeLeft] = useState(20);
-  const totalDuration = 20;
-
-  useEffect(() => {
-    if (timeLeft <= 0) {
-      onDecline('Timeout (no response)');
-      return;
-    }
-    const timer = setTimeout(() => {
-      setTimeLeft(prev => prev - 1);
-    }, 1000);
-    return () => clearTimeout(timer);
-  }, [timeLeft, onDecline]);
-
-  const progressFraction = timeLeft / totalDuration;
-  const strokeWidth = 8;
-  const radius = 52;
-  const circumference = 2 * Math.PI * radius;
-  const strokeDashoffset = circumference - progressFraction * circumference;
-
   // Calculate earnings (90% tech share)
   const serviceCharge = job.serviceCharge || job.amount || 0;
   const sparePartsCost = job.sparePartsCost || 0;
@@ -37,30 +16,12 @@ export default function DispatchOverlay({ job, onAccept, onDecline }) {
 
       <div className="w-full max-w-md bg-slate-900/60 border border-slate-800/80 rounded-[2.5rem] p-6 sm:p-8 shadow-2xl relative z-10 flex flex-col items-center text-center backdrop-blur-lg">
         
-        {/* Animated Countdown Timer Ring */}
-        <div className="relative w-36 h-36 flex items-center justify-center mb-6">
-          <svg className="w-full h-full transform -rotate-90">
-            <circle
-              cx="72"
-              cy="72"
-              r={radius}
-              className="stroke-slate-800 fill-none"
-              strokeWidth={strokeWidth}
-            />
-            <circle
-              cx="72"
-              cy="72"
-              r={radius}
-              className="stroke-indigo-500 fill-none transition-all duration-1000 ease-linear"
-              strokeWidth={strokeWidth}
-              strokeDasharray={circumference}
-              strokeDashoffset={strokeDashoffset}
-              strokeLinecap="round"
-            />
-          </svg>
-          <div className="absolute flex flex-col items-center">
-            <span className="text-4xl font-black text-slate-50 tracking-tighter">{timeLeft}s</span>
-            <span className="text-[10px] text-slate-400 font-extrabold uppercase tracking-widest mt-0.5">Remaining</span>
+        {/* Pulsing Bell Icon representing New Job Assignment */}
+        <div className="relative w-28 h-28 flex items-center justify-center mb-6 mt-2">
+          <div className="absolute inset-0 bg-indigo-500/20 rounded-full animate-ping [animation-duration:2s]"></div>
+          <div className="absolute inset-2 bg-indigo-600/30 rounded-full animate-pulse"></div>
+          <div className="relative w-20 h-20 bg-gradient-to-br from-indigo-500 to-violet-650 rounded-full flex items-center justify-center shadow-xl shadow-indigo-600/30 border border-indigo-400/50">
+            <Bell size={36} className="text-white animate-bounce" />
           </div>
         </div>
 

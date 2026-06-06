@@ -49,7 +49,7 @@ class DispatchService {
 
       // If booking is already assigned, skip search and set the 20-second timeout for the assigned tech
       if (booking.status === 'assigned' && booking.providerId) {
-        console.log(`[Dispatch] Booking ${bookingId} is pre-assigned to tech ${booking.providerId}. Starting 20s acceptance timeout.`);
+        console.log(`[Dispatch] Booking ${bookingId} is pre-assigned to tech ${booking.providerId}. Dispatch loop completed.`);
         
         // Find technician's name to emit correct dispatch status
         const assignedTech = await Technician.findOne({ userId: booking.providerId });
@@ -59,17 +59,13 @@ class DispatchService {
           global.io.to(`user_${booking.userId}`).emit('dispatch_status', {
             bookingId: booking._id.toString(),
             status: 'assigned',
-            radius: this.RADII[dispatchState.radiusIndex],
+            radius: this.RADII[dispatchState.radiusIndex] || 2,
             technicianName: techName,
-            timeout: this.TIMEOUT_DURATION / 1000
+            timeout: null
           });
         }
 
-        const timeoutId = setTimeout(async () => {
-          await this.handleAcceptanceTimeout(bookingId, booking.providerId);
-        }, this.TIMEOUT_DURATION);
-
-        dispatchState.timeoutId = timeoutId;
+        this.activeDispatches.delete(bookingId.toString());
         return;
       }
 
@@ -178,7 +174,7 @@ class DispatchService {
             status: 'assigned',
             radius: radius,
             technicianName: matchedTech.name,
-            timeout: this.TIMEOUT_DURATION / 1000
+            timeout: null
           });
           global.io.to(`user_${booking.userId}`).emit('job_reassigned', payload);
           global.io.to(`user_${booking.userId}`).emit('job_update', payload);
@@ -210,12 +206,8 @@ class DispatchService {
           global.io.to(`user_${matchedTech.userId}`).emit('new_notification', techNotif.toObject());
         }
 
-        // Set acceptance countdown timeout
-        const timeoutId = setTimeout(async () => {
-          await this.handleAcceptanceTimeout(bookingId, matchedTech.userId);
-        }, this.TIMEOUT_DURATION);
-
-        dispatchState.timeoutId = timeoutId;
+        // Remove active dispatch since a technician has been assigned and no timeout is needed
+        this.activeDispatches.delete(bookingId.toString());
       } else {
         // No technician found in this radius. Expand radius.
         if (dispatchState.radiusIndex < this.RADII.length - 1) {
@@ -243,82 +235,6 @@ class DispatchService {
     }
   }
 
-  async handleAcceptanceTimeout(bookingId, techUserId) {
-    console.log(`[Dispatch] Timeout expired for Booking ${bookingId} and Tech ${techUserId}.`);
-    
-    const dispatchState = this.activeDispatches.get(bookingId.toString());
-    if (!dispatchState) return;
-
-    try {
-      const booking = await Booking.findById(bookingId);
-      if (booking && booking.status === 'assigned' && booking.providerId === techUserId) {
-        console.log(`[Dispatch] Reverting assignment for booking ${bookingId}.`);
-
-        booking.rejectedTechnicians = booking.rejectedTechnicians || [];
-        if (!booking.rejectedTechnicians.includes(techUserId)) {
-          booking.rejectedTechnicians.push(techUserId);
-        }
-
-        const techProfile = await Technician.findOne({ userId: techUserId });
-        const techName = techProfile ? techProfile.name : 'Technician';
-
-        booking.rejectionReason = 'Response timeout (20 seconds exceeded)';
-        booking.rejectedByTechName = techName;
-        booking.providerId = null;
-        booking.providerPhone = null;
-        booking.providerEmail = null;
-        booking.status = 'pending';
-
-        if (techProfile) {
-          techProfile.currentStatus = 'available';
-          techProfile.currentJobId = null;
-          await techProfile.save();
-        }
-
-        const savedBooking = await booking.save();
-
-        if (global.io) {
-          global.io.to(`user_${techUserId}`).emit('job_expired', { bookingId: bookingId.toString() });
-          global.io.to(`user_${booking.userId}`).emit('job_rejected', {
-            bookingId: booking._id.toString(),
-            rejectedByTechName: booking.rejectedByTechName,
-            rejectionReason: booking.rejectionReason
-          });
-          global.io.to(`user_${booking.userId}`).emit('job_update', savedBooking.toObject());
-        }
-
-        // Notify technician of expired assignment
-        const expireNotif = await Notification.create({
-          userId: techUserId,
-          title: 'Request Expired ⏰',
-          message: `The assigned request for ${booking.serviceName} expired because it was not accepted within 20s.`,
-          type: 'booking',
-          bookingId: booking._id.toString()
-        });
-
-        if (global.io && expireNotif) {
-          global.io.to(`user_${techUserId}`).emit('new_notification', expireNotif.toObject());
-        }
-
-        // Send push notification about re-matching
-        const { notifyUser } = require('./NotificationService');
-        await notifyUser({
-          userId: booking.userId,
-          email: booking.userEmail,
-          type: 'both',
-          subject: 'Searching for nearby technicians... 🔄',
-          text: `Finding the best available technician for your request. We are matching your booking with another expert.`,
-          notifType: 'booking',
-          bookingId: booking._id.toString()
-        });
-
-        // Trigger the next search step!
-        await this.processDispatchStep(bookingId);
-      }
-    } catch (err) {
-      console.error(`[Dispatch] Error in handleAcceptanceTimeout:`, err);
-    }
-  }
 
   cancelDispatch(bookingId) {
     const state = this.activeDispatches.get(bookingId.toString());
