@@ -1,3 +1,4 @@
+const mongoose = require('mongoose');
 const Booking = require('../models/Booking');
 const Technician = require('../models/Technician');
 const User = require('../models/User');
@@ -156,7 +157,10 @@ class DispatchService {
         console.log(`[Dispatch] Found eligible tech ${matchedTech.name} (ID: ${matchedTech.userId}) at radius ${radius}km.`);
         
         // Assign booking
-        const techUserDoc = await User.findById(matchedTech.userId);
+        let techUserDoc = null;
+        if (mongoose.Types.ObjectId.isValid(matchedTech.userId)) {
+          techUserDoc = await User.findById(matchedTech.userId);
+        }
         
         booking.providerId = matchedTech.userId;
         booking.providerPhone = matchedTech.phone || techUserDoc?.phone || null;
