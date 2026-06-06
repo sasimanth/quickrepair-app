@@ -103,3 +103,70 @@ export const playNotificationSound = (priority = 'low') => {
     playSyntheticBeep(priority);
   }
 };
+
+let activeAudio = null;
+let activeVibeInterval = null;
+
+/**
+ * Starts a looping dispatch ringtone and repeating vibration alert.
+ */
+export const startDispatchRingtone = () => {
+  stopDispatchRingtone();
+
+  try {
+    const audioPath = '/sounds/booking_request.wav';
+    activeAudio = new Audio(audioPath);
+    activeAudio.volume = 0.95;
+    activeAudio.loop = true;
+
+    const playPromise = activeAudio.play();
+    if (playPromise !== undefined) {
+      playPromise.catch((err) => {
+        console.warn('Looping dispatch audio autoplay blocked. Using synthetic alarm.', err.message);
+        let beepCount = 0;
+        activeVibeInterval = setInterval(() => {
+          playSyntheticBeep('high');
+          vibrateDevice('high');
+          beepCount++;
+          if (beepCount > 10) stopDispatchRingtone();
+        }, 2000);
+      });
+    }
+  } catch (err) {
+    console.warn('Failed to start looping audio file:', err);
+    playSyntheticBeep('high');
+  }
+
+  if (!activeVibeInterval) {
+    vibrateDevice('high');
+    activeVibeInterval = setInterval(() => {
+      vibrateDevice('high');
+    }, 3000);
+  }
+};
+
+/**
+ * Stops the looping dispatch ringtone and active vibration loops.
+ */
+export const stopDispatchRingtone = () => {
+  if (activeAudio) {
+    try {
+      activeAudio.pause();
+      activeAudio.currentTime = 0;
+    } catch (err) {
+      console.warn('Error pausing active audio:', err);
+    }
+    activeAudio = null;
+  }
+  
+  if (activeVibeInterval) {
+    clearInterval(activeVibeInterval);
+    activeVibeInterval = null;
+  }
+
+  if ('vibrate' in navigator) {
+    try {
+      navigator.vibrate(0);
+    } catch (err) {}
+  }
+};

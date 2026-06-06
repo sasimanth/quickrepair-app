@@ -101,10 +101,8 @@ const KycModal = ({ onClose, onSuccess }) => {
             {step === 1 && (
               <div className="space-y-4 animate-in slide-in-from-left-4 fade-in duration-300">
                 <div className="space-y-1">
-                  <label htmlFor="kyc-account-name" className="block text-[10px] font-bold text-slate-400 uppercase tracking-widest ml-1">Bank Account Holder Name</label>
+                  <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-widest ml-1">Bank Account Holder Name</label>
                   <input 
-                    id="kyc-account-name"
-                    name="accountName"
                     required 
                     type="text" 
                     value={formData.accountName} 
@@ -115,10 +113,8 @@ const KycModal = ({ onClose, onSuccess }) => {
                 </div>
                 
                 <div className="space-y-1">
-                  <label htmlFor="kyc-account-number" className="block text-[10px] font-bold text-slate-400 uppercase tracking-widest ml-1">Bank Account Number</label>
+                  <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-widest ml-1">Bank Account Number</label>
                   <input 
-                    id="kyc-account-number"
-                    name="accountNumber"
                     required 
                     type="text" 
                     value={formData.accountNumber} 
@@ -129,10 +125,8 @@ const KycModal = ({ onClose, onSuccess }) => {
                 </div>
 
                 <div className="space-y-1">
-                  <label htmlFor="kyc-ifsc" className="block text-[10px] font-bold text-slate-400 uppercase tracking-widest ml-1">IFSC / Routing Code</label>
+                  <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-widest ml-1">IFSC / Routing Code</label>
                   <input 
-                    id="kyc-ifsc"
-                    name="ifscCode"
                     required 
                     type="text" 
                     value={formData.ifscCode} 
@@ -152,10 +146,8 @@ const KycModal = ({ onClose, onSuccess }) => {
             {step === 2 && (
               <div className="space-y-4 animate-in slide-in-from-right-4 fade-in duration-300">
                 <div className="space-y-1">
-                  <label htmlFor="kyc-id-proof" className="block text-[10px] font-bold text-slate-400 uppercase tracking-widest ml-1">ID Proof Image URL (Optional)</label>
+                  <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-widest ml-1">ID Proof Image URL (Optional)</label>
                   <input 
-                    id="kyc-id-proof"
-                    name="idProofUrl"
                     type="url" 
                     value={formData.idProofUrl} 
                     onChange={(e) => setFormData({...formData, idProofUrl: e.target.value})} 

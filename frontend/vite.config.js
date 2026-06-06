@@ -12,7 +12,7 @@ export default defineConfig({
       filename: 'sw.js',
       registerType: 'autoUpdate',
       injectRegister: 'auto',
-      includeAssets: ['fixvo-icon.png'],
+      includeAssets: ['favicon.ico', 'apple-touch-icon.png', 'masked-icon.svg'],
       manifest: {
         name: 'Fixvo Platform',
         short_name: 'Fixvo',
@@ -22,9 +22,9 @@ export default defineConfig({
         display: 'standalone',
         icons: [
           {
-            src: 'fixvo-icon.png',
+            src: 'icon.svg',
             sizes: '192x192 512x512',
-            type: 'image/png',
+            type: 'image/svg+xml',
             purpose: 'any maskable'
           }
         ]

@@ -116,11 +116,10 @@ const AuthModal = ({ onClose, onSuccess }) => {
           {isSignUp && (
             <>
               <div className="space-y-1">
-                <label htmlFor="auth-modal-name" className="text-[10px] font-bold text-slate-400 uppercase tracking-widest ml-1">Full Name</label>
+                <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest ml-1">Full Name</label>
                 <div className="relative group">
                   <User className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-500 group-focus-within:text-blue-400 transition-colors" size={16} />
                   <input
-                    id="auth-modal-name"
                     type="text"
                     name="name"
                     required
@@ -133,11 +132,10 @@ const AuthModal = ({ onClose, onSuccess }) => {
               </div>
 
               <div className="space-y-1">
-                <label htmlFor="auth-modal-phone" className="text-[10px] font-bold text-slate-400 uppercase tracking-widest ml-1">Phone Number</label>
+                <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest ml-1">Phone Number</label>
                 <div className="relative group">
                   <Phone className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-500 group-focus-within:text-blue-400 transition-colors" size={16} />
                   <input
-                    id="auth-modal-phone"
                     type="tel"
                     name="phone"
                     required
@@ -152,11 +150,10 @@ const AuthModal = ({ onClose, onSuccess }) => {
           )}
 
           <div className="space-y-1">
-            <label htmlFor="auth-modal-email" className="text-[10px] font-bold text-slate-400 uppercase tracking-widest ml-1">Email Address</label>
+            <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest ml-1">Email Address</label>
             <div className="relative group">
               <Mail className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-500 group-focus-within:text-blue-400 transition-colors" size={16} />
               <input
-                id="auth-modal-email"
                 type="email"
                 name="email"
                 required
@@ -170,12 +167,11 @@ const AuthModal = ({ onClose, onSuccess }) => {
 
           <div className="space-y-1">
             <div className="flex items-center justify-between ml-1">
-              <label htmlFor="auth-modal-password" className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Password</label>
+              <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Password</label>
             </div>
             <div className="relative group">
               <Lock className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-500 group-focus-within:text-blue-400 transition-colors" size={16} />
               <input
-                id="auth-modal-password"
                 type="password"
                 name="password"
                 required

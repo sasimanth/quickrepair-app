@@ -74,11 +74,10 @@ const Login = () => {
 
         <form onSubmit={handleLogin} className="space-y-5">
           <div className="space-y-1">
-            <label htmlFor="login-email" className="text-sm font-bold text-slate-700 ml-1">Email Address</label>
+            <label className="text-sm font-bold text-slate-700 ml-1">Email Address</label>
             <div className="relative group">
               <Mail className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-blue-600 transition-colors" size={20} />
               <input
-                id="login-email"
                 type="email"
                 name="email"
                 required
@@ -92,13 +91,12 @@ const Login = () => {
 
           <div className="space-y-1">
             <div className="flex items-center justify-between ml-1">
-              <label htmlFor="login-password" className="text-sm font-bold text-slate-700">Password</label>
+              <label className="text-sm font-bold text-slate-700">Password</label>
               <a href="#" className="text-xs font-bold text-indigo-600 hover:text-indigo-500 transition-colors">Forgot password?</a>
             </div>
             <div className="relative group">
               <Lock className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-blue-600 transition-colors" size={20} />
               <input
-                id="login-password"
                 type="password"
                 name="password"
                 required

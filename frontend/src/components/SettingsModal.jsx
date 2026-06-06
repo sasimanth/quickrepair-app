@@ -129,12 +129,10 @@ const SettingsModal = ({ role, currentProfile, onClose, onSuccess }) => {
             {/* Inputs Grid */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
               <div className="space-y-1.5">
-                <label htmlFor="settings-name" className="text-xs font-bold text-slate-400 uppercase tracking-widest ml-1">Full Name</label>
+                <label className="text-xs font-bold text-slate-400 uppercase tracking-widest ml-1">Full Name</label>
                 <div className="relative group">
                   <User className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-500 group-focus-within:text-indigo-400 transition-colors" size={16} />
                   <input 
-                    id="settings-name"
-                    name="name"
                     type="text" 
                     value={formData.name}
                     onChange={(e) => setFormData({...formData, name: e.target.value})}
@@ -144,12 +142,10 @@ const SettingsModal = ({ role, currentProfile, onClose, onSuccess }) => {
                 </div>
               </div>
               <div className="space-y-1.5">
-                <label htmlFor="settings-phone" className="text-xs font-bold text-slate-400 uppercase tracking-widest ml-1">Phone Number</label>
+                <label className="text-xs font-bold text-slate-400 uppercase tracking-widest ml-1">Phone Number</label>
                 <div className="relative group">
                   <Phone className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-500 group-focus-within:text-indigo-400 transition-colors" size={16} />
                   <input 
-                    id="settings-phone"
-                    name="phone"
                     type="text" 
                     value={formData.phone}
                     onChange={(e) => setFormData({...formData, phone: e.target.value})}
@@ -179,12 +175,10 @@ const SettingsModal = ({ role, currentProfile, onClose, onSuccess }) => {
                  
                  <div className="grid grid-cols-1 gap-5">
                    <div className="space-y-1.5">
-                     <label htmlFor="settings-experience" className="text-xs font-bold text-slate-400 uppercase tracking-widest ml-1 flex items-center gap-1.5">
+                     <label className="text-xs font-bold text-slate-400 uppercase tracking-widest ml-1 flex items-center gap-1.5">
                        <Briefcase size={14} className="text-slate-500"/> Experience
                      </label>
                      <input 
-                       id="settings-experience"
-                       name="experience"
                        type="text" 
                        placeholder="e.g. 5 Years"
                        value={formData.experience}
