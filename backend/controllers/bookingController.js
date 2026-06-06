@@ -8,6 +8,16 @@ const normalizePhone = (phone) => {
   return phone.replace(/\D/g, "").slice(-10);
 };
 
+const logControllerError = (action, req, error, statusCode = 400) => {
+  console.error(`[BookingController Error] Action "${action}" failed (HTTP ${statusCode}):`);
+  console.error(`Error message: ${error.message}`);
+  console.error(`Stack trace: ${error.stack}`);
+  console.error('Request Payload:', JSON.stringify(req.body, null, 2));
+  console.error('Request Query params:', JSON.stringify(req.query, null, 2));
+  console.error('Request URI params:', JSON.stringify(req.params, null, 2));
+  console.error('User Context:', req.user ? JSON.stringify(req.user, null, 2) : 'Unauthenticated');
+};
+
 const DispatchService = require('../services/DispatchService');
 
 // AUTOMATED NOTIFICATION & CHAT MESSAGE HELPER
@@ -199,6 +209,7 @@ const createBooking = async (req, res) => {
       }
     }
     const finalPhone = normalizePhone(phone) || normalizePhone(userPhone) || '0000000000';
+    console.log(`[BookingController] createBooking request received. User: ${bookingUserId || 'Guest'}, Phone: ${finalPhone}, Service: ${service || deviceType || 'Unknown'}`);
 
     // DUPLICATE SUBMISSION CHECK (Within last 2 minutes)
     const twoMinutesAgo = new Date(Date.now() - 2 * 60 * 1000);
@@ -312,6 +323,7 @@ const createBooking = async (req, res) => {
       accessoriesNeeded: accessoriesNeeded || null
     });
     const createdBooking = await booking.save();
+    console.log(`[BookingController] Booking successfully created in database. ID: ${createdBooking._id}, Status: ${createdBooking.status}`);
 
     // If manually assigned (technician selected by user)
     if (finalProviderId && !finalProviderId.startsWith('tech-')) {
@@ -371,6 +383,7 @@ const createBooking = async (req, res) => {
 
     res.status(201).json({ success: true, message: 'Booking created successfully', booking: createdBooking });
   } catch (error) {
+    logControllerError('createBooking', req, error, 400);
     res.status(400).json({ message: error.message });
   }
 };
@@ -445,6 +458,7 @@ const getBookings = async (req, res) => {
     const enriched = await enrichBookingsWithChat(bookings, req.user.id);
     return res.json(enriched);
   } catch (error) {
+    logControllerError('getBookings', req, error, 500);
     res.status(500).json({ message: error.message });
   }
 };
@@ -580,6 +594,7 @@ const updateBookingStatus = async (req, res) => {
 
     res.json(updatedBooking);
   } catch (error) {
+    logControllerError('updateBookingStatus', req, error, 400);
     res.status(400).json({ message: error.message });
   }
 };
@@ -588,6 +603,7 @@ const updateBookingStatus = async (req, res) => {
 // @route   PUT /api/bookings/:id/assign
 const assignBooking = async (req, res) => {
   const { providerId } = req.body;
+  console.log(`[BookingController] assignBooking request received. Booking: ${req.params.id}, Target Tech: ${providerId}`);
   try {
     const booking = await Booking.findById(req.params.id);
     if (!booking) {
@@ -604,12 +620,14 @@ const assignBooking = async (req, res) => {
     
     const updatedBooking = await booking.save();
     await updatedBooking.populate('serviceId', 'name price');
+    console.log(`[BookingController] Booking successfully assigned in database. ID: ${updatedBooking._id}, Provider ID: ${updatedBooking.providerId}`);
 
     // Call Automated Notification
     await triggerNotifications(req, updatedBooking, 'accepted');
 
     res.json(updatedBooking);
   } catch (error) {
+    logControllerError('assignBooking', req, error, 400);
     res.status(400).json({ message: error.message });
   }
 };
@@ -704,6 +722,7 @@ const processPayment = async (req, res) => {
       return res.json(updatedBooking);
     }
   } catch (error) {
+    logControllerError('processPayment', req, error, 400);
     res.status(400).json({ message: error.message });
   }
 };
@@ -733,7 +752,7 @@ const createPaymentIntent = async (req, res) => {
     
     res.json({ clientSecret: paymentIntent.client_secret });
   } catch (error) {
-    console.error("Stripe Error:", error);
+    logControllerError('createPaymentIntent', req, error, 400);
     res.status(400).json({ message: error.message });
   }
 };
@@ -825,6 +844,7 @@ const submitQuote = async (req, res) => {
 
     res.json(updatedBooking);
   } catch (error) {
+    logControllerError('submitQuote', req, error, 400);
     res.status(400).json({ message: error.message });
   }
 };
@@ -887,6 +907,7 @@ const approveQuote = async (req, res) => {
 
     res.json(updatedBooking);
   } catch (error) {
+    logControllerError('approveQuote', req, error, 400);
     res.status(400).json({ message: error.message });
   }
 };
@@ -951,6 +972,7 @@ const requestQuoteClarification = async (req, res) => {
 
     res.json(updatedBooking);
   } catch (error) {
+    logControllerError('requestQuoteClarification', req, error, 400);
     res.status(400).json({ message: error.message });
   }
 };
@@ -1014,6 +1036,7 @@ const respondQuoteClarification = async (req, res) => {
 
     res.json(updatedBooking);
   } catch (error) {
+    logControllerError('respondQuoteClarification', req, error, 400);
     res.status(400).json({ message: error.message });
   }
 };
@@ -1067,6 +1090,7 @@ const cancelBooking = async (req, res) => {
     
     res.json(updatedBooking);
   } catch (error) {
+    logControllerError('cancelBooking', req, error, 400);
     res.status(400).json({ message: error.message });
   }
 };

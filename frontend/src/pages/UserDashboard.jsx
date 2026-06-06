@@ -64,6 +64,7 @@ const UserDashboard = () => {
   const [isPlusDismissed, setIsPlusDismissed] = useState(localStorage.getItem('fixvo_plus_dismissed') === 'true');
   const [toasts, setToasts] = useState([]);
   const techSectionRef = useRef(null);
+  const lastFetchErrorRef = useRef(null);
   
   const [cancelBookingId, setCancelBookingId] = useState(null);
   const [cancellationReason, setCancellationReason] = useState('');
@@ -426,7 +427,18 @@ const UserDashboard = () => {
           socket.emit('track_tech', b.providerId);
       });
 
-    } catch (error) { console.error('Error fetching dashboard data:', error); } 
+    } catch (error) {
+      const errorMsg = error.response?.data?.message || error.message || 'Unknown error fetching dashboard data';
+      if (lastFetchErrorRef.current !== errorMsg) {
+        console.error('Error fetching dashboard data:', {
+          message: error.message,
+          status: error.response?.status,
+          data: error.response?.data,
+          stack: error.stack
+        });
+        lastFetchErrorRef.current = errorMsg;
+      }
+    } 
     finally { 
       if (showLoading) setLoading(false); 
     }
@@ -544,8 +556,15 @@ const UserDashboard = () => {
       });
       fetchData(); 
     } catch (error) {
-      alert('Failed to submit booking request. Check the console.');
-      console.error(error);
+      const errorMsg = error.response?.data?.message || error.message || 'Unknown error occurred while submitting booking request.';
+      alert(`Booking failed: ${errorMsg}`);
+      console.error('Booking submission failed:', {
+        message: error.message,
+        status: error.response?.status,
+        data: error.response?.data,
+        payload: payload,
+        stack: error.stack
+      });
     } finally {
       setIsBooking(false);
     }
@@ -632,7 +651,15 @@ const UserDashboard = () => {
         });
         fetchData(); 
       } catch (error) {
-        alert('Failed to auto-dispatch. Check the console.');
+        const errorMsg = error.response?.data?.message || error.message || 'Unknown error occurred during auto-dispatch.';
+        alert(`Auto-dispatch failed: ${errorMsg}`);
+        console.error('Auto-dispatch booking creation failed:', {
+          message: error.message,
+          status: error.response?.status,
+          data: error.response?.data,
+          payload: payload,
+          stack: error.stack
+        });
       } finally {
         setIsBooking(false);
       }
