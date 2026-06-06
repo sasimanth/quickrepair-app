@@ -25,10 +25,12 @@ const triggerNotifications = async (req, booking, type) => {
     // Fetch technician name
     let techName = 'Technician';
     if (booking.providerId) {
-      const User = require('../models/User');
-      const techUser = await User.findById(booking.providerId);
-      if (techUser) {
-        techName = techUser.name;
+      if (mongoose.Types.ObjectId.isValid(booking.providerId)) {
+        const User = require('../models/User');
+        const techUser = await User.findById(booking.providerId);
+        if (techUser) {
+          techName = techUser.name;
+        }
       }
     }
 
@@ -376,17 +378,21 @@ const enrichBookingsWithChat = async (bookings, userId) => {
     
     let customerPhone = b.phone;
     if ((!customerPhone || customerPhone === '0000000000' || customerPhone === '1234567890') && b.userId) {
-      const customer = await User.findById(b.userId);
-      if (customer && customer.phone) {
-        customerPhone = customer.phone;
+      if (mongoose.Types.ObjectId.isValid(b.userId)) {
+        const customer = await User.findById(b.userId);
+        if (customer && customer.phone) {
+          customerPhone = customer.phone;
+        }
       }
     }
 
     let technicianName = 'Unassigned';
     if (b.providerId) {
-      const techUser = await User.findById(b.providerId);
-      if (techUser) {
-        technicianName = techUser.name;
+      if (mongoose.Types.ObjectId.isValid(b.providerId)) {
+        const techUser = await User.findById(b.providerId);
+        if (techUser) {
+          technicianName = techUser.name;
+        }
       }
     }
 
@@ -414,10 +420,16 @@ const getBookings = async (req, res) => {
       bookings = await Booking.find({})
         .populate('serviceId', 'name price');
     } else if (req.user.role === 'technician') {
+      if (!mongoose.Types.ObjectId.isValid(req.user.id)) {
+        return res.status(400).json({ message: 'Invalid Technician ID format' });
+      }
       bookings = await Booking.find({ providerId: req.user.id })
         .populate('serviceId', 'name price');
     } else {
       // Regular User - Strictly filter by logged-in user ID to prevent cross-user access
+      if (!mongoose.Types.ObjectId.isValid(req.user.id)) {
+        return res.status(400).json({ message: 'Invalid User ID format' });
+      }
       bookings = await Booking.find({ userId: req.user.id })
         .populate('serviceId', 'name price')
         .sort('-createdAt');
