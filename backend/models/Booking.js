@@ -283,7 +283,7 @@ const bookingSchema = new mongoose.Schema({
 }, { timestamps: true });
 
 // Pre-save hook to populate timeline events on status and paymentStatus changes
-bookingSchema.pre('save', function() {
+bookingSchema.pre('save', function(next) {
   if (this.isNew) {
     if (!this.timelineEvents || this.timelineEvents.length === 0) {
       this.timelineEvents = [{
@@ -361,6 +361,7 @@ bookingSchema.pre('save', function() {
       });
     }
   }
+  next();
 });
 
 bookingSchema.index({ userId: 1 });

@@ -1,4 +1,3 @@
-const mongoose = require('mongoose');
 const Booking = require('../models/Booking');
 const Technician = require('../models/Technician');
 const User = require('../models/User');
@@ -48,9 +47,9 @@ class DispatchService {
         return;
       }
 
-      // If booking is already assigned, skip search and set the 20-second timeout for the assigned tech
+      // If booking is already assigned, skip search and do not set timeout
       if (booking.status === 'assigned' && booking.providerId) {
-        console.log(`[Dispatch] Booking ${bookingId} is pre-assigned to tech ${booking.providerId}. Starting 20s acceptance timeout.`);
+        console.log(`[Dispatch] Booking ${bookingId} is pre-assigned to tech ${booking.providerId}.`);
         
         // Find technician's name to emit correct dispatch status
         const assignedTech = await Technician.findOne({ userId: booking.providerId });
@@ -62,15 +61,10 @@ class DispatchService {
             status: 'assigned',
             radius: this.RADII[dispatchState.radiusIndex],
             technicianName: techName,
-            timeout: this.TIMEOUT_DURATION / 1000
+            timeout: null
           });
         }
 
-        const timeoutId = setTimeout(async () => {
-          await this.handleAcceptanceTimeout(bookingId, booking.providerId);
-        }, this.TIMEOUT_DURATION);
-
-        dispatchState.timeoutId = timeoutId;
         return;
       }
 
@@ -157,10 +151,7 @@ class DispatchService {
         console.log(`[Dispatch] Found eligible tech ${matchedTech.name} (ID: ${matchedTech.userId}) at radius ${radius}km.`);
         
         // Assign booking
-        let techUserDoc = null;
-        if (mongoose.Types.ObjectId.isValid(matchedTech.userId)) {
-          techUserDoc = await User.findById(matchedTech.userId);
-        }
+        const techUserDoc = await User.findById(matchedTech.userId);
         
         booking.providerId = matchedTech.userId;
         booking.providerPhone = matchedTech.phone || techUserDoc?.phone || null;
@@ -182,7 +173,7 @@ class DispatchService {
             status: 'assigned',
             radius: radius,
             technicianName: matchedTech.name,
-            timeout: this.TIMEOUT_DURATION / 1000
+            timeout: null
           });
           global.io.to(`user_${booking.userId}`).emit('job_reassigned', payload);
           global.io.to(`user_${booking.userId}`).emit('job_update', payload);
@@ -213,13 +204,6 @@ class DispatchService {
         if (global.io && techNotif) {
           global.io.to(`user_${matchedTech.userId}`).emit('new_notification', techNotif.toObject());
         }
-
-        // Set acceptance countdown timeout
-        const timeoutId = setTimeout(async () => {
-          await this.handleAcceptanceTimeout(bookingId, matchedTech.userId);
-        }, this.TIMEOUT_DURATION);
-
-        dispatchState.timeoutId = timeoutId;
       } else {
         // No technician found in this radius. Expand radius.
         if (dispatchState.radiusIndex < this.RADII.length - 1) {

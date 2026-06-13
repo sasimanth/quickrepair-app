@@ -20,14 +20,20 @@ const TechnicianAgreement = () => {
   }, []);
 
   const defaultContent = `
-    <h2>1. Professional Standard</h2>
-    <p>As a verified technician on Fixvo, you agree to maintain high professional standards, complete jobs successfully, and maintain a rating above 4.2.</p>
+    <h2>1. Service Quality & Professional Standards</h2>
+    <p>As a verified technician on Fixvo, you represent and warrant that you possess the necessary technical skills, equipment, and experience to carry out repair services. You agree to deliver high-quality services, maintain a professional and respectful demeanor, and keep your overall rating above 4.2 stars.</p>
     
-    <h2>2. Commission and Fees</h2>
-    <p>Fixvo retains a 10% platform commission on all booking earnings. The remaining 90% is cleared to your wallet balance upon successful payment confirmation.</p>
+    <h2>2. Conduct Guidelines and Safety</h2>
+    <p>Technicians must wear proper identification, arrive within the scheduled time windows, and provide transparent diagnosis feedback. You are strictly prohibited from soliciting customers for off-platform repairs, sharing user contact details with third parties, or performing unauthorized activities.</p>
     
-    <h2>3. Revisions & Timeouts</h2>
-    <p>ASAP job requests must be accepted within 60 seconds. All quotes and revisions must be approved by the customer before starting work.</p>
+    <h2>3. Commission Rules and Wallet Balances</h2>
+    <p>Fixvo retains a standard 10% platform commission on the gross total of all completed bookings (including labour and materials). The remaining 90% is credited to your technician wallet balance. Cash payments collected directly from customers are logged, and the 10% platform commission due is deducted from your online wallet balance.</p>
+    
+    <h2>4. Payouts and Withdrawals</h2>
+    <p>Technicians can request a withdrawal of their available online balance to their registered bank account or UPI ID. The minimum payout request is ₹500. Withdrawal requests are processed by Admin within 24 to 48 hours.</p>
+    
+    <h2>5. Account Suspension Policies</h2>
+    <p>Fixvo reserves the right to suspend or terminate technician accounts immediately for: rating drops below 4.2, safety violations, fraudulent quotes, off-platform soliciting, excessive cancellations, or failing background check updates.</p>
   `;
 
   return (

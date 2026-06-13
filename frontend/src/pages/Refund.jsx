@@ -20,11 +20,20 @@ const Refund = () => {
   }, []);
 
   const defaultContent = `
-    <h2>1. Refund Eligibility</h2>
-    <p>Refunds are evaluated for bookings where the technician failed to resolve the agreed issue, caused damage, or failed to arrive.</p>
+    <h2>1. Inspection Visits and Fees</h2>
+    <p>Fixvo charges a standard inspection/diagnostic fee of ₹99 for regular users (waived entirely for Fixvo Plus members). If you cancel a booking before the technician departs, no fee is charged. Once the technician arrives and performs the diagnostic inspection, the inspection fee is non-refundable regardless of whether you proceed with the suggested repairs.</p>
     
-    <h2>2. Process</h2>
-    <p>To request a refund, submit details through customer support within 48 hours of service completion. Approved refunds clear to the original payment method in 5-7 business days.</p>
+    <h2>2. Online Payment Refunds</h2>
+    <p>For online payments processed through the app, refunds will be credited back to your original payment method. Once approved by our support team, refunds typically clear within 5 to 7 business days depending on your banking institution.</p>
+    
+    <h2>3. Failed or Unresolved Services</h2>
+    <p>If a technician is unable to resolve the agreed-upon issue, or if the repair fails within our standard warranty window (if applicable), customer support will review the case. If verified, you will receive a full refund of the repair service charges. This does not cover secondary problems or unrelated hardware failures.</p>
+    
+    <h2>4. Customer Cancellation Fees</h2>
+    <p>Customers can cancel requests for free any time before the technician departs. If cancellation occurs after the technician is already 'En Route' to your location, a late cancellation dispatch fee of ₹99 may be deducted or billed to your account to compensate the technician for fuel and time.</p>
+    
+    <h2>5. Technician Cancellation</h2>
+    <p>If a technician cancels the job after acceptance or fails to arrive within the guarantee window, the job will be immediately reassigned to another technician. If you choose not to proceed with a reassignment, any pre-paid amounts for that booking will be fully refunded without fees.</p>
   `;
 
   return (

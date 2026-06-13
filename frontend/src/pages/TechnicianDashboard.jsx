@@ -90,10 +90,12 @@ const TechnicianDashboard = () => {
     }
   };
 
-  const showToast = (title, message, type = 'info') => {
+  const showToast = (title, message, type = 'info', silent = false) => {
     const id = Date.now() + Math.random().toString(36).substr(2, 9);
     setToasts(prev => [...prev, { id, title, message, type }]);
-    playChime();
+    if (!silent) {
+      playChime();
+    }
     setTimeout(() => {
       setToasts(prev => prev.filter(t => t.id !== id));
     }, 6000);
@@ -277,13 +279,17 @@ const TechnicianDashboard = () => {
     // Sync when tab gets focused/foregrounded on mobile
     const handleVisibilityChange = () => {
       if (document.visibilityState === 'visible') {
+        if (!socket.connected) {
+          console.log('[Socket] Reconnecting socket client due to visibility change...');
+          socket.connect();
+        }
         fetchJobs(true);
       }
     };
 
     const handleOnlineSync = () => {
       syncOfflineActions((action) => {
-        showToast('🔄 Offline Sync Complete', `Status update synced successfully: ${action.status.replace(/_/g, ' ').toUpperCase()}`, 'success');
+        showToast('🔄 Offline Sync Complete', `Status update synced successfully: ${action.status.replace(/_/g, ' ').toUpperCase()}`, 'success', true);
         fetchJobs(true);
       });
     };
@@ -293,7 +299,7 @@ const TechnicianDashboard = () => {
 
     // Trigger sync on dashboard load/mount
     syncOfflineActions((action) => {
-      showToast('🔄 Offline Sync Complete', `Status update synced successfully: ${action.status.replace(/_/g, ' ').toUpperCase()}`, 'success');
+      showToast('🔄 Offline Sync Complete', `Status update synced successfully: ${action.status.replace(/_/g, ' ').toUpperCase()}`, 'success', true);
       fetchJobs(true);
     });
 
@@ -331,10 +337,14 @@ const TechnicianDashboard = () => {
       const isSelfGenerated = updatedJob.initiatorId === profileRef.current?.userId || updatedJob.initiatorRole === 'technician';
 
       if (!isSelfGenerated) {
+        const criticalStatuses = ['in_progress', 'completed'];
+        const isCritical = criticalStatuses.includes(updatedJob.status) || updatedJob.paymentStatus === 'completed';
+
         showToast(
           '🔄 Job Update', 
           `Job #${updatedJob._id.slice(-6)} is now: ${updatedJob.status.replace(/_/g, ' ').toUpperCase()}`, 
-          'info'
+          'info',
+          !isCritical
         );
         triggerBrowserNotification('🔄 Job Update', `Job #${updatedJob._id.slice(-6)} is now: ${updatedJob.status.replace(/_/g, ' ').toUpperCase()}`, {
           tag: `job-${updatedJob._id}`,
@@ -353,7 +363,12 @@ const TechnicianDashboard = () => {
     };
 
     const handleNewNotification = (notif) => {
-      setNotifications(prev => [notif, ...prev]);
+      setNotifications(prev => {
+        if (prev.some(n => n._id === notif._id || (n.title === notif.title && n.message === notif.message && Math.abs(new Date(n.createdAt) - new Date(notif.createdAt)) < 5000))) {
+          return prev;
+        }
+        return [notif, ...prev];
+      });
       if (notif.type === 'payout' || notif.type === 'system') {
         showToast(notif.title, notif.message, 'info');
       }

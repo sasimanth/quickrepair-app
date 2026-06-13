@@ -20,14 +20,23 @@ const UserSafety = () => {
   }, []);
 
   const defaultContent = `
-    <h2>1. Verified Technicians</h2>
-    <p>All technicians on Fixvo undergo rigorous identity and background checks. Always verify the technician's identity card when they arrive.</p>
+    <h2>1. Respectful Communication</h2>
+    <p>Fixvo is committed to providing a safe and friendly community. Customers and technicians must treat each other with respect, courtesy, and professional dignity. Abusive language, harassment, discrimination, or physical confrontation of any kind will result in immediate and permanent ban from the platform.</p>
     
-    <h2>2. Safe Environment</h2>
-    <p>Ensure that an adult is present during the service and the work area is safe and accessible. Report any suspicious behavior immediately.</p>
+    <h2>2. Fraud Prevention and Quote Integrity</h2>
+    <p>All quotes must be documented, itemized, and approved inside the Fixvo app. Technicians are prohibited from inflating pricing artificially or using low-quality materials. Customers must not attempt to alter agreed prices or request work beyond the scope of approved quotes without updating the invoice.</p>
     
-    <h2>3. Secure Transactions</h2>
-    <p>All bookings and payments must be processed through the platform. Off-platform transactions violate our guidelines and void all safety guarantees.</p>
+    <h2>3. Prohibited Activities</h2>
+    <p>To protect the safety of all users, the following are strictly prohibited:</p>
+    <ul>
+      <li>Bypassing the platform to arrange off-platform services or cash agreements.</li>
+      <li>Sharing private phone numbers or personal credentials for off-platform work.</li>
+      <li>Impersonation, sharing accounts, or allowing unverified individuals to complete assigned jobs.</li>
+      <li>Submitting fake reviews, false reports, or promotional spam.</li>
+    </ul>
+    
+    <h2>4. Reporting Violations</h2>
+    <p>If you encounter safety issues, fraud attempts, or violations of these guidelines, please report them immediately to <strong>support@fixvo.in</strong> or use the in-app help center. We take all reports seriously and investigate promptly.</p>
   `;
 
   return (

@@ -20,17 +20,26 @@ const Terms = () => {
   }, []);
 
   const defaultContent = `
-    <h2>1. Introduction</h2>
-    <p>Welcome to Fixvo. By using our platform, you agree to comply with and be bound by these Terms & Conditions. Please read them carefully.</p>
+    <h2>1. Welcome and Role of the Platform</h2>
+    <p>Welcome to Fixvo. By registering, downloading, or using our platform, you agree to comply with and be bound by these Terms & Conditions. Fixvo acts strictly as an on-demand marketplace connecting customers with independent, qualified repair and maintenance technicians. We do not provide physical repair services directly and are not employers of the technicians.</p>
     
-    <h2>2. Services</h2>
-    <p>Fixvo acts as an on-demand marketplace connecting customers with independent, qualified repair technicians. We do not provide physical repair services directly.</p>
+    <h2>2. User Responsibilities</h2>
+    <p>Users must provide accurate, complete, and current information when creating a booking, including exact address details, contact numbers, and description of the device or issue. Users must ensure a safe, respectful, and cooperative working environment for the technician upon arrival.</p>
     
-    <h2>3. Quote Approval & Payments</h2>
-    <p>All quotes are subject to user approval before work begins. Payments must be processed through the platform or verified cash exchange. Technicians cannot increase prices directly without a customer-approved quote revision.</p>
+    <h2>3. Technician Responsibilities</h2>
+    <p>Technicians agree to perform services with professional skill and diligence, represent their qualifications honestly, maintain necessary background checks, and respect user privacy. Technicians must coordinate all quote proposals and work approvals strictly through the Fixvo application.</p>
     
-    <h2>4. User Responsibilities</h2>
-    <p>You agree to provide accurate information regarding your service needs and location. You must ensure a safe working environment for the technician.</p>
+    <h2>4. Service Booking and Quote Terms</h2>
+    <p>All service bookings are processed through the platform. Any diagnostic inspections result in a cost estimate or quote. Work may only begin after the customer has explicitly approved the quote in-app. Technicians are prohibited from modifying quotes or charging additional fees outside the approved quote structure.</p>
+    
+    <h2>5. Payment Policies</h2>
+    <p>Payments for services completed must be processed through the platform using integrated online payment options or confirmed cash-on-service payments. Any off-platform payments or direct solicitation violate these terms, void service warranties, and will result in immediate account termination.</p>
+    
+    <h2>6. Cancellation and Dispute Handling</h2>
+    <p>Cancellations are governed by our Cancellation Policy. Disputes between users and technicians should be reported to Fixvo Support within 48 hours. While Fixvo facilitates resolution, final liability for service quality and performance remains between the customer and the independent technician.</p>
+    
+    <h2>7. Limitations of Liability</h2>
+    <p>To the maximum extent permitted by law, Fixvo shall not be liable for any indirect, incidental, special, exemplary, or consequential damages, including personal injury or property damage, arising out of or in connection with any service matches facilitated by the platform.</p>
   `;
 
   return (

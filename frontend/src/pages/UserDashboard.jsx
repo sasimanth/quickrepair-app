@@ -116,10 +116,12 @@ const UserDashboard = () => {
     }
   };
 
-  const showToast = (title, message, type = 'info') => {
+  const showToast = (title, message, type = 'info', silent = false) => {
     const id = Date.now() + Math.random().toString(36).substr(2, 9);
     setToasts(prev => [...prev, { id, title, message, type }]);
-    playChime();
+    if (!silent) {
+      playChime();
+    }
     setTimeout(() => {
       setToasts(prev => prev.filter(t => t.id !== id));
     }, 6000);
@@ -278,12 +280,18 @@ const UserDashboard = () => {
       const isSelfGenerated = updatedJob.initiatorId === profile?.userId || updatedJob.initiatorRole === 'user';
 
       if (!isSelfGenerated) {
+        const criticalStatuses = ['assigned', 'accepted', 'on_the_way', 'arrived', 'quote_pending', 'quote_clarification', 'completed'];
+        const isCritical = criticalStatuses.includes(updatedJob.status) || updatedJob.paymentStatus === 'completed';
+
         showToast(
           '🔄 Repair Status Updated', 
           `Your ${updatedJob.serviceName} status is now: ${updatedJob.status.replace(/_/g, ' ').toUpperCase()}`, 
-          'info'
+          'info',
+          !isCritical
         );
-        playNotificationSound('low');
+        if (isCritical) {
+          playNotificationSound('low');
+        }
         if (Notification.permission === 'granted') {
           new Notification('🔄 Repair Status Updated', {
             body: `Your ${updatedJob.serviceName} status is now: ${updatedJob.status.replace(/_/g, ' ').toUpperCase()}`,
@@ -1205,44 +1213,71 @@ const UserDashboard = () => {
                       </button>
                     )}
 
-                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
                       {technicians.length === 0 ? (
-                        <div className="col-span-full py-12 text-center bg-slate-50 border border-slate-100 rounded-2xl">
-                          <h3 className="text-xl font-bold text-slate-700 mb-2">No Technicians Available</h3>
-                          <p className="text-slate-500">We couldn't find any real verified technicians covering your exact area right now. Please try again later or expand your search location.</p>
+                        <div className="col-span-full py-16 text-center bg-slate-50 border border-slate-200/60 rounded-3xl p-8 shadow-inner">
+                          <h3 className="text-xl font-extrabold text-slate-850 mb-2">No Technicians Available</h3>
+                          <p className="text-slate-500 text-sm max-w-sm mx-auto leading-relaxed">We couldn't find any verified professionals in your exact area right now. Please check back shortly or select another area.</p>
                         </div>
                       ) : (
                         technicians.map((tech) => (
                            <div 
                              key={tech.id}
                              onClick={() => setSelectedTech(tech)}
-                             className={`cursor-pointer rounded-2xl p-5 border-2 transition-all duration-300 ${selectedTech?.id === tech.id ? 'border-indigo-500 bg-indigo-50/50 shadow-md shadow-indigo-100 transform scale-[1.02]' : 'border-slate-100 hover:border-slate-300 hover:shadow-sm bg-white'}`}
+                             className={`cursor-pointer rounded-3xl p-6 border-2 transition-all duration-300 relative overflow-hidden flex flex-col justify-between ${
+                               selectedTech?.id === tech.id 
+                                 ? 'border-indigo-600 bg-indigo-50/30 shadow-[0_10px_25px_rgba(99,102,241,0.12)] transform scale-[1.02]' 
+                                 : 'border-slate-100 hover:border-slate-350 hover:shadow-md bg-white'
+                             }`}
                            >
-                             <div className="flex items-center gap-4 mb-4">
-                               <div className="w-12 h-12 bg-indigo-100 rounded-full flex items-center justify-center text-2xl shadow-inner">
-                                 {tech.avatar || '👨‍🔧'}
-                               </div>
-                               <div>
-                                 <h3 className="font-bold text-slate-800 flex items-center gap-1.5">
-                                    {tech.name}
-                                    <ShieldCheck size={16} className="text-emerald-500" title="Identity Verified"/>
-                                    <span className="text-[9px] bg-emerald-50 text-emerald-600 border border-emerald-100 px-1.5 rounded uppercase tracking-widest font-black ml-0.5">Verified</span>
-                                 </h3>
-                                 <div className="flex items-center text-amber-500 text-sm font-bold">
-                                   <Star size={14} className="fill-current mr-1"/>
-                                   {tech.rating} <span className="text-slate-400 font-normal ml-1 border-l border-slate-300 pl-1">{tech.jobsCompleted || 0} jobs</span>
+                             {selectedTech?.id === tech.id && (
+                               <div className="absolute top-0 right-0 w-24 h-24 bg-gradient-to-bl from-indigo-500/10 to-transparent rounded-bl-full pointer-events-none"></div>
+                             )}
+                             <div>
+                               <div className="flex items-center gap-4.5 mb-4">
+                                 <div className="w-14 h-14 bg-indigo-100 rounded-full flex items-center justify-center text-3xl shadow-inner shrink-0">
+                                   {tech.avatar || '👨‍🔧'}
+                                 </div>
+                                 <div className="min-w-0">
+                                   <h3 className="font-extrabold text-slate-900 flex items-center gap-1.5 text-base truncate">
+                                      {tech.name}
+                                      <ShieldCheck size={16} className="text-emerald-500 shrink-0" title="Identity Verified"/>
+                                   </h3>
+                                   <div className="flex items-center gap-1.5 mt-1">
+                                     <span className="text-[9px] bg-emerald-50 text-emerald-700 border border-emerald-100/60 px-2 py-0.5 rounded-md uppercase tracking-wider font-extrabold">Verified</span>
+                                     <span className="text-[9px] bg-indigo-50 text-indigo-700 border border-indigo-100/60 px-2 py-0.5 rounded-md uppercase tracking-wider font-extrabold">Pro Tech</span>
+                                   </div>
                                  </div>
                                </div>
+                               
+                               <div className="flex items-center gap-3 mb-4 bg-slate-50/80 p-2.5 rounded-xl border border-slate-100">
+                                 <div className="flex items-center text-amber-500 text-sm font-black">
+                                   <Star size={14} className="fill-current mr-1 text-amber-400"/>
+                                   {tech.rating}
+                                 </div>
+                                 <div className="h-3.5 w-px bg-slate-300"></div>
+                                 <div className="text-xs text-slate-500 font-extrabold">{tech.jobsCompleted || 0} Jobs Done</div>
+                               </div>
+
+                               {tech.skills && tech.skills.length > 0 && (
+                                 <div className="flex flex-wrap gap-1.5 mb-4">
+                                   {tech.skills.slice(0, 3).map((skill, sIdx) => (
+                                     <span key={sIdx} className="text-[10px] bg-slate-100 text-slate-600 px-2 py-0.5 rounded-full font-bold">
+                                       {skill}
+                                     </span>
+                                   ))}
+                                 </div>
+                               )}
                              </div>
                              
-                             <div className="space-y-2 text-sm text-slate-600 pt-2 border-t border-slate-100/50">
-                               <div className="flex justify-between">
-                                 <span className="font-medium text-slate-400">Experience</span>
-                                 <span className="font-bold text-slate-700">{tech.experience || 'New'}</span>
+                             <div className="space-y-2 text-xs pt-3.5 border-t border-slate-100">
+                               <div className="flex justify-between items-center">
+                                 <span className="font-extrabold text-slate-400">Experience</span>
+                                 <span className="font-black text-slate-700">{tech.experience || '3+ Years'}</span>
                                </div>
-                               <div className="flex justify-between">
-                                 <span className="font-medium text-slate-400">Distance</span>
-                                 <span className="font-bold text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded">{tech.distance || 'Nearby'}</span>
+                               <div className="flex justify-between items-center">
+                                 <span className="font-extrabold text-slate-400">Availability</span>
+                                 <span className="font-black text-emerald-600 bg-emerald-50 px-2.5 py-0.5 rounded-full text-[10px]">{tech.distance || 'Available Now'}</span>
                                </div>
                              </div>
                            </div>
@@ -1685,51 +1720,70 @@ const UserDashboard = () => {
 
                       {/* Quote negotiation and revision UI */}
                       {['quote_pending', 'quote_clarification', 'quote_rejected'].includes(booking.status) && (
-                        <div className="mt-4 p-6 bg-slate-900 text-white rounded-2xl border border-indigo-500/50 shadow-xl animate-in fade-in zoom-in-95">
-                          <div className="flex justify-between items-center mb-4 border-b border-white/10 pb-3">
-                            <h4 className="text-white font-extrabold text-lg flex items-center gap-2">
-                              <CreditCard size={20} className="text-emerald-400"/> Quote Proposal
-                            </h4>
-                            <span className={`text-xs font-bold uppercase tracking-wider px-2.5 py-1 rounded-full border ${
+                        <div className="mt-5 p-6 bg-slate-900/95 backdrop-blur-md text-white rounded-3xl border border-indigo-500/30 shadow-[0_0_30px_rgba(99,102,241,0.15)] animate-in fade-in zoom-in-95 duration-200">
+                          {/* Quote Header */}
+                          <div className="flex justify-between items-center mb-4 pb-3 border-b border-white/5">
+                            <div>
+                              <h4 className="text-white font-black text-base flex items-center gap-2.5">
+                                <CreditCard size={18} className="text-emerald-400"/>
+                                <span>Invoice Quote Proposal</span>
+                              </h4>
+                              <p className="text-[10px] text-slate-400 mt-0.5">
+                                Technician: <strong className="text-slate-200">{booking.technicianName || booking.providerId?.name || 'Verified Technician'}</strong>
+                              </p>
+                            </div>
+                            <span className={`text-[10px] font-black uppercase tracking-wider px-3 py-1 rounded-full border ${
                               booking.status === 'quote_pending' ? 'bg-amber-500/10 text-amber-400 border-amber-500/20' :
                               booking.status === 'quote_clarification' ? 'bg-purple-500/10 text-purple-400 border-purple-500/20 animate-pulse' :
                               'bg-rose-500/10 text-rose-400 border-rose-500/20'
                             }`}>
-                              {booking.status === 'quote_pending' ? 'Approval Needed' :
-                               booking.status === 'quote_clarification' ? 'Clarification Requested' :
-                               'Rejected - Suspended'}
+                              {booking.status === 'quote_pending' ? 'Approval Required' :
+                               booking.status === 'quote_clarification' ? 'Under Clarification' :
+                               'Rejected & Suspended'}
                             </span>
                           </div>
-                          
+
                           {/* Cost Breakdown */}
-                          <div className="bg-white/5 p-4 rounded-xl border border-white/10 mb-4 space-y-2.5">
-                            <div className="flex justify-between text-sm text-slate-300">
-                              <span>Service / Inspection Charge:</span>
-                              <span className="font-semibold text-white">₹{booking.serviceCharge || 0}</span>
+                          <div className="bg-white/5 p-4 rounded-2xl border border-white/5 mb-4 space-y-3">
+                            <div className="flex justify-between text-xs text-slate-400 font-medium">
+                              <span>Labour & Service Charge:</span>
+                              <span className="font-bold text-slate-100">₹{booking.serviceCharge || 0}</span>
                             </div>
-                            <div className="flex justify-between text-sm text-slate-300">
-                              <span>Spare Parts / Material:</span>
-                              <span className="font-semibold text-white">₹{booking.sparePartsCost || 0}</span>
+                            <div className="flex justify-between text-xs text-slate-400 font-medium">
+                              <span>Materials & Spare Parts:</span>
+                              <span className="font-bold text-slate-100">₹{booking.sparePartsCost || 0}</span>
                             </div>
-                            <div className="flex justify-between text-sm text-slate-300 pb-2 border-b border-white/10">
-                              <span>Transport & Travel Charge:</span>
-                              <span className="font-semibold text-white">₹{booking.transportCharge || 50}</span>
+                            <div className="flex justify-between text-xs text-slate-400 font-medium pb-2.5 border-b border-white/5">
+                              <span>Travel & Transport Charge:</span>
+                              <span className="font-bold text-slate-100">₹{booking.transportCharge || 50}</span>
                             </div>
-                            <div className="flex justify-between items-center pt-2">
-                              <span className="text-base font-bold text-slate-200">Total Guaranteed Quote:</span>
-                              <span className="text-2xl font-black text-emerald-400">₹{booking.finalQuote}</span>
+                            <div className="flex justify-between items-center pt-1.5">
+                              <div>
+                                <span className="text-xs font-black text-slate-200 block">Total Guaranteed Invoice</span>
+                                <span className="text-[9px] text-slate-400">All charges included</span>
+                              </div>
+                              <span className="text-2xl font-black text-emerald-400 drop-shadow-[0_2px_8px_rgba(16,185,129,0.15)]">₹{booking.finalQuote}</span>
                             </div>
                           </div>
-                          
-                          <div className="bg-white/5 p-4 rounded-xl mb-4 border border-white/10 text-sm">
+
+                          {/* Issues & Notes */}
+                          <div className="bg-white/5 p-4 rounded-2xl border border-white/5 mb-4 text-xs space-y-3 leading-relaxed">
                             {booking.detectedIssues && (
-                              <div className="mb-2">
-                                <p className="text-amber-400 font-bold">Detected Issues:</p>
-                                <p className="text-amber-100/80 italic mt-0.5">"{booking.detectedIssues}"</p>
+                              <div>
+                                <p className="text-amber-400 font-black uppercase tracking-wider text-[10px]">Detected Issues:</p>
+                                <p className="text-slate-200 mt-1 pl-2.5 border-l-2 border-amber-500/50 italic font-medium">
+                                  "{booking.detectedIssues}"
+                                </p>
                               </div>
                             )}
-                            <p className="text-indigo-300 font-bold">Technician's Explanation:</p>
-                            <p className="text-slate-300 italic mt-0.5">"{booking.quoteReason || 'Replaced parts and labor for fixing the root cause.'}"</p>
+                            <div>
+                              <p className="text-indigo-300 font-black uppercase tracking-wider text-[10px]">Technician's Explanation:</p>
+                              <p className="text-slate-200 mt-1 pl-2.5 border-l-2 border-indigo-500/50 italic font-medium">
+                                "{booking.quoteReason || 'Replacement parts and labor for fixing the root cause.'}"
+                              </p>
+                            </div>
+
+                            {/* Proof Images inside Quote Card */}
                             {(() => {
                               if (!booking.quotePhoto) return null;
                               
@@ -1758,11 +1812,15 @@ const UserDashboard = () => {
                               if (photos.length === 0) return null;
 
                               return (
-                                <div className="mt-4 space-y-2">
-                                  <p className="text-indigo-300 font-bold text-xs uppercase tracking-wider">Proof Images (Click to view full-size):</p>
+                                <div className="mt-3 pt-3 border-t border-white/5">
+                                  <p className="text-[10px] font-black uppercase tracking-wider text-slate-400 mb-2">Proof/Reference Media:</p>
                                   <div className="grid grid-cols-3 gap-2">
                                     {photos.map((photo, idx) => (
-                                      <div key={idx} className="rounded-lg overflow-hidden border border-white/10 shadow-sm relative group bg-slate-950/60 aspect-video flex items-center justify-center cursor-zoom-in" onClick={() => window.open(photo.url, '_blank')}>
+                                      <div 
+                                        key={idx} 
+                                        className="rounded-xl overflow-hidden border border-white/10 shadow-sm relative group bg-slate-950 aspect-video flex items-center justify-center cursor-zoom-in" 
+                                        onClick={() => window.open(photo.url, '_blank')}
+                                      >
                                         <img src={photo.url} className="w-full h-full object-cover group-hover:scale-105 transition-all duration-300" alt={photo.label} />
                                         <span className="absolute bottom-1 left-1 bg-black/85 text-[8px] font-black uppercase tracking-wider px-1.5 py-0.5 rounded text-indigo-200 border border-white/5 capitalize">
                                           {photo.label}
@@ -1777,15 +1835,15 @@ const UserDashboard = () => {
 
                           {/* Negotiation Feedback Context */}
                           {booking.status === 'quote_clarification' && (
-                            <div className="mb-4 p-4 bg-purple-500/10 border border-purple-500/20 text-purple-200 text-xs rounded-xl flex items-center gap-2">
-                              <span className="flex h-2.5 w-2.5 rounded-full bg-purple-400 animate-ping"></span>
+                            <div className="mb-4 p-3 bg-purple-500/10 border border-purple-500/20 text-purple-200 text-xs rounded-xl flex items-center gap-2">
+                              <span className="flex h-2 w-2 rounded-full bg-purple-400 animate-ping"></span>
                               <span>Waiting for the technician to address your clarification request.</span>
                             </div>
                           )}
 
                           {booking.status === 'quote_rejected' && (
-                            <div className="mb-4 p-4 bg-rose-500/10 border border-rose-500/20 text-rose-300 text-xs rounded-xl flex items-center gap-2">
-                              <AlertCircle size={16} className="text-rose-400 shrink-0" />
+                            <div className="mb-4 p-3 bg-rose-500/10 border border-rose-500/20 text-rose-300 text-xs rounded-xl flex items-center gap-2">
+                              <AlertCircle size={14} className="text-rose-400 shrink-0" />
                               <span>Work is suspended. The technician must submit a revised quote to resume.</span>
                             </div>
                           )}
@@ -1793,35 +1851,44 @@ const UserDashboard = () => {
                           {/* Action Buttons */}
                           {booking.status === 'quote_pending' && (
                             <div className="flex flex-col gap-3">
+                              <button 
+                                disabled={updatingJobs[booking._id]} 
+                                onClick={() => handleQuoteApproval(booking._id, true)} 
+                                className="w-full bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-400 hover:to-teal-400 text-white font-black py-3.5 rounded-xl shadow-[0_4px_20px_rgba(16,185,129,0.3)] hover:shadow-[0_4px_25px_rgba(16,185,129,0.4)] transition-all flex justify-center items-center gap-2 cursor-pointer text-sm outline-none border-none"
+                              >
+                                {updatingJobs[booking._id] ? <Loader2 size={16} className="animate-spin text-white"/> : 'Approve & Start Work'}
+                              </button>
+                              
                               <div className="flex gap-3">
-                                <button disabled={updatingJobs[booking._id]} onClick={() => handleQuoteApproval(booking._id, false)} className="flex-1 bg-white/5 hover:bg-rose-500/10 border border-white/10 hover:border-rose-500/30 text-slate-300 hover:text-rose-400 font-bold py-3 rounded-xl transition-all flex justify-center items-center gap-2 cursor-pointer">
-                                  {updatingJobs[booking._id] ? <Loader2 size={16} className="animate-spin"/> : 'Decline Quote'}
+                                <button 
+                                  disabled={updatingJobs[booking._id]} 
+                                  onClick={() => setShowClarifyInput(prev => ({ ...prev, [booking._id]: !prev[booking._id] }))}
+                                  className="flex-1 bg-indigo-500/10 hover:bg-indigo-500/20 border border-indigo-500/20 hover:border-indigo-500/40 text-indigo-300 font-bold py-2.5 rounded-xl transition-all flex justify-center items-center gap-1.5 cursor-pointer text-xs"
+                                >
+                                  {showClarifyInput[booking._id] ? 'Hide Request' : '📢 Clarification'}
                                 </button>
-                                <button disabled={updatingJobs[booking._id]} onClick={() => handleQuoteApproval(booking._id, true)} className="flex-1 bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-400 hover:to-teal-400 text-white font-bold py-3 rounded-xl shadow-lg hover:shadow-emerald-500/20 transition-all flex justify-center items-center gap-2 cursor-pointer">
-                                  {updatingJobs[booking._id] ? <Loader2 size={16} className="animate-spin"/> : 'Approve & Start Work'}
+                                <button 
+                                  disabled={updatingJobs[booking._id]} 
+                                  onClick={() => handleQuoteApproval(booking._id, false)} 
+                                  className="flex-1 bg-white/5 hover:bg-rose-500/10 border border-white/5 hover:border-rose-500/30 text-slate-300 hover:text-rose-400 font-bold py-2.5 rounded-xl transition-all flex justify-center items-center gap-1.5 cursor-pointer text-xs"
+                                >
+                                  {updatingJobs[booking._id] ? <Loader2 size={14} className="animate-spin"/> : 'Decline Quote'}
                                 </button>
                               </div>
-                              <button
-                                disabled={updatingJobs[booking._id]}
-                                onClick={() => setShowClarifyInput(prev => ({ ...prev, [booking._id]: !prev[booking._id] }))}
-                                className="w-full bg-indigo-500/10 hover:bg-indigo-500/20 border border-indigo-500/25 text-indigo-300 font-bold py-2.5 rounded-xl transition-all flex justify-center items-center gap-2 cursor-pointer text-xs"
-                              >
-                                {showClarifyInput[booking._id] ? 'Hide Clarification Input' : '📢 Request Quote Clarification'}
-                              </button>
 
                               {showClarifyInput[booking._id] && (
                                 <div className="mt-2 space-y-2 p-3 bg-white/5 border border-white/5 rounded-xl animate-in slide-in-from-top-2 duration-300">
                                   <textarea
                                     value={clarificationText}
                                     onChange={(e) => setClarificationText(e.target.value)}
-                                    placeholder="Ask for clarification details (e.g. why are spare parts costing ₹800?)..."
+                                    placeholder="Ask for clarification (e.g. why are spare parts costing ₹800?)..."
                                     className="w-full p-3 bg-slate-950 border border-white/10 rounded-lg text-xs outline-none text-slate-100 placeholder-slate-500 focus:border-indigo-500 transition-all resize-none"
                                     rows={2.5}
                                   />
                                   <button
                                     disabled={updatingJobs[booking._id] || !clarificationText.trim()}
                                     onClick={() => handleQuoteClarification(booking._id)}
-                                    className="w-full bg-indigo-600 hover:bg-indigo-500 disabled:bg-slate-800 text-white font-black py-2 rounded-lg text-xs transition-all flex justify-center items-center gap-2 cursor-pointer"
+                                    className="w-full bg-indigo-600 hover:bg-indigo-500 disabled:bg-slate-800 text-white font-black py-2 rounded-lg text-xs transition-all flex justify-center items-center gap-2 cursor-pointer border-none"
                                   >
                                     {updatingJobs[booking._id] ? <Loader2 size={12} className="animate-spin"/> : 'Submit Clarification Request'}
                                   </button>
@@ -1832,8 +1899,8 @@ const UserDashboard = () => {
 
                           {/* Historical Revision Log Card */}
                           {booking.quoteRevisions && booking.quoteRevisions.length > 0 && (
-                            <div className="mt-6 border-t border-white/10 pt-4">
-                              <p className="text-xs font-black uppercase tracking-wider text-slate-400 mb-3">Quote History & Revision Logs</p>
+                            <div className="mt-6 border-t border-white/5 pt-4">
+                              <p className="text-[10px] font-black uppercase tracking-wider text-slate-400 mb-3">Quote History & Revision Logs</p>
                               <div className="space-y-3">
                                 {booking.quoteRevisions.map((rev, idx) => (
                                   <div key={rev._id || idx} className="bg-white/5 border border-white/5 rounded-xl p-4 text-xs">
@@ -1877,120 +1944,126 @@ const UserDashboard = () => {
                         </div>
                       )}
                       
+                      {/* Customer Action Buttons Grid */}
+                      {booking.providerId && ['assigned', 'accepted', 'on_the_way', 'arrived', 'inspection_started', 'work_started', 'quote_pending', 'quote_clarification', 'quote_rejected'].includes(booking.status) ? (
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5 w-full mt-4 border-t border-slate-100 pt-4">
+                          {(booking.providerPhone || booking.providerId?.phone) && (
+                            <a 
+                              href={`tel:${formatPhoneLink(booking.providerPhone || booking.providerId?.phone)}`}
+                              className="flex items-center justify-center gap-2.5 w-full h-12 rounded-xl text-sm font-bold border transition-all duration-200 whitespace-nowrap bg-emerald-600 border-emerald-600 hover:bg-emerald-500 text-white cursor-pointer shadow-sm text-center no-underline"
+                            >
+                              <PhoneCall size={16} /> Call Technician
+                            </a>
+                          )}
+                          
+                          {(booking.providerPhone || booking.providerId?.phone) && booking.serviceLocation !== 'off-site' && (
+                            <button 
+                              onClick={() => handleShareLocation(booking)}
+                              className="flex items-center justify-center gap-2.5 w-full h-12 rounded-xl text-sm font-bold border transition-all duration-200 whitespace-nowrap bg-[#25D366] border-[#25D366] hover:bg-[#1ebd5a] text-white cursor-pointer shadow-sm outline-none"
+                            >
+                              <MapPin size={16} /> Share Location
+                            </button>
+                          )}
+
+                          <button 
+                            onClick={() => setChatBookingId(booking._id)}
+                            className="flex items-center justify-center gap-2.5 w-full h-12 rounded-xl text-sm font-bold border transition-all duration-200 whitespace-nowrap bg-white border-slate-200 hover:border-indigo-300 hover:bg-indigo-50 text-indigo-600 cursor-pointer relative shadow-sm"
+                          >
+                            <MessageSquare size={16} /> Open Chat
+                            {booking.unreadCount > 0 && (
+                              <span className="absolute -top-1.5 -right-1.5 bg-rose-500 text-white rounded-full text-[10px] font-black w-5.5 h-5.5 flex items-center justify-center border-2 border-white animate-pulse shadow-md">
+                                {booking.unreadCount}
+                              </span>
+                            )}
+                          </button>
+
+                          {!['completed', 'cancelled', 'rejected'].includes(booking.status) && (
+                            <button 
+                              onClick={() => setCancelBookingId(booking._id)}
+                              className="flex items-center justify-center gap-2.5 w-full h-12 rounded-xl text-sm font-bold border transition-all duration-200 whitespace-nowrap bg-white border-rose-200 hover:border-rose-300 hover:bg-rose-50 text-rose-600 cursor-pointer outline-none"
+                            >
+                              <XCircle size={16} /> Cancel Booking
+                            </button>
+                          )}
+                        </div>
+                      ) : (
+                        !['completed', 'cancelled', 'rejected'].includes(booking.status) && (
+                          <div className="flex flex-col sm:flex-row items-center justify-between gap-3 w-full mt-4 border-t border-slate-100 pt-4">
+                            <div className="flex items-center gap-2 bg-slate-100 px-4 py-2.5 rounded-xl text-slate-500 text-xs font-bold border border-slate-200 shadow-sm">
+                              <span className="w-2 h-2 bg-slate-400 rounded-full animate-pulse"></span>
+                              Finding Technician...
+                            </div>
+                            <button 
+                              onClick={() => setCancelBookingId(booking._id)}
+                              className="w-full sm:w-auto flex items-center justify-center gap-2.5 px-4 h-12 rounded-xl text-sm font-bold border border-rose-200 hover:border-rose-300 hover:bg-rose-50 text-rose-600 cursor-pointer outline-none transition-all"
+                            >
+                              <XCircle size={16} /> Cancel Booking
+                            </button>
+                          </div>
+                        )
+                      )}
+
+                      {/* Post-Completion or Terminated Actions */}
+                      {['completed', 'cancelled', 'rejected'].includes(booking.status) && (
+                        <div className="flex flex-wrap items-center justify-between gap-3 border-t border-slate-100/80 pt-4 mt-4 w-full">
+                          <div className="flex flex-col sm:flex-row gap-3 items-center w-full">
+                            {booking.status === 'completed' && !booking.isReviewed && (
+                              <button 
+                                onClick={() => setReviewBooking(booking)}
+                                className="w-full sm:w-auto flex items-center justify-center gap-2 px-5 py-3.5 bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-400 hover:to-orange-400 text-white transition-all rounded-xl text-sm font-bold shadow-sm cursor-pointer border-none outline-none"
+                              >
+                                <Star size={16} className="text-amber-100 fill-current" /> Leave Review
+                              </button>
+                            )}
+
+                            {booking.status === 'completed' && !['completed', 'cash_pending'].includes(booking.paymentStatus) && (
+                              <button 
+                                onClick={() => setPaymentBooking(booking)}
+                                className="w-full sm:w-auto flex items-center justify-center gap-2 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white px-5 py-3.5 rounded-xl text-sm font-bold shadow-lg transition-all shadow-blue-500/30 cursor-pointer border-none outline-none"
+                              >
+                                <CreditCard size={16} /> Pay Now
+                              </button>
+                            )}
+
+                            {booking.status === 'completed' && booking.paymentStatus === 'cash_pending' && (
+                              <div className="w-full sm:w-auto flex items-center justify-center gap-2 bg-amber-50 border border-amber-100 px-4 py-3 rounded-xl text-amber-700 text-sm font-bold shadow-sm">
+                                <Clock size={16} className="text-amber-500 animate-pulse" /> Cash Receipt Pending Confirmation
+                              </div>
+                            )}
+
+                            {booking.status === 'completed' && booking.paymentStatus === 'completed' && (
+                              <div className="w-full sm:w-auto flex items-center justify-center gap-2 bg-emerald-50 border border-emerald-100 px-4 py-3 rounded-xl text-emerald-700 text-sm font-bold shadow-sm">
+                                <CheckCircle size={16} className="text-emerald-500" /> Payment & Completed
+                              </div>
+                            )}
+                            
+                            {booking.isReviewed && booking.status !== 'completed' && (
+                              <div className="flex items-center gap-2 bg-emerald-50 border border-emerald-100 px-4 py-3 rounded-xl text-emerald-700 text-sm font-bold shadow-sm">
+                                <Star size={16} className="text-emerald-500 fill-emerald-500"/>
+                                Reviewed
+                              </div>
+                            )}
+
+                            {['cancelled', 'rejected'].includes(booking.status) && (
+                              <button 
+                                onClick={() => setViewReasonBooking(booking)}
+                                className="w-full sm:w-auto flex items-center justify-center gap-2 bg-white border border-slate-200 hover:border-slate-300 hover:bg-slate-50 text-slate-600 px-4 py-3 rounded-xl text-sm font-bold shadow-sm transition-all cursor-pointer outline-none"
+                              >
+                                <Eye size={16} /> View Reason
+                              </button>
+                            )}
+                          </div>
+                        </div>
+                      )}
+
                     </div>
                   )}
                 </div>
-                
-                {expandedBookings[booking._id] && (
-                <div className="mt-6 pt-5 border-t border-slate-100 flex flex-wrap items-center justify-between gap-3 animate-in fade-in duration-300">
-                  <div className="flex flex-wrap items-center gap-3">
-                    {booking.providerId ? (
-                      <div className="flex items-center gap-2 bg-indigo-50 px-3 py-2 rounded-xl text-indigo-700 text-sm font-bold shadow-sm border border-indigo-100">
-                        <User size={16} className="text-indigo-500"/>
-                        Technician Assigned
-                      </div>
-                    ) : (
-                      <div className="flex items-center gap-2 bg-slate-100 px-3 py-2 rounded-xl text-slate-500 text-sm font-bold shadow-sm border border-slate-200">
-                        <User size={16} className="text-slate-400"/>
-                        Finding Technician...
-                      </div>
-                    )}
-
-                    {['accepted', 'on_the_way', 'arrived'].includes(booking.status) && (booking.providerPhone || booking.providerId?.phone) && (
-                      <>
-                        <a href={`tel:${formatPhoneLink(booking.providerPhone || booking.providerId?.phone)}`} className="flex items-center gap-2 bg-gradient-to-r from-emerald-500 to-emerald-600 hover:from-emerald-400 hover:to-emerald-500 text-white px-4 py-2 rounded-xl text-sm font-bold shadow-sm transition-all shadow-emerald-200 transform hover:-translate-y-0.5">
-                          <PhoneCall size={16} /> Call Technician
-                        </a>
-                        <button 
-                          onClick={() => handleShareLocation(booking)} 
-                          className="flex items-center gap-2 bg-[#25D366] hover:bg-[#1ebd5a] text-white px-4 py-2 rounded-xl text-sm font-bold shadow-sm transition-all shadow-emerald-200 transform hover:-translate-y-0.5 border-none cursor-pointer outline-none font-sans"
-                        >
-                          <MapPin size={16} /> Share Location
-                        </button>
-                      </>
-                    )}
-
-                    {booking.providerId && (
-                      <button 
-                         onClick={() => setChatBookingId(booking._id)}
-                         className="relative flex items-center gap-2 bg-white border border-slate-200 hover:border-indigo-300 hover:bg-indigo-50 text-indigo-600 px-4 py-2 rounded-xl text-sm font-bold shadow-sm transition-all shadow-indigo-100 transform hover:-translate-y-0.5"
-                      >
-                         <MessageSquare size={16} /> Open Chat
-                         {booking.unreadCount > 0 && (
-                           <span className="absolute -top-2 -right-2 bg-rose-500 text-white rounded-full text-xs font-black w-6 h-6 flex items-center justify-center border-2 border-white animate-pulse shadow-md">
-                             {booking.unreadCount}
-                           </span>
-                         )}
-                      </button>
-                    )}
-                  </div>
-                  
-                  <div className="flex flex-col sm:flex-row gap-3 items-center w-full sm:w-auto">
-                    {booking.status === 'completed' && !booking.isReviewed && (
-                      <button 
-                         onClick={() => !booking.isReviewed && setReviewBooking(booking)}
-                         className="w-full sm:w-auto flex items-center justify-center gap-2 px-4 py-3 bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-400 hover:to-orange-400 text-white shadow-amber-200 transition-all rounded-xl text-sm font-bold shadow-sm"
-                      >
-                         <Star size={16} className="text-amber-100 fill-current" /> Leave Review
-                      </button>
-                    )}
-
-                    {booking.status === 'completed' && !['completed', 'cash_pending'].includes(booking.paymentStatus) && (
-                      <button 
-                         onClick={() => setPaymentBooking(booking)}
-                         className="w-full sm:w-auto flex items-center justify-center gap-2 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white px-5 py-3 rounded-xl text-sm font-bold shadow-lg transition-all shadow-blue-500/30 font-sans cursor-pointer"
-                      >
-                         <CreditCard size={16} /> Pay Now
-                      </button>
-                    )}
-
-                    {booking.status === 'completed' && booking.paymentStatus === 'cash_pending' && (
-                      <div className="w-full sm:w-auto flex items-center justify-center gap-2 bg-amber-50 border border-amber-100 px-4 py-3 rounded-xl text-amber-700 text-sm font-bold shadow-sm">
-                        <Clock size={16} className="text-amber-500 animate-pulse" /> Cash Receipt Pending Confirmation
-                      </div>
-                    )}
-
-                    {booking.status === 'completed' && booking.paymentStatus === 'completed' && (
-                       <div className="w-full sm:w-auto flex items-center justify-center gap-2 bg-emerald-50 border border-emerald-100 px-3 py-2 rounded-xl text-emerald-700 text-sm font-bold shadow-sm">
-                         <CheckCircle size={16} className="text-emerald-500" /> Payment & Completed
-                       </div>
-                    )}
-                    
-                    {booking.isReviewed && booking.status !== 'completed' && (
-                       <div className="flex items-center gap-2 bg-emerald-50 border border-emerald-100 px-3 py-2 rounded-xl text-emerald-700 text-sm font-bold shadow-sm">
-                         <Star size={16} className="text-emerald-500 fill-emerald-500"/>
-                         Reviewed
-                       </div>
-                    )}
-
-                    {!['completed', 'cancelled', 'rejected'].includes(booking.status) && (
-                      <button 
-                        onClick={() => setCancelBookingId(booking._id)}
-                        className="flex items-center gap-2 bg-white border border-rose-200 hover:border-rose-300 hover:bg-rose-50 text-rose-600 px-4 py-2 rounded-xl text-sm font-bold shadow-sm transition-all transform hover:-translate-y-0.5 cursor-pointer outline-none"
-                      >
-                        <XCircle size={16} /> Cancel Booking
-                      </button>
-                    )}
-
-                    {['cancelled', 'rejected'].includes(booking.status) && (
-                      <button 
-                        onClick={() => setViewReasonBooking(booking)}
-                        className="flex items-center gap-2 bg-white border border-slate-200 hover:border-slate-300 hover:bg-slate-50 text-slate-600 px-4 py-2 rounded-xl text-sm font-bold shadow-sm transition-all transform hover:-translate-y-0.5 cursor-pointer outline-none"
-                      >
-                        <Eye size={16} /> View Reason
-                      </button>
-                    )}
-                  </div>
-                </div>
-                )}
-
-
               </div>
-            );
+              );
             })}
           </div>
         )}
-      </div>
       
       {chatBookingId && (
         <ChatModal 
@@ -2162,6 +2235,7 @@ const UserDashboard = () => {
         ))}
       </div>
     </div>
+  </div>
   );
 };
 

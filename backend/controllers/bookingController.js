@@ -1,4 +1,3 @@
-const mongoose = require('mongoose');
 const Booking = require('../models/Booking');
 const { notifyUser } = require('../services/NotificationService');
 require("dotenv").config();
@@ -25,7 +24,7 @@ const triggerNotifications = async (req, booking, type) => {
 
     // Fetch technician name
     let techName = 'Technician';
-    if (booking.providerId && mongoose.Types.ObjectId.isValid(booking.providerId)) {
+    if (booking.providerId) {
       const User = require('../models/User');
       const techUser = await User.findById(booking.providerId);
       if (techUser) {
@@ -240,11 +239,8 @@ const createBooking = async (req, res) => {
       const assignedTech = await Technician.findOne({ userId: finalProviderId });
       if (assignedTech) {
         assignedTechEmail = assignedTech.email;
-        let techUserDoc = null;
-        if (mongoose.Types.ObjectId.isValid(finalProviderId)) {
-          const User = require('../models/User');
-          techUserDoc = await User.findById(finalProviderId);
-        }
+        const User = require('../models/User');
+        const techUserDoc = await User.findById(finalProviderId);
         assignedTechPhone = assignedTech.phone || techUserDoc?.phone || null;
       }
     }
@@ -379,7 +375,7 @@ const enrichBookingsWithChat = async (bookings, userId) => {
     const lastMsg = await Message.findOne({ bookingId: b._id, senderId: { $ne: 'system' } }).sort({ createdAt: -1 });
     
     let customerPhone = b.phone;
-    if ((!customerPhone || customerPhone === '0000000000' || customerPhone === '1234567890') && b.userId && mongoose.Types.ObjectId.isValid(b.userId)) {
+    if ((!customerPhone || customerPhone === '0000000000' || customerPhone === '1234567890') && b.userId) {
       const customer = await User.findById(b.userId);
       if (customer && customer.phone) {
         customerPhone = customer.phone;
@@ -387,7 +383,7 @@ const enrichBookingsWithChat = async (bookings, userId) => {
     }
 
     let technicianName = 'Unassigned';
-    if (b.providerId && mongoose.Types.ObjectId.isValid(b.providerId)) {
+    if (b.providerId) {
       const techUser = await User.findById(b.providerId);
       if (techUser) {
         technicianName = techUser.name;
@@ -580,10 +576,7 @@ const assignBooking = async (req, res) => {
     }
     
     const User = require('../models/User');
-    let techUser = null;
-    if (mongoose.Types.ObjectId.isValid(providerId)) {
-      techUser = await User.findById(providerId);
-    }
+    const techUser = await User.findById(providerId);
 
     booking.providerId = providerId;
     booking.providerEmail = techUser ? techUser.email : null;
@@ -1070,7 +1063,7 @@ const updateTechnicianWallet = async (booking) => {
     
     // Calculate discount if premium
     let isPremium = booking.isPremiumUser;
-    if (booking.userId && mongoose.Types.ObjectId.isValid(booking.userId)) {
+    if (booking.userId) {
       const User = require('../models/User');
       const userDoc = await User.findById(booking.userId);
       if (userDoc && userDoc.isPremium) {

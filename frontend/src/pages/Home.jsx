@@ -223,7 +223,7 @@ const Home = () => {
               initial={{ opacity: 0, x: 20 }}
               animate={{ opacity: 1, x: 0 }}
               transition={{ duration: 0.4 }}
-              className="flex overflow-x-auto gap-4 sm:gap-6 pb-8 snap-x snap-mandatory hide-scrollbar custom-scrollbar-hide"
+              className="flex overflow-x-auto gap-4 sm:gap-6 pb-8 snap-x snap-mandatory scroll-smooth hide-scrollbar custom-scrollbar-hide"
             >
               {services.filter(s => s.categoryId === activeCategory).map((service, idx) => (
                 <motion.div 
@@ -232,7 +232,7 @@ const Home = () => {
                   animate={{ opacity: 1, scale: 1 }}
                   transition={{ duration: 0.4, delay: idx * 0.05 }}
                   onClick={() => handleBookingClick(service.id)}
-                  className="group cursor-pointer rounded-[2rem] overflow-hidden relative h-[320px] sm:h-[360px] min-w-[260px] sm:min-w-[300px] snap-center shadow-2xl border border-white/10 hover:border-blue-500/50 transition-all shrink-0"
+                  className="group cursor-pointer rounded-[2rem] overflow-hidden relative h-[340px] sm:h-[380px] w-[82vw] xs:w-[72vw] sm:w-[320px] shrink-0 snap-start shadow-2xl border border-white/10 hover:border-blue-500/50 transition-all"
                 >
                   <div className="absolute inset-0 bg-gradient-to-t from-[#0B0F19] via-[#0B0F19]/60 to-transparent z-10 transition-opacity duration-300 group-hover:opacity-80"></div>
                   <img src={service.img} alt={service.name} className="absolute inset-0 w-full h-full object-cover transform group-hover:scale-110 transition-transform duration-700" />
