@@ -535,7 +535,14 @@ const TechnicianDashboard = () => {
             setJobTab('completed');
             setExpandedCompletedJobs(prev => ({ ...prev, [jobId]: true }));
           } else if (['cancelled', 'rejected'].includes(foundJob.status)) setJobTab('cancelled');
+          
           window.history.replaceState({}, document.title, window.location.pathname);
+          setTimeout(() => {
+            const element = document.getElementById(`job-card-${jobId}`);
+            if (element) {
+              element.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            }
+          }, 500);
         }
       }
     }
@@ -1053,7 +1060,7 @@ const TechnicianDashboard = () => {
                   
                   if (isCompleted && !isExpanded) {
                     return (
-                      <div key={job._id} className="relative bg-white rounded-3xl shadow-[0_4px_20px_rgb(0,0,0,0.03)] hover:shadow-[0_8px_30px_rgb(0,0,0,0.05)] transition-all duration-300 border border-slate-100/80 p-6 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 overflow-hidden pl-8">
+                      <div key={job._id} id={`job-card-${job._id}`} className="relative bg-white rounded-3xl shadow-[0_4px_20px_rgb(0,0,0,0.03)] hover:shadow-[0_8px_30px_rgb(0,0,0,0.05)] transition-all duration-300 border border-slate-100/80 p-6 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 overflow-hidden pl-8">
                         <div className="absolute top-0 left-0 w-2 h-full bg-emerald-500"></div>
                         <div className="space-y-1.5 flex-1 min-w-0">
                           <div className="flex flex-wrap items-center gap-2">
@@ -1081,7 +1088,7 @@ const TechnicianDashboard = () => {
                   }
 
                   return (
-                  <div key={job._id} className="relative bg-white rounded-[2rem] shadow-[0_4px_20px_rgb(0,0,0,0.03)] hover:shadow-[0_8px_30px_rgb(0,0,0,0.06)] transition-all duration-300 border border-slate-100/80 overflow-hidden group">
+                  <div key={job._id} id={`job-card-${job._id}`} className="relative bg-white rounded-[2rem] shadow-[0_4px_20px_rgb(0,0,0,0.03)] hover:shadow-[0_8px_30px_rgb(0,0,0,0.06)] transition-all duration-300 border border-slate-100/80 overflow-hidden group">
                     <div className={`absolute top-0 left-0 w-2 h-full ${['pending','assigned','queued'].includes(job.status) ? 'bg-amber-400' : ['accepted', 'quote_approved'].includes(job.status) ? 'bg-indigo-500' : job.status === 'completed' ? 'bg-emerald-500' : 'bg-red-400'}`}></div>
                     
                     <div className="p-8 md:p-10 flex flex-col md:flex-row gap-8 pl-10 md:pl-12">

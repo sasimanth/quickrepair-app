@@ -115,6 +115,38 @@ const AdminDashboard = () => {
     fetchData();
   }, []);
 
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const jobId = params.get('jobId');
+    if (jobId && bookings.length > 0) {
+      setActiveTab('bookings');
+      setStatusFilter('all');
+      setExpandedBookingId(jobId);
+
+      // Find the page index of this booking
+      const sorted = [...bookings].sort((a, b) => {
+        const dateA = new Date(a.createdAt || a.date).getTime();
+        const dateB = new Date(b.createdAt || b.date).getTime();
+        return dateB - dateA;
+      });
+      const sortedIndex = sorted.findIndex(b => b._id === jobId);
+      if (sortedIndex !== -1) {
+        const page = Math.floor(sortedIndex / itemsPerPage) + 1;
+        setCurrentPage(page);
+      }
+
+      window.history.replaceState({}, document.title, window.location.pathname);
+
+      setTimeout(() => {
+        // Scroll either row (desktop) or card (mobile) into view
+        const element = document.getElementById(`booking-row-${jobId}`) || document.getElementById(`booking-card-${jobId}`);
+        if (element) {
+          element.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        }
+      }, 500);
+    }
+  }, [bookings, window.location.search]);
+
   const handleAssignTechnician = async (bookingId, techId) => {
     if (!techId) return;
     try {
@@ -463,7 +495,7 @@ const AdminDashboard = () => {
                     
                     return (
                       <React.Fragment key={b._id}>
-                        <tr className={`hover:bg-slate-900/30 transition-all ${isExpanded ? 'bg-slate-900/20' : ''}`}>
+                        <tr id={`booking-row-${b._id}`} className={`hover:bg-slate-900/30 transition-all ${isExpanded ? 'bg-slate-900/20' : ''}`}>
                           <td className="p-5">
                             <p className="font-extrabold text-white text-sm">{b.serviceName || b.serviceId?.name || 'Device Repair'}</p>
                             <p className="text-[10px] text-indigo-400 font-mono font-bold mt-0.5">#{b._id.slice(-6).toUpperCase()}</p>
@@ -583,7 +615,7 @@ const AdminDashboard = () => {
                 const isExpanded = expandedBookingId === b._id;
                 
                 return (
-                  <div key={b._id} className="bg-slate-900/60 rounded-3xl p-5 border border-white/5 space-y-4">
+                  <div key={b._id} id={`booking-card-${b._id}`} className="bg-slate-900/60 rounded-3xl p-5 border border-white/5 space-y-4">
                     <div className="flex justify-between items-start">
                       <div>
                         <span className={`px-2.5 py-0.5 rounded-full text-[9px] font-black uppercase tracking-wider ${getStatusStyle(b.status)}`}>

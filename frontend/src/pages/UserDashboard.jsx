@@ -242,6 +242,7 @@ const UserDashboard = () => {
     const action = params.get('action');
     const serviceId = params.get('service');
     const techId = params.get('techId');
+    const jobId = params.get('jobId');
 
     if (action === 'premium') {
       setShowPremiumModal(true);
@@ -278,7 +279,26 @@ const UserDashboard = () => {
         selectTechDirectly();
       }
     }
-  }, [location.search]);
+
+    if (jobId && bookings.length > 0) {
+      const foundBooking = bookings.find(b => b._id === jobId);
+      if (foundBooking) {
+        setExpandedBookings(prev => ({ ...prev, [jobId]: true }));
+        if (['completed', 'cancelled'].includes(foundBooking.status)) {
+          setFilterTab('completed');
+        } else {
+          setFilterTab('active');
+        }
+        window.history.replaceState({}, document.title, window.location.pathname);
+        setTimeout(() => {
+          const cardElement = document.getElementById(`booking-card-${jobId}`);
+          if (cardElement) {
+            cardElement.scrollIntoView({ behavior: 'smooth', block: 'center' });
+          }
+        }, 500);
+      }
+    }
+  }, [location.search, bookings]);
 
   // Register private room for customer notification/alerts & sync on reconnects
   useEffect(() => {
@@ -1446,7 +1466,7 @@ const UserDashboard = () => {
             {filteredBookings.map((booking) => {
               const isCompleted = booking.status === 'completed';
               return (
-              <div key={booking._id} className={`group bg-white rounded-[2rem] p-6 sm:p-8 border ${expandedBookings[booking._id] ? 'border-indigo-300 shadow-md' : 'border-slate-100/80 shadow-sm'} hover:border-indigo-250 hover:-translate-y-1 hover:shadow-lg hover:shadow-slate-100/40 transition-all duration-300 flex flex-col justify-between overflow-hidden relative`}>
+              <div key={booking._id} id={`booking-card-${booking._id}`} className={`group bg-white rounded-[2rem] p-6 sm:p-8 border ${expandedBookings[booking._id] ? 'border-indigo-300 shadow-md' : 'border-slate-100/80 shadow-sm'} hover:border-indigo-250 hover:-translate-y-1 hover:shadow-lg hover:shadow-slate-100/40 transition-all duration-300 flex flex-col justify-between overflow-hidden relative`}>
                 <div className="relative z-10">
                   <div 
                     className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-4 cursor-pointer"

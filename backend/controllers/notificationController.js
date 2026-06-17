@@ -109,4 +109,15 @@ const subscribe = async (req, res) => {
   }
 };
 
-module.exports = { getNotifications, markRead, getVapidPublicKey, subscribe };
+// @desc    Mark all notifications as read
+// @route   PUT /api/notifications/read-all
+const markAllRead = async (req, res) => {
+  try {
+    await Notification.updateMany({ userId: req.user.id, isRead: false }, { isRead: true });
+    res.json({ success: true, message: 'All notifications marked as read' });
+  } catch (err) {
+    res.status(500).json({ message: err.message });
+  }
+};
+
+module.exports = { getNotifications, markRead, markAllRead, getVapidPublicKey, subscribe };

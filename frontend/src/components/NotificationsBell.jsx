@@ -3,9 +3,11 @@ import api from '../services/api';
 import { Bell, Check, X, MessageSquare, Info, Calendar, CheckSquare } from 'lucide-react';
 import { socket } from '../services/socket';
 import { useAuth } from '../contexts/AuthContext';
+import { useNavigate } from 'react-router-dom';
 
 const NotificationsBell = () => {
   const { user } = useAuth();
+  const navigate = useNavigate();
   const [notifications, setNotifications] = useState([]);
   const [isOpen, setIsOpen] = useState(false);
   const [unreadCount, setUnreadCount] = useState(0);
@@ -96,8 +98,7 @@ const NotificationsBell = () => {
 
   const markAllAsRead = async () => {
     try {
-      const unreadNotifs = notifications.filter(n => !n.isRead);
-      await Promise.all(unreadNotifs.map(n => api.put(`/notifications/${n._id}/read`)));
+      await api.put('/notifications/read-all');
       setUnreadCount(0);
       setNotifications(prev => prev.map(n => ({ ...n, isRead: true })));
     } catch (err) {
@@ -212,7 +213,22 @@ const NotificationsBell = () => {
                   <div 
                     key={notif._id} 
                     className={`p-5 transition-all duration-350 cursor-pointer ${getNotifBg(notif.type, notif.isRead)}`}
-                    onClick={() => !notif.isRead && markAsRead(notif._id)}
+                    onClick={async () => {
+                      if (!notif.isRead) {
+                        await markAsRead(notif._id);
+                      }
+                      if (notif.bookingId) {
+                        setIsOpen(false);
+                        const role = user?.role || 'user';
+                        if (role === 'technician') {
+                          navigate(`/technician-dashboard?jobId=${notif.bookingId}`);
+                        } else if (role === 'admin') {
+                          navigate(`/admin-dashboard?jobId=${notif.bookingId}`);
+                        } else {
+                          navigate(`/dashboard?jobId=${notif.bookingId}`);
+                        }
+                      }
+                    }}
                   >
                     <div className="flex justify-between items-start gap-4">
                       <div className="flex items-start gap-4 min-w-0">
