@@ -350,6 +350,11 @@ const TechnicianDashboard = () => {
           tag: `job-${updatedJob._id}`,
           data: { url: `/dashboard?jobId=${updatedJob._id}` }
         });
+
+        // Play noticeable sound only for important events (Quote Approval or Payment Completion)
+        if (updatedJob.status === 'quote_approved' || updatedJob.paymentStatus === 'completed') {
+          playNotificationSound('high');
+        }
       }
       
       // If the alarm job is no longer assigned to us
@@ -424,6 +429,8 @@ const TechnicianDashboard = () => {
           tag: `chat-${newMsg.bookingId}`,
           data: { url: `/dashboard?chatId=${newMsg.bookingId}` }
         });
+        // Play subtle sound for customer message
+        playNotificationSound('low');
       }
       setJobs(prev => prev.map(b => {
         if (b._id === newMsg.bookingId) {
@@ -542,6 +549,10 @@ const TechnicianDashboard = () => {
   }, [showNotifDropdown]);
 
   const updateJobStatus = async (id, status, rejectionReason = '') => {
+    if (activeAlertJob && activeAlertJob._id === id) {
+      stopAlarm();
+      setActiveAlertJob(null);
+    }
     if (updatingJobs[id]) return;
 
     // Check if network is offline

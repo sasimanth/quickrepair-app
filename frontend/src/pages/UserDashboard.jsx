@@ -175,6 +175,43 @@ const UserDashboard = () => {
     unknownProblem: false
   });
 
+  const [techSearchQuery, setTechSearchQuery] = useState('');
+
+  const filteredTechnicians = useMemo(() => {
+    if (!techSearchQuery.trim()) return technicians;
+    const q = techSearchQuery.toLowerCase().trim();
+    return technicians.filter(tech => {
+      const nameMatches = tech.name?.toLowerCase().includes(q);
+      const areaMatches = (tech.area || tech.distance || '').toLowerCase().includes(q);
+      const skillMatches = tech.skills?.some(s => s.toLowerCase().includes(q));
+      const serviceMatches = tech.services?.some(s => s.toLowerCase().includes(q));
+      return nameMatches || areaMatches || skillMatches || serviceMatches;
+    });
+  }, [technicians, techSearchQuery]);
+
+  useEffect(() => {
+    if (!techSearchQuery.trim()) return;
+
+    const delayDebounceId = setTimeout(async () => {
+      try {
+        setFetchingTechs(true);
+        const queryParams = new URLSearchParams();
+        queryParams.append('search', techSearchQuery);
+        if (formData.serviceId) {
+          queryParams.append('serviceId', formData.serviceId);
+        }
+        const res = await api.get(`/technicians/nearby?${queryParams.toString()}`);
+        setTechnicians(res.data || []);
+      } catch (err) {
+        console.error('Debounced technician search failed:', err);
+      } finally {
+        setFetchingTechs(false);
+      }
+    }, 400);
+
+    return () => clearTimeout(delayDebounceId);
+  }, [techSearchQuery, formData.serviceId]);
+
   const selectedServiceObj = useMemo(() => {
     return services.find(s => s.id === formData.serviceId) || globalServices.find(s => s.id === formData.serviceId);
   }, [services, formData.serviceId]);
@@ -537,6 +574,7 @@ const UserDashboard = () => {
       
       await api.post('/bookings', payload);
       
+      showToast('Booking Request Submitted 🎉', 'Booking request submitted successfully.', 'success');
       localStorage.removeItem('pendingBooking');
       // Reset state
       setShowForm(false);
@@ -552,8 +590,9 @@ const UserDashboard = () => {
       });
       fetchData(); 
     } catch (error) {
-      alert('Failed to submit booking request. Check the console.');
-      console.error(error);
+      console.error("Booking submission error:", error);
+      const errMsg = error.response?.data?.message || 'Unable to process request. Please try again.';
+      showToast('Booking Failed ❌', errMsg, 'error');
     } finally {
       setIsBooking(false);
     }
@@ -630,6 +669,7 @@ const UserDashboard = () => {
         };
         await api.post('/bookings', payload);
         
+        showToast('Technician Assigned Successfully! 👨‍🔧', 'Technician assigned successfully.', 'success');
         localStorage.removeItem('pendingBooking');
         setShowForm(false);
         setStep(1);
@@ -640,7 +680,9 @@ const UserDashboard = () => {
         });
         fetchData(); 
       } catch (error) {
-        alert('Failed to auto-dispatch. Check the console.');
+        console.error("Auto-dispatch submission failed:", error);
+        const errMsg = error.response?.data?.message || 'Unable to process request. Please try again.';
+        showToast('Auto-Dispatch Failed ❌', errMsg, 'error');
       } finally {
         setIsBooking(false);
       }
@@ -1213,14 +1255,32 @@ const UserDashboard = () => {
                       </button>
                     )}
 
+                    {/* Real-time search bar */}
+                    <div className="relative w-full">
+                      <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none">
+                        <Search size={18} className="text-slate-400" />
+                      </div>
+                      <input
+                        type="text"
+                        placeholder="Search technician by name, service category (e.g. AC, Mobile), or area..."
+                        value={techSearchQuery}
+                        onChange={(e) => setTechSearchQuery(e.target.value)}
+                        className="w-full pl-10 pr-4 py-3 bg-white border border-slate-200 rounded-2xl focus:ring-4 focus:ring-indigo-50 focus:border-indigo-500 transition-all font-medium text-slate-700 shadow-sm outline-none"
+                      />
+                    </div>
+
                     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-                      {technicians.length === 0 ? (
+                      {filteredTechnicians.length === 0 ? (
                         <div className="col-span-full py-16 text-center bg-slate-50 border border-slate-200/60 rounded-3xl p-8 shadow-inner">
-                          <h3 className="text-xl font-extrabold text-slate-850 mb-2">No Technicians Available</h3>
-                          <p className="text-slate-500 text-sm max-w-sm mx-auto leading-relaxed">We couldn't find any verified professionals in your exact area right now. Please check back shortly or select another area.</p>
+                          <h3 className="text-xl font-extrabold text-slate-850 mb-2">No Technicians Found</h3>
+                          <p className="text-slate-500 text-sm max-w-sm mx-auto leading-relaxed">
+                            {techSearchQuery 
+                              ? "We couldn't find any professionals matching your search query. Try searching for a different name, skill, or area."
+                              : "We couldn't find any verified professionals in your exact area right now. Please check back shortly or select another area."}
+                          </p>
                         </div>
                       ) : (
-                        technicians.map((tech) => (
+                        filteredTechnicians.map((tech) => (
                            <div 
                              key={tech.id}
                              onClick={() => setSelectedTech(tech)}

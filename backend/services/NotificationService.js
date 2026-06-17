@@ -109,7 +109,11 @@ const dispatchExternal = async (email, phone, type, subject, message) => {
 // Internal In-App Push Method
 const sendInAppPush = async (userId, title, message, type = 'system', bookingId = null) => {
   try {
-    await Notification.create({ userId, title, message, type, bookingId });
+    const createdNotif = await Notification.create({ userId, title, message, type, bookingId });
+    if (global.io) {
+      global.io.to(`user_${userId}`).emit('new_notification', createdNotif.toObject());
+      console.log(`📡 Emitted new_notification socket event to user_${userId}`);
+    }
   } catch (err) {
     console.error('Failed saving push to DB:', err.message);
   }
@@ -167,9 +171,25 @@ const sendWebPush = async (userId, title, message, bookingId = null, priority = 
       }
     }
 
+    let finalTitle = title;
+    let finalBody = message;
+
+    if (bookingId) {
+      try {
+        const Booking = require('../models/Booking');
+        const booking = await Booking.findById(bookingId);
+        if (booking) {
+          finalTitle = `New Request: ${booking.serviceName || title} 💼`;
+          finalBody = `🏡 Area: ${booking.location || 'Madanapalle'}\n👤 Name: ${booking.name || 'Client'}\n🛠️ Issue: ${booking.problemDescription || 'Not specified'}`;
+        }
+      } catch (err) {
+        console.error('Error fetching booking details for push:', err.message);
+      }
+    }
+
     const payload = JSON.stringify({
-      title,
-      body: message,
+      title: finalTitle,
+      body: finalBody,
       data: {
         url: redirectUrl,
         bookingId,
@@ -179,10 +199,10 @@ const sendWebPush = async (userId, title, message, bookingId = null, priority = 
 
     const sendPromises = subscriptions.map(async (sub) => {
       try {
-        // Only send push notifications to active, logged-in device sessions
-        const session = await DeviceSession.findOne({ userId, deviceId: sub.deviceId, isActive: true });
-        if (!session) {
-          console.log(`⚠️ Skipping push notification for user ${userId} on device ${sub.deviceId} because device session is inactive`);
+        // Only skip if the session is explicitly marked inactive
+        const session = await DeviceSession.findOne({ userId, deviceId: sub.deviceId });
+        if (session && session.isActive === false) {
+          console.log(`⚠️ Skipping push notification for user ${userId} on device ${sub.deviceId} because device session is explicitly inactive`);
           return;
         }
 

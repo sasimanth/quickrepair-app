@@ -160,6 +160,13 @@ class DispatchService {
         
         const updatedBooking = await booking.save();
 
+        // Schedule acceptance timeout (20 seconds)
+        const timeoutId = setTimeout(async () => {
+          await this.handleAcceptanceTimeout(bookingId, matchedTech.userId);
+        }, this.TIMEOUT_DURATION);
+        
+        dispatchState.timeoutId = timeoutId;
+
         // Emit socket events
         if (global.io) {
           const payload = updatedBooking.toObject();
@@ -173,7 +180,7 @@ class DispatchService {
             status: 'assigned',
             radius: radius,
             technicianName: matchedTech.name,
-            timeout: null
+            timeout: this.TIMEOUT_DURATION
           });
           global.io.to(`user_${booking.userId}`).emit('job_reassigned', payload);
           global.io.to(`user_${booking.userId}`).emit('job_update', payload);
@@ -191,19 +198,6 @@ class DispatchService {
           notifType: 'booking',
           bookingId: booking._id.toString()
         });
-
-        // Trigger push to user's notifications collection
-        const techNotif = await Notification.create({
-          userId: matchedTech.userId,
-          title: 'New Job Request 💼',
-          message: `New repair request for ${booking.serviceName} at ${booking.location}.`,
-          type: 'booking',
-          bookingId: booking._id.toString()
-        });
-
-        if (global.io && techNotif) {
-          global.io.to(`user_${matchedTech.userId}`).emit('new_notification', techNotif.toObject());
-        }
       } else {
         // No technician found in this radius. Expand radius.
         if (dispatchState.radiusIndex < this.RADII.length - 1) {

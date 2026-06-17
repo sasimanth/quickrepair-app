@@ -226,7 +226,7 @@ const updateProfile = async (req, res) => {
 };
 
 const getNearbyTechnicians = async (req, res) => {
-  const { area, serviceId } = req.query;
+  const { area, serviceId, search } = req.query;
 
   try {
     let query = {
@@ -234,13 +234,22 @@ const getNearbyTechnicians = async (req, res) => {
       isOnline: true
     };
 
-    if (area) {
-      // Area match (case-insensitive)
-      query.area = { $regex: new RegExp(`^${area}$`, 'i') };
-    }
-
-    if (serviceId) {
-      query.services = serviceId;
+    if (search) {
+      const searchRegex = new RegExp(search.trim(), 'i');
+      query.$or = [
+        { name: searchRegex },
+        { area: searchRegex },
+        { skills: searchRegex },
+        { services: searchRegex }
+      ];
+    } else {
+      if (area) {
+        // Area match (case-insensitive)
+        query.area = { $regex: new RegExp(`^${area}$`, 'i') };
+      }
+      if (serviceId) {
+        query.services = serviceId;
+      }
     }
 
     let techs = await Technician.find(query).limit(30);

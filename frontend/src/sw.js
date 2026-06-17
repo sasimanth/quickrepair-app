@@ -63,12 +63,16 @@ self.addEventListener('push', (event) => {
           actions: isTechRequest 
             ? [
                 {
+                  action: 'open',
+                  title: 'View Job 🔍'
+                },
+                {
                   action: 'accept',
-                  title: 'Accept Job ⚡'
+                  title: 'Accept ⚡'
                 },
                 {
                   action: 'decline',
-                  title: 'Decline ❌'
+                  title: 'Reject ❌'
                 }
               ]
             : [

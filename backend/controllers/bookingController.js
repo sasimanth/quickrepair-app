@@ -122,20 +122,23 @@ const triggerNotifications = async (req, booking, type) => {
         return;
     }
 
-    // 1. Create DB Notification for recipient (if valid user ID)
+    // 1. Create DB Notification and Web Push for recipient (if valid user ID)
     if (recipientId && !recipientId.startsWith('tech-')) {
       const notifType = ['accepted', 'rejected', 'on_the_way', 'arrived', 'inspection_started'].includes(type) ? 'booking' : 'system';
-      const createdNotif = await Notification.create({
+      const User = require('../models/User');
+      const recipientUser = await User.findById(recipientId);
+      const { notifyUser } = require('../services/NotificationService');
+      
+      await notifyUser({
         userId: recipientId,
-        title,
-        message,
-        isRead: false,
-        type: notifType,
+        email: recipientUser?.email || null,
+        phone: recipientUser?.phone || null,
+        type: 'push',
+        subject: title,
+        text: message,
+        notifType,
         bookingId: booking._id.toString()
       });
-      if (io) {
-        io.to(`user_${recipientId}`).emit('new_notification', createdNotif);
-      }
     }
 
     // 2. Create DB Message inside Chat for system notifications
@@ -198,16 +201,26 @@ const createBooking = async (req, res) => {
     }
     const finalPhone = normalizePhone(phone) || normalizePhone(userPhone) || '0000000000';
 
+    let parsedDate = date ? new Date(date) : new Date();
+    if (isNaN(parsedDate.getTime())) {
+      parsedDate = new Date();
+    }
+
     // DUPLICATE SUBMISSION CHECK (Within last 2 minutes)
     const twoMinutesAgo = new Date(Date.now() - 2 * 60 * 1000);
-    const duplicate = await Booking.findOne({
-      $or: [
-        { userId: bookingUserId, userId: { $ne: null } },
-        { phone: finalPhone }
-      ],
+    const duplicateQuery = {
       serviceId: serviceId || null,
       createdAt: { $gte: twoMinutesAgo }
-    });
+    };
+    if (bookingUserId) {
+      duplicateQuery.$or = [
+        { userId: bookingUserId },
+        { phone: finalPhone }
+      ];
+    } else {
+      duplicateQuery.phone = finalPhone;
+    }
+    const duplicate = await Booking.findOne(duplicateQuery);
 
     if (duplicate) {
       return res.status(409).json({ message: 'Duplicate booking detected. Please wait 2 minutes before resubmitting.' });
@@ -263,7 +276,7 @@ const createBooking = async (req, res) => {
       serviceId: serviceId || null,
       serviceName: service || deviceType || 'Unknown Service',
       providerId: finalProviderId,
-      date: date || new Date(),
+      date: parsedDate,
       deviceType: deviceType || service || 'Unknown Device',
       problemDescription: problemDescription || problem || 'Not Specified',
       problemId: problemId || null,
@@ -362,6 +375,12 @@ const createBooking = async (req, res) => {
 
     res.status(201).json({ success: true, message: 'Booking created successfully', booking: createdBooking });
   } catch (error) {
+    console.error("❌ createBooking Failure Details:", {
+      error: error.message,
+      stack: error.stack,
+      body: req.body,
+      user: req.user
+    });
     res.status(400).json({ message: error.message });
   }
 };

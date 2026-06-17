@@ -64,21 +64,23 @@ const sendMessage = async (req, res) => {
       io.to(`chat_${bookingId}`).emit('receive_message', newMessage);
     }
 
-    // Create DB notification of type 'chat' for the recipient
+    // Create DB notification of type 'chat' and send Web Push for the recipient
     const recipientId = isOwner ? booking.providerId : booking.userId;
     if (recipientId && !recipientId.startsWith('tech-')) {
-      const Notification = require('../models/Notification');
-      const chatNotif = await Notification.create({
+      const User = require('../models/User');
+      const recipientUser = await User.findById(recipientId);
+      const { notifyUser } = require('../services/NotificationService');
+      
+      await notifyUser({
         userId: recipientId,
-        title: `💬 New Message from ${senderName || req.user.email.split('@')[0]}`,
-        message: text,
-        isRead: false,
-        type: 'chat',
+        email: recipientUser?.email || null,
+        phone: recipientUser?.phone || null,
+        type: 'push', // only push for messages to avoid email spam
+        subject: `💬 New Message from ${senderName || req.user.email.split('@')[0]}`,
+        text: text,
+        notifType: 'chat',
         bookingId: bookingId
       });
-      if (io) {
-        io.to(`user_${recipientId}`).emit('new_notification', chatNotif);
-      }
     }
 
     res.status(201).json(newMessage);
