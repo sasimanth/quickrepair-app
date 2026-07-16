@@ -1345,7 +1345,7 @@ const UserDashboard = () => {
                              <input type="radio" name="serviceOption" checked={formData.serviceOption === 'inspection'} onChange={() => setFormData({...formData, serviceOption: 'inspection'})} className="mt-1 w-4.5 h-4.5 text-indigo-650 focus:ring-indigo-500 cursor-pointer" />
                              <div className="flex-grow">
                                <div className="flex items-center gap-2 flex-wrap">
-                                 <span className="font-extrabold text-slate-200 text-sm flex items-center gap-1.5"><Eye size={14} className="text-indigo-400" /> Inspection Visit</span>
+                                 <span className="font-extrabold text-slate-800 text-sm flex items-center gap-1.5"><Eye size={14} className="text-indigo-400" /> Inspection Visit</span>
                                  {formData.unknownProblem && (
                                    <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-[9px] font-black bg-indigo-600 text-white animate-pulse">
                                      ✨ Recommended
@@ -1364,7 +1364,7 @@ const UserDashboard = () => {
                              <input type="radio" name="serviceOption" checked={formData.serviceOption === 'direct'} onChange={() => setFormData({...formData, serviceOption: 'direct'})} className="mt-1 w-4.5 h-4.5 text-indigo-650 focus:ring-indigo-500 cursor-pointer" />
                              <div className="flex-grow">
                                <div className="flex items-center gap-2 flex-wrap">
-                                 <span className="font-extrabold text-slate-200 text-sm flex items-center gap-1.5"><Zap size={14} className="text-amber-400" /> Direct Repair Visit</span>
+                                 <span className="font-extrabold text-slate-800 text-sm flex items-center gap-1.5"><Zap size={14} className="text-amber-400" /> Direct Repair Visit</span>
                                  {!formData.unknownProblem && (
                                    <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-[9px] font-black bg-emerald-600 text-white">
                                      ⚡ Faster
@@ -1626,7 +1626,7 @@ const UserDashboard = () => {
                         </div>
 
                         {/* Sidebar Menu */}
-                        <div className="hidden lg:block bg-slate-900/40 border border-slate-200/80 rounded-3xl p-4 space-y-1">
+                        <div className="hidden lg:block bg-white border border-slate-150 rounded-3xl p-4 shadow-sm space-y-1">
                           {sidebarItems.map(item => {
                             const IconComp = item.icon;
                             const isSelected = activeSubTab === item.id;
@@ -1635,9 +1635,7 @@ const UserDashboard = () => {
                                 key={item.id}
                                 onClick={() => setActiveSubTab(item.id)}
                                 className={`w-full flex items-center gap-3 px-4.5 py-3 rounded-2xl text-xs font-black transition-all cursor-pointer border-none outline-none text-left tracking-wide ${
-                                  isSelected 
-                                    ? 'bg-indigo-650 text-white shadow-md shadow-indigo-600/10' 
-                                    : 'text-slate-400 hover:text-slate-205 hover:bg-slate-900/40'
+                                  isSelected ? 'bg-indigo-600 text-white shadow-md shadow-indigo-600/10' : 'text-slate-700 hover:text-indigo-650 hover:bg-indigo-50/50'
                                 }`}
                               >
                                 <IconComp size={16} className={isSelected ? "text-white animate-pulse" : "text-slate-500"} />
@@ -1649,7 +1647,7 @@ const UserDashboard = () => {
                       </div>
 
                       {/* Main content pane */}
-                      <div className="lg:col-span-3 bg-slate-900/20 border border-slate-200/80 rounded-[2rem] p-6 sm:p-8 shadow-inner min-h-[500px]">
+                      <div className="lg:col-span-3 bg-white border border-slate-100 rounded-[2.5rem] p-6 sm:p-8 shadow-sm min-h-[500px]">
                         
                         {/* OVERVIEW TAB */}
                         {activeSubTab === 'overview' && (
@@ -1669,14 +1667,14 @@ const UserDashboard = () => {
 
                             {/* Plus promo banner */}
                             {!profile?.isPremium && (
-                              <div className="bg-gradient-to-r from-slate-950 via-[#1E293B] to-indigo-950 border border-amber-500/30 rounded-3xl p-5 flex flex-col sm:flex-row items-center justify-between gap-5 shadow-lg">
+                              <div className="bg-gradient-to-r from-amber-50/80 to-yellow-100/40 border border-amber-200 rounded-3xl p-5 flex flex-col sm:flex-row items-center justify-between gap-5 shadow-sm text-slate-800">
                                 <div className="flex items-center gap-3.5 text-center sm:text-left">
                                   <div className="w-12 h-12 bg-gradient-to-br from-amber-400 to-yellow-500 text-slate-950 rounded-2xl flex items-center justify-center shrink-0 shadow-lg shadow-amber-500/20">
                                     <Sparkles size={20} className="animate-pulse" />
                                   </div>
                                   <div className="space-y-0.5">
-                                    <h3 className="text-sm font-extrabold text-white">Upgrade to Fixvo Plus</h3>
-                                    <p className="text-[10px] text-slate-455 font-semibold max-w-sm leading-relaxed">
+                                    <h3 className="text-sm font-black text-amber-900">Upgrade to Fixvo Plus</h3>
+                                    <p className="text-[10px] text-amber-800/90 font-bold max-w-sm leading-relaxed">
                                       Get 5% discount on all quotes, zero inspection fees (save ₹99), and priority technician dispatch.
                                     </p>
                                   </div>
@@ -1705,7 +1703,7 @@ const UserDashboard = () => {
                                       <div className="p-3 bg-indigo-650/10 text-indigo-405 border border-indigo-505/20 rounded-xl mb-3 shrink-0">
                                         <IconComp size={18} />
                                       </div>
-                                      <h4 className="font-extrabold text-white text-xs tracking-tight">{item.label}</h4>
+                                      <h4 className="font-extrabold text-slate-800 text-xs tracking-tight">{item.label}</h4>
                                     </div>
                                   );
                                 })}
@@ -1714,7 +1712,7 @@ const UserDashboard = () => {
 
                             {/* Bookings Preview */}
                             <div className="space-y-4">
-                              <h3 className="font-extrabold text-xs text-slate-455 uppercase tracking-widest ml-1">Recent Booking Status</h3>
+                              <h3 className="font-extrabold text-xs text-slate-600 uppercase tracking-widest ml-1">Recent Booking Status</h3>
                               {bookings.length === 0 ? (
                                 <div className="bg-slate-900/20 border border-slate-200/80 rounded-3xl p-8 text-center text-slate-550 font-bold text-sm">
                                   No service bookings yet. Click "Book Repair" to request your first visit.
@@ -1731,7 +1729,7 @@ const UserDashboard = () => {
                                         <p className="text-[10px] text-slate-450 font-medium">Date: {booking.date ? new Date(booking.date).toLocaleDateString() : 'Pending'}</p>
                                       </div>
                                       <div className="flex items-center gap-3 w-full sm:w-auto justify-between sm:justify-end">
-                                        <span className="text-[10px] uppercase font-black tracking-wider text-slate-350 bg-slate-800 px-3 py-1 rounded-full border border-slate-200/80">
+                                        <span className="text-[10px] uppercase font-black tracking-wider text-slate-600 bg-slate-800 px-3 py-1 rounded-full border border-slate-200/80">
                                           {booking.status}
                                         </span>
                                         <button
@@ -1782,7 +1780,7 @@ const UserDashboard = () => {
                                   className={`px-4 py-2 text-xs font-bold uppercase tracking-wider transition-all border-b-2 whitespace-nowrap outline-none cursor-pointer border-none bg-transparent ${
                                     filterTab === tab
                                       ? 'border-indigo-500 text-indigo-400'
-                                      : 'border-transparent text-slate-500 hover:text-slate-350'
+                                      : 'border-transparent text-slate-500 hover:text-slate-600'
                                   }`}
                                 >
                                   {tab === 'all' ? 'All Bookings' : tab === 'active' ? 'Active' : 'Completed'}
@@ -1813,7 +1811,7 @@ const UserDashboard = () => {
                                           </span>
                                         </div>
                                         <h3 className="text-xl font-black text-slate-900">₹{booking.finalQuote || booking.amount || 0}</h3>
-                                        <p className="text-[10px] text-slate-455 font-medium">Date: {booking.date ? new Date(booking.date).toLocaleDateString() : 'Pending'}</p>
+                                        <p className="text-[10px] text-slate-600 font-medium">Date: {booking.date ? new Date(booking.date).toLocaleDateString() : 'Pending'}</p>
                                         {booking.technicianName && booking.technicianName !== 'Unassigned' && (
                                           <span className="inline-block text-[9px] bg-indigo-500/20 text-indigo-300 font-extrabold uppercase px-2 py-0.5 rounded mt-1.5 border border-indigo-500/30">👨‍🔧 {booking.technicianName}</span>
                                         )}
@@ -1822,9 +1820,9 @@ const UserDashboard = () => {
                                       {/* Details Toggle content */}
                                       {expandedBookings[booking._id] && (
                                         <div className="mt-4 pt-4 border-t border-slate-200/80 space-y-4 animate-in fade-in duration-200 text-left text-xs font-semibold">
-                                          <p className="text-slate-400 leading-relaxed font-medium"><strong className="text-slate-200">Problem:</strong> {booking.problemDescription}</p>
-                                          <p className="text-slate-400 leading-relaxed font-medium"><strong className="text-slate-205">Address:</strong> {booking.location}</p>
-                                          {booking.deviceType && <p className="text-slate-455"><strong className="text-slate-205">Device Type:</strong> {booking.deviceType}</p>}
+                                          <p className="text-slate-650 leading-relaxed font-semibold"><strong className="text-slate-800">Problem:</strong> {booking.problemDescription}</p>
+                                          <p className="text-slate-650 leading-relaxed font-semibold"><strong className="text-slate-700">Address:</strong> {booking.location}</p>
+                                          {booking.deviceType && <p className="text-slate-600"><strong className="text-slate-700">Device Type:</strong> {booking.deviceType}</p>}
 
                                           {/* Quote Details & Approval Panel */}
                                           {['quote_pending', 'quote_clarification', 'quote_rejected'].includes(booking.status) && (
@@ -1953,7 +1951,7 @@ const UserDashboard = () => {
                                               )}
                                               <button 
                                                 onClick={() => setChatBookingId(booking._id)}
-                                                className="flex items-center justify-center gap-1.5 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-wider bg-slate-800 text-white hover:bg-slate-700 cursor-pointer border-none outline-none relative"
+                                                className="flex items-center justify-center gap-1.5 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-wider bg-slate-100 text-slate-700 hover:bg-slate-200 border border-slate-250 cursor-pointer border-none outline-none relative"
                                               >
                                                 <MessageSquare size={12} /> Chat
                                                 {booking.unreadCount > 0 && (
@@ -1967,7 +1965,7 @@ const UserDashboard = () => {
                                           {!['completed', 'cancelled', 'rejected'].includes(booking.status) && (
                                             <button
                                               onClick={() => setCancelBookingId(booking._id)}
-                                              className="w-full bg-slate-950 text-rose-455 hover:bg-rose-500/10 border border-rose-500/20 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-wider cursor-pointer transition-colors"
+                                              className="w-full bg-slate-50 text-rose-600 hover:bg-rose-100/50 border border-rose-200 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-wider cursor-pointer transition-colors"
                                             >
                                               Cancel Booking
                                             </button>
@@ -2077,7 +2075,7 @@ const UserDashboard = () => {
 
                               <div className="space-y-6 divide-y divide-white/5">
                                 <div className="space-y-4">
-                                  <h3 className="font-extrabold text-sm text-slate-200">Preferences</h3>
+                                  <h3 className="font-extrabold text-sm text-slate-800">Preferences</h3>
                                   <div className="flex justify-between items-center py-2.5">
                                     <div>
                                       <p className="text-xs sm:text-sm font-bold text-white">Interface Dark Mode</p>
@@ -2111,7 +2109,7 @@ const UserDashboard = () => {
                                 </div>
 
                                 <div className="pt-6 space-y-4">
-                                  <h3 className="font-extrabold text-sm text-slate-200">Security & Sessions</h3>
+                                  <h3 className="font-extrabold text-sm text-slate-800">Security & Sessions</h3>
                                   <div className="flex flex-col sm:flex-row gap-3">
                                     <button
                                       onClick={() => setShowSettings(true)}
@@ -2132,7 +2130,7 @@ const UserDashboard = () => {
                                 </div>
 
                                 <div className="pt-6 space-y-4">
-                                  <h3 className="font-extrabold text-sm text-rose-455">Danger Zone</h3>
+                                  <h3 className="font-extrabold text-sm text-rose-600">Danger Zone</h3>
                                   <div className="p-4 bg-rose-500/5 border border-rose-500/10 rounded-2xl flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
                                     <div>
                                       <p className="text-xs sm:text-sm font-bold text-white">Permanently Delete Account</p>
@@ -2254,9 +2252,9 @@ const UserDashboard = () => {
                             "{viewReasonBooking.cancellationReason || 'No reason provided.'}"
                           </div>
                           <div className="text-xs text-slate-400 font-semibold space-y-2 pl-1">
-                            <p>Cancelled By: <strong className="text-slate-200 capitalize">{viewReasonBooking.cancelledBy || 'system'}</strong></p>
+                            <p>Cancelled By: <strong className="text-slate-800 capitalize">{viewReasonBooking.cancelledBy || 'system'}</strong></p>
                             {viewReasonBooking.cancelledAt && (
-                              <p>Cancelled On: <strong className="text-slate-200">{new Date(viewReasonBooking.cancelledAt).toLocaleString()}</strong></p>
+                              <p>Cancelled On: <strong className="text-slate-800">{new Date(viewReasonBooking.cancelledAt).toLocaleString()}</strong></p>
                             )}
                           </div>
                         </div>
@@ -2294,7 +2292,7 @@ const UserDashboard = () => {
                             placeholder="Describe your reason here..."
                             value={cancellationReason}
                             onChange={(e) => setCancellationReason(e.target.value)}
-                            className="w-full px-4 py-3 rounded-xl bg-slate-900 border border-white/10 text-slate-200 outline-none text-sm font-semibold focus:border-red-500 transition-all resize-none"
+                            className="w-full px-4 py-3 rounded-xl bg-slate-900 border border-white/10 text-slate-800 outline-none text-sm font-semibold focus:border-red-500 transition-all resize-none"
                             required
                           />
                         </div>
@@ -2352,7 +2350,7 @@ const UserDashboard = () => {
                         </div>
                         <button
                           onClick={() => setToasts(prev => prev.filter(t => t.id !== toast.id))}
-                          className="text-slate-400 hover:text-slate-200 self-start transition-colors font-bold text-xs p-1"
+                          className="text-slate-400 hover:text-slate-800 self-start transition-colors font-bold text-xs p-1"
                         >
                           ✕
                         </button>

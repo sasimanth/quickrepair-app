@@ -846,7 +846,7 @@ const TechnicianDashboard = () => {
 
               <button
                 onClick={() => setShowSettings(true)}
-                className="bg-slate-900 hover:bg-slate-850 border border-slate-200/85 text-slate-350 font-extrabold px-4.5 py-3 rounded-xl transition-all text-xs uppercase tracking-widest flex items-center gap-1.5 cursor-pointer outline-none"
+                className="bg-slate-900 hover:bg-slate-850 border border-slate-200/85 text-slate-700 font-extrabold px-4.5 py-3 rounded-xl transition-all text-xs uppercase tracking-widest flex items-center gap-1.5 cursor-pointer outline-none"
               >
                 <Settings size={14} /> Settings
               </button>
@@ -1160,14 +1160,14 @@ const TechnicianDashboard = () => {
                                 <Smartphone className="text-indigo-400 mt-0.5 shrink-0" size={18} />
                                 <div>
                                   <p className="text-[9px] font-extrabold uppercase tracking-widest text-slate-500">Device</p>
-                                  <p className="font-bold text-slate-200 text-xs sm:text-sm">{job.deviceType || 'Device'}</p>
+                                  <p className="font-extrabold text-slate-800 text-xs sm:text-sm">{job.deviceType || 'Device'}</p>
                                 </div>
                               </div>
                               <div className="flex gap-3">
                                 <MapPin className="text-emerald-400 mt-0.5 shrink-0" size={18} />
                                 <div>
                                   <p className="text-[9px] font-extrabold uppercase tracking-widest text-slate-500">Location</p>
-                                  <p className="font-bold text-slate-200 text-xs sm:text-sm leading-relaxed">{job.location}</p>
+                                  <p className="font-extrabold text-slate-800 text-xs sm:text-sm leading-relaxed">{job.location}</p>
                                   {(job.serviceLocation && job.serviceLocation !== 'on-site') && (
                                      <span className="inline-block mt-1 text-[8px] font-extrabold bg-amber-500/10 text-amber-400 px-2 py-0.5 rounded border border-amber-500/20 uppercase tracking-wider">
                                        {job.serviceLocation === 'gate' ? 'Gate Meetup' : 'Off-site Pickup Required'}
@@ -1180,7 +1180,7 @@ const TechnicianDashboard = () => {
                               <AlertCircle className="text-rose-450 mt-0.5 shrink-0" size={18} />
                               <div>
                                 <p className="text-[9px] font-extrabold uppercase tracking-widest text-slate-500">Issue Description</p>
-                                <p className="text-slate-300 italic text-xs leading-relaxed">"{job.problemDescription}"</p>
+                                <p className="text-slate-700 italic text-xs leading-relaxed">"{job.problemDescription}"</p>
                                 {job.unknownProblem && (
                                    <span className="inline-flex items-center gap-1 mt-1 text-[8px] font-extrabold bg-rose-500/10 text-rose-400 px-2 py-0.5 rounded border border-rose-500/25 uppercase tracking-wider">
                                      <HelpCircle size={10}/> Diagnosis Required
@@ -1304,7 +1304,7 @@ const TechnicianDashboard = () => {
                               <button
                                 disabled={updatingJobs[job._id]}
                                 onClick={() => setDeclineJobId(job._id)}
-                                className="w-full bg-rose-500/5 hover:bg-rose-500/10 border border-rose-500/20 text-rose-400 font-bold py-3 px-4 rounded-xl transition-all flex items-center justify-center gap-2 cursor-pointer outline-none disabled:opacity-50"
+                                className="w-full bg-rose-50 border border-rose-200 text-rose-600 font-bold py-3 px-4 rounded-xl transition-all flex items-center justify-center gap-2 cursor-pointer outline-none disabled:opacity-50"
                               >
                                 {updatingJobs[job._id] ? <Loader2 size={16} className="animate-spin" /> : <><XCircle size={16} /> Decline</>}
                               </button>
@@ -1742,7 +1742,7 @@ const TechnicianDashboard = () => {
               <button 
                 onClick={() => setCancelJobId(null)} 
                 disabled={submittingCancellation}
-                className="flex-1 border border-slate-200 hover:bg-white/5 text-slate-350 font-bold py-3 rounded-xl transition-all text-xs sm:text-sm uppercase tracking-wider outline-none disabled:opacity-50 cursor-pointer"
+                className="flex-1 border border-slate-200 hover:bg-white/5 text-slate-700 font-bold py-3 rounded-xl transition-all text-xs sm:text-sm uppercase tracking-wider outline-none disabled:opacity-50 cursor-pointer"
               >
                 Back
               </button>
@@ -1862,7 +1862,7 @@ const TechnicianDashboard = () => {
                   type="button"
                   onClick={() => setShowWithdrawModal(false)} 
                   disabled={submittingWithdraw}
-                  className="flex-1 border border-slate-200 hover:bg-white/5 text-slate-350 font-bold py-3.5 rounded-xl transition-all text-xs sm:text-sm uppercase tracking-wider outline-none disabled:opacity-50 cursor-pointer"
+                  className="flex-1 border border-slate-200 hover:bg-white/5 text-slate-700 font-bold py-3.5 rounded-xl transition-all text-xs sm:text-sm uppercase tracking-wider outline-none disabled:opacity-50 cursor-pointer"
                 >
                   Cancel
                 </button>
