@@ -10,6 +10,18 @@ const createRateLimiter = (options = {}) => {
 
   return async (req, res, next) => {
     const ip = req.ip || req.connection.remoteAddress || 'unknown-ip';
+    
+    // Bypass rate limits in development or for local loopback testing
+    if (
+      process.env.NODE_ENV === 'development' || 
+      ip === '::1' || 
+      ip === '127.0.0.1' || 
+      ip.includes('127.0.0.1') || 
+      ip.includes('::ffff:127.0.0.1')
+    ) {
+      return next();
+    }
+
     const userId = req.user ? (req.user.id || req.user._id || 'guest') : 'guest';
     const route = req.originalUrl || req.url;
     
@@ -80,8 +92,8 @@ module.exports = {
   }),
   signupLimiter: createRateLimiter({
     windowMs: 60 * 60 * 1000, // 1 hour
-    max: 3,
-    message: 'Too many signups from this location. You can create up to 3 accounts per hour.',
+    max: 15,
+    message: 'Too many signups from this location. You can create up to 15 accounts per hour.',
     alertType: 'RATE_LIMIT_VIOLATION'
   }),
   otpLimiter: createRateLimiter({
