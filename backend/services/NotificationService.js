@@ -1,6 +1,7 @@
 const Notification = require('../models/Notification');
 const webpush = require('web-push');
 const { getVapidKeys } = require('../utils/vapidHelper');
+const sendEmail = require('../utils/sendEmail');
 
 // Configure Web Push VAPID keys
 try {
@@ -61,7 +62,7 @@ const dispatchExternal = async (email, phone, type, subject, message, htmlConten
     }
   }
 
-  // Real or Simulated Email using Resend
+  // Real or Simulated Email using Resend / Nodemailer
   if (type === 'email' || type === 'both' || email) {
     const resendApiKey = process.env.RESEND_API_KEY;
     const targetEmail = email || 'customer@fixvo.com';
@@ -97,11 +98,24 @@ const dispatchExternal = async (email, phone, type, subject, message, htmlConten
       } catch (err) {
         console.error('Failed to dispatch via Resend:', err.message);
       }
+    } else if (process.env.EMAIL_USER && process.env.EMAIL_PASS) {
+      console.log(`🚀 Dispatching LIVE Email via Nodemailer to: ${targetEmail}`);
+      const success = await sendEmail({
+        to: targetEmail,
+        subject: subject,
+        text: message,
+        html: finalHtml
+      });
+      if (success) {
+        console.log(`✅ Nodemailer Native Dispatch Success!`);
+      } else {
+        console.error(`❌ Nodemailer Native Dispatch Failed!`);
+      }
     } else {
       console.log(`📧 MOCK EMAIL TO: ${targetEmail}`);
       console.log(`📝 SUBJECT: ${subject}`);
       console.log(`💌 HTML BODY: ${finalHtml.substring(0, 300)}... (${finalHtml.length} chars)`);
-      console.log(`\n💡 To enable LIVE REAL emails, set RESEND_API_KEY in your .env file!`);
+      console.log(`\n💡 To enable LIVE REAL emails, set RESEND_API_KEY or EMAIL_USER & EMAIL_PASS in your .env file!`);
     }
   }
   console.log(`================================\n`);
