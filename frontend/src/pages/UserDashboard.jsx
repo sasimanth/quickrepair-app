@@ -5,6 +5,7 @@ import { globalCategories, globalServices, getDbServices } from '../data/service
 import SearchableServiceSelector from '../components/SearchableServiceSelector';
 import SearchableAreaSelector from '../components/SearchableAreaSelector';
 import { subscribeToPushNotifications } from '../services/pushNotification';
+import { requestFcmPermission } from '../services/firebase';
 import { Calendar, MapPin, Smartphone, AlertCircle, Clock, CheckCircle, PackageSearch, XCircle, Plus, LayoutDashboard, Wrench, Settings, Star, User, ChevronRight, MessageSquare, Camera, UploadCloud, Loader2, Shield, ShieldCheck, HelpCircle, Truck, Home, Search, Eye, Zap, Maximize2, Hash, Layers, Paintbrush, Tv, X } from 'lucide-react';
 import ChatModal from '../components/ChatModal';
 import ReviewModal from '../components/ReviewModal';
@@ -222,6 +223,7 @@ const UserDashboard = () => {
     getDbServices().then(setServices);
     fetchData(true);
     subscribeToPushNotifications(); // PWA background push notifications
+    requestFcmPermission(); // FCM background push notifications
     const interval = setInterval(() => fetchData(false), 5000);
 
     const handleLocationUpdate = (data) => {

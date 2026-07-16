@@ -1,7 +1,8 @@
 import { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
-import { Wrench, Mail, Lock, ArrowRight, Loader2 } from 'lucide-react';
-
+import { Wrench, Mail, Lock, ArrowRight, Loader2, RefreshCw } from 'lucide-react';
+import api from '../services/api';
+import CanvasCaptcha from '../components/CanvasCaptcha';
 import { login } from '../services/auth';
 
 const Login = () => {
@@ -13,6 +14,26 @@ const Login = () => {
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
 
+  // Security CAPTCHA States
+  const [failedAttempts, setFailedAttempts] = useState(0);
+  const [showCaptcha, setShowCaptcha] = useState(false);
+  const [captchaText, setCaptchaText] = useState('');
+  const [captchaSolution, setCaptchaSolution] = useState('');
+
+  const generateCaptchaText = () => {
+    const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789'; // Exclude ambiguous chars like 0, O, 1, I
+    let text = '';
+    for (let i = 0; i < 5; i++) {
+      text += chars.charAt(Math.floor(Math.random() * chars.length));
+    }
+    return text;
+  };
+
+  const handleRefreshCaptcha = () => {
+    setCaptchaText(generateCaptchaText());
+    setCaptchaSolution('');
+  };
+
   const handleChange = (e) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
   };
@@ -20,6 +41,27 @@ const Login = () => {
   const handleLogin = async (e) => {
     e.preventDefault();
     setError('');
+    
+    // Check CAPTCHA Solution if visible
+    if (showCaptcha) {
+      if (!captchaSolution) {
+        setError('Please complete the CAPTCHA check.');
+        return;
+      }
+      setLoading(true);
+      try {
+        await api.post('/auth/captcha-verify', {
+          userSolution: captchaSolution,
+          captchaText
+        });
+      } catch (captchaErr) {
+        setLoading(false);
+        setError('CAPTCHA verification failed. Incorrect text.');
+        handleRefreshCaptcha();
+        return;
+      }
+    }
+
     setLoading(true);
     
     try {
@@ -38,10 +80,25 @@ const Login = () => {
       }
       window.location.reload();
     } catch (err) {
+      // Increment failed attempts on exception
+      setFailedAttempts((prev) => {
+        const next = prev + 1;
+        if (next >= 3) {
+          setShowCaptcha(true);
+          if (!captchaText) {
+            setCaptchaText(generateCaptchaText());
+          }
+        }
+        return next;
+      });
+
       if (err.status === 403) {
          setError('Your email is not verified. Please complete sign up verification.');
       } else {
          setError(err.response?.data?.message || err.message || 'Failed to login');
+      }
+      if (showCaptcha) {
+        handleRefreshCaptcha();
       }
     } finally {
       setLoading(false);
@@ -108,6 +165,26 @@ const Login = () => {
               />
             </div>
           </div>
+
+          {/* CAPTCHA challenge section */}
+          {showCaptcha && (
+            <div className="bg-slate-50 border border-slate-200/60 rounded-2xl p-4 space-y-3 animate-in fade-in duration-300">
+              <label className="text-xs font-extrabold text-slate-500 uppercase tracking-widest block">
+                Security Check: Enter Code Below
+              </label>
+              <div className="flex flex-col sm:flex-row gap-3">
+                <CanvasCaptcha captchaText={captchaText} onRefresh={handleRefreshCaptcha} />
+                <input
+                  type="text"
+                  maxLength={5}
+                  value={captchaSolution}
+                  onChange={(e) => setCaptchaSolution(e.target.value.toUpperCase())}
+                  placeholder="CODE"
+                  className="bg-white border-2 border-slate-100 focus:border-blue-500 rounded-xl px-4 py-2.5 text-center font-mono text-lg font-bold outline-none flex-1 tracking-wider"
+                />
+              </div>
+            </div>
+          )}
 
           <button
             type="submit"

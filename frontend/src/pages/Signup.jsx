@@ -1,6 +1,8 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
-import { Wrench, Mail, Lock, User, Phone, Briefcase, MapPin, ArrowRight, Loader2, X, Check, Search } from 'lucide-react';
+import { Wrench, Mail, Lock, User, Phone, Briefcase, MapPin, ArrowRight, Loader2, X, Check, Search, RefreshCw } from 'lucide-react';
+import api from '../services/api';
+import CanvasCaptcha from '../components/CanvasCaptcha';
 import { register } from '../services/auth';
 import { globalServices } from '../data/services';
 import SearchableServiceSelector from '../components/SearchableServiceSelector';
@@ -26,9 +28,54 @@ const Signup = () => {
   const [agreeTechTerms, setAgreeTechTerms] = useState(false);
   const navigate = useNavigate();
 
+  // Password Complexity Verification State
+  const [passwordStrength, setPasswordStrength] = useState({
+    length: false,
+    uppercase: false,
+    lowercase: false,
+    number: false,
+    specialChar: false
+  });
+
+  // CAPTCHA Challenge Verification States
+  const [captchaText, setCaptchaText] = useState('');
+  const [captchaSolution, setCaptchaSolution] = useState('');
+
+  const generateCaptchaText = () => {
+    const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789'; // Avoid confusing letters
+    let text = '';
+    for (let i = 0; i < 5; i++) {
+      text += chars.charAt(Math.floor(Math.random() * chars.length));
+    }
+    return text;
+  };
+
+  const handleRefreshCaptcha = () => {
+    setCaptchaText(generateCaptchaText());
+    setCaptchaSolution('');
+  };
+
+  // Generate CAPTCHA code on mount
+  useEffect(() => {
+    setCaptchaText(generateCaptchaText());
+  }, []);
+
+  const checkPasswordStrength = (pwd) => {
+    setPasswordStrength({
+      length: pwd.length >= 8,
+      uppercase: /[A-Z]/.test(pwd),
+      lowercase: /[a-z]/.test(pwd),
+      number: /[0-9]/.test(pwd),
+      specialChar: /[^A-Za-z0-9]/.test(pwd)
+    });
+  };
+
   const handleChange = (e) => {
     const { name, value } = e.target;
     setFormData({ ...formData, [name]: value });
+    if (name === 'password') {
+      checkPasswordStrength(value);
+    }
   };
 
   const handleSignupSubmit = async (e) => {
@@ -43,10 +90,13 @@ const Signup = () => {
     if (!phoneRegex.test(formData.phone)) {
        return setError('Please enter a valid phone number (at least 10 digits).');
     }
-    if (formData.password.length < 6) {
-       return setError('Password must be at least 6 characters long.');
-    }
 
+    // Verify password meets all complexity rules
+    const isStrongPassword = Object.values(passwordStrength).every(Boolean);
+    if (!isStrongPassword) {
+      return setError('Password must meet all complexity requirements (min 8 chars, 1 uppercase, 1 lowercase, 1 number, 1 special character).');
+    }
+ 
     if (formData.role === 'technician') {
       if (formData.skills.length === 0) {
         return setError('Please select at least one service.');
@@ -55,7 +105,7 @@ const Signup = () => {
         return setError('Please select a service area.');
       }
     }
-
+ 
     if (!agreeTerms || !agreePrivacy) {
       return setError('You must agree to the Terms & Conditions and Privacy Policy.');
     }
@@ -63,7 +113,25 @@ const Signup = () => {
       return setError('You must agree to the Technician Service Agreement.');
     }
 
+    // Verify visual CAPTCHA solution
+    if (!captchaSolution) {
+      return setError('Please enter the visual CAPTCHA verification code.');
+    }
+
     setLoading(true);
+    try {
+      // Validate CAPTCHA server-side first
+      await api.post('/auth/captcha-verify', {
+        userSolution: captchaSolution,
+        captchaText
+      });
+    } catch (captchaErr) {
+      setLoading(false);
+      setError('CAPTCHA verification failed. Please check the security code.');
+      handleRefreshCaptcha();
+      return;
+    }
+ 
     try {
       const data = await register({
         name: formData.name,
@@ -88,6 +156,7 @@ const Signup = () => {
       window.location.reload();
     } catch (err) {
       setError(err.response?.data?.message || err.message || 'Failed to register.');
+      handleRefreshCaptcha();
     } finally {
       setLoading(false);
     }
@@ -142,6 +211,42 @@ const Signup = () => {
               <Lock className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-indigo-600 transition-colors" size={18} />
               <input type="password" name="password" required autoComplete="new-password" className="w-full pl-11 pr-4 py-3.5 bg-white/80 border-2 border-slate-100 focus:border-indigo-500 rounded-2xl focus:ring-4 focus:ring-indigo-50 transition-all font-medium text-slate-800 outline-none" placeholder="••••••••" value={formData.password} onChange={handleChange} />
             </div>
+
+            {/* Real-time Password Strength Check List */}
+            {formData.password && (
+              <div className="mt-3 bg-slate-50 border border-slate-100 rounded-2xl p-4 grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs font-semibold animate-in fade-in duration-300">
+                <div className="flex items-center gap-1.5 text-slate-500">
+                  <span className={`w-4 h-4 rounded-full flex items-center justify-center text-[10px] text-white ${passwordStrength.length ? 'bg-emerald-500' : 'bg-slate-300'}`}>
+                    {passwordStrength.length ? '✓' : '✗'}
+                  </span>
+                  <span className={passwordStrength.length ? 'text-emerald-600' : ''}>8+ Characters</span>
+                </div>
+                <div className="flex items-center gap-1.5 text-slate-500">
+                  <span className={`w-4 h-4 rounded-full flex items-center justify-center text-[10px] text-white ${passwordStrength.uppercase ? 'bg-emerald-500' : 'bg-slate-300'}`}>
+                    {passwordStrength.uppercase ? '✓' : '✗'}
+                  </span>
+                  <span className={passwordStrength.uppercase ? 'text-emerald-600' : ''}>Uppercase Letter</span>
+                </div>
+                <div className="flex items-center gap-1.5 text-slate-500">
+                  <span className={`w-4 h-4 rounded-full flex items-center justify-center text-[10px] text-white ${passwordStrength.lowercase ? 'bg-emerald-500' : 'bg-slate-300'}`}>
+                    {passwordStrength.lowercase ? '✓' : '✗'}
+                  </span>
+                  <span className={passwordStrength.lowercase ? 'text-emerald-600' : ''}>Lowercase Letter</span>
+                </div>
+                <div className="flex items-center gap-1.5 text-slate-500">
+                  <span className={`w-4 h-4 rounded-full flex items-center justify-center text-[10px] text-white ${passwordStrength.number ? 'bg-emerald-500' : 'bg-slate-300'}`}>
+                    {passwordStrength.number ? '✓' : '✗'}
+                  </span>
+                  <span className={passwordStrength.number ? 'text-emerald-600' : ''}>At least 1 number</span>
+                </div>
+                <div className="flex items-center gap-1.5 text-slate-500 col-span-1 sm:col-span-2">
+                  <span className={`w-4 h-4 rounded-full flex items-center justify-center text-[10px] text-white ${passwordStrength.specialChar ? 'bg-emerald-500' : 'bg-slate-300'}`}>
+                    {passwordStrength.specialChar ? '✓' : '✗'}
+                  </span>
+                  <span className={passwordStrength.specialChar ? 'text-emerald-600' : ''}>At least 1 special char (!@#$ etc)</span>
+                </div>
+              </div>
+            )}
           </div>
 
           <div className="space-y-1 pt-2">
@@ -203,6 +308,24 @@ const Signup = () => {
             </div>
           )}
 
+          {/* CAPTCHA Challenge Widget */}
+          <div className="bg-slate-50 border border-slate-100 rounded-3xl p-6 space-y-4">
+            <label className="text-xs font-extrabold text-indigo-900 uppercase tracking-widest block">
+              Security Verification Challenge
+            </label>
+            <div className="flex flex-col sm:flex-row gap-4">
+              <CanvasCaptcha captchaText={captchaText} onRefresh={handleRefreshCaptcha} />
+              <input
+                type="text"
+                maxLength={5}
+                value={captchaSolution}
+                onChange={(e) => setCaptchaSolution(e.target.value.toUpperCase())}
+                placeholder="Enter CAPTCHA code"
+                className="bg-white border-2 border-slate-100 focus:border-indigo-500 rounded-xl px-4 py-2.5 text-center font-mono text-lg font-bold outline-none flex-1 tracking-widest"
+              />
+            </div>
+          </div>
+
           {/* Legal Compliance Checkboxes */}
           <div className="space-y-3 pt-2 text-slate-600 font-semibold text-sm">
             <label className="flex items-start gap-3 cursor-pointer select-none">
@@ -245,7 +368,7 @@ const Signup = () => {
                 />
                 <span>
                   I agree to the{' '}
-                  <a href="/technician-terms" target="_blank" rel="noopener noreferrer" className="text-indigo-600 hover:underline font-bold">
+                  <a href="/technician-agreement" target="_blank" rel="noopener noreferrer" className="text-indigo-600 hover:underline font-bold">
                     Technician Service Agreement
                   </a>
                 </span>

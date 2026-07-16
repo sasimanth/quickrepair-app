@@ -40,9 +40,14 @@ const createReview = async (req, res) => {
       return res.status(403).json({ message: 'Not authorized to review this booking' });
     }
 
-    // Ensure the booking is completed
-    if (booking.status !== 'completed') {
-      return res.status(400).json({ message: 'You can only review completed jobs' });
+    // Ensure the booking is completed and payment status is completed (paid)
+    if (booking.status !== 'completed' || booking.paymentStatus !== 'completed') {
+      return res.status(400).json({ message: 'You can only review completed and paid jobs' });
+    }
+
+    // Block self-reviews (technicians reviewing themselves)
+    if (booking.providerId && booking.providerId.toString() === req.user.id.toString()) {
+      return res.status(403).json({ message: 'Technicians are not allowed to review themselves' });
     }
 
     // Check if review already exists

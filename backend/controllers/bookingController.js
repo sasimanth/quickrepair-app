@@ -226,6 +226,31 @@ const createBooking = async (req, res) => {
       return res.status(409).json({ message: 'Duplicate booking detected. Please wait 2 minutes before resubmitting.' });
     }
 
+    // RISK SCORING & CANCELLATION ABUSE CHECK
+    if (req.user) {
+      const userBookings = await Booking.find({ userId: req.user.id }).sort({ createdAt: -1 }).limit(3);
+      const consecutiveCancellations = userBookings.length === 3 && userBookings.every(b => b.status === 'cancelled');
+      if (consecutiveCancellations) {
+        // Log a security alert for cancellation abuse
+        const SecurityAlert = require('../models/SecurityAlert');
+        await SecurityAlert.create({
+          userId: req.user._id,
+          userEmail: req.user.email,
+          alertType: 'CANCELLATION_ABUSE',
+          severity: 'high',
+          description: `User ${req.user.email} flagged for booking cancellation abuse (last 3 bookings cancelled).`,
+          metadata: { ipAddress: req.ip, userAgent: req.headers['user-agent'] }
+        });
+
+        // Enforce prepayment if they choose cash on a direct repair booking
+        if (serviceOption !== 'inspection' && (req.body.paymentMethod === 'cash' || !req.body.paymentMethod)) {
+          return res.status(400).json({ 
+            message: 'Due to repeated booking cancellations, the cash payment option is temporarily disabled for your account. Please pay online to request a service.' 
+          });
+        }
+      }
+    }
+
     let isPremiumUser = false;
     if (req.user) {
       const User = require('../models/User');
@@ -642,31 +667,10 @@ const processPayment = async (req, res) => {
         await triggerNotifications(req, updatedBooking, 'cash_pending');
         return res.json(updatedBooking);
       } else {
-        // Mock online/other payment
-        booking.paymentStatus = 'completed';
-        booking.paymentMethod = paymentMethod || 'mock';
-        booking.amount = amount || booking.finalQuote || 0;
-        booking.transactionId = 'tx_' + Math.random().toString(36).substr(2, 9);
-
-        const updatedBooking = await booking.save();
-        await updatedBooking.populate('serviceId', 'name price');
-
-        await updateTechnicianWallet(updatedBooking);
-
-        if (booking.providerEmail) {
-          notifyUser({
-            userId: booking.providerId,
-            email: booking.providerEmail,
-            type: 'both',
-            subject: 'Payment Received!',
-            text: `Customer has paid ₹${booking.amount} for the completed job.`,
-            notifType: 'booking',
-            bookingId: booking._id.toString()
-          });
-        }
-
-        await triggerNotifications(req, updatedBooking, 'payment_completed');
-        return res.json(updatedBooking);
+        // Prevent frontend from self-authorizing mock online payments
+        return res.status(400).json({ 
+          message: 'Insecure online payment request. Online payment statuses must be verified server-side through secure payment gateway signatures.' 
+        });
       }
     } else if (req.user.role === 'technician') {
       const isProvider = booking.providerId && booking.providerId.toString() === req.user.id.toString();

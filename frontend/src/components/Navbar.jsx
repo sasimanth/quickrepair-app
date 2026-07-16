@@ -28,8 +28,8 @@ const Navbar = () => {
     return '/dashboard';
   };
 
-  // Hide Navbar completely on authentication pages for a cleaner Auth experience
-  if (['/login', '/signup'].includes(location.pathname)) {
+  // Hide Navbar completely on authentication and home pages for a custom premium shell
+  if (['/login', '/signup', '/'].includes(location.pathname)) {
     return null;
   }
 

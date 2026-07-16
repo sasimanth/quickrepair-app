@@ -3,7 +3,7 @@ import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { globalCategories, globalServices, getDbServices } from '../data/services';
 import SmartDiagnosis from '../components/SmartDiagnosis/SmartDiagnosis';
 import NearbyTechnicians from '../components/NearbyTechnicians';
-import { motion, AnimatePresence, useMotionValue, useAnimationFrame } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion';
 import { 
   Zap, 
   Droplets, 
@@ -17,21 +17,153 @@ import {
   Camera,
   Banknote,
   Search,
-  Sparkles
+  Sparkles,
+  MapPin,
+  ChevronDown,
+  LogOut,
+  LayoutDashboard,
+  UserCircle2,
+  Mic,
+  History,
+  Check,
+  X,
+  Cpu,
+  Globe,
+  Bell
 } from 'lucide-react';
 import { FaInstagram, FaLinkedin, FaXTwitter, FaWhatsapp } from 'react-icons/fa6';
 import founderImg from '../assets/sasi_founder.jpeg';
+import fixvoLogo from '../assets/logos/fixvo-app-icon-dark.png';
 import { useAuth } from '../contexts/AuthContext';
 import AuthModal from '../components/AuthModal';
+import NotificationsBell from '../components/NotificationsBell';
+
+// Mapping details to enrich services cards
+const serviceDetails = {
+  ac_repair: { subtitle: "Fast cooling & leak repairs", price: "₹299", rating: 4.9, jobs: 1240, popular: true },
+  washing_machine: { subtitle: "Fix spin, drum & drainage", price: "₹199", rating: 4.8, jobs: 890, popular: false },
+  refrigerator: { subtitle: "Compressor & gas refilling", price: "₹249", rating: 4.7, jobs: 620, popular: false },
+  microwave: { subtitle: "Magnetron & heating repair", price: "₹199", rating: 4.6, jobs: 340, popular: false },
+  tv_repair: { subtitle: "Screen & backlight issues", price: "₹349", rating: 4.7, jobs: 510, popular: false },
+  laptop_repair: { subtitle: "OS install, RAM & hardware fixes", price: "₹399", rating: 4.8, jobs: 420, popular: false },
+  mobile_repair: { subtitle: "Screen, battery & charging port", price: "₹149", rating: 4.9, jobs: 2110, popular: true },
+  ac_install: { subtitle: "Split & window AC setup", price: "₹599", rating: 4.8, jobs: 410, popular: false },
+  cctv_install: { subtitle: "Setup security cameras & DVR", price: "₹499", rating: 4.7, jobs: 180, popular: false },
+  ro_install: { subtitle: "Filter swap & water purifier setup", price: "₹299", rating: 4.9, jobs: 650, popular: true },
+  inverter_install: { subtitle: "Home power backup setup", price: "₹499", rating: 4.8, jobs: 230, popular: false },
+  fan_install: { subtitle: "Ceiling & wall fan mounting", price: "₹99", rating: 4.7, jobs: 1100, popular: false },
+  lock_install: { subtitle: "Secure door lock replacement", price: "₹149", rating: 4.8, jobs: 340, popular: false },
+  furniture: { subtitle: "Bed, wardrobe & desk assembly", price: "₹399", rating: 4.9, jobs: 310, popular: false },
+  sofa_clean: { subtitle: "Deep vacuum & shampoo clean", price: "₹299", rating: 4.8, jobs: 730, popular: false },
+  bathroom_clean: { subtitle: "Acid cleaning & disinfection", price: "₹199", rating: 4.9, jobs: 1250, popular: true },
+  water_tank_clean: { subtitle: "Hygienic tank sanitation", price: "₹499", rating: 4.7, jobs: 280, popular: false },
+  carpet_clean: { subtitle: "Remove dust & stains", price: "₹199", rating: 4.8, jobs: 410, popular: false },
+  kitchen_clean: { subtitle: "Degrease tiles, chimney & slabs", price: "₹599", rating: 4.9, jobs: 680, popular: false },
+  home_clean: { subtitle: "Full house deep scrubbing", price: "₹1499", rating: 4.9, jobs: 940, popular: true },
+  pest_control: { subtitle: "Cockroach, bedbug & termite spray", price: "₹499", rating: 4.8, jobs: 820, popular: false },
+  electric_wiring: { subtitle: "Short circuit & rewiring work", price: "₹999", rating: 4.9, jobs: 540, popular: false },
+  plumbing_work: { subtitle: "Leakages, blockages & fittings", price: "₹99", rating: 4.8, jobs: 1670, popular: true },
+  furniture_repair: { subtitle: "Wood repairs & hinges fixing", price: "₹149", rating: 4.7, jobs: 450, popular: false },
+  painting: { subtitle: "Wall paint & touch-ups", price: "₹1999", rating: 4.8, jobs: 290, popular: false },
+};
+
+// Custom category presentation visuals
+const categoryVisuals = {
+  repair: {
+    img: "https://images.unsplash.com/photo-1621905251189-08b45d6a269e?q=80&w=400&auto=format&fit=crop",
+    gradient: "from-blue-600/90 to-indigo-700/90",
+  },
+  installation: {
+    img: "https://images.unsplash.com/photo-1581539250439-c96689b516dd?q=80&w=400&auto=format&fit=crop",
+    gradient: "from-indigo-600/90 to-purple-700/90",
+  },
+  cleaning: {
+    img: "https://images.unsplash.com/photo-1527515637462-cff94eecc1ac?q=80&w=400&auto=format&fit=crop",
+    gradient: "from-cyan-600/90 to-blue-700/90",
+  },
+  other: {
+    img: "https://images.unsplash.com/photo-1504328345606-18bbc8c9d7d1?q=80&w=400&auto=format&fit=crop",
+    gradient: "from-slate-700/90 to-slate-900/90",
+  },
+};
+
+// Location-specific popular services mock data mapping
+const locationPopularMap = {
+  Madanapalle: ['ro_install', 'ac_repair', 'home_clean', 'plumbing_work'],
+  Kadiri: ['mobile_repair', 'electric_wiring', 'sofa_clean', 'washing_machine'],
+  Rayachoty: ['refrigerator', 'bathroom_clean', 'cctv_install', 'tv_repair'],
+  Galiveedu: ['laptop_repair', 'furniture', 'pest_control', 'fan_install']
+};
+
+const LoadingSkeleton = () => (
+  <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-32 pb-24 space-y-12 animate-pulse text-white">
+    {/* Navbar Skeleton */}
+    <div className="h-16 bg-white/5 border border-white/10 rounded-[2rem] w-full mb-12"></div>
+    {/* Welcome & Welcome Search Skeleton */}
+    <div className="space-y-4 max-w-xl mx-auto text-center">
+      <div className="h-4 bg-white/5 rounded-full w-24 mx-auto"></div>
+      <div className="h-10 bg-white/5 rounded-2xl w-3/4 mx-auto"></div>
+      <div className="h-14 bg-white/5 rounded-2xl w-full"></div>
+    </div>
+    {/* Category Grid Skeleton */}
+    <div className="grid grid-cols-2 md:grid-cols-4 gap-4 sm:gap-6 pt-8">
+      {[1, 2, 3, 4].map(i => (
+        <div key={i} className="h-32 bg-white/5 border border-white/10 rounded-[2rem]"></div>
+      ))}
+    </div>
+    {/* Carousels Skeleton */}
+    <div className="space-y-4 pt-10">
+      <div className="h-6 bg-white/5 rounded-lg w-1/4"></div>
+      <div className="flex gap-4 overflow-hidden">
+        {[1, 2, 3, 4].map(i => (
+          <div key={i} className="h-60 bg-white/5 border border-white/10 rounded-[2rem] w-64 shrink-0"></div>
+        ))}
+      </div>
+    </div>
+  </div>
+);
 
 const Home = () => {
   const navigate = useNavigate();
-  const { user } = useAuth();
+  const { user, logout } = useAuth();
   const location = useLocation();
+  const [loading, setLoading] = useState(true);
   const [showAuthModal, setShowAuthModal] = useState(false);
   const [postAuthAction, setPostAuthAction] = useState(null);
   const [highlightPricing, setHighlightPricing] = useState(false);
+  const [activeCategory, setActiveCategory] = useState(globalCategories[0].id);
+  const [services, setServices] = useState(globalServices);
 
+  // Custom Sticky Shell elements state
+  const [selectedLocation, setSelectedLocation] = useState(() => {
+    return localStorage.getItem('fixvo_selected_location') || 'Madanapalle';
+  });
+  const [isLocationDropdownOpen, setIsLocationDropdownOpen] = useState(false);
+  const [isProfileMenuOpen, setIsProfileMenuOpen] = useState(false);
+  const [isSearchFocused, setIsSearchFocused] = useState(false);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [isListening, setIsListening] = useState(false);
+  const [searchHistory, setSearchHistory] = useState(() => {
+    try {
+      return JSON.parse(localStorage.getItem('fixvo_search_history')) || [];
+    } catch {
+      return [];
+    }
+  });
+
+  const locationRef = useRef(null);
+  const profileRef = useRef(null);
+  const searchRef = useRef(null);
+
+  // Initialize and simulate skeleton screen
+  useEffect(() => {
+    getDbServices().then((dbServices) => {
+      setServices(dbServices);
+      setTimeout(() => setLoading(false), 1200); // Premium skeleton loader timer
+    });
+  }, []);
+
+  // Scroll logic for #pricing hash anchor
   useEffect(() => {
     if (location.hash === '#pricing') {
       setHighlightPricing(true);
@@ -41,7 +173,30 @@ const Home = () => {
       return () => clearTimeout(timer);
     }
   }, [location.hash]);
-  
+
+  // Click outside listener for custom menus
+  useEffect(() => {
+    const handleClickOutside = (e) => {
+      if (locationRef.current && !locationRef.current.contains(e.target)) {
+        setIsLocationDropdownOpen(false);
+      }
+      if (profileRef.current && !profileRef.current.contains(e.target)) {
+        setIsProfileMenuOpen(false);
+      }
+      if (searchRef.current && !searchRef.current.contains(e.target)) {
+        setIsSearchFocused(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
+
+  // Standard user profiles
+  let role = user?.user_metadata?.role || user?.app_metadata?.role || 'user';
+  if (user?.email?.includes('+admin') || user?.email?.startsWith('admin')) role = 'admin';
+  if (user?.email?.includes('+tech') || user?.email?.startsWith('tech')) role = 'technician';
+  const name = user?.user_metadata?.name || user?.email;
+
   const handleBookingClick = (serviceId = '') => {
     const targetPath = `/dashboard?action=book${serviceId ? `&service=${serviceId}` : ''}`;
     if (user) {
@@ -51,275 +206,792 @@ const Home = () => {
       setShowAuthModal(true);
     }
   };
-  const [activeCategory, setActiveCategory] = useState(globalCategories[0].id);
-  const [services, setServices] = useState(globalServices);
 
-  useEffect(() => {
-    getDbServices().then(setServices);
-  }, []);
+  const handleLogout = async () => {
+    await logout();
+    navigate('/login');
+  };
 
-  const marqueeX = useMotionValue(0);
-  const [isHovered, setIsHovered] = useState(false);
-  const [isDragging, setIsDragging] = useState(false);
-  const [wrapWidth, setWrapWidth] = useState(1032);
+  const getDashboardLink = () => {
+    if (!user) return '/';
+    if (role === 'admin') return '/admin-dashboard';
+    if (role === 'technician') return '/technician-dashboard';
+    return '/dashboard';
+  };
 
-  useEffect(() => {
-    const handleResize = () => {
-      const cardWidth = window.innerWidth < 640 ? 324 : 344;
-      setWrapWidth(cardWidth * 4);
+  // Autocomplete Suggestions logic
+  const getSuggestions = () => {
+    if (!searchQuery.trim()) return null;
+    const q = searchQuery.toLowerCase();
+    
+    const matchedCategories = globalCategories.filter(c => 
+      c.name.toLowerCase().includes(q)
+    );
+
+    const matchedServices = services
+      .map(s => ({ ...s, ...(serviceDetails[s.id] || {}) }))
+      .filter(s => s.name.toLowerCase().includes(q));
+
+    const matchedAreas = ['Madanapalle', 'Kadiri', 'Rayachoty', 'Galiveedu'].filter(a =>
+      a.toLowerCase().includes(q)
+    );
+
+    const mockTechs = [
+      { id: 'tech_1', name: "Amit Verma", rating: "4.9", area: "Madanapalle" },
+      { id: 'tech_2', name: "Suresh Kumar", rating: "4.8", area: "Kadiri" },
+      { id: 'tech_3', name: "Rajesh Reddy", rating: "4.9", area: "Rayachoty" },
+      { id: 'tech_4', name: "Kalyan Naidu", rating: "4.7", area: "Galiveedu" },
+    ];
+    const matchedTechs = mockTechs.filter(t => t.name.toLowerCase().includes(q));
+
+    return {
+      categories: matchedCategories,
+      services: matchedServices,
+      areas: matchedAreas,
+      technicians: matchedTechs
     };
-    handleResize();
-    window.addEventListener('resize', handleResize);
-    return () => window.removeEventListener('resize', handleResize);
-  }, []);
+  };
 
-  useAnimationFrame(() => {
-    let currentX = marqueeX.get();
-    if (isHovered || isDragging) {
-      if (currentX < -wrapWidth * 2) {
-        marqueeX.set(currentX + wrapWidth);
-      } else if (currentX > 0) {
-        marqueeX.set(currentX - wrapWidth);
-      }
+  const suggestions = getSuggestions();
+  const hasSuggestions = suggestions && (
+    suggestions.categories.length > 0 ||
+    suggestions.services.length > 0 ||
+    suggestions.areas.length > 0 ||
+    suggestions.technicians.length > 0
+  );
+
+  const handleSearchSelect = (query, type, valueId = '') => {
+    let history = [query, ...searchHistory.filter(h => h !== query)].slice(0, 5);
+    setSearchHistory(history);
+    localStorage.setItem('fixvo_search_history', JSON.stringify(history));
+    setIsSearchFocused(false);
+    setSearchQuery('');
+
+    if (type === 'service') {
+      handleBookingClick(valueId);
+    } else if (type === 'category') {
+      setActiveCategory(valueId);
+      const el = document.getElementById('explore-services');
+      if (el) el.scrollIntoView({ behavior: 'smooth' });
+    } else if (type === 'area') {
+      setSelectedLocation(query);
+      localStorage.setItem('fixvo_selected_location', query);
+    } else if (type === 'technician') {
+      window.location.href = `/dashboard?action=book&techId=${valueId}&service=mobile_repair`;
+    }
+  };
+
+  const removeHistoryItem = (e, queryToRemove) => {
+    e.stopPropagation();
+    const updated = searchHistory.filter(h => h !== queryToRemove);
+    setSearchHistory(updated);
+    localStorage.setItem('fixvo_search_history', JSON.stringify(updated));
+  };
+
+  const clearHistory = (e) => {
+    e.stopPropagation();
+    setSearchHistory([]);
+    localStorage.setItem('fixvo_search_history', JSON.stringify([]));
+  };
+
+  // Voice speech simulation & API execution
+  const handleVoiceSearch = () => {
+    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+    if (!SpeechRecognition) {
+      setIsListening(true);
+      setTimeout(() => {
+        setSearchQuery("AC Repair");
+        setIsListening(false);
+        setIsSearchFocused(true);
+      }, 1800);
       return;
     }
     
-    currentX -= 0.8; // Butter-smooth slow scrolling marquee
-    if (currentX <= -wrapWidth) {
-      currentX += wrapWidth;
-    }
-    marqueeX.set(currentX);
-  });
+    const recognition = new SpeechRecognition();
+    recognition.lang = 'en-US';
+    recognition.interimResults = false;
+    recognition.maxAlternatives = 1;
+
+    setIsListening(true);
+    recognition.start();
+
+    recognition.onresult = (event) => {
+      const speechResult = event.results[0][0].transcript;
+      setSearchQuery(speechResult);
+      setIsSearchFocused(true);
+    };
+    recognition.onerror = () => setIsListening(false);
+    recognition.onend = () => setIsListening(false);
+  };
+
+  // Horizontal Scrolling Service Carousel Sub-Component
+  const ServiceCarousel = ({ title, subtitle, items }) => {
+    const scrollRef = useRef(null);
+
+    const scroll = (direction) => {
+      if (scrollRef.current) {
+        const { scrollLeft, clientWidth } = scrollRef.current;
+        const scrollTo = direction === 'left' 
+          ? scrollLeft - clientWidth * 0.75 
+          : scrollLeft + clientWidth * 0.75;
+        scrollRef.current.scrollTo({ left: scrollTo, behavior: 'smooth' });
+      }
+    };
+
+    if (!items || items.length === 0) return null;
+
+    return (
+      <div className="relative group/carousel py-8 border-b border-white/5 last:border-0">
+        <div className="flex justify-between items-end mb-6 px-4 md:px-0">
+          <div>
+            <h3 className="text-xl sm:text-2xl font-black text-white tracking-tight flex items-center gap-2">
+              {title}
+            </h3>
+            {subtitle && <p className="text-xs sm:text-sm text-slate-400 font-semibold mt-1">{subtitle}</p>}
+          </div>
+          
+          <div className="hidden sm:flex gap-2 opacity-0 group-hover/carousel:opacity-100 transition-opacity duration-300">
+            <button 
+              onClick={() => scroll('left')}
+              className="w-10 h-10 rounded-full bg-white/5 border border-white/10 hover:bg-white/10 text-slate-400 hover:text-white flex items-center justify-center transition active:scale-95 cursor-pointer"
+            >
+              <ChevronRight className="rotate-180 w-5 h-5" />
+            </button>
+            <button 
+              onClick={() => scroll('right')}
+              className="w-10 h-10 rounded-full bg-white/5 border border-white/10 hover:bg-white/10 text-slate-400 hover:text-white flex items-center justify-center transition active:scale-95 cursor-pointer"
+            >
+              <ChevronRight className="w-5 h-5" />
+            </button>
+          </div>
+        </div>
+
+        <div 
+          ref={scrollRef}
+          className="flex overflow-x-auto gap-4 sm:gap-6 pb-6 snap-x snap-mandatory scroll-smooth hide-scrollbar px-4 md:px-0"
+        >
+          {items.map((service, idx) => {
+            const details = serviceDetails[service.id] || {};
+            const rating = details.rating || 4.8;
+            const jobs = details.jobs || 150;
+            const price = details.price || "₹99";
+            const subtitleText = details.subtitle || "Expert service on demand";
+            const popular = details.popular || false;
+            const Icon = service.icon || Sparkles;
+
+            return (
+              <motion.div
+                key={service.id}
+                initial={{ opacity: 0, scale: 0.95 }}
+                whileInView={{ opacity: 1, scale: 1 }}
+                viewport={{ once: true }}
+                transition={{ duration: 0.4, delay: Math.min(idx * 0.05, 0.3) }}
+                whileHover={{ y: -8, transition: { duration: 0.2 } }}
+                className="group/card shrink-0 snap-start bg-white/[0.02] hover:bg-white/[0.05] border border-white/5 hover:border-blue-500/40 rounded-[2rem] overflow-hidden flex flex-col justify-between w-[290px] h-[370px] transition-all duration-300 shadow-[0_8px_32px_0_rgba(0,0,0,0.3)] relative"
+              >
+                {popular && (
+                  <div className="absolute top-3 left-3 bg-gradient-to-r from-blue-600 to-indigo-600 text-white text-[9px] font-black uppercase tracking-widest px-2.5 py-1 rounded-full z-20 shadow-md">
+                    Popular
+                  </div>
+                )}
+                
+                <div className="relative h-[150px] overflow-hidden shrink-0">
+                  <img 
+                    src={service.img} 
+                    alt={service.name} 
+                    loading="lazy"
+                    className="w-full h-full object-cover transition-transform duration-700 group-hover/card:scale-110" 
+                  />
+                  <div className="absolute inset-0 bg-gradient-to-t from-[#0B0F19] via-transparent to-transparent"></div>
+                  <div className="absolute bottom-3 right-3 bg-slate-900/90 backdrop-blur-md px-2.5 py-1 rounded-lg text-xs font-black text-cyan-400 border border-white/5">
+                    Starting {price}
+                  </div>
+                </div>
+
+                <div className="p-5 flex-grow flex flex-col justify-between">
+                  <div>
+                    <div className="flex items-center gap-2 mb-2">
+                      <div className="w-8 h-8 rounded-lg bg-blue-500/10 border border-blue-500/20 flex items-center justify-center text-blue-400">
+                        <Icon size={16} />
+                      </div>
+                      <h4 className="font-extrabold text-sm text-white group-hover/card:text-blue-400 transition truncate max-w-[180px]">{service.name}</h4>
+                    </div>
+                    <p className="text-xs text-slate-400 line-clamp-2 leading-relaxed mb-3">
+                      {subtitleText}
+                    </p>
+                  </div>
+
+                  <div>
+                    <div className="flex items-center gap-1.5 text-xs text-slate-400 mb-4 font-semibold">
+                      <span className="flex items-center text-amber-400">
+                        <Star size={12} className="fill-current mr-0.5" />
+                        {rating}
+                      </span>
+                      <span>•</span>
+                      <span>{jobs} completed jobs</span>
+                    </div>
+
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleBookingClick(service.id);
+                      }}
+                      className="w-full py-3 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white text-xs font-black uppercase tracking-wider rounded-xl transition duration-200 cursor-pointer shadow-lg active:scale-95"
+                    >
+                      Quick Book
+                    </button>
+                  </div>
+                </div>
+              </motion.div>
+            );
+          })}
+        </div>
+      </div>
+    );
+  };
+
+  // Helper to extract services by IDs
+  const getServicesByIds = (ids) => {
+    return ids.map(id => services.find(s => s.id === id)).filter(Boolean);
+  };
+
+  if (loading) {
+    return (
+      <div className="w-full min-h-screen bg-[#0B0F19]">
+        <LoadingSkeleton />
+      </div>
+    );
+  }
+
+  const popularNearYouIds = locationPopularMap[selectedLocation] || locationPopularMap.Madanapalle;
 
   return (
     <div className="relative w-full min-h-screen bg-[#0B0F19] text-white overflow-x-hidden font-sans">
       {/* Background Gradients */}
-      <div className="absolute top-[-5%] left-[-10%] w-[70%] h-[50%] bg-blue-600/20 rounded-full blur-[120px] pointer-events-none"></div>
+      <div className="absolute top-[-5%] left-[-10%] w-[70%] h-[50%] bg-blue-600/15 rounded-full blur-[120px] pointer-events-none"></div>
       <div className="absolute top-[15%] right-[-10%] w-[60%] h-[60%] bg-purple-600/10 rounded-full blur-[120px] pointer-events-none"></div>
 
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-32 lg:pt-40 pb-24 relative z-10">
-        
-        {/* Hero Section */}
-        <div className="flex flex-col lg:flex-row items-center gap-12 lg:gap-16">
-          
-          <motion.div 
-            initial={{ opacity: 0, y: 30 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.8, ease: "easeOut" }}
-            className="w-full lg:w-1/2 space-y-6 lg:space-y-8 text-center lg:text-left"
-          >
-            <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-white/5 border border-white/10 backdrop-blur-sm shadow-sm select-none mx-auto lg:mx-0">
-              <span className="flex h-2.5 w-2.5 rounded-full bg-emerald-500 animate-pulse"></span>
-              <span className="text-[10px] sm:text-xs font-bold text-emerald-400 uppercase tracking-widest">30-Minute Arrival Guarantee</span>
+      {/* 1. CUSTOM PREMIUM STICKY HEADER */}
+      <div className="sticky top-4 inset-x-0 z-50 flex justify-center px-4 pointer-events-none">
+        <nav className="relative pointer-events-auto bg-[#0B0F19]/70 backdrop-blur-2xl border border-white/10 shadow-[0_8px_30px_rgb(0,0,0,0.3)] rounded-[2rem] w-full max-w-5xl transition-all duration-500">
+          <div className="px-4 sm:px-6">
+            <div className="flex justify-between items-center h-16 sm:h-20">
+              
+              {/* Logo & Location group */}
+              <div className="flex items-center gap-4">
+                <Link to="/" className="flex items-center gap-1.5 sm:gap-2 group">
+                  <div className="w-8 h-8 sm:w-10 sm:h-10 group-hover:scale-105 group-hover:rotate-3 transition-all duration-300 shadow-lg shadow-blue-500/30 rounded-full overflow-hidden">
+                    <img src={fixvoLogo} alt="Fixvo Logo" className="w-full h-full object-cover scale-110" />
+                  </div>
+                  <span className="font-black text-lg sm:text-2xl tracking-tight bg-clip-text text-transparent bg-gradient-to-r from-blue-400 to-cyan-400">
+                    Fixvo
+                  </span>
+                </Link>
+
+                <div className="h-4 w-[1px] bg-white/10 hidden xs:block"></div>
+
+                {/* Location selector dropdown */}
+                <div ref={locationRef} className="relative hidden xs:block">
+                  <button 
+                    onClick={() => setIsLocationDropdownOpen(!isLocationDropdownOpen)}
+                    className="flex items-center gap-1 px-3 py-1.5 bg-white/5 border border-white/10 rounded-full hover:bg-white/10 transition text-[10px] sm:text-xs font-bold text-slate-300 hover:text-white cursor-pointer select-none"
+                  >
+                    <MapPin size={12} className="text-cyan-400" />
+                    <span>{selectedLocation}</span>
+                    <ChevronDown size={10} className={`transition-transform duration-200 ${isLocationDropdownOpen ? 'rotate-180' : ''}`} />
+                  </button>
+                  {isLocationDropdownOpen && (
+                    <div className="absolute left-0 mt-2 w-44 bg-[#101524]/95 border border-white/10 rounded-2xl shadow-2xl p-2 z-50 overflow-hidden animate-in fade-in slide-in-from-top-2 duration-200">
+                      {['Madanapalle', 'Kadiri', 'Rayachoty', 'Galiveedu'].map((loc) => (
+                        <button
+                          key={loc}
+                          onClick={() => {
+                            setSelectedLocation(loc);
+                            localStorage.setItem('fixvo_selected_location', loc);
+                            setIsLocationDropdownOpen(false);
+                          }}
+                          className={`w-full flex items-center justify-between px-3 py-2 rounded-xl text-[10px] sm:text-xs font-black transition cursor-pointer ${
+                            selectedLocation === loc 
+                              ? 'bg-blue-600/20 text-blue-400 border border-blue-500/20' 
+                              : 'text-slate-400 hover:text-white hover:bg-white/5 border border-transparent'
+                          }`}
+                        >
+                          <span>{loc}</span>
+                          {selectedLocation === loc && <Check size={12} className="text-blue-400" />}
+                        </button>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              {/* Profile, Auth & Notifications */}
+              <div className="flex items-center gap-3">
+                {/* Mobile Location Selector Icon (toggled inside navbar on very narrow viewports) */}
+                <div ref={locationRef} className="relative block xs:hidden">
+                  <button 
+                    onClick={() => setIsLocationDropdownOpen(!isLocationDropdownOpen)}
+                    className="p-2 text-slate-400 hover:text-white rounded-xl hover:bg-white/5 transition"
+                  >
+                    <MapPin size={18} />
+                  </button>
+                  {isLocationDropdownOpen && (
+                    <div className="absolute right-0 mt-2 w-44 bg-[#101524]/95 border border-white/10 rounded-2xl shadow-2xl p-2 z-50 overflow-hidden animate-in fade-in slide-in-from-top-2 duration-200">
+                      {['Madanapalle', 'Kadiri', 'Rayachoty', 'Galiveedu'].map((loc) => (
+                        <button
+                          key={loc}
+                          onClick={() => {
+                            setSelectedLocation(loc);
+                            localStorage.setItem('fixvo_selected_location', loc);
+                            setIsLocationDropdownOpen(false);
+                          }}
+                          className={`w-full flex items-center justify-between px-3 py-2 rounded-xl text-xs font-bold transition ${
+                            selectedLocation === loc 
+                              ? 'bg-blue-600/20 text-blue-400 border border-blue-500/20' 
+                              : 'text-slate-400 hover:text-white hover:bg-white/5 border border-transparent'
+                          }`}
+                        >
+                          <span>{loc}</span>
+                          {selectedLocation === loc && <Check size={12} className="text-blue-400" />}
+                        </button>
+                      ))}
+                    </div>
+                  )}
+                </div>
+
+                {user ? (
+                  <>
+                    <NotificationsBell />
+
+                    {/* Custom Profile Dropdown Menu */}
+                    <div ref={profileRef} className="relative ml-1">
+                      <button
+                        onClick={() => setIsProfileMenuOpen(!isProfileMenuOpen)}
+                        className="w-9 h-9 rounded-full bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 flex items-center justify-center font-bold text-white shadow-lg border border-white/20 transition active:scale-95 cursor-pointer uppercase text-xs"
+                      >
+                        {name ? name[0] : 'U'}
+                      </button>
+                      {isProfileMenuOpen && (
+                        <div className="absolute right-0 mt-3 w-64 bg-[#101524]/95 backdrop-blur-2xl border border-white/10 rounded-2xl shadow-2xl p-4 z-50 text-left animate-in fade-in slide-in-from-top-2 duration-200">
+                          <div className="border-b border-white/10 pb-3 mb-3">
+                            <h4 className="font-extrabold text-xs sm:text-sm text-white truncate">{name?.split('@')[0]}</h4>
+                            <p className="text-[10px] text-slate-400 truncate mt-0.5">{user?.email}</p>
+                            <div className="flex flex-wrap gap-1.5 mt-2.5">
+                              {user?.isPremium && (
+                                <span className="px-1.5 py-0.5 bg-gradient-to-r from-amber-500 to-yellow-400 border border-amber-500 text-[#0B0F19] text-[8px] font-black rounded uppercase tracking-wider shadow-sm">
+                                  Plus
+                                </span>
+                              )}
+                              <span className="px-1.5 py-0.5 bg-blue-500/20 border border-blue-500/30 text-blue-400 text-[8px] font-black rounded uppercase tracking-wider">
+                                {role}
+                              </span>
+                            </div>
+                          </div>
+                          <div className="space-y-1">
+                            <Link
+                              to={getDashboardLink()}
+                              onClick={() => setIsProfileMenuOpen(false)}
+                              className="flex items-center gap-2 px-3 py-2.5 rounded-xl text-xs font-bold text-slate-300 hover:text-white hover:bg-white/5 transition"
+                            >
+                              <LayoutDashboard size={14} />
+                              <span>Dashboard</span>
+                            </Link>
+                            <button
+                              onClick={() => {
+                                setIsProfileMenuOpen(false);
+                                handleLogout();
+                              }}
+                              className="w-full flex items-center gap-2 px-3 py-2.5 rounded-xl text-xs font-bold text-rose-400 hover:text-rose-300 hover:bg-rose-500/10 transition text-left cursor-pointer border-none bg-transparent"
+                            >
+                              <LogOut size={14} />
+                              <span>Log Out</span>
+                            </button>
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  </>
+                ) : (
+                  <>
+                    <Link 
+                      to="/login" 
+                      className="text-slate-400 hover:text-white font-bold transition-colors px-3 py-2 text-xs sm:text-sm"
+                    >
+                      Sign In
+                    </Link>
+                    <Link
+                      to="/signup"
+                      className="bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white px-4 sm:px-5 py-2.5 rounded-xl text-xs sm:text-sm font-black shadow-lg shadow-blue-600/20 hover:shadow-blue-600/40 transition-all duration-300 transform hover:-translate-y-0.5"
+                    >
+                      Join Fixvo
+                    </Link>
+                  </>
+                )}
+              </div>
+
             </div>
-            
-            <h1 className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-extrabold text-white tracking-tight leading-[1.15]">
-              Premium Home Services.<br className="hidden md:block"/>
-              <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-400 via-indigo-400 to-purple-400">
-                On-Demand.
+          </div>
+        </nav>
+      </div>
+
+      <div className="max-w-5xl mx-auto px-4 pb-24 relative z-10">
+        
+        {/* 2. HERO & SMART SEARCH BAR SECTION */}
+        <section className="pt-12 md:pt-20 pb-16 text-center max-w-3xl mx-auto relative z-10">
+          <motion.div 
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.6 }}
+            className="space-y-6"
+          >
+            <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-white/5 border border-white/10 backdrop-blur-sm shadow-sm select-none">
+              <span className="flex h-2.5 w-2.5 rounded-full bg-emerald-500 animate-pulse"></span>
+              <span className="text-[10px] sm:text-xs font-bold text-emerald-400 uppercase tracking-widest">30-Minute Dispatch Guarantee</span>
+            </div>
+
+            <h1 className="text-4xl sm:text-5xl md:text-6xl font-black text-white tracking-tight leading-[1.1]">
+              Premium Home Services,<br />
+              <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-400 via-indigo-400 to-cyan-400">
+                At Your Command.
               </span>
             </h1>
-            
-            <p className="text-lg sm:text-xl text-slate-400 max-w-xl mx-auto lg:mx-0 leading-relaxed font-medium">
-              Experience hassle-free repairs, expert installations, and deep cleaning. Verified technicians, transparent upfront pricing, and a 30-Minute Arrival Guarantee.
+
+            <p className="text-slate-400 text-sm sm:text-base max-w-xl mx-auto leading-relaxed">
+              Explore hassle-free repairs, custom installations, and deep cleaning services. Background-verified experts, transparent quotes, and absolute safety.
             </p>
-            
-            <div className="flex flex-col sm:flex-row gap-4 pt-2 lg:pt-4 justify-center lg:justify-start w-full sm:w-auto">
-              <button
-                onClick={() => handleBookingClick()}
-                className="group relative px-6 sm:px-8 py-4 bg-gradient-to-r from-blue-600 to-indigo-600 text-white font-bold rounded-2xl shadow-xl shadow-blue-900/30 hover:shadow-blue-600/40 transition-all duration-300 flex items-center justify-center gap-2 transform hover:-translate-y-1 w-full sm:w-auto text-center border-none cursor-pointer outline-none font-sans"
-              >
-                <span className="relative z-10 text-lg">Book Service</span>
-                <ChevronRight className="relative z-10 w-5 h-5 group-hover:translate-x-1 transition-transform" />
-              </button>
-              <a
-                href="tel:+919515980170"
-                className="px-6 sm:px-8 py-4 bg-white/5 backdrop-blur-md text-white font-bold rounded-2xl border border-white/10 shadow-sm hover:bg-white/10 transition-all duration-300 flex items-center justify-center gap-2 transform hover:-translate-y-1 w-full sm:w-auto"
-              >
-                <span>📞 Call Now</span>
-              </a>
-            </div>
-          </motion.div>
-          
-          <motion.div 
-            initial={{ opacity: 0, scale: 0.95 }}
-            animate={{ opacity: 1, scale: 1 }}
-            transition={{ duration: 0.8, delay: 0.2 }}
-            className="w-full lg:w-1/2 relative mt-8 lg:mt-0"
-          >
-            {/* Main Image Grid / Collage */}
-            <div className="relative rounded-[2rem] p-2 bg-gradient-to-br from-white/10 to-white/5 border border-white/10 backdrop-blur-xl">
-              <div className="grid grid-cols-2 gap-2 h-[350px] sm:h-[450px] md:h-[500px]">
-                <img 
-                  src="https://images.unsplash.com/photo-1621245645300-305f69e96f13?q=80&w=600&auto=format&fit=crop" 
-                  alt="AC Repair" 
-                  className="rounded-[1.5rem] w-full h-full object-cover col-span-1 row-span-2"
-                />
-                <img 
-                  src="https://images.unsplash.com/photo-1621905251189-08b45d6a269e?q=80&w=600&auto=format&fit=crop" 
-                  alt="Electrician" 
-                  className="rounded-[1.5rem] w-full h-full object-cover"
-                />
-                <img 
-                  src="https://images.unsplash.com/photo-1585704032915-c3400ca199e7?q=80&w=600&auto=format&fit=crop" 
-                  alt="Plumbing" 
-                  className="rounded-[1.5rem] w-full h-full object-cover"
-                />
-              </div>
-              
-              {/* Floating UI Elements */}
-              <div className="absolute top-4 sm:top-10 -left-2 sm:-left-6 bg-[#1A2235]/90 backdrop-blur-md p-3 sm:p-4 rounded-xl sm:rounded-2xl shadow-2xl border border-white/10 flex items-center gap-3 sm:gap-4 animate-[bounce_4s_infinite]">
-                <div className="w-8 h-8 sm:w-12 sm:h-12 bg-blue-500/20 rounded-full flex items-center justify-center text-blue-400">
-                  <Banknote size={18} className="sm:w-6 sm:h-6" />
-                </div>
-                <div>
-                  <p className="text-[10px] sm:text-xs font-bold text-slate-400 uppercase tracking-wider">Transparent</p>
-                  <p className="font-extrabold text-white text-xs sm:text-sm">Approve Quote First</p>
-                </div>
-              </div>
-              
-              <div className="absolute bottom-6 sm:bottom-12 -right-2 sm:-right-8 bg-[#1A2235]/95 backdrop-blur-md p-3 sm:p-4 rounded-xl sm:rounded-2xl shadow-2xl border border-white/10 flex items-center gap-3 sm:gap-4 animate-[bounce_5s_infinite_reverse]">
-                <div className="w-8 h-8 sm:w-12 sm:h-12 bg-emerald-500/20 rounded-full flex items-center justify-center text-emerald-400">
-                  <ShieldCheck size={18} className="sm:w-6 sm:h-6" />
-                </div>
-                <div className="text-left">
-                  <p className="text-[10px] sm:text-xs font-bold text-slate-400 uppercase tracking-wider">Trust</p>
-                  <p className="font-extrabold text-white text-xs sm:text-sm">Background Verified</p>
-                </div>
-              </div>
-            </div>
-          </motion.div>
-        </div>
 
-        {/* Quick Service Selection - Horizontal Interactive Carousel */}
-        <div className="mt-24 sm:mt-32 relative z-10" id="services">
-          <div className="text-center mb-8 sm:mb-12 px-4">
-            <h2 className="text-3xl sm:text-4xl md:text-5xl font-extrabold text-white mb-4">Explore Our Premium Services</h2>
-            <p className="text-base sm:text-lg text-slate-400 max-w-2xl mx-auto">Select a category to view services and book a verified professional instantly.</p>
-          </div>
-          
-          {/* Categories Tabs - Horizontal Scroll on Mobile */}
-          <div className="flex overflow-x-auto hide-scrollbar gap-3 mb-8 px-4 sm:px-0 sm:justify-center snap-x snap-mandatory">
-            {globalCategories.map((cat) => (
-              <button
-                key={cat.id}
-                onClick={() => setActiveCategory(cat.id)}
-                className={`flex-shrink-0 snap-center flex items-center gap-2 px-5 py-3 rounded-full font-bold transition-all duration-300 ${
-                  activeCategory === cat.id 
-                    ? 'bg-gradient-to-r from-blue-600 to-indigo-600 text-white shadow-lg shadow-blue-600/30 border-transparent' 
-                    : 'bg-white/5 text-slate-400 border border-white/10 hover:bg-white/10 hover:text-white'
-                }`}
-              >
-                <cat.icon size={18} />
-                <span>{cat.name}</span>
-              </button>
-            ))}
-          </div>
+            {/* Premium Smart Search Container */}
+            <div ref={searchRef} className="relative max-w-2xl mx-auto pt-4">
+              <div className="relative flex items-center bg-white/[0.03] border border-white/10 focus-within:border-blue-500/50 hover:border-white/20 rounded-2xl p-1 transition shadow-xl backdrop-blur-md">
+                <Search className="text-slate-500 w-5 h-5 ml-4 shrink-0" />
+                <input 
+                  type="text"
+                  placeholder="Search Repair, Installation, Cleaning or Home Services..."
+                  value={searchQuery}
+                  onFocus={() => setIsSearchFocused(true)}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  className="w-full bg-transparent border-0 pl-3 pr-4 py-3 text-white text-xs sm:text-sm font-semibold outline-none focus:ring-0 placeholder:text-slate-500"
+                />
+                
+                {searchQuery && (
+                  <button 
+                    onClick={() => setSearchQuery('')}
+                    className="p-2 text-slate-400 hover:text-white rounded-lg transition mr-1"
+                  >
+                    <X size={16} />
+                  </button>
+                )}
 
-          {/* Horizontal Swiper for Services */}
-          <div className="relative px-4 sm:px-0">
-            <motion.div 
-              key={activeCategory}
-              initial={{ opacity: 0, x: 20 }}
-              animate={{ opacity: 1, x: 0 }}
-              transition={{ duration: 0.4 }}
-              className="flex overflow-x-auto gap-4 sm:gap-6 pb-8 snap-x snap-mandatory scroll-smooth hide-scrollbar custom-scrollbar-hide"
-            >
-              {services.filter(s => s.categoryId === activeCategory).map((service, idx) => (
-                <motion.div 
-                  key={service.id}
-                  initial={{ opacity: 0, scale: 0.95 }}
-                  animate={{ opacity: 1, scale: 1 }}
-                  transition={{ duration: 0.4, delay: idx * 0.05 }}
-                  onClick={() => handleBookingClick(service.id)}
-                  className="group cursor-pointer rounded-[2rem] overflow-hidden relative h-[340px] sm:h-[380px] w-[82vw] xs:w-[72vw] sm:w-[320px] shrink-0 snap-start shadow-2xl border border-white/10 hover:border-blue-500/50 transition-all"
+                <button 
+                  onClick={handleVoiceSearch}
+                  className="p-2.5 bg-white/5 border border-white/10 hover:bg-white/10 text-cyan-400 hover:text-cyan-300 rounded-xl transition cursor-pointer mr-1"
+                  title="Voice Search"
                 >
-                  <div className="absolute inset-0 bg-gradient-to-t from-[#0B0F19] via-[#0B0F19]/60 to-transparent z-10 transition-opacity duration-300 group-hover:opacity-80"></div>
-                  <img src={service.img} alt={service.name} className="absolute inset-0 w-full h-full object-cover transform group-hover:scale-110 transition-transform duration-700" />
-                  <div className="absolute bottom-0 left-0 w-full p-6 z-20 flex flex-col justify-end h-full">
-                    <div className="w-12 h-12 rounded-2xl bg-white/10 backdrop-blur-md border border-white/20 flex items-center justify-center mb-4 text-white shadow-lg group-hover:bg-blue-600 transition-colors duration-300">
-                      <service.icon size={24} />
+                  <Mic size={16} />
+                </button>
+              </div>
+
+              {/* Suggestions Panel */}
+              <AnimatePresence>
+                {isSearchFocused && (
+                  <motion.div 
+                    initial={{ opacity: 0, y: 10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, y: 10 }}
+                    transition={{ duration: 0.2 }}
+                    className="absolute left-0 right-0 mt-3 bg-[#101524]/98 border border-white/10 backdrop-blur-xl rounded-2xl shadow-2xl p-4 z-40 text-left overflow-hidden max-h-[420px] overflow-y-auto"
+                  >
+                    
+                    {/* Empty Query: Show History & Popular tags */}
+                    {!searchQuery.trim() && (
+                      <div className="space-y-5">
+                        {searchHistory.length > 0 && (
+                          <div>
+                            <div className="flex justify-between items-center text-[10px] font-black uppercase tracking-wider text-slate-500 mb-2">
+                              <span className="flex items-center gap-1"><History size={11} /> Search History</span>
+                              <button onClick={clearHistory} className="hover:text-white cursor-pointer bg-transparent border-0">Clear All</button>
+                            </div>
+                            <div className="space-y-1">
+                              {searchHistory.map((item, i) => (
+                                <div 
+                                  key={i} 
+                                  onClick={() => handleSearchSelect(item, 'service', services.find(s => s.name === item)?.id || '')}
+                                  className="flex justify-between items-center px-3 py-2 rounded-xl text-slate-300 hover:text-white hover:bg-white/5 transition cursor-pointer text-xs font-semibold"
+                                >
+                                  <span>{item}</span>
+                                  <button 
+                                    onClick={(e) => removeHistoryItem(e, item)}
+                                    className="p-1 text-slate-500 hover:text-rose-400 transition"
+                                  >
+                                    <X size={12} />
+                                  </button>
+                                </div>
+                              ))}
+                            </div>
+                          </div>
+                        )}
+
+                        <div>
+                          <p className="text-[10px] font-black uppercase tracking-wider text-slate-500 flex items-center gap-1 mb-2">
+                            <Sparkles size={11} className="text-cyan-400" /> Popular Searches
+                          </p>
+                          <div className="flex flex-wrap gap-2">
+                            {["AC Repair", "Washing Machine Repair", "Bathroom Deep Cleaning", "Electrician", "RO Installation"].map((pop, i) => (
+                              <button
+                                key={i}
+                                onClick={() => handleSearchSelect(pop, 'service', services.find(s => s.name.toLowerCase() === pop.toLowerCase())?.id || '')}
+                                className="px-3.5 py-1.5 bg-white/5 border border-white/5 hover:border-blue-500/20 text-slate-300 hover:text-white hover:bg-blue-600/10 text-xs font-bold rounded-full transition cursor-pointer"
+                              >
+                                {pop}
+                              </button>
+                            ))}
+                          </div>
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Autocomplete active suggestion categories */}
+                    {searchQuery.trim() && (
+                      <div className="space-y-4">
+                        {hasSuggestions ? (
+                          <>
+                            {suggestions.services.length > 0 && (
+                              <div>
+                                <p className="text-[10px] font-black uppercase tracking-wider text-slate-500 mb-1.5">Services</p>
+                                <div className="space-y-0.5">
+                                  {suggestions.services.map(s => (
+                                    <button
+                                      key={s.id}
+                                      onClick={() => handleSearchSelect(s.name, 'service', s.id)}
+                                      className="w-full text-left px-3 py-2 rounded-xl text-slate-300 hover:text-white hover:bg-white/5 flex items-center justify-between text-xs font-bold transition cursor-pointer"
+                                    >
+                                      <span>{s.name}</span>
+                                      <span className="text-[10px] font-black text-cyan-400 px-2 py-0.5 rounded bg-cyan-500/10 border border-cyan-500/20 uppercase tracking-wide">Starting {s.price}</span>
+                                    </button>
+                                  ))}
+                                </div>
+                              </div>
+                            )}
+
+                            {suggestions.categories.length > 0 && (
+                              <div>
+                                <p className="text-[10px] font-black uppercase tracking-wider text-slate-500 mb-1.5">Categories</p>
+                                <div className="space-y-0.5">
+                                  {suggestions.categories.map(c => (
+                                    <button
+                                      key={c.id}
+                                      onClick={() => handleSearchSelect(c.name, 'category', c.id)}
+                                      className="w-full text-left px-3 py-2 rounded-xl text-slate-300 hover:text-white hover:bg-white/5 flex items-center gap-2 text-xs font-bold transition cursor-pointer"
+                                    >
+                                      <Sparkles size={12} className="text-indigo-400" />
+                                      <span>{c.name}</span>
+                                    </button>
+                                  ))}
+                                </div>
+                              </div>
+                            )}
+
+                            {suggestions.areas.length > 0 && (
+                              <div>
+                                <p className="text-[10px] font-black uppercase tracking-wider text-slate-500 mb-1.5">Locations</p>
+                                <div className="space-y-0.5">
+                                  {suggestions.areas.map(a => (
+                                    <button
+                                      key={a}
+                                      onClick={() => handleSearchSelect(a, 'area')}
+                                      className="w-full text-left px-3 py-2 rounded-xl text-slate-300 hover:text-white hover:bg-white/5 flex items-center gap-2 text-xs font-bold transition cursor-pointer"
+                                    >
+                                      <MapPin size={12} className="text-cyan-400" />
+                                      <span>{a}</span>
+                                    </button>
+                                  ))}
+                                </div>
+                              </div>
+                            )}
+
+                            {suggestions.technicians.length > 0 && (
+                              <div>
+                                <p className="text-[10px] font-black uppercase tracking-wider text-slate-500 mb-1.5">Online Technicians</p>
+                                <div className="space-y-0.5">
+                                  {suggestions.technicians.map(t => (
+                                    <button
+                                      key={t.id}
+                                      onClick={() => handleSearchSelect(t.name, 'technician', t.id)}
+                                      className="w-full text-left px-3 py-2 rounded-xl text-slate-300 hover:text-white hover:bg-white/5 flex items-center justify-between text-xs font-bold transition cursor-pointer"
+                                    >
+                                      <div className="flex items-center gap-2">
+                                        <div className="w-5 h-5 rounded-full bg-slate-900 border border-white/10 flex items-center justify-center text-[10px]">👨‍🔧</div>
+                                        <span>{t.name}</span>
+                                      </div>
+                                      <span className="text-[10px] text-slate-400">{t.rating} ★ • {t.area}</span>
+                                    </button>
+                                  ))}
+                                </div>
+                              </div>
+                            )}
+                          </>
+                        ) : (
+                          <div className="py-6 text-center text-xs text-slate-500 font-semibold italic">
+                            No matching services, categories, or technicians found for "{searchQuery}"
+                          </div>
+                        )}
+                      </div>
+                    )}
+                  </motion.div>
+                )}
+              </AnimatePresence>
+            </div>
+          </motion.div>
+        </section>
+
+        {/* 3. CATEGORY GRID */}
+        <section className="mt-8 mb-16 px-4 md:px-0">
+          <div className="mb-8 text-center">
+            <h2 className="text-2xl sm:text-4xl font-extrabold text-white">Explore Categories</h2>
+            <p className="text-slate-400 text-sm mt-2 max-w-xl mx-auto">Select a category to quickly discover available home maintenance solutions.</p>
+          </div>
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4 sm:gap-6">
+            {globalCategories.map((cat) => {
+              const visual = categoryVisuals[cat.id] || categoryVisuals.other;
+              const CatIcon = cat.icon || Sparkles;
+              return (
+                <motion.button
+                  key={cat.id}
+                  onClick={() => {
+                    setActiveCategory(cat.id);
+                    const el = document.getElementById('explore-services');
+                    if (el) el.scrollIntoView({ behavior: 'smooth' });
+                  }}
+                  whileHover={{ scale: 1.03, y: -4 }}
+                  whileTap={{ scale: 0.98 }}
+                  className="relative h-32 sm:h-40 rounded-[2rem] overflow-hidden group border border-white/5 hover:border-blue-500/30 transition-all duration-300 text-left shadow-lg cursor-pointer w-full"
+                >
+                  <img 
+                    src={visual.img} 
+                    alt={cat.name} 
+                    className="absolute inset-0 w-full h-full object-cover group-hover:scale-110 transition-transform duration-700 opacity-60"
+                  />
+                  <div className={`absolute inset-0 bg-gradient-to-br ${visual.gradient} opacity-80 group-hover:opacity-85 transition-opacity`}></div>
+                  <div className="absolute inset-0 p-5 flex flex-col justify-between z-10">
+                    <div className="w-10 h-10 rounded-xl bg-white/10 backdrop-blur-md flex items-center justify-center text-white border border-white/10 shadow-sm">
+                      <CatIcon size={20} />
                     </div>
-                    <h3 className="text-xl sm:text-2xl font-extrabold text-white drop-shadow-md mb-2">{service.name}</h3>
-                    <p className="text-sm text-slate-300 opacity-0 group-hover:opacity-100 transition-opacity duration-300 h-0 group-hover:h-auto overflow-hidden line-clamp-2">
-                      Professional {service.name.toLowerCase()} services by verified experts.
-                    </p>
-                    <div className="mt-4 flex items-center text-blue-400 font-bold opacity-0 group-hover:opacity-100 transition-all transform translate-y-2 group-hover:translate-y-0">
-                      <span>Book Now</span>
-                      <ChevronRight size={18} className="ml-1" />
+                    <div>
+                      <h4 className="font-extrabold text-sm sm:text-base text-white tracking-tight">{cat.name}</h4>
+                      <p className="text-[10px] text-slate-200 mt-0.5 line-clamp-1">{cat.desc}</p>
                     </div>
                   </div>
-                </motion.div>
-              ))}
-            </motion.div>
+                </motion.button>
+              );
+            })}
           </div>
-        </div>
+        </section>
 
-        {/* Available Technicians Nearby Discovery Section */}
-        <NearbyTechnicians />
+        {/* 4. HORIZONTAL SERVICE CAROUSELS SECTION */}
+        <section id="explore-services" className="space-y-12">
+          
+          {/* Dynamic Carousel: Popular Near You */}
+          <ServiceCarousel 
+            title={`Popular near ${selectedLocation}`}
+            subtitle="Top-booked services in your selected area right now."
+            items={getServicesByIds(popularNearYouIds)}
+          />
 
-        {/* AI Diagnosis Section */}
-        <div className="mt-24 sm:mt-32 relative z-10 px-4 sm:px-0">
-          <div className="text-center mb-10 sm:mb-12">
-            <h2 className="text-3xl sm:text-4xl md:text-5xl font-extrabold text-white mb-4">AI Smart Diagnosis</h2>
-            <p className="text-base sm:text-lg text-slate-400 max-w-2xl mx-auto">Not sure what the exact problem is? Answer a few quick questions to identify the issue and get an estimated cost instantly.</p>
+          {/* Carousel: Most Booked Services */}
+          <ServiceCarousel 
+            title="Most Booked Services"
+            subtitle="The highest volume services requested by our community."
+            items={getServicesByIds(['ac_repair', 'mobile_repair', 'washing_machine', 'refrigerator'])}
+          />
+
+          {/* Carousel: Home Repair & Installation */}
+          <ServiceCarousel 
+            title="Home Repair & Installation"
+            subtitle="From structural fixes to brand-new home appliance mountings."
+            items={getServicesByIds(['electric_wiring', 'plumbing_work', 'furniture', 'ac_install'])}
+          />
+
+          {/* Carousel: Cleaning Services */}
+          <ServiceCarousel 
+            title="Deep Cleaning Services"
+            subtitle="Eco-friendly formulas and high-pressure scrubbing machinery."
+            items={getServicesByIds(['home_clean', 'kitchen_clean', 'bathroom_clean', 'sofa_clean'])}
+          />
+
+          {/* Carousel: Appliance Services */}
+          <ServiceCarousel 
+            title="Appliance Services"
+            subtitle="Specialist support for laptops, TVs, RO and surveillance hardware."
+            items={getServicesByIds(['tv_repair', 'laptop_repair', 'ro_install', 'cctv_install'])}
+          />
+
+          {/* Carousel: Recently Booked / Recommendations */}
+          <ServiceCarousel 
+            title="Recently Booked"
+            subtitle="Personalized recommendations matching your discovery history."
+            items={getServicesByIds(['ac_repair', 'laptop_repair', 'plumbing_work', 'home_clean'])}
+          />
+
+        </section>
+
+        {/* 6. FEATURED SERVICES (BENEFITS GRID) */}
+        <section className="mt-16 md:mt-24 bg-gradient-to-br from-white/[0.02] to-transparent border border-white/5 backdrop-blur-md rounded-[2.5rem] p-6 sm:p-10 mx-4 sm:mx-0">
+          <div className="mb-8">
+            <h2 className="text-2xl sm:text-4xl font-extrabold text-white tracking-tight flex items-center gap-2">
+              <Sparkles className="text-cyan-400 w-6 h-6 animate-pulse" /> Why Fixvo Excels
+            </h2>
+            <p className="text-slate-400 text-sm mt-1">Our platform standards ensure you get professional, trustworthy repair and installation solutions.</p>
           </div>
-          <SmartDiagnosis onOpenAuth={(redirectUrl) => {
-            setPostAuthAction(() => () => navigate(redirectUrl));
-            setShowAuthModal(true);
-          }} />
-        </div>
+          <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
+            {[
+              { id: 'trending', label: "Trending Services", value: "AC & Mobile Repairs", icon: Zap, color: "text-amber-400", bg: "bg-amber-500/10", border: "border-amber-500/20" },
+              { id: 'rated', label: "Best Rated", value: "4.9★ Average Rating", icon: Star, color: "text-yellow-400", bg: "bg-yellow-500/10", border: "border-yellow-500/20" },
+              { id: 'booking', label: "Fast Booking", value: "Book in 10 Seconds", icon: Clock, color: "text-cyan-400", bg: "bg-cyan-500/10", border: "border-cyan-500/20" },
+              { id: 'techs', label: "Verified Technicians", value: "100% Background Check", icon: ShieldCheck, color: "text-emerald-400", bg: "bg-emerald-500/10", border: "border-emerald-500/20" },
+              { id: 'sameday', label: "Same Day Service", value: "30-Min Dispatch Option", icon: CheckCircle2, color: "text-blue-400", bg: "bg-blue-500/10", border: "border-blue-500/20" },
+            ].map((stat) => (
+              <div 
+                key={stat.id}
+                className="p-5 bg-white/[0.01] hover:bg-white/[0.03] border border-white/5 rounded-[2rem] flex flex-col justify-between gap-4 transition duration-300"
+              >
+                <div className={`w-10 h-10 rounded-xl ${stat.bg} ${stat.border} border flex items-center justify-center ${stat.color}`}>
+                  <stat.icon size={20} />
+                </div>
+                <div>
+                  <p className="text-[10px] text-slate-500 font-extrabold uppercase tracking-wider">{stat.label}</p>
+                  <p className="text-xs sm:text-sm font-extrabold text-white mt-1 leading-snug">{stat.value}</p>
+                </div>
+              </div>
+            ))}
+          </div>
+        </section>
 
-        {/* Urgent Repair Needed */}
-        <div className="mt-24 sm:mt-32 relative z-10 bg-gradient-to-br from-white/5 to-white/[0.02] backdrop-blur-xl rounded-[2rem] p-8 sm:p-12 border border-white/10 text-center mx-4 sm:mx-0">
-            <div className="w-16 h-16 bg-emerald-500/20 rounded-full flex items-center justify-center text-emerald-400 mx-auto mb-6">
-              <Zap size={32} />
-            </div>
-            <h2 className="text-3xl sm:text-4xl md:text-5xl font-extrabold text-white mb-4">Urgent Repair Needed?</h2>
-            <p className="text-base sm:text-lg text-slate-400 mb-8 max-w-2xl mx-auto">Skip the booking form and call us directly for an instant technician dispatch. We prioritize emergencies.</p>
-            <a href="tel:+919515980170" className="inline-flex items-center gap-3 px-8 sm:px-10 py-4 sm:py-5 bg-gradient-to-r from-emerald-500 to-emerald-600 text-white font-extrabold text-lg sm:text-xl rounded-2xl shadow-xl shadow-emerald-500/30 hover:scale-105 transition-transform">
-              <MessageCircle /> 
-              <span className="hidden sm:inline">Call Now:</span> +91 95159 80170
-            </a>
-        </div>
-
-        {/* Trust & Transparency Section */}
-        <div className="mt-24 sm:mt-32 border-t border-white/5 pt-24 sm:pt-32 px-4 sm:px-0">
+        {/* 13. TRUST & TRANSPARENCY SECTION */}
+        <section className="mt-16 md:mt-24 border-t border-white/5 pt-16 md:pt-24 px-4 sm:px-0">
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 sm:gap-16 items-center">
             <div>
               <h2 className="text-3xl sm:text-4xl md:text-5xl font-extrabold text-white mb-6 leading-tight">Elevating the home service industry.</h2>
               <div className="space-y-6 sm:space-y-8 mt-8 sm:mt-10">
-                <div className="flex gap-4">
-                  <div className="shrink-0 w-12 h-12 rounded-full bg-blue-500/20 flex items-center justify-center text-blue-400">
-                    <Banknote size={24} />
+                {[
+                  { title: "No Hidden Prices", desc: "Standard inspection fee of ₹99. We show an estimated range upfront. The technician must enter the exact quote in-app before starting, and wait for your one-click approval.", icon: Banknote, color: "text-blue-400", bg: "bg-blue-500/10" },
+                  { title: "Quality Backed by Data", desc: "See technician skill scores. We track success rates, repeat bookings, and require before/after photo proof for high-priced jobs.", icon: CheckCircle2, color: "text-emerald-400", bg: "bg-emerald-500/10" },
+                  { title: "30-Minute Arrival Guarantee", desc: "Water leaking? AC dead in summer? Select our premium emergency option and we guarantee a verified technician at your door within 30 minutes.", icon: Clock, color: "text-purple-400", bg: "bg-purple-500/10" },
+                ].map((item, i) => (
+                  <div key={i} className="flex gap-4">
+                    <div className={`shrink-0 w-12 h-12 rounded-full ${item.bg} flex items-center justify-center ${item.color}`}>
+                      <item.icon size={24} />
+                    </div>
+                    <div>
+                      <h4 className="text-lg sm:text-xl font-bold text-white mb-2">{item.title}</h4>
+                      <p className="text-sm sm:text-base text-slate-400 leading-relaxed">{item.desc}</p>
+                    </div>
                   </div>
-                  <div>
-                    <h4 className="text-lg sm:text-xl font-bold text-white mb-2">No Hidden Prices</h4>
-                    <p className="text-sm sm:text-base text-slate-400 leading-relaxed">Standard inspection fee of ₹99. We show an estimated range upfront. The technician must enter the exact quote in-app before starting, and wait for your one-click approval.</p>
-                  </div>
-                </div>
-                <div className="flex gap-4">
-                  <div className="shrink-0 w-12 h-12 rounded-full bg-emerald-500/20 flex items-center justify-center text-emerald-400">
-                    <CheckCircle2 size={24} />
-                  </div>
-                  <div>
-                    <h4 className="text-lg sm:text-xl font-bold text-white mb-2">Quality Backed by Data</h4>
-                    <p className="text-sm sm:text-base text-slate-400 leading-relaxed">See technician skill scores. We track success rates, repeat bookings, and require before/after photo proof for high-priced jobs.</p>
-                  </div>
-                </div>
-                <div className="flex gap-4">
-                  <div className="shrink-0 w-12 h-12 rounded-full bg-purple-500/20 flex items-center justify-center text-purple-400">
-                    <Clock size={24} />
-                  </div>
-                  <div>
-                    <h4 className="text-lg sm:text-xl font-bold text-white mb-2">30-Minute Arrival Guarantee</h4>
-                    <p className="text-sm sm:text-base text-slate-400 leading-relaxed">Water leaking? AC dead in summer? Select our premium emergency option and we guarantee a verified technician at your door within 30 minutes.</p>
-                  </div>
-                </div>
+                ))}
               </div>
             </div>
+            
             <div className="relative mt-8 lg:mt-0">
-              <div className="bg-[#1A2235] border border-white/10 rounded-[2rem] p-6 sm:p-8 shadow-2xl relative z-10 w-full max-w-md mx-auto">
+              <div className="bg-[#101524] border border-white/10 rounded-[2.5rem] p-6 sm:p-8 shadow-2xl relative z-10 w-full max-w-md mx-auto">
                 <div className="flex justify-between items-center border-b border-white/5 pb-4 mb-6">
                   <h3 className="font-bold text-base sm:text-lg text-white">Smart AC Diagnostics</h3>
                   <span className="px-3 py-1 bg-amber-500/20 text-amber-400 rounded-full text-[10px] sm:text-xs font-bold">Inspection Completed</span>
@@ -336,7 +1008,7 @@ const Home = () => {
                     </div>
                   </div>
                 </div>
-                <div className="bg-[#0B0F19] rounded-xl p-4 mb-6 space-y-3">
+                <div className="bg-[#0b0f19] rounded-xl p-4 mb-6 space-y-3">
                   <div>
                     <p className="text-xs text-slate-500 uppercase font-black tracking-wider">Diagnosed Issue:</p>
                     <p className="font-semibold text-slate-200 text-sm mt-0.5">AC Starter Capacitor failed. Condenser unable to start. Requires swap.</p>
@@ -377,13 +1049,93 @@ const Home = () => {
                 </div>
               </div>
               
-              {/* Decorative background blob */}
               <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-[120%] h-[120%] bg-gradient-to-r from-blue-500/20 to-purple-500/20 blur-3xl -z-10 rounded-full pointer-events-none"></div>
             </div>
           </div>
+        </section>
+
+        {/* Available Technicians Nearby Discovery Section */}
+        <NearbyTechnicians />
+
+        {/* AI Diagnosis Section */}
+        <div className="mt-24 sm:mt-32 relative z-10 px-4 sm:px-0">
+          <div className="text-center mb-10 sm:mb-12">
+            <h2 className="text-3xl sm:text-4xl md:text-5xl font-extrabold text-white mb-4">AI Smart Diagnosis</h2>
+            <p className="text-base sm:text-lg text-slate-400 max-w-2xl mx-auto">Not sure what the exact problem is? Answer a few quick questions to identify the issue and get an estimated cost instantly.</p>
+          </div>
+          <SmartDiagnosis onOpenAuth={(redirectUrl) => {
+            setPostAuthAction(() => () => navigate(redirectUrl));
+            setShowAuthModal(true);
+          }} />
         </div>
 
-        {/* Fixvo Plus Section */}
+        {/* 15. FEATURED VENTURES SECTION */}
+        <section className="mt-24 sm:mt-32 border-t border-white/5 pt-24 sm:pt-32 px-4 sm:px-0">
+          <div className="text-center mb-12 sm:mb-16">
+            <h2 className="text-3xl sm:text-4xl md:text-5xl font-extrabold text-white mb-4">Fixvo Ventures</h2>
+            <p className="text-slate-400 text-sm max-w-lg mx-auto">Discover futuristic ecosystems built by the team behind Fixvo home utilities.</p>
+          </div>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-8 max-w-4xl mx-auto">
+            {[
+              {
+                name: "DevPulse AI",
+                desc: "Empowering developers and tech teams with autonomous workflow subagents and intelligent coding pair-partners.",
+                badge: "Active Beta",
+                gradient: "from-cyan-500/10 via-blue-600/10 to-transparent",
+                border: "border-cyan-500/30 hover:border-cyan-400/60",
+                glow: "hover:shadow-[0_0_30px_rgba(6,182,212,0.15)]",
+                icon: Cpu,
+                tagColor: "text-cyan-400 bg-cyan-500/10 border-cyan-500/20",
+                url: "#"
+              },
+              {
+                name: "Fixvo SmartHome",
+                desc: "Next-gen home automation setups, IoT installations, surveillance planning, and intelligent lighting calibrations.",
+                badge: "Upcoming",
+                gradient: "from-indigo-500/10 via-purple-600/10 to-transparent",
+                border: "border-indigo-500/30 hover:border-indigo-400/60",
+                glow: "hover:shadow-[0_0_30px_rgba(99,102,241,0.15)]",
+                icon: Globe,
+                tagColor: "text-indigo-400 bg-indigo-500/10 border-indigo-500/20",
+                url: "#"
+              }
+            ].map((venture, i) => (
+              <motion.div
+                key={i}
+                whileHover={{ y: -6 }}
+                className={`relative overflow-hidden bg-gradient-to-b ${venture.gradient} bg-[#101524]/60 backdrop-blur-xl border ${venture.border} ${venture.glow} rounded-[2rem] p-8 flex flex-col justify-between h-[250px] shadow-xl transition-all duration-300`}
+              >
+                <div className="flex justify-between items-start">
+                  <div className="w-12 h-12 rounded-2xl bg-white/5 border border-white/10 flex items-center justify-center text-white">
+                    <venture.icon size={22} className={i === 0 ? "text-cyan-400 animate-pulse" : "text-indigo-400"} />
+                  </div>
+                  <span className={`px-2.5 py-1 rounded-full text-[9px] font-black uppercase tracking-wider border ${venture.tagColor}`}>
+                    {venture.badge}
+                  </span>
+                </div>
+                <div>
+                  <h4 className="font-extrabold text-xl text-white tracking-tight">{venture.name}</h4>
+                  <p className="text-xs text-slate-400 mt-2 leading-relaxed">{venture.desc}</p>
+                </div>
+              </motion.div>
+            ))}
+          </div>
+        </section>
+
+        {/* Urgent Repair dispatch Call block */}
+        <div className="mt-24 sm:mt-32 relative z-10 bg-gradient-to-br from-white/5 to-white/[0.02] backdrop-blur-xl rounded-[2rem] p-8 sm:p-12 border border-white/10 text-center mx-4 sm:mx-0">
+            <div className="w-16 h-16 bg-emerald-500/20 rounded-full flex items-center justify-center text-emerald-400 mx-auto mb-6">
+              <Zap size={32} />
+            </div>
+            <h2 className="text-3xl sm:text-4xl md:text-5xl font-extrabold text-white mb-4">Urgent Repair Needed?</h2>
+            <p className="text-base sm:text-lg text-slate-400 mb-8 max-w-2xl mx-auto">Skip the booking form and call us directly for an instant technician dispatch. We prioritize emergencies.</p>
+            <a href="tel:+919515980170" className="inline-flex items-center gap-3 px-8 sm:px-10 py-4 sm:py-5 bg-gradient-to-r from-emerald-500 to-emerald-600 text-white font-extrabold text-lg sm:text-xl rounded-2xl shadow-xl shadow-emerald-500/30 hover:scale-105 transition-transform">
+              <MessageCircle /> 
+              <span className="hidden sm:inline">Call Now:</span> +91 95159 80170
+            </a>
+        </div>
+
+        {/* Fixvo Plus Member section */}
         <div id="pricing" className="mt-24 sm:mt-32 border-t border-white/5 pt-24 sm:pt-32 px-4 sm:px-0">
           <div className="text-center mb-12 sm:mb-16">
             <h2 className="text-3xl sm:text-4xl md:text-5xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-amber-200 via-amber-400 to-yellow-500 mb-4 inline-flex items-center gap-3"><Sparkles className="text-amber-400 w-8 h-8 md:w-10 md:h-10"/> Fixvo Plus</h2>
@@ -398,7 +1150,7 @@ const Home = () => {
             <div className="absolute top-[-20%] right-[-10%] w-[50%] h-[50%] bg-amber-500/10 rounded-full blur-[80px] pointer-events-none group-hover:bg-amber-500/20 transition-all duration-700"></div>
             
             <div className="flex flex-col md:flex-row justify-between items-center gap-10 md:gap-12">
-               <div className="flex-1 space-y-6 sm:space-y-8 relative z-10 w-full">
+               <div className="flex-1 space-y-6 sm:space-y-8 relative z-10 w-full text-left">
                  <div className="flex items-start gap-4">
                    <div className="mt-1 w-10 h-10 rounded-full bg-amber-500/20 flex items-center justify-center text-amber-400 shrink-0 border border-amber-500/30"><Clock size={18}/></div>
                    <div>
@@ -428,7 +1180,7 @@ const Home = () => {
                  <p className="text-xs sm:text-sm text-slate-400 mb-8 font-medium">Billed annually. Cancel anytime.</p>
                  <button 
                    onClick={() => navigate('/dashboard?action=premium')}
-                   className="w-full bg-gradient-to-r from-amber-500 to-yellow-600 hover:from-amber-400 hover:to-yellow-500 text-[#0B0F19] font-black py-4 rounded-xl shadow-[0_0_20px_rgba(245,158,11,0.3)] hover:shadow-[0_0_30px_rgba(245,158,11,0.5)] transition-all duration-300 transform hover:-translate-y-1 text-sm sm:text-base"
+                   className="w-full bg-gradient-to-r from-amber-500 to-yellow-600 hover:from-amber-400 hover:to-yellow-500 text-[#0B0F19] font-black py-4 rounded-xl shadow-[0_0_20px_rgba(245,158,11,0.3)] hover:shadow-[0_0_30px_rgba(245,158,11,0.5)] transition-all duration-300 transform hover:-translate-y-1 text-sm sm:text-base cursor-pointer"
                  >
                    Get Fixvo Plus
                  </button>
@@ -437,7 +1189,7 @@ const Home = () => {
           </div>
         </div>
         
-        {/* Meet the Founder Section */}
+        {/* Founder profile presentation card */}
         <div className="mt-24 sm:mt-32 border-t border-white/5 pt-24 sm:pt-32 px-4 sm:px-0">
           <div className="text-center mb-12 sm:mb-16">
             <h2 className="text-3xl sm:text-4xl md:text-5xl font-extrabold text-white mb-4">Meet the Founder</h2>
@@ -449,9 +1201,8 @@ const Home = () => {
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true, margin: "-100px" }}
             transition={{ duration: 0.8 }}
-            className="flex flex-col md:flex-row items-center justify-between gap-10 md:gap-16 lg:gap-20 max-w-5xl mx-auto bg-gradient-to-br from-white/[0.08] to-transparent border border-white/10 rounded-[2rem] sm:rounded-[2.5rem] p-8 sm:p-10 md:p-16 shadow-2xl relative overflow-hidden backdrop-blur-xl"
+            className="flex flex-col md:flex-row items-center justify-between gap-10 md:gap-16 lg:gap-20 max-w-5xl mx-auto bg-gradient-to-br from-white/[0.08] to-transparent border border-white/10 rounded-[2.5rem] p-8 sm:p-10 md:p-16 shadow-2xl relative overflow-hidden backdrop-blur-xl"
           >
-            {/* Background glowing effects */}
             <div className="absolute top-[-20%] left-[-10%] w-[60%] h-[60%] bg-blue-500/20 rounded-full blur-[100px] pointer-events-none"></div>
             <div className="absolute bottom-[-20%] right-[-10%] w-[60%] h-[60%] bg-purple-500/20 rounded-full blur-[100px] pointer-events-none"></div>
             
@@ -498,9 +1249,7 @@ const Home = () => {
           </motion.div>
         </div>
 
-
-        
-        {/* CTA Section */}
+        {/* CTA section bottom banner */}
         <div className="mt-24 sm:mt-32 pt-16 border-t border-white/5 text-center px-4 sm:px-0">
             <motion.div 
                initial={{ opacity: 0, scale: 0.95 }}
@@ -535,9 +1284,26 @@ const Home = () => {
         />
       )}
 
+      {/* Voice Listening Overlay Modal */}
+      {isListening && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-md">
+          <div className="bg-[#101524] border border-white/10 p-8 rounded-3xl text-center space-y-6 max-w-sm mx-4 animate-in zoom-in-95 duration-200">
+            <div className="relative flex justify-center">
+              <div className="w-16 h-16 bg-blue-500/20 rounded-full flex items-center justify-center text-blue-400 animate-pulse">
+                <Mic size={32} />
+              </div>
+              <div className="absolute inset-0 w-16 h-16 bg-blue-500/10 rounded-full animate-ping mx-auto"></div>
+            </div>
+            <div>
+              <h4 className="font-extrabold text-white text-lg">Listening...</h4>
+              <p className="text-slate-400 text-xs mt-1">Speak the service name (e.g., AC Repair)</p>
+            </div>
+          </div>
+        </div>
+      )}
+
       </div>
 
-      {/* Global CSS for hiding scrollbar visually but keeping functionality */}
       <style>{`
         .hide-scrollbar::-webkit-scrollbar {
           display: none;
@@ -545,18 +1311,6 @@ const Home = () => {
         .hide-scrollbar {
           -ms-overflow-style: none;
           scrollbar-width: none;
-        }
-        @keyframes scroll {
-          0% { transform: translateX(0); }
-          100% { transform: translateX(-1032px); }
-        }
-        .animate-infinite-scroll {
-          display: flex;
-          width: max-content;
-          animation: scroll 32s linear infinite;
-        }
-        .animate-infinite-scroll:hover {
-          animation-play-state: paused;
         }
       `}</style>
     </div>

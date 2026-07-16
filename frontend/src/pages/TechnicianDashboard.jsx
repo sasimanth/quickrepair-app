@@ -3,6 +3,7 @@ import { Link, useLocation } from 'react-router-dom';
 import api from '../services/api';
 import { globalServices } from '../data/services';
 import { subscribeToPushNotifications } from '../services/pushNotification';
+import { requestFcmPermission } from '../services/firebase';
 import { Calendar, MapPin, Smartphone, AlertCircle, Clock, CheckCircle, PackageSearch, XCircle, Plus, LayoutDashboard, Wrench, Settings, Briefcase, Star, User, ChevronRight, MessageSquare, Camera, UploadCloud, Loader2, Shield, ShieldCheck, ShieldAlert, Sparkles, IndianRupee, Wallet, Coins, ArrowUpRight, ArrowDownLeft, FileText, Bell, CreditCard, Banknote, HelpCircle, Truck, Home, Search, Eye, Zap, Maximize2, Hash, Layers, Paintbrush, Tv, X, RefreshCw, PhoneCall } from 'lucide-react';
 import ChatModal from '../components/ChatModal';
 import SettingsModal from '../components/SettingsModal';
@@ -44,6 +45,7 @@ const TechnicianDashboard = () => {
     setNotifPermission(permission);
     if (permission === 'granted') {
       await subscribeToPushNotifications();
+      await requestFcmPermission();
       showToast('Notifications Enabled 🔔', 'You will now receive job alerts instantly.', 'success');
     }
   };
@@ -241,6 +243,7 @@ const TechnicianDashboard = () => {
   useEffect(() => { 
     fetchJobs(); 
     subscribeToPushNotifications(); // PWA background push notifications
+    requestFcmPermission(); // FCM background push notifications
   }, []);
 
   // Live Location Broadcasting via WebSockets

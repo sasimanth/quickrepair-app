@@ -205,17 +205,27 @@ const updateWithdrawalStatus = async (req, res) => {
       tech.pendingWithdrawal = walletStats.pendingWithdrawal;
       await tech.save();
 
-      // Trigger user/notification alerts for the technician
+      // Trigger user/notification alerts for the technician using notifyUser
       try {
-        const Notification = require('../models/Notification');
-        await Notification.create({
+        const { notifyUser } = require('../services/NotificationService');
+        await notifyUser({
           userId: payoutReq.technicianId,
-          title: 'Payout Disbursed 💰',
-          message: `Your withdrawal of ₹${payoutReq.amount} has been processed and paid! Transaction ID: ${payoutReq.transactionId}`,
-          type: 'payout'
+          email: tech.email,
+          phone: tech.phone,
+          type: 'both',
+          subject: 'Payout Disbursed 💰',
+          text: `Your withdrawal of ₹${payoutReq.amount} has been processed and paid! Transaction ID: ${payoutReq.transactionId}`,
+          notifType: 'system',
+          templateName: 'technicianWithdrawalProcessed',
+          templateData: {
+            name: tech.name,
+            amount: payoutReq.amount,
+            referenceNo: payoutReq.transactionId,
+            url: `${process.env.FRONTEND_URL || 'http://localhost:5173'}/technician-dashboard`
+          }
         });
       } catch (err) {
-        console.error("Failed to create payout notification", err);
+        console.error("Failed to dispatch payout notification", err);
       }
 
     } else if (status === 'rejected') {
@@ -266,9 +276,114 @@ const updateWithdrawalStatus = async (req, res) => {
   }
 };
 
+// @desc    Get technicians pending document verification
+// @route   GET /api/admin/technicians/pending
+// @access  Private (Admin Only)
+const getPendingVerifications = async (req, res) => {
+  try {
+    const pendingTechs = await Technician.find({
+      verificationStatus: { $in: ['pending', 'under_review', 'rejected'] }
+    }).sort({ updatedAt: -1 });
+
+    res.json(pendingTechs);
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
+// @desc    Approve/Reject technician verification request
+// @route   PUT /api/admin/technicians/:id/verify
+// @access  Private (Admin Only)
+const reviewTechnician = async (req, res) => {
+  const { status, adminNotes } = req.body; // 'approved', 'rejected', 'under_review'
+  
+  if (!['approved', 'rejected', 'under_review'].includes(status)) {
+    return res.status(400).json({ message: 'Invalid verification status code.' });
+  }
+
+  try {
+    const tech = await Technician.findOne({ userId: req.params.id });
+    if (!tech) {
+      return res.status(404).json({ message: 'Technician profile not found.' });
+    }
+
+    const previousStatus = tech.verificationStatus;
+    tech.verificationStatus = status;
+    tech.isVerified = (status === 'approved');
+    tech.backgroundCheckStatus = status === 'approved' ? 'approved' : status === 'rejected' ? 'rejected' : 'pending';
+    await tech.save();
+
+    // Update verified status in corresponding User document
+    await User.findByIdAndUpdate(req.params.id, { isVerified: tech.isVerified });
+
+    // Create Admin Audit Log
+    const AdminAuditLog = require('../models/AdminAuditLog');
+    await AdminAuditLog.create({
+      adminId: req.user._id,
+      adminName: req.user.name,
+      adminEmail: req.user.email,
+      action: status === 'approved' ? 'APPROVE_TECHNICIAN' : status === 'rejected' ? 'REJECT_TECHNICIAN' : 'REVIEW_TECHNICIAN_UNDER_WAY',
+      targetId: req.params.id,
+      targetType: 'Technician',
+      details: { 
+        techName: tech.name, 
+        techEmail: tech.email,
+        previousStatus,
+        newStatus: status,
+        adminNotes: adminNotes || 'N/A'
+      },
+      ipAddress: req.ip,
+      userAgent: req.headers['user-agent']
+    });
+
+    // Notify the technician
+    try {
+      const { notifyUser } = require('../services/NotificationService');
+      if (status === 'approved') {
+        await notifyUser({
+          userId: tech.userId,
+          email: tech.email,
+          phone: tech.phone,
+          type: 'both',
+          subject: 'Fixvo Profile Approved! 🎉',
+          text: 'Congratulations! Your Fixvo Professional Profile has been verified and approved. You can now receive local jobs.',
+          templateName: 'technicianProfileApproved',
+          templateData: {
+            name: tech.name,
+            url: `${process.env.FRONTEND_URL || 'http://localhost:5173'}/technician-dashboard`
+          }
+        });
+      } else if (status === 'rejected') {
+        const Notification = require('../models/Notification');
+        await Notification.create({
+          userId: tech.userId,
+          title: 'Verification Request Rejected ❌',
+          message: `Your professional profile verification was rejected. Reason: ${adminNotes || 'Prohibited/incomplete documents.'}`,
+          type: 'system'
+        });
+
+        if (global.io) {
+          global.io.to(`user_${tech.userId}`).emit('new_notification', {
+            title: 'Verification Request Rejected ❌',
+            message: `Your professional profile verification was rejected. Reason: ${adminNotes || 'Prohibited/incomplete documents.'}`
+          });
+        }
+      }
+    } catch (notifErr) {
+      console.error('Failed to notify tech on verification change:', notifErr.message);
+    }
+
+    res.json({ message: `Technician verification status updated to ${status}`, tech });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
 module.exports = {
   getDashboardStats,
   getAllUsers,
   getWithdrawals,
-  updateWithdrawalStatus
+  updateWithdrawalStatus,
+  getPendingVerifications,
+  reviewTechnician
 };

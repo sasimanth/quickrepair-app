@@ -12,7 +12,44 @@ const userSchema = new mongoose.Schema({
   },
   phone: {
     type: String,
+    required: true,
+    unique: true
+  },
+  isEmailVerified: {
+    type: Boolean,
+    default: false
+  },
+  isPhoneVerified: {
+    type: Boolean,
+    default: false
+  },
+  emailVerificationToken: {
+    type: String
+  },
+  emailVerificationExpires: {
+    type: Date
+  },
+  phoneVerificationOtp: {
+    type: String
+  },
+  phoneVerificationExpires: {
+    type: Date
+  },
+  loginAttempts: {
+    type: Number,
+    default: 0,
     required: true
+  },
+  lockUntil: {
+    type: Date
+  },
+  isSuspicious: {
+    type: Boolean,
+    default: false
+  },
+  suspiciousReasons: {
+    type: [String],
+    default: []
   },
   password: {
     type: String,

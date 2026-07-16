@@ -3,7 +3,7 @@ import api from '../services/api';
 import { 
   Users, Briefcase, LayoutDashboard, Settings, Search, SlidersHorizontal, 
   ChevronDown, ChevronUp, Calendar, MapPin, CheckCircle, Clock, XCircle, 
-  ChevronLeft, ChevronRight, AlertCircle, CreditCard, UserCheck, Eye, Sparkles, Star, Shield, Loader2, RefreshCw
+  ChevronLeft, ChevronRight, AlertCircle, CreditCard, UserCheck, Eye, Sparkles, Star, Shield, Loader2, RefreshCw, ShieldAlert
 } from 'lucide-react';
 
 const AdminDashboard = () => {
@@ -25,6 +25,20 @@ const AdminDashboard = () => {
   const [isSavingDoc, setIsSavingDoc] = useState(false);
   const [isLoadingLegal, setIsLoadingLegal] = useState(false);
 
+  // Verification Center states
+  const [pendingVerifications, setPendingVerifications] = useState([]);
+  const [loadingVerifications, setLoadingVerifications] = useState(false);
+  const [selectedVerificationTech, setSelectedVerificationTech] = useState(null);
+  const [verificationNotes, setVerificationNotes] = useState('');
+
+  // Security Center states
+  const [securityAlerts, setSecurityAlerts] = useState([]);
+  const [securityStats, setSecurityStats] = useState(null);
+  const [auditLogs, setAuditLogs] = useState([]);
+  const [loadingSecurity, setLoadingSecurity] = useState(false);
+  const [resolvingAlertId, setResolvingAlertId] = useState(null);
+  const [resolutionNotes, setResolutionNotes] = useState('');
+
   const fetchLegalData = async () => {
     setIsLoadingLegal(true);
     try {
@@ -44,9 +58,41 @@ const AdminDashboard = () => {
     }
   };
 
+  const fetchPendingVerifications = async () => {
+    setLoadingVerifications(true);
+    try {
+      const { data } = await api.get('/admin/technicians/pending');
+      setPendingVerifications(data);
+    } catch (err) {
+      console.error("Failed to load pending verifications", err);
+    } finally {
+      setLoadingVerifications(false);
+    }
+  };
+
+  const fetchSecurityData = async () => {
+    setLoadingSecurity(true);
+    try {
+      const alertsRes = await api.get('/admin/security/alerts');
+      setSecurityAlerts(alertsRes.data.alerts);
+      setSecurityStats(alertsRes.data.stats);
+
+      const logsRes = await api.get('/admin/security/audit-logs');
+      setAuditLogs(logsRes.data);
+    } catch (err) {
+      console.error("Failed to load security metrics", err);
+    } finally {
+      setLoadingSecurity(false);
+    }
+  };
+
   useEffect(() => {
     if (activeTab === 'legal') {
       fetchLegalData();
+    } else if (activeTab === 'verifications') {
+      fetchPendingVerifications();
+    } else if (activeTab === 'security') {
+      fetchSecurityData();
     }
   }, [activeTab]);
 
@@ -67,6 +113,39 @@ const AdminDashboard = () => {
       alert(err.response?.data?.message || 'Failed to update document template');
     } finally {
       setIsSavingDoc(false);
+    }
+  };
+
+  const handleReviewTechnician = async (userId, status) => {
+    try {
+      await api.put(`/admin/technicians/${userId}/verify`, {
+        status,
+        adminNotes: verificationNotes
+      });
+      alert(`Technician status updated to ${status} successfully!`);
+      setSelectedVerificationTech(null);
+      setVerificationNotes('');
+      fetchPendingVerifications();
+    } catch (err) {
+      console.error(err);
+      alert(err.response?.data?.message || 'Failed to submit technician document review');
+    }
+  };
+
+  const handleResolveAlert = async (e) => {
+    e.preventDefault();
+    if (!resolvingAlertId) return;
+    try {
+      await api.put(`/admin/security/alerts/${resolvingAlertId}/resolve`, {
+        resolutionNotes
+      });
+      alert('Security alert successfully resolved.');
+      setResolvingAlertId(null);
+      setResolutionNotes('');
+      fetchSecurityData();
+    } catch (err) {
+      console.error(err);
+      alert(err.response?.data?.message || 'Failed to resolve alert.');
     }
   };
 
@@ -394,6 +473,8 @@ const AdminDashboard = () => {
           {[
             { id: 'bookings', label: 'Dispatch Center', icon: LayoutDashboard },
             { id: 'withdrawals', label: 'Withdrawal Requests', icon: CreditCard },
+            { id: 'verifications', label: 'Verification Center', icon: UserCheck },
+            { id: 'security', label: 'Security Center', icon: ShieldAlert },
             { id: 'analytics', label: 'Growth & Demands', icon: Sparkles },
             { id: 'users', label: 'User Directory', icon: Users },
             { id: 'legal', label: 'Compliance & Legal', icon: Shield },
@@ -1224,6 +1305,195 @@ const AdminDashboard = () => {
           </div>
         )}
 
+        {/* Verification Center Tab */}
+        {activeTab === 'verifications' && (
+          <div className="space-y-6">
+            <div className="bg-slate-900/40 rounded-[2rem] border border-white/5 p-6 shadow-2xl">
+              <h3 className="text-xl font-extrabold text-white mb-2">Technician Verification Center</h3>
+              <p className="text-xs font-semibold text-slate-400 mb-6">
+                Review and approve or reject uploaded technician documents to activate their profiles.
+              </p>
+
+              {loadingVerifications ? (
+                <div className="flex justify-center items-center py-16 text-indigo-400">
+                  <Loader2 className="animate-spin mr-2" />
+                  <span className="font-bold text-xs uppercase tracking-widest">Loading submissions...</span>
+                </div>
+              ) : (
+                <div className="overflow-x-auto">
+                  <table className="w-full text-left border-collapse">
+                    <thead>
+                      <tr className="border-b border-white/5 text-[10px] font-black uppercase tracking-widest text-slate-400">
+                        <th className="p-5">Technician</th>
+                        <th className="p-5">Submitted Area</th>
+                        <th className="p-5">Experience</th>
+                        <th className="p-5">Status</th>
+                        <th className="p-5 text-right">Action</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {pendingVerifications.map((tech) => (
+                        <tr key={tech._id} className="border-b border-white/5 hover:bg-white/5 transition-colors font-semibold text-xs text-white">
+                          <td className="p-5">
+                            <div className="font-black text-slate-100">{tech.name}</div>
+                            <div className="text-[10px] text-slate-500 mt-0.5">{tech.email}</div>
+                          </td>
+                          <td className="p-5 text-slate-300">{tech.area || 'Not Specified'}</td>
+                          <td className="p-5 text-slate-300">{tech.experience}</td>
+                          <td className="p-5">
+                            <span className={`px-2.5 py-0.5 rounded-full text-[10px] uppercase font-black border ${
+                              tech.verificationStatus === 'approved' 
+                                ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20' 
+                                : tech.verificationStatus === 'rejected' 
+                                ? 'bg-rose-500/10 text-rose-400 border-rose-500/20' 
+                                : 'bg-amber-500/10 text-amber-400 border-amber-500/20'
+                            }`}>
+                              {tech.verificationStatus}
+                            </span>
+                          </td>
+                          <td className="p-5 text-right">
+                            <button
+                              onClick={() => { setSelectedVerificationTech(tech); }}
+                              className="px-3.5 py-1.5 bg-indigo-600 hover:bg-indigo-500 text-white text-[10px] font-black uppercase tracking-wider rounded-lg outline-none transition cursor-pointer"
+                            >
+                              Review Docs
+                            </button>
+                          </td>
+                        </tr>
+                      ))}
+                      {pendingVerifications.length === 0 && (
+                        <tr>
+                          <td colSpan="5" className="p-8 text-center text-xs text-slate-500 italic">
+                            No pending technician verifications at this time.
+                          </td>
+                        </tr>
+                      )}
+                    </tbody>
+                  </table>
+                </div>
+              )}
+            </div>
+          </div>
+        )}
+
+        {/* Security Center Tab */}
+        {activeTab === 'security' && (
+          <div className="space-y-6 text-white">
+            {/* Stats Summary Cards */}
+            {securityStats && (
+              <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+                <div className="bg-slate-900/60 p-5 rounded-2xl border border-white/5">
+                  <p className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">Unresolved Alerts</p>
+                  <p className={`text-2xl font-black mt-1 ${securityStats.unresolved > 0 ? 'text-amber-500' : 'text-emerald-500'}`}>
+                    {securityStats.unresolved}
+                  </p>
+                </div>
+                <div className="bg-slate-900/60 p-5 rounded-2xl border border-white/5">
+                  <p className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">High Severity Alerts</p>
+                  <p className={`text-2xl font-black mt-1 ${securityStats.severityCounts.high > 0 ? 'text-rose-500' : 'text-slate-300'}`}>
+                    {securityStats.severityCounts.high}
+                  </p>
+                </div>
+                <div className="bg-slate-900/60 p-5 rounded-2xl border border-white/5">
+                  <p className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">Medium/Low Severity</p>
+                  <p className="text-2xl font-black text-slate-300 mt-1">
+                    {securityStats.severityCounts.medium + securityStats.severityCounts.low}
+                  </p>
+                </div>
+                <div className="bg-slate-900/60 p-5 rounded-2xl border border-white/5">
+                  <p className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">Total Alert Events</p>
+                  <p className="text-2xl font-black text-indigo-400 mt-1">{securityStats.total}</p>
+                </div>
+              </div>
+            )}
+
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+              {/* Security Alerts List */}
+              <div className="lg:col-span-2 bg-slate-900/40 rounded-[2rem] border border-white/5 p-6 shadow-2xl space-y-4">
+                <h3 className="text-lg font-black text-white">Active Fraud & Abuse Incidents</h3>
+                {loadingSecurity ? (
+                  <div className="flex justify-center items-center py-12 text-indigo-400">
+                    <Loader2 className="animate-spin mr-2" />
+                    <span className="font-bold text-xs uppercase">Loading timeline...</span>
+                  </div>
+                ) : (
+                  <div className="space-y-4 max-h-[500px] overflow-y-auto pr-1">
+                    {securityAlerts.map(alert => (
+                      <div key={alert._id} className={`p-4 rounded-2xl border flex items-start gap-3 transition-colors ${
+                        alert.isResolved 
+                          ? 'bg-slate-800/10 border-white/5' 
+                          : alert.severity === 'high' 
+                          ? 'bg-rose-500/5 border-rose-500/15' 
+                          : 'bg-amber-500/5 border-amber-500/15'
+                      }`}>
+                        <div className={`p-2 rounded-xl border mt-0.5 ${
+                          alert.isResolved 
+                            ? 'bg-slate-800 text-slate-500 border-white/5' 
+                            : alert.severity === 'high' 
+                            ? 'bg-rose-500/10 text-rose-400 border-rose-500/20' 
+                            : 'bg-amber-500/10 text-amber-400 border-amber-500/20'
+                        }`}>
+                          <ShieldAlert size={18} />
+                        </div>
+                        <div className="flex-1">
+                          <div className="flex items-center justify-between gap-2 flex-wrap">
+                            <span className="font-bold text-xs text-white uppercase tracking-wider">{alert.alertType}</span>
+                            <span className="text-[10px] text-slate-500">{new Date(alert.createdAt).toLocaleString()}</span>
+                          </div>
+                          <p className="text-slate-300 text-xs mt-1.5 font-medium leading-relaxed">{alert.description}</p>
+                          {alert.userEmail && alert.userEmail !== 'anonymous' && (
+                            <div className="text-[10px] text-slate-500 mt-1.5 font-semibold">Impacted User: {alert.userEmail}</div>
+                          )}
+                          {alert.isResolved ? (
+                            <div className="mt-3 bg-emerald-500/5 border border-emerald-500/10 rounded-xl p-2.5 text-[10px] text-emerald-400/90 font-semibold">
+                              ✓ Resolved Notes: {alert.resolutionNotes}
+                            </div>
+                          ) : (
+                            <div className="mt-3">
+                              <button
+                                onClick={() => setResolvingAlertId(alert._id)}
+                                className="px-3 py-1 bg-amber-600 hover:bg-amber-500 text-white font-bold text-[9px] uppercase tracking-wider rounded-md outline-none cursor-pointer transition"
+                              >
+                                Resolve
+                              </button>
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    ))}
+                    {securityAlerts.length === 0 && (
+                      <p className="text-center py-12 text-xs text-slate-500 italic">No security incidents logged.</p>
+                    )}
+                  </div>
+                )}
+              </div>
+
+              {/* Administrative Audit logs */}
+              <div className="bg-slate-900/40 rounded-[2rem] border border-white/5 p-6 shadow-2xl">
+                <h3 className="text-lg font-black text-white mb-4">Admin Audit Ledger</h3>
+                <div className="space-y-4 max-h-[500px] overflow-y-auto pr-1">
+                  {auditLogs.map(log => (
+                    <div key={log._id} className="p-3.5 bg-slate-950/40 border border-white/5 rounded-2xl text-xs space-y-2">
+                      <div className="flex justify-between items-start gap-2">
+                        <span className="font-bold text-slate-300">{log.adminName}</span>
+                        <span className="text-[9px] text-slate-600">{new Date(log.createdAt).toLocaleDateString()}</span>
+                      </div>
+                      <div className="font-black text-indigo-400 text-[10px] uppercase tracking-wider">{log.action}</div>
+                      <p className="text-slate-400 font-semibold text-[10px]">Target: {log.targetType} ({log.targetId})</p>
+                      {log.details && log.details.reason && (
+                        <p className="text-slate-500 italic text-[10px]">Reason: {log.details.reason}</p>
+                      )}
+                    </div>
+                  ))}
+                  {auditLogs.length === 0 && (
+                    <p className="text-center py-12 text-xs text-slate-500 italic">No admin audits logged.</p>
+                  )}
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+
       </div>
 
       {/* Reject Withdrawal Modal */}
@@ -1308,6 +1578,160 @@ const AdminDashboard = () => {
                   className="px-4 py-2 bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold rounded-lg outline-none cursor-pointer"
                 >
                   Confirm Payout
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* Technician Document Verification Review Modal */}
+      {selectedVerificationTech && (
+        <div className="fixed inset-0 z-50 bg-[#0B0F19]/80 backdrop-blur-sm flex items-center justify-center p-4 overflow-y-auto">
+          <div className="bg-slate-900 border border-white/10 rounded-3xl p-6 sm:p-8 w-full max-w-4xl shadow-2xl relative animate-in fade-in zoom-in-95 duration-200 my-8">
+            <button 
+              onClick={() => { setSelectedVerificationTech(null); setVerificationNotes(''); }}
+              className="absolute top-6 right-6 p-2 text-slate-400 hover:text-slate-200 bg-white/5 hover:bg-white/10 rounded-full transition cursor-pointer font-bold"
+            >
+              <X size={20} />
+            </button>
+
+            <h3 className="text-xl font-black text-white mb-2">Technician Verification Review</h3>
+            <p className="text-xs font-semibold text-slate-400 mb-6">
+              Reviewing application documents for: <span className="text-white font-bold">{selectedVerificationTech.name}</span> ({selectedVerificationTech.email})
+            </p>
+
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
+              {/* Document 1: Government ID */}
+              <div className="space-y-2">
+                <label className="block text-[10px] font-extrabold text-slate-400 uppercase tracking-widest">Government ID</label>
+                <div className="bg-slate-950 rounded-2xl border border-white/5 overflow-hidden h-64 flex items-center justify-center relative">
+                  {selectedVerificationTech.governmentIdUrl ? (
+                    selectedVerificationTech.governmentIdUrl.startsWith('data:application/pdf') ? (
+                      <div className="text-center p-4">
+                        <FileSignature className="w-12 h-12 text-indigo-400 mx-auto mb-2" />
+                        <span className="text-[10px] text-slate-400 font-bold block">PDF Document</span>
+                        <a href={selectedVerificationTech.governmentIdUrl} download="government_id.pdf" className="text-indigo-400 hover:underline text-[10px] mt-2 block font-black uppercase">Download PDF</a>
+                      </div>
+                    ) : (
+                      <img src={selectedVerificationTech.governmentIdUrl} className="w-full h-full object-contain" alt="Government ID" />
+                    )
+                  ) : (
+                    <span className="text-slate-600 text-xs italic">No document uploaded</span>
+                  )}
+                </div>
+              </div>
+
+              {/* Document 2: Address Proof */}
+              <div className="space-y-2">
+                <label className="block text-[10px] font-extrabold text-slate-400 uppercase tracking-widest">Address Proof</label>
+                <div className="bg-slate-950 rounded-2xl border border-white/5 overflow-hidden h-64 flex items-center justify-center relative">
+                  {selectedVerificationTech.addressProofUrl ? (
+                    selectedVerificationTech.addressProofUrl.startsWith('data:application/pdf') ? (
+                      <div className="text-center p-4">
+                        <FileSignature className="w-12 h-12 text-indigo-400 mx-auto mb-2" />
+                        <span className="text-[10px] text-slate-400 font-bold block">PDF Document</span>
+                        <a href={selectedVerificationTech.addressProofUrl} download="address_proof.pdf" className="text-indigo-400 hover:underline text-[10px] mt-2 block font-black uppercase">Download PDF</a>
+                      </div>
+                    ) : (
+                      <img src={selectedVerificationTech.addressProofUrl} className="w-full h-full object-contain" alt="Address Proof" />
+                    )
+                  ) : (
+                    <span className="text-slate-600 text-xs italic">No document uploaded</span>
+                  )}
+                </div>
+              </div>
+
+              {/* Document 3: Selfie */}
+              <div className="space-y-2">
+                <label className="block text-[10px] font-extrabold text-slate-400 uppercase tracking-widest">Selfie Photograph</label>
+                <div className="bg-slate-950 rounded-2xl border border-white/5 overflow-hidden h-64 flex items-center justify-center">
+                  {selectedVerificationTech.selfieUrl ? (
+                    <img src={selectedVerificationTech.selfieUrl} className="w-full h-full object-contain" alt="Selfie" />
+                  ) : (
+                    <span className="text-slate-600 text-xs italic">No photograph captured</span>
+                  )}
+                </div>
+              </div>
+            </div>
+
+            {/* Action notes */}
+            <div className="space-y-2 mb-6">
+              <label className="block text-[10px] font-extrabold text-slate-400 uppercase tracking-widest">Review Notes / Reason (Sent to tech upon rejection)</label>
+              <textarea
+                value={verificationNotes}
+                onChange={(e) => setVerificationNotes(e.target.value)}
+                placeholder="Write approval/rejection details here..."
+                className="w-full p-3.5 bg-slate-950 border border-white/10 rounded-2xl text-xs font-semibold text-white outline-none focus:border-indigo-500 h-20 resize-none"
+              />
+            </div>
+
+            <div className="flex flex-wrap gap-3 justify-end">
+              <button
+                type="button"
+                onClick={() => { setSelectedVerificationTech(null); setVerificationNotes(''); }}
+                className="px-5 py-2.5 bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-bold rounded-xl outline-none cursor-pointer transition"
+              >
+                Close
+              </button>
+              <button
+                type="button"
+                onClick={() => handleReviewTechnician(selectedVerificationTech.userId, 'rejected')}
+                className="px-5 py-2.5 bg-rose-600 hover:bg-rose-500 text-white text-xs font-bold rounded-xl outline-none cursor-pointer transition"
+              >
+                Reject Technician
+              </button>
+              <button
+                type="button"
+                onClick={() => handleReviewTechnician(selectedVerificationTech.userId, 'under_review')}
+                className="px-5 py-2.5 bg-amber-600 hover:bg-amber-500 text-white text-xs font-bold rounded-xl outline-none cursor-pointer transition"
+              >
+                Under Review
+              </button>
+              <button
+                type="button"
+                onClick={() => handleReviewTechnician(selectedVerificationTech.userId, 'approved')}
+                className="px-5 py-2.5 bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold rounded-xl outline-none cursor-pointer transition"
+              >
+                Approve & Verify
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Resolve Alert Modal */}
+      {resolvingAlertId && (
+        <div className="fixed inset-0 z-50 bg-[#0B0F19]/80 backdrop-blur-sm flex items-center justify-center p-4">
+          <div className="bg-slate-900 border border-white/10 rounded-2xl p-6 w-full max-w-md shadow-2xl relative animate-in fade-in zoom-in-95 duration-200">
+            <h3 className="text-lg font-bold text-white mb-2 font-heading">Resolve Security Alert</h3>
+            <p className="text-xs text-slate-400 mb-4">
+              Explain details of resolution. This will mark the security flag as resolved and archive the incident.
+            </p>
+            <form onSubmit={handleResolveAlert} className="space-y-4">
+              <div>
+                <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1.5">Resolution Notes</label>
+                <textarea
+                  required
+                  placeholder="Explain actions taken e.g. Contacted user, checked txn, unlocked IP..."
+                  value={resolutionNotes}
+                  onChange={(e) => setResolutionNotes(e.target.value)}
+                  className="w-full p-3 bg-slate-950 border border-white/10 rounded-xl text-xs font-semibold text-white outline-none focus:border-indigo-500 h-24 resize-none"
+                />
+              </div>
+              <div className="flex gap-3 justify-end pt-2">
+                <button
+                  type="button"
+                  onClick={() => { setResolvingAlertId(null); setResolutionNotes(''); }}
+                  className="px-4 py-2 bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-bold rounded-lg outline-none cursor-pointer"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  className="px-4 py-2 bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold rounded-lg outline-none cursor-pointer"
+                >
+                  Confirm Resolve
                 </button>
               </div>
             </form>

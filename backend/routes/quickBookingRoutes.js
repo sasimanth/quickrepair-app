@@ -5,8 +5,10 @@ const Technician = require('../models/Technician');
 const nodemailer = require('nodemailer');
 const axios = require('axios');
 
+const { bookingLimiter } = require('../middleware/rateLimiter');
+
 // POST /api/book-service
-router.post('/', async (req, res) => {
+router.post('/', bookingLimiter, async (req, res) => {
   try {
     const { name, phone, service, problem, address } = req.body;
 
@@ -24,7 +26,12 @@ router.post('/', async (req, res) => {
     let reqTimeSlot = req.body.timeSlot || 'ASAP';
 
     // Find available technicians
-    const availableTech = await Technician.findOne({ currentStatus: { $in: ['online', 'available'] }, isOnline: true });
+    const availableTech = await Technician.findOne({ 
+      currentStatus: { $in: ['online', 'available'] }, 
+      isOnline: true,
+      isVerified: true,
+      verificationStatus: 'approved'
+    });
     
     if (availableTech) {
       techName = availableTech.name;
@@ -33,7 +40,12 @@ router.post('/', async (req, res) => {
       estArrival = new Date(Date.now() + 30 * 60000); // Expect in ~30 mins
     } else {
       // Queue System: Find busy tech finishing earliest
-      const busyTech = await Technician.findOne({ currentStatus: { $in: ['busy', 'on_the_way', 'on_job'] }, isOnline: true }).sort('expectedAvailableTime');
+      const busyTech = await Technician.findOne({ 
+        currentStatus: { $in: ['busy', 'on_the_way', 'on_job'] }, 
+        isOnline: true,
+        isVerified: true,
+        verificationStatus: 'approved'
+      }).sort('expectedAvailableTime');
       
       if (busyTech) {
         techName = busyTech.name;

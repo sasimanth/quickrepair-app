@@ -50,6 +50,21 @@ router.post("/create-order", async (req, res) => {
 router.post("/verify", async (req, res) => {
   const { razorpay_order_id, razorpay_payment_id, razorpay_signature, bookingId } = req.body;
 
+  // Idempotency/Replay attack prevention
+  if (razorpay_payment_id) {
+    const existingTx = await Booking.findOne({ transactionId: razorpay_payment_id });
+    if (existingTx) {
+      const SecurityAlert = require("../models/SecurityAlert");
+      await SecurityAlert.create({
+        alertType: 'PAYMENT_ANOMALY',
+        severity: 'high',
+        description: `Duplicate Razorpay payment ID detected: ${razorpay_payment_id}. Replay attack blocked.`,
+        metadata: { razorpay_payment_id, bookingId, ipAddress: req.ip }
+      });
+      return res.status(400).json({ success: false, message: "Duplicate transaction ID. Payment verification failed." });
+    }
+  }
+
   const body = razorpay_order_id + "|" + razorpay_payment_id;
   const expectedSignature = crypto
     .createHmac("sha256", process.env.RAZORPAY_KEY_SECRET || "rzp_secret_change_me")
@@ -90,6 +105,24 @@ router.post("/verify", async (req, res) => {
 router.post("/verify-premium", protect, async (req, res) => {
   const { razorpay_order_id, razorpay_payment_id, razorpay_signature, plan } = req.body;
 
+  // Idempotency/Replay check
+  if (razorpay_payment_id) {
+    const SecurityAlert = require("../models/SecurityAlert");
+    const existingPremium = await SecurityAlert.findOne({
+      alertType: 'PREMIUM_UPGRADE_TRANSACTION',
+      'metadata.razorpay_payment_id': razorpay_payment_id
+    });
+    if (existingPremium) {
+      await SecurityAlert.create({
+        alertType: 'PAYMENT_ANOMALY',
+        severity: 'high',
+        description: `Duplicate Razorpay Premium payment ID detected: ${razorpay_payment_id}. Replay attack blocked.`,
+        metadata: { razorpay_payment_id, userId: req.user.id, ipAddress: req.ip }
+      });
+      return res.status(400).json({ success: false, message: "Duplicate transaction ID. Payment verification failed." });
+    }
+  }
+
   const body = razorpay_order_id + "|" + razorpay_payment_id;
   const expectedSignature = crypto
     .createHmac("sha256", process.env.RAZORPAY_KEY_SECRET || "rzp_secret_change_me")
@@ -103,6 +136,17 @@ router.post("/verify-premium", protect, async (req, res) => {
       if (!user) {
         return res.status(404).json({ success: false, message: "User not found" });
       }
+
+      // Log successful transaction for future idempotency checks
+      const SecurityAlert = require("../models/SecurityAlert");
+      await SecurityAlert.create({
+        userId: user._id,
+        userEmail: user.email,
+        alertType: 'PREMIUM_UPGRADE_TRANSACTION',
+        severity: 'low',
+        description: `User successfully upgraded to premium: ${plan}.`,
+        metadata: { razorpay_payment_id, plan, ipAddress: req.ip }
+      });
 
       user.isPremium = true;
       user.membershipType = plan === 'monthly' ? 'monthly' : 'yearly';

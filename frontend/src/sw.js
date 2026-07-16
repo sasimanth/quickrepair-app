@@ -12,9 +12,12 @@ self.addEventListener('push', (event) => {
       payload = { title: 'Fixvo Alert', body: 'You have a new repair status update' };
     }
 
-    const title = payload.title || 'Fixvo Update 🛠️';
-    const priority = payload.data?.priority || 'low';
-    const bookingId = payload.data?.bookingId || null;
+    // Support both standard VAPID structure and FCM payload structure
+    const notificationData = payload.data || payload.notification?.data || {};
+    const title = payload.title || payload.notification?.title || 'Fixvo Update 🛠️';
+    const body = payload.body || payload.notification?.body || 'New marketplace activity detected.';
+    const priority = notificationData.priority || payload.data?.priority || 'low';
+    const bookingId = notificationData.bookingId || payload.data?.bookingId || null;
 
     event.waitUntil(
       self.clients.matchAll({ type: 'window', includeUncontrolled: true }).then((clientList) => {
@@ -22,7 +25,11 @@ self.addEventListener('push', (event) => {
         clientList.forEach((client) => {
           client.postMessage({
             type: 'push_received',
-            payload: payload
+            payload: {
+              title,
+              body,
+              data: notificationData
+            }
           });
         });
 
@@ -42,15 +49,15 @@ self.addEventListener('push', (event) => {
 
         // Set vibration pattern based on priority (high priority gets strong patterns)
         let vibratePattern = [100];
-        if (priority === 'high') {
+        if (priority === 'high' || priority === 'high') {
           vibratePattern = [500, 250, 500, 250, 500, 250, 500, 250, 1000]; // Uber-like vibration
         }
 
-        const redirectUrl = payload.data?.url || '/dashboard';
+        const redirectUrl = notificationData.url || '/dashboard';
         const isTechRequest = redirectUrl.includes('technician-dashboard');
 
         const options = {
-          body: payload.body || 'New marketplace activity detected.',
+          body: body,
           icon: '/fixvo-icon.png',
           badge: '/fixvo-icon.png',
           vibrate: vibratePattern,
@@ -59,7 +66,7 @@ self.addEventListener('push', (event) => {
           renotify: true,
           requireInteraction: priority === 'high',
           visibility: 'public',
-          data: payload.data || {},
+          data: notificationData,
           actions: isTechRequest 
             ? [
                 {

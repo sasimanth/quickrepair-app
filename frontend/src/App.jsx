@@ -19,6 +19,7 @@ import Referrals from './pages/Referrals';
 import TechnicianAgreement from './pages/TechnicianAgreement';
 import UserSafety from './pages/UserSafety';
 import LoadingSpinner from './components/LoadingSpinner';
+import VerifyAccount from './pages/VerifyAccount';
 import { AuthProvider, useAuth } from './contexts/AuthContext';
 
 const ScrollToTop = () => {
@@ -57,6 +58,12 @@ const PrivateRoute = ({ children, allowedRoles }) => {
   if (allowedRoles && !allowedRoles.includes(role)) {
     return <Navigate to="/" replace />;
   }
+
+  // Redirect users who haven't verified their email/phone yet
+  if (role !== 'admin' && (!user.isEmailVerified || !user.isPhoneVerified)) {
+    return <Navigate to="/verify-account" replace />;
+  }
+
   return children;
 };
 
@@ -132,6 +139,7 @@ const AppContent = () => {
             <Route path="/book" element={<Booking />} />
             <Route path="/login" element={<Login />} />
             <Route path="/signup" element={<Signup />} />
+            <Route path="/verify-account" element={<VerifyAccount />} />
             
             <Route path="/dashboard" element={
               <PrivateRoute allowedRoles={['user']}>

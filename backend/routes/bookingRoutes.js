@@ -5,10 +5,11 @@ const {
   createPaymentIntent, submitQuote, approveQuote, cancelBooking, 
   requestQuoteClarification, respondQuoteClarification 
 } = require('../controllers/bookingController');
-const { protect, authorize, optionalAuth } = require('../middleware/auth');
+const { protect, authorize, optionalAuth, ensureVerified } = require('../middleware/auth');
+const { bookingLimiter } = require('../middleware/rateLimiter');
 
 router.route('/')
-  .post(optionalAuth, createBooking)
+  .post(protect, ensureVerified, bookingLimiter, createBooking)
   .get(protect, getBookings); // Controller handles logic based on role
 
 router.put('/:id/status', protect, authorize('user', 'technician', 'admin'), updateBookingStatus);

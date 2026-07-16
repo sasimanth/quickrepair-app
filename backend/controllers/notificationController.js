@@ -120,4 +120,73 @@ const markAllRead = async (req, res) => {
   }
 };
 
-module.exports = { getNotifications, markRead, markAllRead, getVapidPublicKey, subscribe };
+// @desc    Register Firebase Cloud Messaging (FCM) Token
+// @route   POST /api/notifications/fcm-token
+const registerFcmToken = async (req, res) => {
+  try {
+    const { token, deviceId, browser, platform } = req.body;
+    if (!token) {
+      return res.status(400).json({ message: 'Missing token parameter' });
+    }
+    if (!deviceId) {
+      return res.status(400).json({ message: 'Missing deviceId parameter' });
+    }
+
+    const FcmToken = require('../models/FcmToken');
+
+    // Clean up any stale mappings for this token/deviceId
+    await FcmToken.deleteMany({
+      $or: [
+        { token },
+        { deviceId, userId: { $ne: req.user.id } }
+      ]
+    });
+
+    // Upsert the token mapping for the user
+    await FcmToken.findOneAndUpdate(
+      { userId: req.user.id, deviceId },
+      {
+        userId: req.user.id,
+        role: req.user.role,
+        deviceId,
+        token,
+        browser: browser || 'Unknown',
+        platform: platform || 'Unknown',
+        lastActive: new Date(),
+        isActive: true
+      },
+      { upsert: true, new: true }
+    );
+
+    // Also update DeviceSession to keep track
+    const DeviceSession = require('../models/DeviceSession');
+    let techProfile = null;
+    if (req.user.role === 'technician') {
+      const Technician = require('../models/Technician');
+      techProfile = await Technician.findOne({ userId: req.user.id });
+    }
+
+    await DeviceSession.findOneAndUpdate(
+      { userId: req.user.id, deviceId },
+      {
+        userId: req.user.id,
+        technicianId: techProfile ? techProfile._id.toString() : null,
+        role: req.user.role,
+        deviceId,
+        browser: browser || 'Unknown',
+        platform: platform || 'Unknown',
+        lastSeen: new Date(),
+        isActive: true
+      },
+      { upsert: true, new: true }
+    );
+
+    res.status(200).json({ success: true, message: 'FCM token registered successfully' });
+  } catch (err) {
+    console.error('Error in registerFcmToken:', err);
+    res.status(500).json({ message: err.message });
+  }
+};
+
+module.exports = { getNotifications, markRead, markAllRead, getVapidPublicKey, subscribe, registerFcmToken };
+

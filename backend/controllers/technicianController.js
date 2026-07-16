@@ -278,24 +278,113 @@ const getNearbyTechnicians = async (req, res) => {
   }
 };
 
-// @desc    Mock Identity Verification Submission
+const validateBase64File = (base64String) => {
+  if (!base64String) return { valid: false, message: 'File is required' };
+  
+  // Check if it's already a URL (e.g. from seeded database scripts or fallback)
+  if (base64String.startsWith('http://') || base64String.startsWith('https://')) {
+    return { valid: true, isUrl: true };
+  }
+  
+  const matches = base64String.match(/^data:([a-zA-Z0-9]+\/[a-zA-Z0-9-.+]+);base64,(.+)$/);
+  if (!matches) {
+    return { valid: false, message: 'Invalid file format. Must be a valid Base64 data URL.' };
+  }
+  
+  const mimeType = matches[1];
+  const base64Content = matches[2];
+  
+  const allowedMimeTypes = ['image/png', 'image/jpeg', 'image/jpg', 'application/pdf'];
+  if (!allowedMimeTypes.includes(mimeType.toLowerCase())) {
+    return { valid: false, message: `Invalid file type: ${mimeType}. Only PNG, JPEG, and PDF are allowed.` };
+  }
+  
+  // Estimate size
+  const estimatedSize = (base64Content.length * 3) / 4;
+  if (estimatedSize > 5 * 1024 * 1024) {
+    return { valid: false, message: 'File size exceeds maximum limit of 5MB.' };
+  }
+  
+  // Verify magic bytes
+  const buffer = Buffer.from(base64Content.substring(0, 32), 'base64');
+  
+  let isMagicValid = false;
+  if (mimeType.includes('png')) {
+    isMagicValid = buffer[0] === 0x89 && buffer[1] === 0x50 && buffer[2] === 0x4E && buffer[3] === 0x47;
+  } else if (mimeType.includes('jpeg') || mimeType.includes('jpg')) {
+    isMagicValid = buffer[0] === 0xFF && buffer[1] === 0xD8 && buffer[2] === 0xFF;
+  } else if (mimeType.includes('pdf')) {
+    isMagicValid = buffer[0] === 0x25 && buffer[1] === 0x50 && buffer[2] === 0x44 && buffer[3] === 0x46;
+  }
+  
+  if (!isMagicValid) {
+    return { valid: false, message: 'MIME type mismatch. The file contents do not match its extension.' };
+  }
+  
+  return { valid: true, mimeType, isUrl: false };
+};
+
+// @desc    Submit Identity Verification Documents
 // @route   POST /api/technicians/verify
 const submitVerification = async (req, res) => {
+  const { governmentId, selfie, addressProof } = req.body;
   try {
     const tech = await Technician.findOne({ userId: req.user.id });
     if (!tech) return res.status(404).json({ message: 'Technician not found' });
 
-    // In a real startup, you'd send data to Stripe Identity or Checkr here.
-    // We instantly approve for MVP demonstration:
-    tech.backgroundCheckStatus = 'approved';
-    tech.isVerified = true;
+    // Validate inputs
+    if (!governmentId || !selfie || !addressProof) {
+      return res.status(400).json({ message: 'All documents (Government ID, Selfie, and Address Proof) are required.' });
+    }
+
+    const idVal = validateBase64File(governmentId);
+    if (!idVal.valid) return res.status(400).json({ message: `Government ID Error: ${idVal.message}` });
+
+    const selfieVal = validateBase64File(selfie);
+    if (!selfieVal.valid) return res.status(400).json({ message: `Selfie Error: ${selfieVal.message}` });
+
+    const addrVal = validateBase64File(addressProof);
+    if (!addrVal.valid) return res.status(400).json({ message: `Address Proof Error: ${addrVal.message}` });
+
+    // Save Base64 or URL data
+    tech.governmentIdUrl = governmentId;
+    tech.selfieUrl = selfieie || selfie; // backward compatibility or direct assignment
+    tech.selfieUrl = selfie;
+    tech.addressProofUrl = addressProof;
+    tech.verificationStatus = 'pending';
+    tech.backgroundCheckStatus = 'pending';
+    tech.isVerified = false; // Revoke until approved by admin
     await tech.save();
 
-    res.json({ message: 'Verification successful', tech });
+    // Revoke verified status on User document until admin approves
+    const User = require('../models/User');
+    await User.findByIdAndUpdate(req.user.id, { isVerified: false });
+
+    // Send email/notification to admin asynchronously about new review request
+    try {
+      const { notifyUser } = require('../services/NotificationService');
+      notifyUser({
+        email: process.env.ADMIN_EMAIL || 'admin@fixvo.com',
+        type: 'email',
+        subject: `New Technician Verification Submitted: ${tech.name} 💼`,
+        text: `Technician ${tech.name} has submitted documents for verification. Please review them in the Admin Dashboard.`,
+        templateName: 'adminNewTechRegistration',
+        templateData: {
+          techName: tech.name,
+          specialties: tech.skills?.join(', ') || 'General',
+          url: `${process.env.FRONTEND_URL || 'http://localhost:5173'}/admin-dashboard`
+        }
+      }).catch(err => console.error('Failed to notify admin on verification submission:', err));
+    } catch (e) {
+      console.error('Failed to initiate admin notification for technician review:', e);
+    }
+
+    res.json({ message: 'Verification documents submitted successfully. Status is now Pending Review.', tech });
   } catch (error) {
     res.status(500).json({ message: error.message });
   }
 };
+
 
 // @desc    Update Job Status (Accept, Start, Complete)
 // @route   PUT /api/technicians/job-status
@@ -365,6 +454,11 @@ const requestWithdrawal = async (req, res) => {
     const tech = await Technician.findOne({ userId: req.user.id });
     if (!tech) return res.status(404).json({ message: 'Technician not found' });
 
+    // Enforce KYC and bank details checks
+    if (!tech.kycCompleted || !tech.bankDetails || !tech.bankDetails.accountNumber || !tech.bankDetails.accountName || !tech.bankDetails.ifscCode) {
+      return res.status(400).json({ message: 'KYC and bank details must be completed and approved before requesting withdrawal.' });
+    }
+
     // Recalculate dynamic wallet stats before validating withdrawal
     const walletStats = await calculateTechnicianWallet(req.user.id);
     tech.walletBalance = walletStats.availableBalance;
@@ -382,7 +476,7 @@ const requestWithdrawal = async (req, res) => {
       return res.status(400).json({ message: 'Cannot withdraw more than available balance.' });
     }
 
-    // Check for existing pending requests
+    // Check for existing pending requests in the database
     const WithdrawalRequest = require('../models/WithdrawalRequest');
     const existingPending = await WithdrawalRequest.findOne({
       technicianId: req.user.id,
@@ -392,29 +486,70 @@ const requestWithdrawal = async (req, res) => {
       return res.status(400).json({ message: 'You already have a pending withdrawal request. Please wait for admin processing.' });
     }
 
+    // Atomically lock and update Technician document to prevent race conditions & double-spending
+    const updatedTech = await Technician.findOneAndUpdate(
+      {
+        userId: req.user.id,
+        walletBalance: { $gte: numAmount },
+        $or: [
+          { pendingWithdrawal: 0 },
+          { pendingWithdrawal: { $exists: false } }
+        ]
+      },
+      {
+        $set: {
+          walletBalance: walletStats.availableBalance - numAmount,
+          pendingWithdrawal: numAmount
+        }
+      },
+      { new: true }
+    );
+
+    if (!updatedTech) {
+      return res.status(400).json({ 
+        message: 'Withdrawal request denied. You already have a pending withdrawal request or your balance is insufficient.' 
+      });
+    }
+
     // Create withdrawal request log
     const payoutReq = await WithdrawalRequest.create({
       technicianId: req.user.id,
       amount: numAmount,
       bankDetails: {
-        accountName,
-        accountNumber,
-        ifscCode,
+        accountName: accountName || tech.bankDetails.accountName,
+        accountNumber: accountNumber || tech.bankDetails.accountNumber,
+        ifscCode: ifscCode || tech.bankDetails.ifscCode,
         upiId: upiId || ''
       },
       status: 'pending'
     });
-
-    // Update pending fields in tech profile
-    tech.pendingWithdrawal = (tech.pendingWithdrawal || 0) + numAmount;
-    tech.walletBalance = Math.max(0, tech.walletBalance - numAmount);
-    await tech.save();
     
-    res.json({ message: 'Withdrawal request submitted successfully', payoutReq, tech });
+    // Send email to admin asynchronously
+    try {
+      const { notifyUser } = require('../services/NotificationService');
+      notifyUser({
+        email: process.env.ADMIN_EMAIL || 'admin@fixvo.com',
+        type: 'email',
+        subject: `New Withdrawal Request from ${tech.name} 💰`,
+        text: `${tech.name} has submitted a withdrawal request of ₹${numAmount}. Please review and approve.`,
+        templateName: 'adminWithdrawalRequest',
+        templateData: {
+          techName: tech.name,
+          amount: numAmount,
+          balance: updatedTech.walletBalance + numAmount, // Available balance before this deduction
+          url: `${process.env.FRONTEND_URL || 'http://localhost:5173'}/admin-dashboard`
+        }
+      }).catch(err => console.error('Failed to notify admin on withdrawal request:', err));
+    } catch (e) {
+      console.error('Failed to initiate admin notification for withdrawal:', e);
+    }
+
+    res.json({ message: 'Withdrawal request submitted successfully', payoutReq, tech: updatedTech });
   } catch (error) {
     res.status(500).json({ message: error.message });
   }
 };
+
 
 // @desc    Submit KYC details
 // @route   POST /api/technicians/kyc

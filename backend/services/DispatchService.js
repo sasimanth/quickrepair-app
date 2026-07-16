@@ -93,7 +93,9 @@ class DispatchService {
       const eligibleTechQuery = {
         userId: { $nin: excludedTechs },
         currentStatus: { $in: ['online', 'available'] },
-        isOnline: true
+        isOnline: true,
+        isVerified: true,
+        verificationStatus: 'approved'
       };
 
       if (booking.serviceId) {
