@@ -774,11 +774,11 @@ const TechnicianDashboard = () => {
   };
 
   return (
-    <div className="min-h-screen bg-slate-950 text-white font-sans mt-4 sm:mt-10 pb-16">
+    <div className="min-h-screen bg-slate-50 text-slate-800 font-sans mt-4 sm:mt-10 pb-16">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-6 sm:space-y-10 animate-in fade-in duration-300">
         
         {/* Productivity Header & Profile Section */}
-        <div className="relative overflow-hidden rounded-[2.5rem] bg-gradient-to-br from-slate-900/80 to-[#111827]/80 border border-white/5 p-6 sm:p-8 shadow-2xl backdrop-blur-xl">
+        <div className="relative overflow-hidden rounded-[2.5rem] bg-white border border-slate-200/80 p-6 sm:p-8 shadow-xl text-slate-800">
           <div className="absolute top-[-30%] right-[-10%] w-[35%] h-[150%] bg-[radial-gradient(circle_at_center,_rgba(99,102,241,0.15),_transparent_65%)] rounded-full pointer-events-none animate-pulse"></div>
           
           <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-6 relative z-10">
@@ -794,7 +794,7 @@ const TechnicianDashboard = () => {
               
               <div className="space-y-1.5 flex-1">
                 <div className="flex flex-wrap items-center justify-center sm:justify-start gap-2">
-                  <h1 className="text-xl sm:text-2xl font-black tracking-tight text-white">{profile?.name || 'Technician'}</h1>
+                  <h1 className="text-xl sm:text-2xl font-black tracking-tight text-slate-900">{profile?.name || 'Technician'}</h1>
                   {profile?.isVerified ? (
                     <span className="bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 font-extrabold text-[9px] px-2.5 py-0.5 rounded-full uppercase tracking-wider">Verified Partner</span>
                   ) : (
@@ -804,8 +804,8 @@ const TechnicianDashboard = () => {
                 <p className="text-xs text-slate-400 font-medium">Experience: {profile?.experience || 'N/A'} • Skills: {profile?.skills?.join(', ') || 'General Repair'}</p>
                 <div className="flex flex-wrap justify-center sm:justify-start gap-2 text-[10px] text-slate-500 font-semibold uppercase tracking-wider">
                   <span>Rating: <strong className="text-amber-400">★ {profile?.rating || '5.0'}</strong></span>
-                  <span className="border-l border-white/10 pl-2">Jobs: <strong className="text-indigo-400">{profile?.completedJobsCount || '0'}</strong></span>
-                  <span className="border-l border-white/10 pl-2">Areas: <strong className="text-white">{profile?.address || 'Local'}</strong></span>
+                  <span className="border-l border-slate-200 pl-2">Jobs: <strong className="text-indigo-400">{profile?.completedJobsCount || '0'}</strong></span>
+                  <span className="border-l border-slate-200 pl-2">Areas: <strong className="text-white">{profile?.address || 'Local'}</strong></span>
                 </div>
               </div>
             </div>
@@ -814,7 +814,7 @@ const TechnicianDashboard = () => {
             <div className="flex flex-wrap items-center gap-3 w-full lg:w-auto justify-center sm:justify-start lg:justify-end">
               {profile?.isProfileComplete && (() => {
                 const status = profile?.currentStatus || (profile?.isOnline ? 'online' : 'offline');
-                let btnClass = 'bg-slate-900 border-white/5 hover:bg-slate-850 text-slate-400';
+                let btnClass = 'bg-slate-900 border-slate-200/85 hover:bg-slate-850 text-slate-400';
                 let dotClass = 'bg-slate-600';
                 let label = 'Offline (Hidden)';
                 
@@ -846,7 +846,7 @@ const TechnicianDashboard = () => {
 
               <button
                 onClick={() => setShowSettings(true)}
-                className="bg-slate-900 hover:bg-slate-850 border border-white/5 text-slate-350 font-extrabold px-4.5 py-3 rounded-xl transition-all text-xs uppercase tracking-widest flex items-center gap-1.5 cursor-pointer outline-none"
+                className="bg-slate-900 hover:bg-slate-850 border border-slate-200/85 text-slate-350 font-extrabold px-4.5 py-3 rounded-xl transition-all text-xs uppercase tracking-widest flex items-center gap-1.5 cursor-pointer outline-none"
               >
                 <Settings size={14} /> Settings
               </button>
@@ -864,11 +864,11 @@ const TechnicianDashboard = () => {
 
         {/* Onboarding Section */}
         {!loading && profile && !profile.isProfileComplete && (
-          <div className="bg-[#111827]/60 border border-indigo-500/20 rounded-[2rem] p-8 text-center space-y-4 shadow-2xl backdrop-blur-md">
+          <div className="bg-white border border-indigo-200 rounded-[2rem] p-8 text-center space-y-4 shadow-xl">
             <div className="w-16 h-16 bg-indigo-650/10 border border-indigo-500/20 rounded-2xl flex items-center justify-center mx-auto mb-4 shadow-inner text-indigo-400">
               <MapPin size={32} />
             </div>
-            <h2 className="text-xl sm:text-2xl font-black tracking-tight text-white">Activate Your Profile</h2>
+            <h2 className="text-xl sm:text-2xl font-black tracking-tight text-slate-900">Activate Your Profile</h2>
             <p className="text-slate-400 max-w-md mx-auto text-xs sm:text-sm font-semibold">To start receiving repair requests from local customers, we need to verify your local service area using your device's location.</p>
             <button 
               onClick={handleSetupProfile}
@@ -942,7 +942,7 @@ const TechnicianDashboard = () => {
               initial={{ opacity: 0, y: 15 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.4 }}
-              className="relative overflow-hidden rounded-[2rem] bg-gradient-to-br from-indigo-950/20 to-slate-900/20 border border-indigo-500/20 p-6 sm:p-8 shadow-[0_0_50px_rgba(99,102,241,0.08)] backdrop-blur-xl"
+              className="relative overflow-hidden rounded-[2rem] bg-indigo-50/50 border border-indigo-200 p-6 sm:p-8 shadow-lg text-slate-850"
             >
               <div className="absolute top-[-30%] right-[-10%] w-[35%] h-[150%] bg-[radial-gradient(circle_at_center,_rgba(99,102,241,0.1),_transparent_65%)] rounded-full pointer-events-none animate-pulse" style={{ animationDuration: '4s' }}></div>
               
@@ -981,7 +981,7 @@ const TechnicianDashboard = () => {
               <button 
                 type="button"
                 onClick={() => setShowEarningsDetails(!showEarningsDetails)}
-                className="flex items-center gap-2 px-5 py-2.5 bg-slate-900 hover:bg-slate-850 border border-white/5 hover:border-slate-800 text-slate-400 hover:text-white font-extrabold text-[10px] sm:text-xs uppercase tracking-wider rounded-full shadow-lg transition-all duration-300 transform active:scale-95 cursor-pointer outline-none"
+                className="flex items-center gap-2 px-5 py-2.5 bg-slate-900 hover:bg-slate-850 border border-slate-200/85 hover:border-slate-800 text-slate-400 hover:text-white font-extrabold text-[10px] sm:text-xs uppercase tracking-wider rounded-full shadow-lg transition-all duration-300 transform active:scale-95 cursor-pointer outline-none"
               >
                 <span>{showEarningsDetails ? "Hide Earnings Details" : "View Earnings Breakdown"}</span>
                 <ChevronRight 
@@ -1012,7 +1012,7 @@ const TechnicianDashboard = () => {
                   <motion.div 
                     key={idx}
                     whileHover={{ scale: 1.02, translateY: -2 }}
-                    className="group relative overflow-hidden bg-slate-900/40 backdrop-blur-md p-4 sm:p-5 rounded-2xl border border-white/5 shadow-md hover:border-slate-800 transition-all duration-300 flex flex-col justify-between"
+                    className="group relative overflow-hidden bg-white p-4 sm:p-5 rounded-2xl border border-slate-200 shadow-sm hover:border-indigo-200 transition-all duration-300 flex flex-col justify-between"
                   >
                     <div className={`absolute inset-0 bg-gradient-to-br ${card.gradient} opacity-40 pointer-events-none`}></div>
                     
@@ -1036,7 +1036,7 @@ const TechnicianDashboard = () => {
         {/* Jobs Segmented Columns/Tabs */}
         {!loading && profile?.isProfileComplete && (
           <div className="space-y-6">
-            <div className="flex overflow-x-auto gap-2 pb-2 scrollbar-none snap-x snap-mandatory border-b border-white/5">
+            <div className="flex overflow-x-auto gap-2 pb-2 scrollbar-none snap-x snap-mandatory border-b border-slate-200/85">
               {[
                 { id: 'new', label: 'New Requests', count: jobs.filter(j => ['pending', 'assigned', 'queued'].includes(j.status)).length },
                 { id: 'active', label: 'Active Jobs', count: jobs.filter(j => ['accepted', 'on_the_way', 'arrived', 'inspection_started', 'quote_approved', 'in_progress'].includes(j.status)).length },
@@ -1062,14 +1062,14 @@ const TechnicianDashboard = () => {
             </div>
 
             {filteredJobs.length === 0 ? (
-              <div className="flex flex-col items-center justify-center py-20 px-6 bg-slate-900/10 border border-white/5 rounded-[2rem] text-center animate-in fade-in duration-300 shadow-inner">
-                <div className="relative w-20 h-20 bg-slate-900/60 border border-white/5 rounded-2xl flex items-center justify-center mb-6 shadow-inner text-slate-500">
+              <div className="flex flex-col items-center justify-center py-20 px-6 bg-slate-900/10 border border-slate-200/85 rounded-[2rem] text-center animate-in fade-in duration-300 shadow-inner">
+                <div className="relative w-20 h-20 bg-slate-900/60 border border-slate-200/85 rounded-2xl flex items-center justify-center mb-6 shadow-inner text-slate-500">
                   <PackageSearch size={36} />
                   {jobTab === 'new' && (
                     <div className="absolute top-0 right-0 w-3 h-3 bg-indigo-500 rounded-full animate-ping"></div>
                   )}
                 </div>
-                <h3 className="text-xl font-extrabold text-white tracking-tight">No Jobs Found</h3>
+                <h3 className="text-xl font-extrabold text-slate-850 tracking-tight">No Jobs Found</h3>
                 <p className="text-xs sm:text-sm text-slate-400 font-medium max-w-xs mt-2 leading-relaxed">
                   There are no repair requests in the <strong className="text-indigo-400 capitalize">"{jobTab.replace(/_/g, ' ')}"</strong> section right now.
                 </p>
@@ -1085,19 +1085,19 @@ const TechnicianDashboard = () => {
                       <div 
                         key={job._id} 
                         id={`job-card-${job._id}`} 
-                        className="relative bg-gradient-to-r from-slate-900/60 to-[#111827]/60 border border-white/5 rounded-2xl p-6 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 overflow-hidden pl-8 shadow-xl"
+                        className="relative bg-white border border-slate-200 rounded-2xl p-6 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 overflow-hidden pl-8 shadow-sm"
                       >
                         <div className="absolute top-0 left-0 w-1.5 h-full bg-emerald-500"></div>
                         <div className="space-y-1.5 flex-1 min-w-0">
                           <div className="flex flex-wrap items-center gap-2">
-                            <span className="bg-slate-950 text-slate-400 border border-white/5 text-[9px] font-extrabold px-2.5 py-0.5 rounded uppercase tracking-wider">
+                            <span className="bg-slate-950 text-slate-400 border border-slate-200/85 text-[9px] font-extrabold px-2.5 py-0.5 rounded uppercase tracking-wider">
                               {job.serviceName || 'Device Repair'}
                             </span>
                             {getStatusBadge(job.status)}
                           </div>
                           <h4 className="text-xl font-black text-white tracking-tight">
                             Earned: ₹{job.finalTechnicianEarning ? job.finalTechnicianEarning.toFixed(2) : (((job.finalQuote || job.amount || job.serviceId?.price || 0) - (job.membershipDiscount || 0)) * 0.9).toFixed(2)} 
-                            <span className="text-xs font-semibold text-slate-500 ml-1.5 border-l border-white/10 pl-1.5">Gross Invoice: ₹{job.finalQuote || job.serviceId?.price || 0}</span>
+                            <span className="text-xs font-semibold text-slate-500 ml-1.5 border-l border-slate-200 pl-1.5">Gross Invoice: ₹{job.finalQuote || job.serviceId?.price || 0}</span>
                           </h4>
                           <p className="text-[10px] text-slate-400 font-medium">
                             Completed: {job.updatedAt ? new Date(job.updatedAt).toLocaleDateString() : 'Date Pending'} • Customer: {job.name || 'Guest User'}
@@ -1117,7 +1117,7 @@ const TechnicianDashboard = () => {
                     <div 
                       key={job._id} 
                       id={`job-card-${job._id}`} 
-                      className="relative bg-gradient-to-br from-slate-900/60 to-[#111827]/60 border border-white/5 rounded-[2rem] shadow-xl overflow-hidden group"
+                      className="relative bg-white border border-slate-200/80 rounded-[2rem] shadow-md overflow-hidden group"
                     >
                       <div className={`absolute top-0 left-0 w-1.5 h-full ${
                         ['pending','assigned','queued'].includes(job.status) 
@@ -1132,7 +1132,7 @@ const TechnicianDashboard = () => {
                       <div className="p-6 sm:p-8 flex flex-col lg:flex-row gap-6 pl-8 sm:pl-10">
                         <div className="flex-1 space-y-6">
                           <div className="flex flex-wrap items-center gap-2.5">
-                            <span className="bg-slate-950 text-slate-300 border border-white/5 text-[10px] font-extrabold px-3 py-1 rounded-lg uppercase tracking-wider shadow-sm">
+                            <span className="bg-slate-950 text-slate-300 border border-slate-200/85 text-[10px] font-extrabold px-3 py-1 rounded-lg uppercase tracking-wider shadow-sm">
                               {job.serviceId?.name || job.serviceName || 'Device Repair'}
                             </span>
                             <span className={`text-[10px] font-extrabold px-3 py-1 rounded-lg uppercase tracking-wider shadow-sm border ${
@@ -1149,12 +1149,12 @@ const TechnicianDashboard = () => {
                             </div>
                           </div>
                           
-                          <h3 className="text-2xl sm:text-3xl font-black text-white inline-flex items-center gap-2">
+                          <h3 className="text-2xl sm:text-3xl font-black text-slate-900 inline-flex items-center gap-2">
                             <span className="text-indigo-400">₹</span>{job.finalQuote || job.serviceId?.price || 0} 
                             <span className="text-xs text-slate-500 font-bold ml-2">(+₹{job.transportCharge || 0} Transp.)</span>
                           </h3>
 
-                          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 bg-slate-950/40 border border-white/5 rounded-2xl p-5">
+                          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 bg-slate-50 border border-slate-200/60 rounded-2xl p-5">
                             <div className="space-y-4">
                               <div className="flex gap-3">
                                 <Smartphone className="text-indigo-400 mt-0.5 shrink-0" size={18} />
@@ -1176,7 +1176,7 @@ const TechnicianDashboard = () => {
                                 </div>
                               </div>
                             </div>
-                            <div className="flex gap-3 border-t md:border-t-0 md:border-l border-white/5 pt-4 md:pt-0 md:pl-4">
+                            <div className="flex gap-3 border-t md:border-t-0 md:border-l border-slate-200/85 pt-4 md:pt-0 md:pl-4">
                               <AlertCircle className="text-rose-450 mt-0.5 shrink-0" size={18} />
                               <div>
                                 <p className="text-[9px] font-extrabold uppercase tracking-widest text-slate-500">Issue Description</p>
@@ -1191,12 +1191,12 @@ const TechnicianDashboard = () => {
                           </div>
 
                           {(job.imageUrl || job.mediaUrl) && (
-                            <div className="flex items-start gap-4 p-5 bg-slate-950/20 border border-white/5 rounded-2xl">
+                            <div className="flex items-start gap-4 p-5 bg-slate-50 border border-slate-200/60 rounded-2xl">
                               <div className="w-full">
                                 <p className="text-[9px] font-extrabold uppercase tracking-widest text-slate-500 mb-3 flex items-center gap-1.5">
                                   <Camera size={14} className="text-indigo-400" /> Customer Media Proof
                                 </p>
-                                <div className="relative rounded-xl overflow-hidden border border-white/5 shadow-inner max-w-xs sm:max-w-sm">
+                                <div className="relative rounded-xl overflow-hidden border border-slate-200/85 shadow-inner max-w-xs sm:max-w-sm">
                                   {job.mediaType?.startsWith('video') ? (
                                     <video src={job.mediaUrl} controls className="w-full h-auto object-cover hover:scale-[1.02] transition-transform duration-500" />
                                   ) : (
@@ -1208,13 +1208,13 @@ const TechnicianDashboard = () => {
                           )}
                           
                           <div className="flex flex-wrap items-center gap-4">
-                            <div className="flex items-center gap-2 text-slate-400 bg-slate-950/40 border border-white/5 rounded-full px-4 py-2 w-max text-xs font-semibold">
+                            <div className="flex items-center gap-2 text-slate-400 bg-slate-950/40 border border-slate-200/85 rounded-full px-4 py-2 w-max text-xs font-semibold">
                               <User size={14} />
                               <span>Customer: {job.userEmail ? job.userEmail.split('@')[0] : 'Guest User'}</span>
                             </div>
                             
                             {job.paymentMethod && (
-                              <div className="flex items-center gap-2 text-slate-400 bg-slate-950/40 border border-white/5 rounded-full px-4 py-2 w-max text-xs font-semibold">
+                              <div className="flex items-center gap-2 text-slate-400 bg-slate-950/40 border border-slate-200/85 rounded-full px-4 py-2 w-max text-xs font-semibold">
                                 <CreditCard size={14} />
                                 <span className="uppercase tracking-wider">Payment: {job.paymentMethod}</span>
                               </div>
@@ -1222,24 +1222,24 @@ const TechnicianDashboard = () => {
                           </div>
 
                           {job.lastMessage && (
-                            <div className="p-4 bg-slate-950/60 rounded-2xl border border-white/5 flex items-start gap-2.5 max-w-md">
+                            <div className="p-4 bg-slate-100 rounded-2xl border border-slate-200 flex items-start gap-2.5 max-w-md">
                               <MessageSquare size={14} className="text-indigo-400 shrink-0 mt-0.5" />
                               <div className="text-xs text-slate-300 truncate">
-                                <span className="font-extrabold text-white">{job.lastMessage.senderId === profile?.userId ? 'You: ' : ''}</span>
+                                <span className="font-extrabold text-slate-850">{job.lastMessage.senderId === profile?.userId ? 'You: ' : ''}</span>
                                 {job.lastMessage.text}
                               </div>
                             </div>
                           )}
 
                           {job.status === 'completed' && (
-                            <div className="space-y-3 bg-slate-950/40 border border-white/5 rounded-2xl p-5 mt-4 max-w-xl">
-                              <h4 className="text-xs font-extrabold text-white flex items-center gap-1.5 uppercase tracking-wider">
+                            <div className="space-y-3 bg-slate-50 border border-slate-200 rounded-2xl p-5 mt-4 max-w-xl text-slate-800">
+                              <h4 className="text-xs font-extrabold text-slate-850 flex items-center gap-1.5 uppercase tracking-wider">
                                 <FileText size={16} className="text-indigo-400" /> Billing & Earning Breakdown
                               </h4>
-                              <div className="overflow-hidden rounded-xl border border-white/5 bg-slate-950 shadow-inner">
+                              <div className="overflow-hidden rounded-xl border border-slate-200/85 bg-white border border-slate-250 shadow-inner">
                                 <table className="w-full text-left border-collapse text-[11px] sm:text-xs">
                                   <thead>
-                                    <tr className="bg-white/5 text-slate-400 font-bold border-b border-white/5">
+                                    <tr className="bg-slate-100 text-slate-500 font-bold border-b border-slate-200">
                                       <th className="px-4 py-2.5">Billing Item</th>
                                       <th className="px-4 py-2.5 text-right">Amount</th>
                                     </tr>
@@ -1247,7 +1247,7 @@ const TechnicianDashboard = () => {
                                   <tbody className="divide-y divide-white/5 text-slate-300 font-semibold">
                                     <tr>
                                       <td className="px-4 py-2.5 text-slate-500">Gross Invoice (Billed to Customer)</td>
-                                      <td className="px-4 py-2.5 text-right font-extrabold text-white">₹{job.finalQuote || job.amount || 0}</td>
+                                      <td className="px-4 py-2.5 text-right font-extrabold text-slate-850">₹{job.finalQuote || job.amount || 0}</td>
                                     </tr>
                                     {job.membershipDiscount > 0 && (
                                       <tr className="text-amber-400 bg-amber-500/5">
@@ -1268,7 +1268,7 @@ const TechnicianDashboard = () => {
                                       })()}%)</td>
                                       <td className="px-4 py-2.5 text-right font-extrabold">-₹{(typeof job.platformCommission === 'number' ? job.platformCommission : (((job.finalQuote || job.amount || 0) - (job.membershipDiscount || 0)) * 0.1)).toFixed(2)}</td>
                                     </tr>
-                                    <tr className="bg-emerald-500/10 text-emerald-400 font-bold border-t border-white/10">
+                                    <tr className="bg-emerald-500/10 text-emerald-400 font-bold border-t border-slate-200">
                                       <td className="px-4 py-2.5">Your Net Earnings ({(() => {
                                         const grossInvoice = job.finalQuote || job.amount || 0;
                                         const memberDiscount = job.membershipDiscount || 0;
@@ -1291,7 +1291,7 @@ const TechnicianDashboard = () => {
                         </div>
 
                         {/* Workflow Action Buttons Column */}
-                        <div className="flex flex-col gap-3 min-w-[200px] justify-center border-t lg:border-t-0 lg:border-l border-white/5 pt-6 lg:pt-0 lg:pl-6 shrink-0">
+                        <div className="flex flex-col gap-3 min-w-[200px] justify-center border-t lg:border-t-0 lg:border-l border-slate-200/85 pt-6 lg:pt-0 lg:pl-6 shrink-0">
                           {['pending', 'assigned'].includes(job.status) && (
                             <>
                               <button
@@ -1379,7 +1379,7 @@ const TechnicianDashboard = () => {
                                   <span>📢 Clarification Needed</span>
                                 </div>
                                 {job.quoteRevisions && job.quoteRevisions.length > 0 && (
-                                  <p className="text-slate-400 text-xs italic bg-white/5 p-3 rounded-xl border border-white/5 leading-relaxed">
+                                  <p className="text-slate-400 text-xs italic bg-white/5 p-3 rounded-xl border border-slate-200/85 leading-relaxed">
                                     "{job.quoteRevisions[job.quoteRevisions.length - 1].clarificationText}"
                                   </p>
                                 )}
@@ -1388,7 +1388,7 @@ const TechnicianDashboard = () => {
                                     value={clarificationResponse}
                                     onChange={(e) => setClarificationResponse(e.target.value)}
                                     placeholder="Explain quote breakdown..."
-                                    className="w-full p-2.5 bg-slate-900 border border-white/10 rounded-xl outline-none text-white text-xs focus:border-indigo-500 transition-all resize-none font-semibold"
+                                    className="w-full p-2.5 bg-slate-900 border border-slate-200 rounded-xl outline-none text-white text-xs focus:border-indigo-500 transition-all resize-none font-semibold"
                                     rows={2}
                                   />
                                   <button
@@ -1494,7 +1494,7 @@ const TechnicianDashboard = () => {
                                )}
                                <button
                                  onClick={() => setChatBookingId(job._id)}
-                                 className="w-full bg-white/5 hover:bg-white/10 border border-white/5 text-slate-355 font-extrabold py-3.5 px-4 rounded-xl transition-all flex items-center justify-center gap-2 text-xs cursor-pointer"
+                                 className="w-full bg-white/5 hover:bg-white/10 border border-slate-200/85 text-slate-355 font-extrabold py-3.5 px-4 rounded-xl transition-all flex items-center justify-center gap-2 text-xs cursor-pointer"
                                >
                                  <MessageSquare size={16} /> Chat History
                                </button>
@@ -1509,7 +1509,7 @@ const TechnicianDashboard = () => {
                                </div>
                                <button
                                  onClick={() => setViewReasonJob(job)}
-                                 className="w-full bg-white/5 hover:bg-white/10 border border-white/5 text-slate-355 font-bold py-3.5 px-4 rounded-xl transition-all flex items-center justify-center gap-1.5 text-xs cursor-pointer"
+                                 className="w-full bg-white/5 hover:bg-white/10 border border-slate-200/85 text-slate-355 font-bold py-3.5 px-4 rounded-xl transition-all flex items-center justify-center gap-1.5 text-xs cursor-pointer"
                                >
                                  <FileText size={16} /> View Reason
                                </button>
@@ -1519,7 +1519,7 @@ const TechnicianDashboard = () => {
                           {isCompleted && (
                             <button
                               onClick={() => toggleCompletedExpand(job._id)}
-                              className="w-full mt-3 bg-white/5 hover:bg-white/10 border border-white/5 text-slate-400 font-bold py-2.5 rounded-xl text-xs transition-colors cursor-pointer"
+                              className="w-full mt-3 bg-white/5 hover:bg-white/10 border border-slate-200/85 text-slate-400 font-bold py-2.5 rounded-xl text-xs transition-colors cursor-pointer"
                             >
                               Hide Details
                             </button>
@@ -1551,7 +1551,7 @@ const TechnicianDashboard = () => {
 
         {/* Payout & Withdrawal History Section */}
         {!loading && profile?.isProfileComplete && (
-          <div className="bg-gradient-to-br from-slate-900/60 to-[#111827]/60 border border-white/5 p-6 sm:p-8 rounded-[2rem] shadow-2xl mt-10">
+          <div className="bg-white border border-slate-200 p-6 sm:p-8 rounded-[2rem] shadow-xl mt-10 text-slate-800">
             <div className="flex flex-wrap items-center justify-between gap-4 mb-6">
               <div className="flex items-center gap-3">
                 <div className="p-3 bg-indigo-500/10 text-indigo-400 border border-indigo-500/20 rounded-xl"><FileText size={20} /></div>
@@ -1563,16 +1563,16 @@ const TechnicianDashboard = () => {
             </div>
 
             {!profile.withdrawals || profile.withdrawals.length === 0 ? (
-              <div className="text-center py-12 bg-slate-950/40 border border-dashed border-white/5 rounded-2xl">
+              <div className="text-center py-12 bg-slate-50 border border-dashed border-slate-200 rounded-2xl">
                 <Coins size={36} className="text-slate-600 mx-auto mb-2 opacity-60" />
                 <p className="text-xs sm:text-sm font-bold text-slate-500">No withdrawal requests found.</p>
                 <p className="text-[10px] text-slate-600 mt-1 font-semibold">Submit your first request once you have at least ₹500 in earnings.</p>
               </div>
             ) : (
-              <div className="overflow-x-auto rounded-2xl border border-white/5 shadow-inner">
+              <div className="overflow-x-auto rounded-2xl border border-slate-200/85 shadow-inner">
                 <table className="w-full text-left border-collapse">
                   <thead>
-                    <tr className="bg-slate-950/60 text-slate-400 text-[9px] font-black uppercase tracking-widest border-b border-white/5">
+                    <tr className="bg-slate-50 text-slate-500 text-[9px] font-black uppercase tracking-widest border-b border-slate-250">
                       <th className="px-6 py-4">Request Date</th>
                       <th className="px-6 py-4">Bank Details</th>
                       <th className="px-6 py-4">Amount</th>
@@ -1591,7 +1591,7 @@ const TechnicianDashboard = () => {
                           })}
                         </td>
                         <td className="px-6 py-4">
-                          <p className="font-extrabold text-white">{req.bankDetails?.accountName}</p>
+                          <p className="font-extrabold text-slate-850">{req.bankDetails?.accountName}</p>
                           <p className="text-[10px] text-slate-500 font-semibold mt-0.5">
                             {req.bankDetails?.accountNumber.slice(0, 4)}...{req.bankDetails?.accountNumber.slice(-4)} ({req.bankDetails?.ifscCode})
                           </p>
@@ -1621,7 +1621,7 @@ const TechnicianDashboard = () => {
                         <td className="px-6 py-4">
                           {req.status === 'paid' ? (
                             <div>
-                              <p className="text-[10px] font-mono text-slate-400 bg-slate-950 border border-white/5 px-2 py-0.5 rounded w-max">{req.transactionId || 'TXN_N/A'}</p>
+                              <p className="text-[10px] font-mono text-slate-400 bg-slate-950 border border-slate-200/85 px-2 py-0.5 rounded w-max">{req.transactionId || 'TXN_N/A'}</p>
                               {req.adminNotes && <p className="text-[9px] text-slate-500 font-medium mt-1">{req.adminNotes}</p>}
                             </div>
                           ) : (
@@ -1641,11 +1641,11 @@ const TechnicianDashboard = () => {
         {loading && (
           <div className="space-y-6">
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-              <div className="h-44 bg-slate-900 border border-white/5 rounded-3xl animate-pulse"></div>
-              <div className="h-44 bg-slate-900 border border-white/5 rounded-3xl animate-pulse"></div>
-              <div className="h-44 bg-slate-900 border border-white/5 rounded-3xl animate-pulse"></div>
+              <div className="h-44 bg-slate-900 border border-slate-200/85 rounded-3xl animate-pulse"></div>
+              <div className="h-44 bg-slate-900 border border-slate-200/85 rounded-3xl animate-pulse"></div>
+              <div className="h-44 bg-slate-900 border border-slate-200/85 rounded-3xl animate-pulse"></div>
             </div>
-            <div className="bg-slate-900 border border-white/5 rounded-3xl p-6 h-96 animate-pulse"></div>
+            <div className="bg-slate-900 border border-slate-200/85 rounded-3xl p-6 h-96 animate-pulse"></div>
           </div>
         )}
 
@@ -1685,8 +1685,8 @@ const TechnicianDashboard = () => {
 
       {viewReasonJob && (
         <div className="fixed inset-0 z-[999] bg-[#0B0F19]/80 backdrop-blur-md flex items-center justify-center p-4">
-          <div className="bg-[#111827] border border-white/10 rounded-[2.5rem] p-6 sm:p-8 w-full max-w-md shadow-2xl relative animate-in fade-in zoom-in-95 duration-200 text-white">
-            <h3 className="text-xl font-bold text-white mb-2">Cancellation Details</h3>
+          <div className="bg-[#111827] border border-slate-200 rounded-[2.5rem] p-6 sm:p-8 w-full max-w-md shadow-2xl relative animate-in fade-in zoom-in-95 duration-200 text-white">
+            <h3 className="text-xl font-bold text-slate-900 mb-2">Cancellation Details</h3>
             <div className="space-y-4 my-6">
               <div className="p-4 bg-rose-500/10 border border-rose-500/20 rounded-2xl text-rose-300 text-xs sm:text-sm font-semibold">
                 <span className="font-extrabold text-[10px] bg-rose-500/20 text-rose-300 px-2.5 py-1 rounded uppercase tracking-wider block mb-2 w-max border border-rose-500/30">Reason Given</span>
@@ -1733,7 +1733,7 @@ const TechnicianDashboard = () => {
                 placeholder="Describe your reason here..."
                 value={cancellationReason}
                 onChange={(e) => setCancellationReason(e.target.value)}
-                className="w-full px-4 py-3 rounded-xl bg-slate-900 border border-white/10 text-slate-200 outline-none text-sm font-semibold focus:border-red-500 transition-all resize-none"
+                className="w-full px-4 py-3 rounded-xl bg-slate-900 border border-slate-200 text-slate-200 outline-none text-sm font-semibold focus:border-red-500 transition-all resize-none"
                 required
               />
             </div>
@@ -1742,7 +1742,7 @@ const TechnicianDashboard = () => {
               <button 
                 onClick={() => setCancelJobId(null)} 
                 disabled={submittingCancellation}
-                className="flex-1 border border-white/10 hover:bg-white/5 text-slate-350 font-bold py-3 rounded-xl transition-all text-xs sm:text-sm uppercase tracking-wider outline-none disabled:opacity-50 cursor-pointer"
+                className="flex-1 border border-slate-200 hover:bg-white/5 text-slate-350 font-bold py-3 rounded-xl transition-all text-xs sm:text-sm uppercase tracking-wider outline-none disabled:opacity-50 cursor-pointer"
               >
                 Back
               </button>
@@ -1803,7 +1803,7 @@ const TechnicianDashboard = () => {
                   max={profile?.walletBalance || 0}
                   value={withdrawForm.amount} 
                   onChange={(e) => setWithdrawForm({ ...withdrawForm, amount: e.target.value })} 
-                  className="w-full px-4 py-3 rounded-xl bg-slate-900 border border-white/5 focus:border-indigo-500 focus:ring-4 focus:ring-indigo-500/20 outline-none font-bold text-white text-sm transition-all" 
+                  className="w-full px-4 py-3 rounded-xl bg-slate-900 border border-slate-200/85 focus:border-indigo-500 focus:ring-4 focus:ring-indigo-500/20 outline-none font-bold text-white text-sm transition-all" 
                   placeholder="Minimum ₹500" 
                 />
                 <p className="text-[10px] text-slate-500 mt-1 font-semibold">Available for withdrawal: ₹{(profile?.walletBalance || 0).toFixed(2)}</p>
@@ -1816,7 +1816,7 @@ const TechnicianDashboard = () => {
                   type="text" 
                   value={withdrawForm.accountName} 
                   onChange={(e) => setWithdrawForm({ ...withdrawForm, accountName: e.target.value })} 
-                  className="w-full px-4 py-3 rounded-xl bg-slate-900 border border-white/5 focus:border-indigo-500 focus:ring-4 focus:ring-indigo-500/20 outline-none font-semibold text-white text-sm transition-all" 
+                  className="w-full px-4 py-3 rounded-xl bg-slate-900 border border-slate-200/85 focus:border-indigo-500 focus:ring-4 focus:ring-indigo-500/20 outline-none font-semibold text-white text-sm transition-all" 
                   placeholder="Name as in bank account" 
                 />
               </div>
@@ -1829,7 +1829,7 @@ const TechnicianDashboard = () => {
                     type="text" 
                     value={withdrawForm.accountNumber} 
                     onChange={(e) => setWithdrawForm({ ...withdrawForm, accountNumber: e.target.value })} 
-                    className="w-full px-4 py-3 rounded-xl bg-slate-900 border border-white/5 focus:border-indigo-500 focus:ring-4 focus:ring-indigo-500/20 outline-none font-semibold text-white text-sm transition-all" 
+                    className="w-full px-4 py-3 rounded-xl bg-slate-900 border border-slate-200/85 focus:border-indigo-500 focus:ring-4 focus:ring-indigo-500/20 outline-none font-semibold text-white text-sm transition-all" 
                     placeholder="Bank Account Number" 
                   />
                 </div>
@@ -1840,7 +1840,7 @@ const TechnicianDashboard = () => {
                     type="text" 
                     value={withdrawForm.ifscCode} 
                     onChange={(e) => setWithdrawForm({ ...withdrawForm, ifscCode: e.target.value.toUpperCase() })} 
-                    className="w-full px-4 py-3 rounded-xl bg-slate-900 border border-white/5 focus:border-indigo-500 focus:ring-4 focus:ring-indigo-500/20 outline-none font-semibold text-white text-sm transition-all" 
+                    className="w-full px-4 py-3 rounded-xl bg-slate-900 border border-slate-200/85 focus:border-indigo-500 focus:ring-4 focus:ring-indigo-500/20 outline-none font-semibold text-white text-sm transition-all" 
                     placeholder="SBIN0012345" 
                   />
                 </div>
@@ -1852,7 +1852,7 @@ const TechnicianDashboard = () => {
                   type="text" 
                   value={withdrawForm.upiId} 
                   onChange={(e) => setWithdrawForm({ ...withdrawForm, upiId: e.target.value })} 
-                  className="w-full px-4 py-3 rounded-xl bg-slate-900 border border-white/5 focus:border-indigo-500 focus:ring-4 focus:ring-indigo-500/20 outline-none font-semibold text-white text-sm transition-all" 
+                  className="w-full px-4 py-3 rounded-xl bg-slate-900 border border-slate-200/85 focus:border-indigo-500 focus:ring-4 focus:ring-indigo-500/20 outline-none font-semibold text-white text-sm transition-all" 
                   placeholder="username@okaxis" 
                 />
               </div>
@@ -1862,7 +1862,7 @@ const TechnicianDashboard = () => {
                   type="button"
                   onClick={() => setShowWithdrawModal(false)} 
                   disabled={submittingWithdraw}
-                  className="flex-1 border border-white/10 hover:bg-white/5 text-slate-350 font-bold py-3.5 rounded-xl transition-all text-xs sm:text-sm uppercase tracking-wider outline-none disabled:opacity-50 cursor-pointer"
+                  className="flex-1 border border-slate-200 hover:bg-white/5 text-slate-350 font-bold py-3.5 rounded-xl transition-all text-xs sm:text-sm uppercase tracking-wider outline-none disabled:opacity-50 cursor-pointer"
                 >
                   Cancel
                 </button>
@@ -1893,10 +1893,10 @@ const TechnicianDashboard = () => {
         
         return (
           <div className="fixed inset-0 bg-[#0B0F19]/80 backdrop-blur-md z-[100] flex items-center justify-center p-4 animate-in fade-in duration-300">
-            <div className="bg-[#111827] border border-white/5 rounded-3xl w-full max-w-md overflow-hidden shadow-2xl text-white">
-              <div className="p-6 border-b border-white/5 flex justify-between items-center bg-slate-900/60">
+            <div className="bg-[#111827] border border-slate-200/85 rounded-3xl w-full max-w-md overflow-hidden shadow-2xl text-white">
+              <div className="p-6 border-b border-slate-200/85 flex justify-between items-center bg-slate-900/60">
                 <div>
-                  <h3 className="text-lg font-extrabold text-white tracking-tight">
+                  <h3 className="text-lg font-extrabold text-slate-850 tracking-tight">
                     {quoteModalJob.quoteRevisions && quoteModalJob.quoteRevisions.length > 0
                       ? `Submit Quote Revision (V${quoteModalJob.quoteRevisions.length + 1})`
                       : 'Submit Final Quote'
@@ -1929,16 +1929,16 @@ const TechnicianDashboard = () => {
                           <div className="grid grid-cols-2 gap-4">
                             <div>
                               <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">Labor Cost (₹)</label>
-                              <input required type="number" value={quoteForm.serviceCharge} onChange={(e) => setQuoteForm({...quoteForm, serviceCharge: e.target.value})} className="w-full px-4 py-3 rounded-xl bg-slate-900 border border-white/5 focus:border-indigo-500 focus:ring-4 focus:ring-indigo-500/20 outline-none font-bold text-white text-sm transition-all" placeholder="e.g. 250" />
+                              <input required type="number" value={quoteForm.serviceCharge} onChange={(e) => setQuoteForm({...quoteForm, serviceCharge: e.target.value})} className="w-full px-4 py-3 rounded-xl bg-slate-900 border border-slate-200/85 focus:border-indigo-500 focus:ring-4 focus:ring-indigo-500/20 outline-none font-bold text-white text-sm transition-all" placeholder="e.g. 250" />
                             </div>
                             <div>
                               <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">Parts Cost (₹)</label>
-                              <input required type="number" value={quoteForm.sparePartsCost} onChange={(e) => setQuoteForm({...quoteForm, sparePartsCost: e.target.value})} className="w-full px-4 py-3 rounded-xl bg-slate-900 border border-white/5 focus:border-indigo-500 focus:ring-4 focus:ring-indigo-500/20 outline-none font-bold text-white text-sm transition-all" placeholder="e.g. 0" />
+                              <input required type="number" value={quoteForm.sparePartsCost} onChange={(e) => setQuoteForm({...quoteForm, sparePartsCost: e.target.value})} className="w-full px-4 py-3 rounded-xl bg-slate-900 border border-slate-200/85 focus:border-indigo-500 focus:ring-4 focus:ring-indigo-500/20 outline-none font-bold text-white text-sm transition-all" placeholder="e.g. 0" />
                             </div>
                           </div>
                           <div>
                             <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">Visiting / Inspection Fee (₹)</label>
-                            <input required type="number" value={quoteForm.transportCharge} onChange={(e) => setQuoteForm({...quoteForm, transportCharge: e.target.value})} className="w-full px-4 py-3 rounded-xl bg-slate-900 border border-white/5 focus:border-indigo-500 focus:ring-4 focus:ring-indigo-500/20 outline-none font-bold text-white text-sm transition-all" placeholder="e.g. 99" />
+                            <input required type="number" value={quoteForm.transportCharge} onChange={(e) => setQuoteForm({...quoteForm, transportCharge: e.target.value})} className="w-full px-4 py-3 rounded-xl bg-slate-900 border border-slate-200/85 focus:border-indigo-500 focus:ring-4 focus:ring-indigo-500/20 outline-none font-bold text-white text-sm transition-all" placeholder="e.g. 99" />
                           </div>
                         </>
                       );
@@ -1948,16 +1948,16 @@ const TechnicianDashboard = () => {
                           <div className="grid grid-cols-2 gap-4">
                             <div>
                               <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">Installation Fee (₹)</label>
-                              <input required type="number" value={quoteForm.serviceCharge} onChange={(e) => setQuoteForm({...quoteForm, serviceCharge: e.target.value})} className="w-full px-4 py-3 rounded-xl bg-slate-900 border border-white/5 focus:border-indigo-500 focus:ring-4 focus:ring-indigo-500/20 outline-none font-bold text-white text-sm transition-all" placeholder="e.g. 350" />
+                              <input required type="number" value={quoteForm.serviceCharge} onChange={(e) => setQuoteForm({...quoteForm, serviceCharge: e.target.value})} className="w-full px-4 py-3 rounded-xl bg-slate-900 border border-slate-200/85 focus:border-indigo-500 focus:ring-4 focus:ring-indigo-500/20 outline-none font-bold text-white text-sm transition-all" placeholder="e.g. 350" />
                             </div>
                             <div>
                               <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">Accessories (₹)</label>
-                              <input required type="number" value={quoteForm.sparePartsCost} onChange={(e) => setQuoteForm({...quoteForm, sparePartsCost: e.target.value})} className="w-full px-4 py-3 rounded-xl bg-slate-900 border border-white/5 focus:border-indigo-500 focus:ring-4 focus:ring-indigo-500/20 outline-none font-bold text-white text-sm transition-all" placeholder="e.g. 100" />
+                              <input required type="number" value={quoteForm.sparePartsCost} onChange={(e) => setQuoteForm({...quoteForm, sparePartsCost: e.target.value})} className="w-full px-4 py-3 rounded-xl bg-slate-900 border border-slate-200/85 focus:border-indigo-500 focus:ring-4 focus:ring-indigo-500/20 outline-none font-bold text-white text-sm transition-all" placeholder="e.g. 100" />
                             </div>
                           </div>
                           <div>
                             <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">Transport Charges (₹)</label>
-                            <input required type="number" value={quoteForm.transportCharge} onChange={(e) => setQuoteForm({...quoteForm, transportCharge: e.target.value})} className="w-full px-4 py-3 rounded-xl bg-slate-900 border border-white/5 focus:border-indigo-500 focus:ring-4 focus:ring-indigo-500/20 outline-none font-bold text-white text-sm transition-all" placeholder="e.g. 50" />
+                            <input required type="number" value={quoteForm.transportCharge} onChange={(e) => setQuoteForm({...quoteForm, transportCharge: e.target.value})} className="w-full px-4 py-3 rounded-xl bg-slate-900 border border-slate-200/85 focus:border-indigo-500 focus:ring-4 focus:ring-indigo-500/20 outline-none font-bold text-white text-sm transition-all" placeholder="e.g. 50" />
                           </div>
                         </>
                       );
@@ -1967,21 +1967,21 @@ const TechnicianDashboard = () => {
                           <div className="space-y-4">
                             <div>
                               <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">Area Size / Rooms Details</label>
-                              <input required type="text" value={quoteForm.detectedIssues} onChange={(e) => setQuoteForm({...quoteForm, detectedIssues: e.target.value})} className="w-full px-4 py-3 rounded-xl bg-slate-900 border border-white/5 focus:border-indigo-500 focus:ring-4 focus:ring-indigo-500/20 outline-none font-semibold text-white text-sm transition-all" placeholder="e.g. 3 BHK / 1200 Sq Ft" />
+                              <input required type="text" value={quoteForm.detectedIssues} onChange={(e) => setQuoteForm({...quoteForm, detectedIssues: e.target.value})} className="w-full px-4 py-3 rounded-xl bg-slate-900 border border-slate-200/85 focus:border-indigo-500 focus:ring-4 focus:ring-indigo-500/20 outline-none font-semibold text-white text-sm transition-all" placeholder="e.g. 3 BHK / 1200 Sq Ft" />
                             </div>
                             <div className="grid grid-cols-2 gap-4">
                               <div>
                                 <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">Labor / Manpower Cost (₹)</label>
-                                <input required type="number" value={quoteForm.serviceCharge} onChange={(e) => setQuoteForm({...quoteForm, serviceCharge: e.target.value})} className="w-full px-4 py-3 rounded-xl bg-slate-900 border border-white/5 focus:border-indigo-500 focus:ring-4 focus:ring-indigo-500/20 outline-none font-bold text-white text-sm transition-all" placeholder="e.g. 600" />
+                                <input required type="number" value={quoteForm.serviceCharge} onChange={(e) => setQuoteForm({...quoteForm, serviceCharge: e.target.value})} className="w-full px-4 py-3 rounded-xl bg-slate-900 border border-slate-200/85 focus:border-indigo-500 focus:ring-4 focus:ring-indigo-500/20 outline-none font-bold text-white text-sm transition-all" placeholder="e.g. 600" />
                               </div>
                               <div>
                                 <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">Material Cost (₹)</label>
-                                <input required type="number" value={quoteForm.sparePartsCost} onChange={(e) => setQuoteForm({...quoteForm, sparePartsCost: e.target.value})} className="w-full px-4 py-3 rounded-xl bg-slate-900 border border-white/5 focus:border-indigo-500 focus:ring-4 focus:ring-indigo-500/20 outline-none font-bold text-white text-sm transition-all" placeholder="e.g. 150" />
+                                <input required type="number" value={quoteForm.sparePartsCost} onChange={(e) => setQuoteForm({...quoteForm, sparePartsCost: e.target.value})} className="w-full px-4 py-3 rounded-xl bg-slate-900 border border-slate-200/85 focus:border-indigo-500 focus:ring-4 focus:ring-indigo-500/20 outline-none font-bold text-white text-sm transition-all" placeholder="e.g. 150" />
                               </div>
                             </div>
                             <div>
                               <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">Transport Charges (₹)</label>
-                              <input required type="number" value={quoteForm.transportCharge} onChange={(e) => setQuoteForm({...quoteForm, transportCharge: e.target.value})} className="w-full px-4 py-3 rounded-xl bg-slate-900 border border-white/5 focus:border-indigo-500 focus:ring-4 focus:ring-indigo-500/20 outline-none font-bold text-white text-sm transition-all" placeholder="e.g. 50" />
+                              <input required type="number" value={quoteForm.transportCharge} onChange={(e) => setQuoteForm({...quoteForm, transportCharge: e.target.value})} className="w-full px-4 py-3 rounded-xl bg-slate-900 border border-slate-200/85 focus:border-indigo-500 focus:ring-4 focus:ring-indigo-500/20 outline-none font-bold text-white text-sm transition-all" placeholder="e.g. 50" />
                             </div>
                           </div>
                         </>
@@ -1992,21 +1992,21 @@ const TechnicianDashboard = () => {
                           <div className="space-y-4">
                             <div>
                               <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">Wall Area / Room Details</label>
-                              <input required type="text" value={quoteForm.detectedIssues} onChange={(e) => setQuoteForm({...quoteForm, detectedIssues: e.target.value})} className="w-full px-4 py-3 rounded-xl bg-slate-900 border border-white/5 focus:border-indigo-500 focus:ring-4 focus:ring-indigo-500/20 outline-none font-semibold text-white text-sm transition-all" placeholder="e.g. 1500 Sq Ft / 2 BHK" />
+                              <input required type="text" value={quoteForm.detectedIssues} onChange={(e) => setQuoteForm({...quoteForm, detectedIssues: e.target.value})} className="w-full px-4 py-3 rounded-xl bg-slate-900 border border-slate-200/85 focus:border-indigo-500 focus:ring-4 focus:ring-indigo-500/20 outline-none font-semibold text-white text-sm transition-all" placeholder="e.g. 1500 Sq Ft / 2 BHK" />
                             </div>
                             <div className="grid grid-cols-2 gap-4">
                               <div>
                                 <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">Labor / Painter Cost (₹)</label>
-                                <input required type="number" value={quoteForm.serviceCharge} onChange={(e) => setQuoteForm({...quoteForm, serviceCharge: e.target.value})} className="w-full px-4 py-3 rounded-xl bg-slate-900 border border-white/5 focus:border-indigo-500 focus:ring-4 focus:ring-indigo-500/20 outline-none font-bold text-white text-sm transition-all" placeholder="e.g. 800" />
+                                <input required type="number" value={quoteForm.serviceCharge} onChange={(e) => setQuoteForm({...quoteForm, serviceCharge: e.target.value})} className="w-full px-4 py-3 rounded-xl bg-slate-900 border border-slate-200/85 focus:border-indigo-500 focus:ring-4 focus:ring-indigo-500/20 outline-none font-bold text-white text-sm transition-all" placeholder="e.g. 800" />
                               </div>
                               <div>
                                 <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">Paint & Material Cost (₹)</label>
-                                <input required type="number" value={quoteForm.sparePartsCost} onChange={(e) => setQuoteForm({...quoteForm, sparePartsCost: e.target.value})} className="w-full px-4 py-3 rounded-xl bg-slate-900 border border-white/5 focus:border-indigo-500 focus:ring-4 focus:ring-indigo-500/20 outline-none font-bold text-white text-sm transition-all" placeholder="e.g. 1200" />
+                                <input required type="number" value={quoteForm.sparePartsCost} onChange={(e) => setQuoteForm({...quoteForm, sparePartsCost: e.target.value})} className="w-full px-4 py-3 rounded-xl bg-slate-900 border border-slate-200/85 focus:border-indigo-500 focus:ring-4 focus:ring-indigo-500/20 outline-none font-bold text-white text-sm transition-all" placeholder="e.g. 1200" />
                               </div>
                             </div>
                             <div>
                               <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">Transport / Setup Charges (₹)</label>
-                              <input required type="number" value={quoteForm.transportCharge} onChange={(e) => setQuoteForm({...quoteForm, transportCharge: e.target.value})} className="w-full px-4 py-3 rounded-xl bg-slate-900 border border-white/5 focus:border-indigo-500 focus:ring-4 focus:ring-indigo-500/20 outline-none font-bold text-white text-sm transition-all" placeholder="e.g. 100" />
+                              <input required type="number" value={quoteForm.transportCharge} onChange={(e) => setQuoteForm({...quoteForm, transportCharge: e.target.value})} className="w-full px-4 py-3 rounded-xl bg-slate-900 border border-slate-200/85 focus:border-indigo-500 focus:ring-4 focus:ring-indigo-500/20 outline-none font-bold text-white text-sm transition-all" placeholder="e.g. 100" />
                             </div>
                           </div>
                         </>
@@ -2017,16 +2017,16 @@ const TechnicianDashboard = () => {
                           <div className="grid grid-cols-2 gap-4">
                             <div>
                               <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">Diagnosis Fee (₹)</label>
-                              <input required type="number" value={quoteForm.serviceCharge} onChange={(e) => setQuoteForm({...quoteForm, serviceCharge: e.target.value})} className="w-full px-4 py-3 rounded-xl bg-slate-900 border border-white/5 focus:border-indigo-500 focus:ring-4 focus:ring-indigo-500/20 outline-none font-bold text-white text-sm transition-all" placeholder="e.g. 199" />
+                              <input required type="number" value={quoteForm.serviceCharge} onChange={(e) => setQuoteForm({...quoteForm, serviceCharge: e.target.value})} className="w-full px-4 py-3 rounded-xl bg-slate-900 border border-slate-200/85 focus:border-indigo-500 focus:ring-4 focus:ring-indigo-500/20 outline-none font-bold text-white text-sm transition-all" placeholder="e.g. 199" />
                             </div>
                             <div>
                               <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">Replacement Cost (₹)</label>
-                              <input required type="number" value={quoteForm.sparePartsCost} onChange={(e) => setQuoteForm({...quoteForm, sparePartsCost: e.target.value})} className="w-full px-4 py-3 rounded-xl bg-slate-900 border border-white/5 focus:border-indigo-500 focus:ring-4 focus:ring-indigo-500/20 outline-none font-bold text-white text-sm transition-all" placeholder="e.g. 200" />
+                              <input required type="number" value={quoteForm.sparePartsCost} onChange={(e) => setQuoteForm({...quoteForm, sparePartsCost: e.target.value})} className="w-full px-4 py-3 rounded-xl bg-slate-900 border border-slate-200/85 focus:border-indigo-500 focus:ring-4 focus:ring-indigo-500/20 outline-none font-bold text-white text-sm transition-all" placeholder="e.g. 200" />
                             </div>
                           </div>
                           <div>
                             <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">Visiting / Extra Charges (₹)</label>
-                            <input required type="number" value={quoteForm.transportCharge} onChange={(e) => setQuoteForm({...quoteForm, transportCharge: e.target.value})} className="w-full px-4 py-3 rounded-xl bg-slate-900 border border-white/5 focus:border-indigo-500 focus:ring-4 focus:ring-indigo-500/20 outline-none font-bold text-white text-sm transition-all" placeholder="e.g. 50" />
+                            <input required type="number" value={quoteForm.transportCharge} onChange={(e) => setQuoteForm({...quoteForm, transportCharge: e.target.value})} className="w-full px-4 py-3 rounded-xl bg-slate-900 border border-slate-200/85 focus:border-indigo-500 focus:ring-4 focus:ring-indigo-500/20 outline-none font-bold text-white text-sm transition-all" placeholder="e.g. 50" />
                           </div>
                         </>
                       );
@@ -2044,13 +2044,13 @@ const TechnicianDashboard = () => {
                 {categoryId !== 'cleaning' && (
                   <div>
                     <label className="block text-xs font-bold text-slate-400 uppercase tracking-widest mb-1">Detected Issues (From Inspection)</label>
-                    <textarea required value={quoteForm.detectedIssues} onChange={(e) => setQuoteForm({...quoteForm, detectedIssues: e.target.value})} className="w-full px-4 py-2.5 rounded-xl bg-slate-900 border border-white/5 focus:border-indigo-500 focus:ring-4 focus:ring-indigo-500/20 outline-none resize-none text-white text-xs font-semibold" rows="2" placeholder="List all observed problems..."></textarea>
+                    <textarea required value={quoteForm.detectedIssues} onChange={(e) => setQuoteForm({...quoteForm, detectedIssues: e.target.value})} className="w-full px-4 py-2.5 rounded-xl bg-slate-900 border border-slate-200/85 focus:border-indigo-500 focus:ring-4 focus:ring-indigo-500/20 outline-none resize-none text-white text-xs font-semibold" rows="2" placeholder="List all observed problems..."></textarea>
                   </div>
                 )}
 
                 <div>
                   <label className="block text-xs font-bold text-slate-400 uppercase tracking-widest mb-1">Diagnosis / Explanation</label>
-                  <textarea required value={quoteForm.quoteReason} onChange={(e) => setQuoteForm({...quoteForm, quoteReason: e.target.value})} className="w-full px-4 py-2.5 rounded-xl bg-slate-900 border border-white/5 focus:border-indigo-500 focus:ring-4 focus:ring-indigo-500/20 outline-none resize-none text-white text-xs font-semibold" rows="2" placeholder="Explain the required work scope..."></textarea>
+                  <textarea required value={quoteForm.quoteReason} onChange={(e) => setQuoteForm({...quoteForm, quoteReason: e.target.value})} className="w-full px-4 py-2.5 rounded-xl bg-slate-900 border border-slate-200/85 focus:border-indigo-500 focus:ring-4 focus:ring-indigo-500/20 outline-none resize-none text-white text-xs font-semibold" rows="2" placeholder="Explain the required work scope..."></textarea>
                 </div>
 
                 <button 
@@ -2091,9 +2091,9 @@ const TechnicianDashboard = () => {
       {/* Decline/Rejection Modal */}
       {declineJobId && (
         <div className="fixed inset-0 bg-[#0B0F19]/90 backdrop-blur-md z-[120] flex items-center justify-center p-4 animate-in fade-in duration-200">
-          <div className="bg-[#111827] border border-white/10 rounded-3xl w-full max-w-md overflow-hidden shadow-2xl text-white p-6 space-y-5 animate-in zoom-in-95 duration-200">
+          <div className="bg-[#111827] border border-slate-200 rounded-3xl w-full max-w-md overflow-hidden shadow-2xl text-white p-6 space-y-5 animate-in zoom-in-95 duration-200">
             <div>
-              <h3 className="text-xl font-bold text-white mb-2">Decline Service Request</h3>
+              <h3 className="text-xl font-bold text-slate-900 mb-2">Decline Service Request</h3>
               <p className="text-xs text-slate-400">
                 Please select a reason for declining this repair request. This helps us match the customer with another technician faster.
               </p>
@@ -2115,7 +2115,7 @@ const TechnicianDashboard = () => {
                   className={`flex items-center gap-3 p-3 rounded-xl border cursor-pointer transition-all ${
                     selectedDeclineReason === reason
                       ? 'bg-rose-500/10 border-rose-500/50 text-rose-300'
-                      : 'bg-white/5 border-white/5 hover:bg-white/10 text-slate-300'
+                      : 'bg-white/5 border-slate-200/85 hover:bg-white/10 text-slate-300'
                   }`}
                   onClick={() => setSelectedDeclineReason(reason)}
                 >
@@ -2140,7 +2140,7 @@ const TechnicianDashboard = () => {
                   value={customDeclineReason}
                   onChange={(e) => setCustomDeclineReason(e.target.value)}
                   placeholder="Tell us why you are declining this job..."
-                  className="w-full p-3 bg-slate-950 border border-white/10 rounded-xl outline-none text-slate-100 text-xs focus:border-rose-500 transition-all resize-none"
+                  className="w-full p-3 bg-slate-950 border border-slate-200 rounded-xl outline-none text-slate-100 text-xs focus:border-rose-500 transition-all resize-none"
                   rows={3}
                 />
               </div>
@@ -2154,7 +2154,7 @@ const TechnicianDashboard = () => {
                   setSelectedDeclineReason('');
                   setCustomDeclineReason('');
                 }}
-                className="flex-1 bg-white/5 hover:bg-white/10 border border-white/5 text-slate-300 font-extrabold py-3.5 rounded-xl transition-all uppercase tracking-wider text-xs cursor-pointer"
+                className="flex-1 bg-white/5 hover:bg-white/10 border border-slate-200/85 text-slate-300 font-extrabold py-3.5 rounded-xl transition-all uppercase tracking-wider text-xs cursor-pointer"
               >
                 Cancel
               </button>
