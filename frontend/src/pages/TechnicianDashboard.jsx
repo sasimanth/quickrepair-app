@@ -774,112 +774,131 @@ const TechnicianDashboard = () => {
   };
 
   return (
-    <div className="min-h-screen bg-slate-50/50 py-6 sm:py-12 px-4 sm:px-6 lg:px-8 mt-4 sm:mt-10">
-      <div className="max-w-6xl mx-auto space-y-6 sm:space-y-10">
+    <div className="min-h-screen bg-slate-950 text-white font-sans mt-4 sm:mt-10 pb-16">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-6 sm:space-y-10 animate-in fade-in duration-300">
         
-        {/* Header Section */}
-        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 sm:gap-6 bg-white p-5 sm:p-8 rounded-3xl sm:rounded-[2rem] shadow-[0_2px_20px_rgb(0,0,0,0.04)] border border-slate-100/80">
-          <div className="flex items-center gap-4 sm:gap-5">
-            <div className="p-3 sm:p-4 bg-slate-900 rounded-2xl sm:rounded-[1.25rem] shadow-xl shadow-slate-900/20 text-white">
-              <Briefcase size={24} className="sm:w-7 sm:h-7" />
-            </div>
-            <div>
-              <div className="flex flex-wrap items-center gap-2 sm:gap-3">
-                 <h1 className="text-xl sm:text-3xl font-extrabold text-slate-900 tracking-tight">Tech Dashboard</h1>
-                 {profile?.isVerified && (
-                   <div className="flex items-center gap-1 bg-emerald-100 text-emerald-700 px-2 py-0.5 rounded-md text-[10px] sm:text-xs font-bold uppercase tooltip" title="Identity Verified">
-                     <ShieldCheck size={12} className="sm:w-3.5 sm:h-3.5" /> Verified
-                   </div>
-                 )}
+        {/* Productivity Header & Profile Section */}
+        <div className="relative overflow-hidden rounded-[2.5rem] bg-gradient-to-br from-slate-900/80 to-[#111827]/80 border border-white/5 p-6 sm:p-8 shadow-2xl backdrop-blur-xl">
+          <div className="absolute top-[-30%] right-[-10%] w-[35%] h-[150%] bg-[radial-gradient(circle_at_center,_rgba(99,102,241,0.15),_transparent_65%)] rounded-full pointer-events-none animate-pulse"></div>
+          
+          <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-6 relative z-10">
+            <div className="flex flex-col sm:flex-row items-center gap-5 text-center sm:text-left w-full lg:w-auto">
+              <div className="w-20 h-20 bg-indigo-650/20 border border-indigo-500/20 rounded-2xl flex items-center justify-center text-4xl shadow-inner relative shrink-0">
+                {profile?.avatar || '🔧'}
+                {profile?.isVerified && (
+                  <span className="absolute -top-1.5 -right-1.5 bg-emerald-500 text-slate-950 p-1 rounded-lg shadow-lg border border-emerald-300">
+                    <ShieldCheck size={10} className="stroke-[3]" />
+                  </span>
+                )}
               </div>
-              <p className="text-xs sm:text-base text-slate-500 font-medium mt-0.5 sm:mt-1">Manage assigned jobs and discover new repairs</p>
-            </div>
-          </div>
-          <div className="grid grid-cols-2 md:flex md:items-center gap-3 w-full sm:w-auto mt-2 sm:mt-0">
-            {profile?.isProfileComplete && (() => {
-              const status = profile?.currentStatus || (profile?.isOnline ? 'online' : 'offline');
-              let btnClass = 'bg-slate-800 text-slate-400 border-white/5 hover:bg-slate-700/80';
-              let dotClass = 'bg-slate-500';
-              let label = 'Offline (Hidden)';
               
-              if (status === 'online' || status === 'available') {
-                btnClass = 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20 hover:bg-emerald-500/15';
-                dotClass = 'bg-emerald-500 animate-pulse';
-                label = 'Online (Accepting Jobs)';
-              } else if (status === 'on_job') {
-                btnClass = 'bg-blue-500/10 text-blue-400 border-blue-500/20 cursor-not-allowed';
-                dotClass = 'bg-blue-500 animate-ping';
-                label = 'On Active Job';
-              } else if (status === 'busy') {
-                btnClass = 'bg-amber-500/10 text-amber-400 border-amber-500/20 hover:bg-amber-500/15';
-                dotClass = 'bg-amber-500 animate-pulse';
-                label = 'Busy';
-              }
+              <div className="space-y-1.5 flex-1">
+                <div className="flex flex-wrap items-center justify-center sm:justify-start gap-2">
+                  <h1 className="text-xl sm:text-2xl font-black tracking-tight text-white">{profile?.name || 'Technician'}</h1>
+                  {profile?.isVerified ? (
+                    <span className="bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 font-extrabold text-[9px] px-2.5 py-0.5 rounded-full uppercase tracking-wider">Verified Partner</span>
+                  ) : (
+                    <span className="bg-amber-500/10 border border-amber-500/20 text-amber-400 font-extrabold text-[9px] px-2.5 py-0.5 rounded-full uppercase tracking-wider">Pending Verification</span>
+                  )}
+                </div>
+                <p className="text-xs text-slate-400 font-medium">Experience: {profile?.experience || 'N/A'} • Skills: {profile?.skills?.join(', ') || 'General Repair'}</p>
+                <div className="flex flex-wrap justify-center sm:justify-start gap-2 text-[10px] text-slate-500 font-semibold uppercase tracking-wider">
+                  <span>Rating: <strong className="text-amber-400">★ {profile?.rating || '5.0'}</strong></span>
+                  <span className="border-l border-white/10 pl-2">Jobs: <strong className="text-indigo-400">{profile?.completedJobsCount || '0'}</strong></span>
+                  <span className="border-l border-white/10 pl-2">Areas: <strong className="text-white">{profile?.address || 'Local'}</strong></span>
+                </div>
+              </div>
+            </div>
 
-              return (
-                <button
-                  onClick={status === 'on_job' ? null : toggleOnlineStatus}
-                  disabled={status === 'on_job'}
-                  className={`col-span-2 md:col-span-1 flex items-center justify-center gap-2 px-5 py-3 rounded-2xl font-bold transition-all shadow-sm border-2 ${btnClass}`}
-                >
-                  <div className={`w-2.5 h-2.5 rounded-full ${dotClass}`}></div>
-                  <span className="text-xs uppercase tracking-wider">{label}</span>
-                </button>
-              );
-            })()}
-            <button
-               onClick={() => setShowSettings(true)}
-               className="col-span-1 flex items-center justify-center gap-2 px-5 py-3.5 bg-slate-100 hover:bg-slate-200 border border-slate-200 text-slate-700 font-bold rounded-2xl transition-all shadow-sm text-sm"
-            >
-              <Settings size={18} /> Settings
-            </button>
-            <button
-              onClick={() => fetchJobs(true)}
-              disabled={refreshing}
-              className="col-span-1 flex items-center justify-center gap-2 bg-slate-100 hover:bg-slate-200 text-slate-700 px-5 py-3.5 rounded-2xl font-bold transition-all duration-300 shadow-sm text-sm disabled:opacity-60"
-            >
-              <RefreshCw size={18} className={refreshing ? "animate-spin" : ""} /> Refresh
-            </button>
+            {/* Quick Actions Panel */}
+            <div className="flex flex-wrap items-center gap-3 w-full lg:w-auto justify-center sm:justify-start lg:justify-end">
+              {profile?.isProfileComplete && (() => {
+                const status = profile?.currentStatus || (profile?.isOnline ? 'online' : 'offline');
+                let btnClass = 'bg-slate-900 border-white/5 hover:bg-slate-850 text-slate-400';
+                let dotClass = 'bg-slate-600';
+                let label = 'Offline (Hidden)';
+                
+                if (status === 'online' || status === 'available') {
+                  btnClass = 'bg-emerald-500/10 border-emerald-500/20 text-emerald-400 hover:bg-emerald-500/20';
+                  dotClass = 'bg-emerald-500 animate-pulse';
+                  label = 'Online & Active';
+                } else if (status === 'on_job') {
+                  btnClass = 'bg-blue-500/10 border-blue-500/20 text-blue-400 cursor-not-allowed';
+                  dotClass = 'bg-blue-500 animate-ping';
+                  label = 'On Active Job';
+                } else if (status === 'busy') {
+                  btnClass = 'bg-amber-500/10 border-amber-500/20 text-amber-400 hover:bg-amber-500/20';
+                  dotClass = 'bg-amber-500 animate-pulse';
+                  label = 'Busy';
+                }
+
+                return (
+                  <button
+                    onClick={status === 'on_job' ? null : toggleOnlineStatus}
+                    disabled={status === 'on_job'}
+                    className={`flex items-center gap-2 px-5 py-3 rounded-xl font-black text-xs uppercase tracking-widest border transition-all cursor-pointer shadow-md ${btnClass}`}
+                  >
+                    <span className={`w-2 h-2 rounded-full ${dotClass}`}></span>
+                    <span>{label}</span>
+                  </button>
+                );
+              })()}
+
+              <button
+                onClick={() => setShowSettings(true)}
+                className="bg-slate-900 hover:bg-slate-850 border border-white/5 text-slate-350 font-extrabold px-4.5 py-3 rounded-xl transition-all text-xs uppercase tracking-widest flex items-center gap-1.5 cursor-pointer outline-none"
+              >
+                <Settings size={14} /> Settings
+              </button>
+              
+              <button
+                onClick={() => fetchJobs(true)}
+                disabled={refreshing}
+                className="bg-indigo-650 hover:bg-indigo-550 text-white font-extrabold px-4.5 py-3 rounded-xl transition-all text-xs uppercase tracking-widest flex items-center gap-1.5 cursor-pointer outline-none disabled:opacity-50"
+              >
+                <RefreshCw size={14} className={refreshing ? 'animate-spin' : ''} /> Refresh
+              </button>
+            </div>
           </div>
         </div>
 
         {/* Onboarding Section */}
         {!loading && profile && !profile.isProfileComplete && (
-          <div className="bg-indigo-50 border border-indigo-100 rounded-3xl p-8 text-center space-y-4 shadow-sm">
-            <div className="w-16 h-16 bg-white rounded-full flex items-center justify-center mx-auto mb-4 shadow-sm border border-indigo-50">
-               <MapPin className="text-indigo-600" size={32} />
+          <div className="bg-[#111827]/60 border border-indigo-500/20 rounded-[2rem] p-8 text-center space-y-4 shadow-2xl backdrop-blur-md">
+            <div className="w-16 h-16 bg-indigo-650/10 border border-indigo-500/20 rounded-2xl flex items-center justify-center mx-auto mb-4 shadow-inner text-indigo-400">
+              <MapPin size={32} />
             </div>
-            <h2 className="text-2xl font-bold text-slate-800">Activate Your Profile</h2>
-            <p className="text-slate-600 max-w-md mx-auto">To start receiving repair requests from local customers, we need to verify your local service area using your device's location.</p>
+            <h2 className="text-xl sm:text-2xl font-black tracking-tight text-white">Activate Your Profile</h2>
+            <p className="text-slate-400 max-w-md mx-auto text-xs sm:text-sm font-semibold">To start receiving repair requests from local customers, we need to verify your local service area using your device's location.</p>
             <button 
               onClick={handleSetupProfile}
               disabled={setupLoading}
-              className="mt-6 inline-flex items-center gap-2 bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-3.5 px-8 rounded-xl shadow-lg transition-all transform hover:-translate-y-1"
+              className="mt-6 inline-flex items-center gap-2 bg-gradient-to-r from-blue-600 to-indigo-650 hover:from-blue-500 hover:to-indigo-550 text-white font-black py-4 px-8 rounded-xl shadow-lg transition-all transform hover:-translate-y-0.5 text-xs uppercase tracking-widest cursor-pointer border-none outline-none"
             >
-              {setupLoading ? <RefreshCw className="animate-spin" size={20}/> : <MapPin size={20}/>}
-              {setupLoading ? 'Locating...' : 'Share Location & Go Active'}
+              {setupLoading ? <Loader2 className="animate-spin" size={16}/> : <MapPin size={16}/>}
+              <span>{setupLoading ? 'Locating...' : 'Share Location & Go Active'}</span>
             </button>
           </div>
         )}
 
-        {/* Notification Permission Onboarding Banner */}
+        {/* Notification Permission Banner */}
         {!loading && profile?.isProfileComplete && notifPermission !== 'granted' && (
-          <div className={`p-6 rounded-3xl border flex flex-col md:flex-row items-center justify-between gap-4 shadow-sm animate-in fade-in slide-in-from-top-4 duration-300 ${
+          <div className={`p-6 rounded-[2rem] border flex flex-col md:flex-row items-center justify-between gap-4 shadow-xl backdrop-blur-md animate-in fade-in duration-300 ${
             notifPermission === 'denied' 
-              ? 'bg-rose-50 border-rose-100 text-rose-800' 
-              : 'bg-indigo-50 border-indigo-100 text-indigo-900'
+              ? 'bg-rose-500/5 border-rose-500/20 text-rose-300' 
+              : 'bg-indigo-500/5 border-indigo-500/20 text-indigo-300'
           }`}>
             <div className="flex items-center gap-4 text-center md:text-left flex-col md:flex-row">
               <div className={`p-3 rounded-2xl shrink-0 ${
-                notifPermission === 'denied' ? 'bg-rose-100 text-rose-600' : 'bg-indigo-100 text-indigo-600'
+                notifPermission === 'denied' ? 'bg-rose-500/10 text-rose-400' : 'bg-indigo-500/10 text-indigo-400'
               }`}>
                 <Bell size={24} className={notifPermission === 'default' ? 'animate-bounce' : ''} />
               </div>
               <div className="space-y-1">
-                <h3 className="text-base font-extrabold tracking-tight">
+                <h3 className="text-sm font-extrabold tracking-tight">
                   {notifPermission === 'denied' ? 'Action Required: Notifications Blocked' : 'Enable Real-Time Job Alerts'}
                 </h3>
-                <p className="text-xs font-medium max-w-xl leading-relaxed opacity-90">
+                <p className="text-xs font-semibold max-w-xl leading-relaxed opacity-80">
                   {notifPermission === 'denied' 
                     ? 'You have disabled notifications for Fixvo. To receive sound, vibrate, and background alerts for new jobs, click the lock/settings icon in your browser address bar and set Notifications to "Allow".'
                     : 'Get instant alerts on your lock screen for new bookings, customer messages, and payments, even when using other apps or outside the website.'}
@@ -889,7 +908,7 @@ const TechnicianDashboard = () => {
             {notifPermission !== 'denied' && (
               <button
                 onClick={handleEnableNotifications}
-                className="w-full md:w-auto px-6 py-3 bg-indigo-600 hover:bg-indigo-700 text-white font-extrabold text-xs uppercase tracking-wider rounded-xl shadow-md transition-all shrink-0 active:scale-95 cursor-pointer border-none outline-none"
+                className="w-full md:w-auto px-6 py-3.5 bg-indigo-650 hover:bg-indigo-550 text-white font-extrabold text-xs uppercase tracking-widest rounded-xl shadow-md transition-all shrink-0 active:scale-95 cursor-pointer border-none outline-none"
               >
                 Enable Notifications
               </button>
@@ -899,58 +918,57 @@ const TechnicianDashboard = () => {
 
         {/* Verification Banner */}
         {!loading && profile?.isProfileComplete && !profile?.isVerified && (
-          <div className="bg-amber-50 border border-amber-200 rounded-3xl p-6 sm:p-8 flex flex-col md:flex-row items-center gap-6 shadow-sm">
-            <div className="w-16 h-16 bg-white rounded-full flex items-center justify-center shrink-0 shadow-sm border border-amber-100">
-               <ShieldAlert className="text-amber-500" size={32} />
+          <div className="bg-amber-500/5 border border-amber-500/20 rounded-[2rem] p-6 sm:p-8 flex flex-col md:flex-row items-center gap-6 shadow-2xl backdrop-blur-md">
+            <div className="w-16 h-16 bg-amber-500/10 border border-amber-500/25 rounded-2xl flex items-center justify-center shrink-0 shadow-inner text-amber-400">
+               <ShieldAlert size={32} />
             </div>
             <div className="flex-1 text-center md:text-left">
-              <h2 className="text-xl font-bold text-slate-800">Identity Not Verified</h2>
-              <p className="text-slate-600 mt-1 max-w-2xl text-sm md:text-base">Verified technicians receive 300% more direct repair requests. Complete your background check securely to earn your verified badge and unlock premier jobs.</p>
+              <h2 className="text-lg font-black text-white">Identity Not Verified</h2>
+              <p className="text-slate-400 mt-1 max-w-2xl text-xs sm:text-sm font-semibold">Verified technicians receive 300% more direct repair requests. Complete your background check securely to earn your verified badge and unlock premier jobs.</p>
             </div>
             <button 
               onClick={() => setShowVerification(true)}
-              className="bg-slate-900 hover:bg-slate-800 text-white font-bold py-3.5 px-8 rounded-xl shadow-lg transition-all transform hover:-translate-y-1 w-full md:w-auto whitespace-nowrap"
+              className="bg-white hover:bg-slate-100 text-slate-900 font-extrabold py-3.5 px-8 rounded-xl shadow-lg transition-all transform hover:-translate-y-0.5 w-full md:w-auto text-xs uppercase tracking-widest border-none outline-none cursor-pointer"
             >
               Get Verified Now
             </button>
           </div>
         )}
 
-        {/* Stats Section */}
+        {/* Earnings & Withdrawal Panel */}
         {!loading && profile?.isProfileComplete && (
           <div className="space-y-4">
-            {/* Primary Available Balance Card */}
             <motion.div 
               initial={{ opacity: 0, y: 15 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.4 }}
-              className="relative overflow-hidden rounded-3xl bg-slate-950/90 border border-cyan-500/30 p-6 sm:p-8 shadow-[0_0_50px_-12px_rgba(6,182,212,0.35)] backdrop-blur-xl transition-all duration-300 hover:shadow-[0_0_50px_-6px_rgba(6,182,212,0.5)] mb-4"
+              className="relative overflow-hidden rounded-[2rem] bg-gradient-to-br from-indigo-950/20 to-slate-900/20 border border-indigo-500/20 p-6 sm:p-8 shadow-[0_0_50px_rgba(99,102,241,0.08)] backdrop-blur-xl"
             >
-              <div className="absolute top-[-30%] right-[-10%] w-[35%] h-[150%] bg-[radial-gradient(circle_at_center,_rgba(6,182,212,0.15),_transparent_65%)] rounded-full pointer-events-none animate-pulse" style={{ animationDuration: '4s' }}></div>
+              <div className="absolute top-[-30%] right-[-10%] w-[35%] h-[150%] bg-[radial-gradient(circle_at_center,_rgba(99,102,241,0.1),_transparent_65%)] rounded-full pointer-events-none animate-pulse" style={{ animationDuration: '4s' }}></div>
               
-              <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-6 relative z-10">
+              <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-6 relative z-10">
                 <div className="flex items-center gap-4">
-                  <div className="p-3.5 bg-gradient-to-br from-cyan-950/60 to-slate-900 text-cyan-400 rounded-2xl border border-cyan-500/30 shadow-[0_0_15px_rgba(6,182,212,0.2)]">
+                  <div className="p-3.5 bg-gradient-to-br from-indigo-950/60 to-slate-900 text-indigo-400 rounded-2xl border border-indigo-500/20 shadow-[0_0_15px_rgba(99,102,241,0.2)]">
                     <Wallet size={28} className="animate-pulse" />
                   </div>
                   <div>
-                    <span className="text-[10px] bg-cyan-950/60 text-cyan-400 font-extrabold px-3 py-1 rounded-full uppercase tracking-widest border border-cyan-500/20 select-none">
+                    <span className="text-[9px] bg-indigo-950/60 text-indigo-400 font-extrabold px-3 py-1 rounded-full uppercase tracking-widest border border-indigo-500/20 select-none">
                       Available Balance
                     </span>
                     <p className="text-3xl sm:text-4xl font-black text-white mt-2 tracking-tight">₹{(profile?.walletBalance || 0).toFixed(2)}</p>
                   </div>
                 </div>
 
-                <div className="flex flex-col sm:flex-row sm:items-center gap-4 w-full sm:w-auto shrink-0 justify-between sm:justify-start">
+                <div className="flex flex-col sm:flex-row sm:items-center gap-4 w-full md:w-auto shrink-0 justify-between sm:justify-start">
                   {profile?.pendingWithdrawal > 0 && (
-                    <span className="text-[10px] bg-amber-500/10 text-amber-400 border border-amber-500/20 font-extrabold px-3 py-1 rounded-full uppercase tracking-wider inline-flex items-center gap-1.5 self-start sm:self-auto shadow-[0_0_15px_rgba(245,158,11,0.1)]">
-                      <span className="w-2 h-2 rounded-full bg-amber-400 animate-pulse"></span>
+                    <span className="text-[9px] bg-amber-500/10 text-amber-400 border border-amber-500/20 font-extrabold px-3 py-1.5 rounded-full uppercase tracking-wider inline-flex items-center gap-1.5 self-start sm:self-auto shadow-sm">
+                      <span className="w-1.5 h-1.5 rounded-full bg-amber-400 animate-pulse"></span>
                       Pending Payout: ₹{profile.pendingWithdrawal}
                     </span>
                   )}
                   <button 
                     onClick={handleOpenWithdrawModal}
-                    className="w-full sm:w-auto bg-gradient-to-r from-cyan-400 via-blue-500 to-indigo-600 hover:from-cyan-300 hover:via-blue-400 hover:to-indigo-500 text-white font-black py-4 px-6 rounded-2xl text-xs uppercase tracking-wider transition-all duration-300 flex items-center justify-center gap-2 outline-none cursor-pointer border-none shadow-[0_0_20px_rgba(6,182,212,0.3)] hover:shadow-[0_0_30px_rgba(6,182,212,0.5)] active:scale-[0.98] transform hover:-translate-y-0.5"
+                    className="w-full sm:w-auto bg-gradient-to-r from-blue-500 via-indigo-500 to-purple-600 hover:from-blue-400 hover:via-indigo-400 hover:to-purple-500 text-white font-black py-4 px-6 rounded-2xl text-xs uppercase tracking-widest transition-all duration-300 flex items-center justify-center gap-2 outline-none cursor-pointer border-none shadow-lg active:scale-[0.98] transform hover:-translate-y-0.5"
                   >
                     Request Payout <ArrowUpRight size={16} />
                   </button>
@@ -958,14 +976,14 @@ const TechnicianDashboard = () => {
               </div>
             </motion.div>
 
-            {/* Collapsible View Earnings Details Trigger */}
-            <div className="flex justify-center mb-4">
+            {/* Collapsible Trigger */}
+            <div className="flex justify-center">
               <button 
                 type="button"
                 onClick={() => setShowEarningsDetails(!showEarningsDetails)}
-                className="flex items-center gap-2 px-5 py-2.5 bg-slate-950/80 hover:bg-slate-900 border border-white/10 text-slate-300 hover:text-white font-extrabold text-[10px] sm:text-xs uppercase tracking-wider rounded-full shadow-lg transition-all duration-300 transform active:scale-95 cursor-pointer outline-none"
+                className="flex items-center gap-2 px-5 py-2.5 bg-slate-900 hover:bg-slate-850 border border-white/5 hover:border-slate-800 text-slate-400 hover:text-white font-extrabold text-[10px] sm:text-xs uppercase tracking-wider rounded-full shadow-lg transition-all duration-300 transform active:scale-95 cursor-pointer outline-none"
               >
-                <span>{showEarningsDetails ? "Hide Earnings Details" : "View Earnings Details"}</span>
+                <span>{showEarningsDetails ? "Hide Earnings Details" : "View Earnings Breakdown"}</span>
                 <ChevronRight 
                   size={14} 
                   className={`transform transition-transform duration-300 ${showEarningsDetails ? 'rotate-270' : 'rotate-90'}`} 
@@ -973,17 +991,17 @@ const TechnicianDashboard = () => {
               </button>
             </div>
 
-            {/* Collapsible Detailed Grid */}
+            {/* Collapsible Earnings Details Grid */}
             <motion.div
               initial={false}
               animate={{ height: showEarningsDetails ? "auto" : 0, opacity: showEarningsDetails ? 1 : 0 }}
               transition={{ duration: 0.4, ease: "easeInOut" }}
               className="overflow-hidden"
             >
-              <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 pb-4">
+              <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 pb-4 mt-2">
                 {[
                   { label: 'Gross Earnings', value: profile?.grossEarnings || 0, desc: 'Completed service volume', icon: Coins, color: 'text-indigo-400 bg-indigo-950/40 border-indigo-900/20', gradient: 'from-indigo-500/5 to-transparent' },
-                  { label: 'Platform Fee (10%)', value: profile?.platformFee || 0, desc: 'Fixvo commission rate', icon: ArrowDownLeft, color: 'text-rose-400 bg-rose-950/40 border-rose-900/20', gradient: 'from-rose-500/5 to-transparent' },
+                  { label: 'Platform Fee (10%)', value: profile?.platformFee || 0, desc: 'Platform service commission rate', icon: ArrowDownLeft, color: 'text-rose-400 bg-rose-950/40 border-rose-900/20', gradient: 'from-rose-500/5 to-transparent' },
                   { label: 'Net Earnings', value: profile?.netEarnings || 0, desc: 'Your 90% revenue share', icon: CheckCircle, color: 'text-teal-400 bg-teal-950/40 border-teal-900/20', gradient: 'from-teal-500/5 to-transparent' },
                   { label: 'Cash Collected', value: profile?.cashCollected || 0, desc: 'Cash kept physically by you', icon: Banknote, color: 'text-amber-400 bg-amber-950/40 border-amber-900/20', gradient: 'from-amber-500/5 to-transparent' },
                   { label: 'Online Payments', value: profile?.onlinePayments || 0, desc: 'Processed via payment gateways', icon: CreditCard, color: 'text-sky-400 bg-sky-950/40 border-sky-900/20', gradient: 'from-sky-500/5 to-transparent' },
@@ -994,7 +1012,7 @@ const TechnicianDashboard = () => {
                   <motion.div 
                     key={idx}
                     whileHover={{ scale: 1.02, translateY: -2 }}
-                    className="group relative overflow-hidden bg-slate-950/70 backdrop-blur-md p-4 sm:p-5 rounded-2xl border border-white/5 shadow-md hover:border-slate-800 transition-all duration-300 flex flex-col justify-between"
+                    className="group relative overflow-hidden bg-slate-900/40 backdrop-blur-md p-4 sm:p-5 rounded-2xl border border-white/5 shadow-md hover:border-slate-800 transition-all duration-300 flex flex-col justify-between"
                   >
                     <div className={`absolute inset-0 bg-gradient-to-br ${card.gradient} opacity-40 pointer-events-none`}></div>
                     
@@ -1004,7 +1022,7 @@ const TechnicianDashboard = () => {
                       </div>
                     </div>
                     <div className="mt-4 relative z-10 text-left">
-                      <p className="text-[9px] sm:text-[10px] font-extrabold uppercase tracking-wider text-slate-500">{card.label}</p>
+                      <p className="text-[9px] font-extrabold uppercase tracking-wider text-slate-500">{card.label}</p>
                       <p className="text-base sm:text-lg font-black text-white mt-1">₹{card.value.toFixed(2)}</p>
                       <p className="text-[8px] sm:text-[9px] text-slate-400/80 font-medium mt-1 line-clamp-2 select-none leading-normal">{card.desc}</p>
                     </div>
@@ -1015,74 +1033,79 @@ const TechnicianDashboard = () => {
           </div>
         )}
 
-        {/* Jobs List */}
+        {/* Jobs Segmented Columns/Tabs */}
         {!loading && profile?.isProfileComplete && (
-          <>
-            {/* Quick Filters */}
-            <div className="flex overflow-x-auto gap-2 pb-5 scrollbar-none snap-x snap-mandatory mb-2">
+          <div className="space-y-6">
+            <div className="flex overflow-x-auto gap-2 pb-2 scrollbar-none snap-x snap-mandatory border-b border-white/5">
               {[
-                { id: 'new', label: 'New Jobs', count: jobs.filter(j => ['pending', 'assigned', 'queued'].includes(j.status)).length },
-                { id: 'active', label: 'In Progress', count: jobs.filter(j => ['accepted', 'on_the_way', 'arrived', 'quote_approved', 'in_progress'].includes(j.status)).length },
-                { id: 'quote_pending', label: 'Pending Quote', count: jobs.filter(j => j.status === 'quote_pending').length },
-                { id: 'completed', label: 'Completed', count: jobs.filter(j => j.status === 'completed').length },
-                { id: 'cancelled', label: 'Cancelled / Rejected', count: jobs.filter(j => ['cancelled', 'rejected'].includes(j.status)).length }
+                { id: 'new', label: 'New Requests', count: jobs.filter(j => ['pending', 'assigned', 'queued'].includes(j.status)).length },
+                { id: 'active', label: 'Active Jobs', count: jobs.filter(j => ['accepted', 'on_the_way', 'arrived', 'inspection_started', 'quote_approved', 'in_progress'].includes(j.status)).length },
+                { id: 'quote_pending', label: 'Quote Proposals', count: jobs.filter(j => ['quote_pending', 'quote_clarification', 'quote_rejected'].includes(j.status)).length },
+                { id: 'completed', label: 'Completed History', count: jobs.filter(j => j.status === 'completed').length },
+                { id: 'cancelled', label: 'Cancelled Jobs', count: jobs.filter(j => ['cancelled', 'rejected'].includes(j.status)).length }
               ].map(tab => (
                 <button
                   key={tab.id}
                   onClick={() => setJobTab(tab.id)}
-                  className={`px-5 py-3 rounded-2xl text-xs font-bold transition-all shrink-0 snap-center outline-none border cursor-pointer flex items-center gap-1.5 ${
+                  className={`px-5 py-3.5 rounded-t-2xl text-xs font-black transition-all shrink-0 snap-center outline-none border-b-2 cursor-pointer flex items-center gap-2 bg-transparent ${
                     jobTab === tab.id 
-                      ? 'bg-slate-900 text-white border-slate-800 shadow-md shadow-slate-900/10' 
-                      : 'bg-white text-slate-500 border-slate-200 hover:bg-slate-50 hover:text-slate-700'
+                      ? 'border-indigo-500 text-indigo-400 font-extrabold' 
+                      : 'border-transparent text-slate-500 hover:text-slate-400'
                   }`}
                 >
                   <span>{tab.label}</span>
-                  <span className={`px-1.5 py-0.5 rounded-full text-[9px] font-extrabold ${
-                    jobTab === tab.id ? 'bg-white/20 text-white' : 'bg-slate-100 text-slate-500'
+                  <span className={`px-2 py-0.5 rounded-full text-[9px] font-black ${
+                    jobTab === tab.id ? 'bg-indigo-500/20 text-indigo-400' : 'bg-slate-900 text-slate-500'
                   }`}>{tab.count}</span>
                 </button>
               ))}
             </div>
 
             {filteredJobs.length === 0 ? (
-              <div className="flex flex-col items-center justify-center py-20 px-6 bg-white rounded-3xl border border-slate-100/80 shadow-[0_4px_25px_rgba(0,0,0,0.02)] text-center animate-in fade-in duration-300">
-                <div className="relative w-20 h-20 bg-amber-50 rounded-2xl flex items-center justify-center mb-6 shadow-inner text-amber-600">
+              <div className="flex flex-col items-center justify-center py-20 px-6 bg-slate-900/10 border border-white/5 rounded-[2rem] text-center animate-in fade-in duration-300 shadow-inner">
+                <div className="relative w-20 h-20 bg-slate-900/60 border border-white/5 rounded-2xl flex items-center justify-center mb-6 shadow-inner text-slate-500">
                   <PackageSearch size={36} />
-                  <div className="absolute top-0 right-0 w-3 h-3 bg-amber-500 rounded-full animate-ping"></div>
+                  {jobTab === 'new' && (
+                    <div className="absolute top-0 right-0 w-3 h-3 bg-indigo-500 rounded-full animate-ping"></div>
+                  )}
                 </div>
-                <h3 className="text-xl font-extrabold text-slate-800 tracking-tight">No Jobs Found</h3>
-                <p className="text-sm text-slate-500 font-medium max-w-xs mt-2 leading-relaxed">
-                  There are no repair requests in the <strong className="text-slate-700 capitalize">"{jobTab.replace(/_/g, ' ')}"</strong> tab currently. As soon as a matching customer order is received, it will appear here.
+                <h3 className="text-xl font-extrabold text-white tracking-tight">No Jobs Found</h3>
+                <p className="text-xs sm:text-sm text-slate-400 font-medium max-w-xs mt-2 leading-relaxed">
+                  There are no repair requests in the <strong className="text-indigo-400 capitalize">"{jobTab.replace(/_/g, ' ')}"</strong> section right now.
                 </p>
               </div>
             ) : (
-              <div className="space-y-8">
+              <div className="space-y-6">
                 {filteredJobs.map((job) => {
                   const isCompleted = job.status === 'completed';
                   const isExpanded = expandedCompletedJobs[job._id];
                   
                   if (isCompleted && !isExpanded) {
                     return (
-                      <div key={job._id} id={`job-card-${job._id}`} className="relative bg-white rounded-3xl shadow-[0_4px_20px_rgb(0,0,0,0.03)] hover:shadow-[0_8px_30px_rgb(0,0,0,0.05)] transition-all duration-300 border border-slate-100/80 p-6 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 overflow-hidden pl-8">
-                        <div className="absolute top-0 left-0 w-2 h-full bg-emerald-500"></div>
+                      <div 
+                        key={job._id} 
+                        id={`job-card-${job._id}`} 
+                        className="relative bg-gradient-to-r from-slate-900/60 to-[#111827]/60 border border-white/5 rounded-2xl p-6 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 overflow-hidden pl-8 shadow-xl"
+                      >
+                        <div className="absolute top-0 left-0 w-1.5 h-full bg-emerald-500"></div>
                         <div className="space-y-1.5 flex-1 min-w-0">
                           <div className="flex flex-wrap items-center gap-2">
-                            <span className="bg-slate-100 text-slate-800 text-[10px] font-bold px-2.5 py-1 rounded border border-slate-200 uppercase tracking-wide">
+                            <span className="bg-slate-950 text-slate-400 border border-white/5 text-[9px] font-extrabold px-2.5 py-0.5 rounded uppercase tracking-wider">
                               {job.serviceName || 'Device Repair'}
                             </span>
                             {getStatusBadge(job.status)}
                           </div>
-                          <h4 className="text-xl font-black text-slate-900 tracking-tight">
+                          <h4 className="text-xl font-black text-white tracking-tight">
                             Earned: ₹{job.finalTechnicianEarning ? job.finalTechnicianEarning.toFixed(2) : (((job.finalQuote || job.amount || job.serviceId?.price || 0) - (job.membershipDiscount || 0)) * 0.9).toFixed(2)} 
-                            <span className="text-xs font-semibold text-slate-400 ml-1.5 border-l border-slate-200 pl-1.5">Gross Invoice: ₹{job.finalQuote || job.serviceId?.price || 0}</span>
+                            <span className="text-xs font-semibold text-slate-500 ml-1.5 border-l border-white/10 pl-1.5">Gross Invoice: ₹{job.finalQuote || job.serviceId?.price || 0}</span>
                           </h4>
-                          <p className="text-xs text-slate-500 font-medium">
+                          <p className="text-[10px] text-slate-400 font-medium">
                             Completed: {job.updatedAt ? new Date(job.updatedAt).toLocaleDateString() : 'Date Pending'} • Customer: {job.name || 'Guest User'}
                           </p>
                         </div>
                         <button
                           onClick={() => toggleCompletedExpand(job._id)}
-                          className="shrink-0 text-xs text-indigo-600 font-bold bg-indigo-50 border border-indigo-100 hover:bg-indigo-100/80 px-4 py-2 rounded-xl transition-all shadow-sm"
+                          className="shrink-0 text-xs text-indigo-400 font-extrabold bg-indigo-500/10 border border-indigo-500/20 hover:bg-indigo-500/20 px-4 py-2 rounded-xl transition-all shadow-md cursor-pointer outline-none"
                         >
                           View Details
                         </button>
@@ -1091,416 +1114,465 @@ const TechnicianDashboard = () => {
                   }
 
                   return (
-                  <div key={job._id} id={`job-card-${job._id}`} className="relative bg-white rounded-[2rem] shadow-[0_4px_20px_rgb(0,0,0,0.03)] hover:shadow-[0_8px_30px_rgb(0,0,0,0.06)] transition-all duration-300 border border-slate-100/80 overflow-hidden group">
-                    <div className={`absolute top-0 left-0 w-2 h-full ${['pending','assigned','queued'].includes(job.status) ? 'bg-amber-400' : ['accepted', 'quote_approved'].includes(job.status) ? 'bg-indigo-500' : job.status === 'completed' ? 'bg-emerald-500' : 'bg-red-400'}`}></div>
-                    
-                    <div className="p-8 md:p-10 flex flex-col md:flex-row gap-8 pl-10 md:pl-12">
-                      <div className="flex-1 space-y-6">
-                        <div className="flex flex-wrap items-center gap-3">
-                          <span className="bg-slate-100 text-slate-800 border border-slate-200 text-xs font-bold px-3 py-1.5 rounded-lg uppercase tracking-wider shadow-sm">
-                            {job.serviceId?.name || 'Device Repair'}
-                          </span>
-                          <span className={`text-xs font-bold px-3 py-1.5 rounded-lg uppercase tracking-wider shadow-sm border ${job.serviceOption === 'inspection' ? 'bg-purple-100 text-purple-700 border-purple-200' : 'bg-blue-100 text-blue-700 border-blue-200'}`}>
-                            {job.serviceOption === 'inspection' ? 'Inspection Visit' : 'Direct Repair'}
-                          </span>
-                          {getStatusBadge(job.status)}
-                          <div className="flex items-center gap-1.5 text-slate-500 text-sm font-medium ml-auto md:ml-0">
-                            <Clock size={16} />
-                            {job.date ? new Date(job.date).toLocaleDateString() : 'TBD'}
+                    <div 
+                      key={job._id} 
+                      id={`job-card-${job._id}`} 
+                      className="relative bg-gradient-to-br from-slate-900/60 to-[#111827]/60 border border-white/5 rounded-[2rem] shadow-xl overflow-hidden group"
+                    >
+                      <div className={`absolute top-0 left-0 w-1.5 h-full ${
+                        ['pending','assigned','queued'].includes(job.status) 
+                          ? 'bg-amber-500' 
+                          : ['accepted', 'quote_approved', 'on_the_way', 'arrived', 'inspection_started', 'in_progress'].includes(job.status) 
+                          ? 'bg-indigo-500' 
+                          : job.status === 'completed' 
+                          ? 'bg-emerald-500' 
+                          : 'bg-rose-500'
+                      }`}></div>
+                      
+                      <div className="p-6 sm:p-8 flex flex-col lg:flex-row gap-6 pl-8 sm:pl-10">
+                        <div className="flex-1 space-y-6">
+                          <div className="flex flex-wrap items-center gap-2.5">
+                            <span className="bg-slate-950 text-slate-300 border border-white/5 text-[10px] font-extrabold px-3 py-1 rounded-lg uppercase tracking-wider shadow-sm">
+                              {job.serviceId?.name || job.serviceName || 'Device Repair'}
+                            </span>
+                            <span className={`text-[10px] font-extrabold px-3 py-1 rounded-lg uppercase tracking-wider shadow-sm border ${
+                              job.serviceOption === 'inspection' 
+                                ? 'bg-purple-500/10 text-purple-400 border-purple-500/20' 
+                                : 'bg-blue-500/10 text-blue-400 border-blue-500/20'
+                            }`}>
+                              {job.serviceOption === 'inspection' ? 'Inspection Visit' : 'Direct Repair'}
+                            </span>
+                            {getStatusBadge(job.status)}
+                            <div className="flex items-center gap-1.5 text-slate-500 text-xs font-semibold ml-auto lg:ml-0">
+                              <Calendar size={14} />
+                              {job.date ? new Date(job.date).toLocaleDateString() : 'TBD'}
+                            </div>
                           </div>
-                        </div>
-                        
-                        <h3 className="text-3xl font-extrabold text-slate-800 inline-flex items-center gap-2">
-                          <span className="text-amber-500">₹</span>{job.finalQuote || job.serviceId?.price || 0} <span className="text-sm text-slate-400 font-bold ml-2">(+₹{job.transportCharge || 0} Transp.)</span>
-                        </h3>
+                          
+                          <h3 className="text-2xl sm:text-3xl font-black text-white inline-flex items-center gap-2">
+                            <span className="text-indigo-400">₹</span>{job.finalQuote || job.serviceId?.price || 0} 
+                            <span className="text-xs text-slate-500 font-bold ml-2">(+₹{job.transportCharge || 0} Transp.)</span>
+                          </h3>
 
-                        {job.deviceType && (
-                          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 bg-slate-50 border border-slate-100 rounded-xl p-5">
+                          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 bg-slate-950/40 border border-white/5 rounded-2xl p-5">
                             <div className="space-y-4">
                               <div className="flex gap-3">
-                                <Smartphone className="text-blue-500 mt-1 shrink-0" size={20} />
+                                <Smartphone className="text-indigo-400 mt-0.5 shrink-0" size={18} />
                                 <div>
-                                  <p className="text-xs font-bold uppercase tracking-wider text-slate-400">Device</p>
-                                  <p className="font-medium text-slate-800">{job.deviceType}</p>
+                                  <p className="text-[9px] font-extrabold uppercase tracking-widest text-slate-500">Device</p>
+                                  <p className="font-bold text-slate-200 text-xs sm:text-sm">{job.deviceType || 'Device'}</p>
                                 </div>
                               </div>
                               <div className="flex gap-3">
-                                <MapPin className="text-emerald-500 mt-1 shrink-0" size={20} />
+                                <MapPin className="text-emerald-400 mt-0.5 shrink-0" size={18} />
                                 <div>
-                                  <p className="text-xs font-bold uppercase tracking-wider text-slate-400">Location</p>
-                                  <p className="font-medium text-slate-800">{job.location}</p>
+                                  <p className="text-[9px] font-extrabold uppercase tracking-widest text-slate-500">Location</p>
+                                  <p className="font-bold text-slate-200 text-xs sm:text-sm leading-relaxed">{job.location}</p>
                                   {(job.serviceLocation && job.serviceLocation !== 'on-site') && (
-                                     <span className="inline-block mt-1 text-xs font-bold bg-amber-100 text-amber-700 px-2 py-0.5 rounded border border-amber-200">
+                                     <span className="inline-block mt-1 text-[8px] font-extrabold bg-amber-500/10 text-amber-400 px-2 py-0.5 rounded border border-amber-500/20 uppercase tracking-wider">
                                        {job.serviceLocation === 'gate' ? 'Gate Meetup' : 'Off-site Pickup Required'}
                                      </span>
                                   )}
                                 </div>
                               </div>
                             </div>
-                            <div className="flex gap-3">
-                              <AlertCircle className="text-rose-500 mt-1 shrink-0" size={20} />
+                            <div className="flex gap-3 border-t md:border-t-0 md:border-l border-white/5 pt-4 md:pt-0 md:pl-4">
+                              <AlertCircle className="text-rose-450 mt-0.5 shrink-0" size={18} />
                               <div>
-                                <p className="text-xs font-bold uppercase tracking-wider text-slate-400">Issue Description</p>
-                                <p className="text-slate-700 italic">"{job.problemDescription}"</p>
+                                <p className="text-[9px] font-extrabold uppercase tracking-widest text-slate-500">Issue Description</p>
+                                <p className="text-slate-300 italic text-xs leading-relaxed">"{job.problemDescription}"</p>
                                 {job.unknownProblem && (
-                                   <span className="inline-flex items-center gap-1 mt-1 text-xs font-bold bg-rose-100 text-rose-700 px-2 py-0.5 rounded border border-rose-200">
-                                     <HelpCircle size={12}/> Unknown Issue - Requires Diagnosis
+                                   <span className="inline-flex items-center gap-1 mt-1 text-[8px] font-extrabold bg-rose-500/10 text-rose-400 px-2 py-0.5 rounded border border-rose-500/25 uppercase tracking-wider">
+                                     <HelpCircle size={10}/> Diagnosis Required
                                    </span>
                                 )}
                               </div>
                             </div>
                           </div>
-                        )}
-                        
 
-
-                        {(job.imageUrl || job.mediaUrl) && (
-                          <div className="flex items-start gap-4 p-5 bg-slate-50 border border-slate-100 rounded-xl relative overflow-hidden group/image">
-                            <Camera className="text-indigo-500 mt-1 shrink-0 absolute top-5 left-5 opacity-40 group-hover/image:opacity-100 transition-opacity" size={24} />
-                            <div className="w-full">
-                              <p className="text-xs font-bold uppercase tracking-wider text-slate-400 mb-3 pl-8">Customer Media Proof</p>
-                              <div className="relative rounded-xl overflow-hidden border border-slate-200 shadow-sm max-w-sm ml-8">
-                                {job.mediaType?.startsWith('video') ? (
-                                  <video src={job.mediaUrl} controls className="w-full h-auto object-cover hover:scale-[1.03] transition-transform duration-500" />
-                                ) : (
-                                  <img src={job.mediaUrl || job.imageUrl} alt="Damage evidence" className="w-full h-auto object-cover hover:scale-[1.03] transition-transform duration-500" />
-                                )}
-                              </div>
-                            </div>
-                          </div>
-                        )}
-                        
-                        <div className="flex items-center gap-2 text-slate-500 bg-white border border-slate-100 rounded-full px-4 py-2 w-max shadow-sm mt-4">
-                          <User size={16} />
-                          <span className="text-sm font-medium truncate max-w-[200px] sm:max-w-none">
-                            Customer: {job.userEmail ? job.userEmail.split('@')[0] : 'Guest User'}
-                          </span>
-                        </div>
-                        {job.lastMessage && (
-                          <div className="mt-4 p-3 bg-slate-50 rounded-xl border border-slate-100 flex items-start gap-2 max-w-md">
-                            <MessageSquare size={14} className="text-indigo-500 shrink-0 mt-0.5" />
-                            <div className="text-xs text-slate-600 truncate">
-                              <span className="font-bold">{job.lastMessage.senderId === profile?.userId ? 'You: ' : ''}</span>
-                              {job.lastMessage.text}
-                            </div>
-                          </div>
-                        )}
-                        {job.status === 'completed' && (
-                          <div className="space-y-3 bg-slate-50 border border-slate-200/60 rounded-2xl p-5 mt-4 max-w-xl">
-                            <h4 className="text-sm font-bold text-slate-800 flex items-center gap-1.5">
-                              <FileText size={16} className="text-indigo-600" /> Billing & Earning Breakdown
-                            </h4>
-                            <div className="overflow-hidden rounded-xl border border-slate-200/60 bg-white shadow-sm">
-                              <table className="w-full text-left border-collapse text-xs">
-                                <thead>
-                                  <tr className="bg-slate-50 text-slate-500 font-bold border-b border-slate-200/60">
-                                    <th className="px-4 py-2.5">Billing Item</th>
-                                    <th className="px-4 py-2.5 text-right">Amount</th>
-                                  </tr>
-                                </thead>
-                                <tbody className="divide-y divide-slate-100 text-slate-700 font-medium">
-                                  <tr>
-                                    <td className="px-4 py-2 text-slate-500">Gross Invoice (Billed to Customer)</td>
-                                    <td className="px-4 py-2 text-right font-semibold">₹{job.finalQuote || job.amount || 0}</td>
-                                  </tr>
-                                  {job.membershipDiscount > 0 && (
-                                    <tr className="text-amber-600 bg-amber-50/20">
-                                      <td className="px-4 py-2 flex items-center gap-1">
-                                        <Sparkles size={12} className="text-amber-500" /> 
-                                        Plus Member Discount ({job.discountPercentage || 5}%)
-                                      </td>
-                                      <td className="px-4 py-2 text-right font-semibold">-₹{job.membershipDiscount}</td>
-                                    </tr>
+                          {(job.imageUrl || job.mediaUrl) && (
+                            <div className="flex items-start gap-4 p-5 bg-slate-950/20 border border-white/5 rounded-2xl">
+                              <div className="w-full">
+                                <p className="text-[9px] font-extrabold uppercase tracking-widest text-slate-500 mb-3 flex items-center gap-1.5">
+                                  <Camera size={14} className="text-indigo-400" /> Customer Media Proof
+                                </p>
+                                <div className="relative rounded-xl overflow-hidden border border-white/5 shadow-inner max-w-xs sm:max-w-sm">
+                                  {job.mediaType?.startsWith('video') ? (
+                                    <video src={job.mediaUrl} controls className="w-full h-auto object-cover hover:scale-[1.02] transition-transform duration-500" />
+                                  ) : (
+                                    <img src={job.mediaUrl || job.imageUrl} alt="Damage evidence" className="w-full h-auto object-cover hover:scale-[1.02] transition-transform duration-500" />
                                   )}
-                                  <tr className="text-rose-600 bg-rose-50/10">
-                                    <td className="px-4 py-2">Platform Commission Deducted ({(() => {
-                                      const grossInvoice = job.finalQuote || job.amount || 0;
-                                      const memberDiscount = job.membershipDiscount || 0;
-                                      const netPaidAmount = grossInvoice - memberDiscount;
-                                      const commVal = typeof job.platformCommission === 'number' ? job.platformCommission : (netPaidAmount * 0.10);
-                                      return netPaidAmount > 0 ? Math.round((commVal / netPaidAmount) * 100) : 10;
-                                    })()}%)</td>
-                                    <td className="px-4 py-2 text-right font-semibold">-₹{(typeof job.platformCommission === 'number' ? job.platformCommission : (((job.finalQuote || job.amount || 0) - (job.membershipDiscount || 0)) * 0.1)).toFixed(2)}</td>
-                                  </tr>
-                                  <tr className="bg-emerald-50 text-emerald-800 font-bold border-t border-slate-200">
-                                    <td className="px-4 py-2.5">Your Net Earnings ({(() => {
-                                      const grossInvoice = job.finalQuote || job.amount || 0;
-                                      const memberDiscount = job.membershipDiscount || 0;
-                                      const netPaidAmount = grossInvoice - memberDiscount;
-                                      const commVal = typeof job.platformCommission === 'number' ? job.platformCommission : (netPaidAmount * 0.10);
-                                      const commPct = netPaidAmount > 0 ? Math.round((commVal / netPaidAmount) * 100) : 10;
-                                      return 100 - commPct;
-                                    })()}%)</td>
-                                    <td className="px-4 py-2.5 text-right text-sm">₹{(typeof job.finalTechnicianEarning === 'number' ? job.finalTechnicianEarning : (((job.finalQuote || job.amount || 0) - (job.membershipDiscount || 0)) * 0.9)).toFixed(2)}</td>
-                                  </tr>
-                                </tbody>
-                              </table>
-                            </div>
-                            <div className="flex justify-between items-center text-[10px] text-slate-500 font-bold px-1 uppercase tracking-wider">
-                              <span>Payment Mode: <strong className="text-slate-700">{job.paymentMethod || 'Cash'}</strong></span>
-                              <span>Status: <strong className={job.paymentStatus === 'completed' ? 'text-emerald-600' : 'text-amber-600'}>{job.paymentStatus === 'completed' ? 'Paid' : (job.paymentMethod === 'cash' ? 'Cash Payment Pending' : 'Awaiting Payment')}</strong></span>
-                            </div>
-                          </div>
-                        )}
-                      </div>
-
-                      <div className="flex flex-col gap-4 min-w-[200px] justify-center border-t md:border-t-0 md:border-l border-slate-100 pt-8 md:pt-0 md:pl-8">
-                        {['pending', 'assigned'].includes(job.status) && (
-                          <>
-                            <button
-                              disabled={updatingJobs[job._id]}
-                              onClick={() => updateJobStatus(job._id, 'accepted')}
-                              className="w-full bg-slate-900 hover:bg-slate-800 text-white font-bold py-4 px-4 rounded-2xl shadow-xl hover:shadow-2xl hover:shadow-slate-900/20 transition-all duration-300 transform hover:-translate-y-1 flex items-center justify-center gap-2 disabled:opacity-50"
-                            >
-                              {updatingJobs[job._id] ? <Loader2 size={18} className="animate-spin" /> : <><CheckCircle size={18} /> Accept Job</>}
-                            </button>
-                            <button
-                              disabled={updatingJobs[job._id]}
-                              onClick={() => setDeclineJobId(job._id)}
-                              className="w-full bg-white hover:bg-red-50 text-red-600 border border-red-200 font-bold py-3 p-4 rounded-xl transition-colors flex items-center justify-center gap-2 disabled:opacity-50"
-                            >
-                              {updatingJobs[job._id] ? <Loader2 size={18} className="animate-spin" /> : <><XCircle size={18} /> Decline</>}
-                            </button>
-                          </>
-                        )}
-                        {job.status === 'queued' && (
-                           <div className="flex flex-col text-center items-center justify-center gap-2 p-4 rounded-xl font-bold border bg-yellow-50 text-yellow-700 border-yellow-200 shadow-sm">
-                             <Clock size={18} /> 
-                             <span>In Your Queue</span>
-                             <span className="text-xs font-normal">Finish current job first</span>
-                           </div>
-                        )}
-                        {job.status === 'accepted' && (
-                            <button
-                              disabled={updatingJobs[job._id]}
-                              onClick={() => updateJobStatus(job._id, 'on_the_way')}
-                              className="w-full bg-orange-500 hover:bg-orange-600 text-white font-bold py-4 px-4 rounded-2xl shadow-xl hover:shadow-orange-500/30 transition-all duration-300 transform hover:-translate-y-1 flex items-center justify-center gap-2 disabled:opacity-50"
-                            >
-                              {updatingJobs[job._id] ? <Loader2 size={18} className="animate-spin" /> : <><Truck size={18} /> Start Route (On The Way)</>}
-                            </button>
-                        )}
-                        {job.status === 'on_the_way' && (
-                            <button
-                              disabled={updatingJobs[job._id]}
-                              onClick={() => updateJobStatus(job._id, 'arrived')}
-                              className="w-full bg-blue-500 hover:bg-blue-600 text-white font-bold py-4 px-4 rounded-2xl shadow-xl hover:shadow-blue-500/30 transition-all duration-300 transform hover:-translate-y-1 flex items-center justify-center gap-2 disabled:opacity-50"
-                            >
-                              {updatingJobs[job._id] ? <Loader2 size={18} className="animate-spin" /> : <><MapPin size={18} /> Technician Arrived</>}
-                            </button>
-                        )}
-                        {job.status === 'arrived' && (
-                            <button
-                              disabled={updatingJobs[job._id]}
-                              onClick={() => updateJobStatus(job._id, 'inspection_started')}
-                              className="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-4 px-4 rounded-2xl shadow-xl hover:shadow-indigo-500/30 transition-all duration-300 transform hover:-translate-y-1 flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50"
-                            >
-                              {updatingJobs[job._id] ? <Loader2 size={18} className="animate-spin" /> : <><Wrench size={18} /> Start Diagnosis & Inspection</>}
-                            </button>
-                        )}
-                        {job.status === 'inspection_started' && (
-                            <button
-                              onClick={() => handleOpenQuoteModal(job)}
-                              className="w-full bg-indigo-500 hover:bg-indigo-600 text-white font-bold py-4 px-4 rounded-2xl shadow-xl hover:shadow-indigo-500/30 transition-all duration-300 transform hover:-translate-y-1 flex items-center justify-center gap-2 cursor-pointer"
-                            >
-                              <Wrench size={18} /> Inspection Done - Send Quote
-                            </button>
-                        )}
-                        {job.status === 'quote_rejected' && (
-                            <div className="w-full space-y-2.5">
-                              <div className="p-4 bg-rose-500/10 border border-rose-500/25 rounded-xl text-rose-300 text-xs">
-                                ⚠️ Customer rejected your quote proposal. Revisions are limited to 3 max. You must submit a revised quote to resume work.
+                                </div>
                               </div>
+                            </div>
+                          )}
+                          
+                          <div className="flex flex-wrap items-center gap-4">
+                            <div className="flex items-center gap-2 text-slate-400 bg-slate-950/40 border border-white/5 rounded-full px-4 py-2 w-max text-xs font-semibold">
+                              <User size={14} />
+                              <span>Customer: {job.userEmail ? job.userEmail.split('@')[0] : 'Guest User'}</span>
+                            </div>
+                            
+                            {job.paymentMethod && (
+                              <div className="flex items-center gap-2 text-slate-400 bg-slate-950/40 border border-white/5 rounded-full px-4 py-2 w-max text-xs font-semibold">
+                                <CreditCard size={14} />
+                                <span className="uppercase tracking-wider">Payment: {job.paymentMethod}</span>
+                              </div>
+                            )}
+                          </div>
+
+                          {job.lastMessage && (
+                            <div className="p-4 bg-slate-950/60 rounded-2xl border border-white/5 flex items-start gap-2.5 max-w-md">
+                              <MessageSquare size={14} className="text-indigo-400 shrink-0 mt-0.5" />
+                              <div className="text-xs text-slate-300 truncate">
+                                <span className="font-extrabold text-white">{job.lastMessage.senderId === profile?.userId ? 'You: ' : ''}</span>
+                                {job.lastMessage.text}
+                              </div>
+                            </div>
+                          )}
+
+                          {job.status === 'completed' && (
+                            <div className="space-y-3 bg-slate-950/40 border border-white/5 rounded-2xl p-5 mt-4 max-w-xl">
+                              <h4 className="text-xs font-extrabold text-white flex items-center gap-1.5 uppercase tracking-wider">
+                                <FileText size={16} className="text-indigo-400" /> Billing & Earning Breakdown
+                              </h4>
+                              <div className="overflow-hidden rounded-xl border border-white/5 bg-slate-950 shadow-inner">
+                                <table className="w-full text-left border-collapse text-[11px] sm:text-xs">
+                                  <thead>
+                                    <tr className="bg-white/5 text-slate-400 font-bold border-b border-white/5">
+                                      <th className="px-4 py-2.5">Billing Item</th>
+                                      <th className="px-4 py-2.5 text-right">Amount</th>
+                                    </tr>
+                                  </thead>
+                                  <tbody className="divide-y divide-white/5 text-slate-300 font-semibold">
+                                    <tr>
+                                      <td className="px-4 py-2.5 text-slate-500">Gross Invoice (Billed to Customer)</td>
+                                      <td className="px-4 py-2.5 text-right font-extrabold text-white">₹{job.finalQuote || job.amount || 0}</td>
+                                    </tr>
+                                    {job.membershipDiscount > 0 && (
+                                      <tr className="text-amber-400 bg-amber-500/5">
+                                        <td className="px-4 py-2.5 flex items-center gap-1">
+                                          <Sparkles size={12} className="text-amber-400" /> 
+                                          Plus Member Discount ({job.discountPercentage || 5}%)
+                                        </td>
+                                        <td className="px-4 py-2.5 text-right font-extrabold">-₹{job.membershipDiscount}</td>
+                                      </tr>
+                                    )}
+                                    <tr className="text-rose-450 bg-rose-500/5">
+                                      <td className="px-4 py-2.5">Platform Commission Deducted ({(() => {
+                                        const grossInvoice = job.finalQuote || job.amount || 0;
+                                        const memberDiscount = job.membershipDiscount || 0;
+                                        const netPaidAmount = grossInvoice - memberDiscount;
+                                        const commVal = typeof job.platformCommission === 'number' ? job.platformCommission : (netPaidAmount * 0.10);
+                                        return netPaidAmount > 0 ? Math.round((commVal / netPaidAmount) * 100) : 10;
+                                      })()}%)</td>
+                                      <td className="px-4 py-2.5 text-right font-extrabold">-₹{(typeof job.platformCommission === 'number' ? job.platformCommission : (((job.finalQuote || job.amount || 0) - (job.membershipDiscount || 0)) * 0.1)).toFixed(2)}</td>
+                                    </tr>
+                                    <tr className="bg-emerald-500/10 text-emerald-400 font-bold border-t border-white/10">
+                                      <td className="px-4 py-2.5">Your Net Earnings ({(() => {
+                                        const grossInvoice = job.finalQuote || job.amount || 0;
+                                        const memberDiscount = job.membershipDiscount || 0;
+                                        const netPaidAmount = grossInvoice - memberDiscount;
+                                        const commVal = typeof job.platformCommission === 'number' ? job.platformCommission : (netPaidAmount * 0.10);
+                                        const commPct = netPaidAmount > 0 ? Math.round((commVal / netPaidAmount) * 100) : 10;
+                                        return 100 - commPct;
+                                      })()}%)</td>
+                                      <td className="px-4 py-2.5 text-right text-sm">₹{(typeof job.finalTechnicianEarning === 'number' ? job.finalTechnicianEarning : (((job.finalQuote || job.amount || 0) - (job.membershipDiscount || 0)) * 0.9)).toFixed(2)}</td>
+                                    </tr>
+                                  </tbody>
+                                </table>
+                              </div>
+                              <div className="flex justify-between items-center text-[9px] text-slate-500 font-extrabold px-1 uppercase tracking-widest">
+                                <span>Payment Mode: <strong className="text-slate-300">{job.paymentMethod || 'Cash'}</strong></span>
+                                <span>Status: <strong className={job.paymentStatus === 'completed' ? 'text-emerald-400' : 'text-amber-400'}>{job.paymentStatus === 'completed' ? 'Paid' : (job.paymentMethod === 'cash' ? 'Cash Payment Pending' : 'Awaiting Payment')}</strong></span>
+                              </div>
+                            </div>
+                          )}
+                        </div>
+
+                        {/* Workflow Action Buttons Column */}
+                        <div className="flex flex-col gap-3 min-w-[200px] justify-center border-t lg:border-t-0 lg:border-l border-white/5 pt-6 lg:pt-0 lg:pl-6 shrink-0">
+                          {['pending', 'assigned'].includes(job.status) && (
+                            <>
+                              <button
+                                disabled={updatingJobs[job._id]}
+                                onClick={() => updateJobStatus(job._id, 'accepted')}
+                                className="w-full bg-gradient-to-r from-blue-600 to-indigo-650 hover:from-blue-500 hover:to-indigo-550 text-white font-black py-4 px-4 rounded-xl shadow-lg transition-all duration-300 transform hover:-translate-y-0.5 flex items-center justify-center gap-2 cursor-pointer border-none outline-none disabled:opacity-50"
+                              >
+                                {updatingJobs[job._id] ? <Loader2 size={16} className="animate-spin" /> : <><CheckCircle size={16} /> Accept Request</>}
+                              </button>
+                              <button
+                                disabled={updatingJobs[job._id]}
+                                onClick={() => setDeclineJobId(job._id)}
+                                className="w-full bg-rose-500/5 hover:bg-rose-500/10 border border-rose-500/20 text-rose-400 font-bold py-3 px-4 rounded-xl transition-all flex items-center justify-center gap-2 cursor-pointer outline-none disabled:opacity-50"
+                              >
+                                {updatingJobs[job._id] ? <Loader2 size={16} className="animate-spin" /> : <><XCircle size={16} /> Decline</>}
+                              </button>
+                            </>
+                          )}
+                          
+                          {job.status === 'queued' && (
+                             <div className="flex flex-col text-center items-center justify-center gap-2 p-4 rounded-xl font-bold border border-amber-500/20 bg-amber-500/5 text-amber-400 shadow-sm w-full">
+                               <Clock size={16} /> 
+                               <span className="text-xs uppercase tracking-wider">In Your Queue</span>
+                               <span className="text-[10px] font-semibold text-slate-500">Finish current job first</span>
+                             </div>
+                          )}
+                          
+                          {job.status === 'accepted' && (
+                              <button
+                                disabled={updatingJobs[job._id]}
+                                onClick={() => updateJobStatus(job._id, 'on_the_way')}
+                                className="w-full bg-orange-650 hover:bg-orange-500 text-white font-black py-4 px-4 rounded-xl shadow-lg transition-all duration-300 transform hover:-translate-y-0.5 flex items-center justify-center gap-2 border-none outline-none cursor-pointer disabled:opacity-50"
+                              >
+                                {updatingJobs[job._id] ? <Loader2 size={16} className="animate-spin" /> : <><Truck size={16} /> Start Route</>}
+                              </button>
+                          )}
+                          
+                          {job.status === 'on_the_way' && (
+                              <button
+                                disabled={updatingJobs[job._id]}
+                                onClick={() => updateJobStatus(job._id, 'arrived')}
+                                className="w-full bg-blue-600 hover:bg-blue-500 text-white font-black py-4 px-4 rounded-xl shadow-lg transition-all duration-300 transform hover:-translate-y-0.5 flex items-center justify-center gap-2 border-none outline-none cursor-pointer disabled:opacity-50"
+                              >
+                                {updatingJobs[job._id] ? <Loader2 size={16} className="animate-spin" /> : <><MapPin size={16} /> Confirm Arrival</>}
+                              </button>
+                          )}
+                          
+                          {job.status === 'arrived' && (
+                              <button
+                                disabled={updatingJobs[job._id]}
+                                onClick={() => updateJobStatus(job._id, 'inspection_started')}
+                                className="w-full bg-indigo-650 hover:bg-indigo-550 text-white font-black py-4 px-4 rounded-xl shadow-lg transition-all duration-300 transform hover:-translate-y-0.5 flex items-center justify-center gap-2 border-none outline-none cursor-pointer disabled:opacity-50"
+                              >
+                                {updatingJobs[job._id] ? <Loader2 size={16} className="animate-spin" /> : <><Wrench size={16} /> Start Inspection</>}
+                              </button>
+                          )}
+                          
+                          {job.status === 'inspection_started' && (
                               <button
                                 onClick={() => handleOpenQuoteModal(job)}
-                                className="w-full bg-indigo-500 hover:bg-indigo-600 text-white font-bold py-4 px-4 rounded-2xl shadow-xl hover:shadow-indigo-500/30 transition-all duration-300 transform hover:-translate-y-1 flex items-center justify-center gap-2 cursor-pointer"
+                                className="w-full bg-indigo-650 hover:bg-indigo-500 text-white font-black py-4 px-4 rounded-xl shadow-lg transition-all duration-300 transform hover:-translate-y-0.5 flex items-center justify-center gap-2 border-none outline-none cursor-pointer"
                               >
-                                <Wrench size={18} /> Submit Revised Quote Proposal
+                                <Wrench size={16} /> Submit Final Quote
                               </button>
-                            </div>
-                        )}
-                        {job.status === 'quote_clarification' && (
-                            <div className="w-full bg-slate-900 border border-purple-500/30 rounded-2xl p-4 space-y-3">
-                              <div className="flex items-center gap-2 text-purple-400 font-extrabold text-xs uppercase tracking-wider">
-                                <span className="flex h-2 w-2 rounded-full bg-purple-500 animate-ping"></span>
-                                <span>📢 Clarification Requested</span>
-                              </div>
-                              {job.quoteRevisions && job.quoteRevisions.length > 0 && (
-                                <p className="text-slate-300 text-xs italic bg-white/5 p-3 rounded-xl border border-white/5">
-                                  "{job.quoteRevisions[job.quoteRevisions.length - 1].clarificationText}"
-                                </p>
-                              )}
-                              <div className="space-y-2">
-                                <textarea
-                                  value={clarificationResponse}
-                                  onChange={(e) => setClarificationResponse(e.target.value)}
-                                  placeholder="Provide clarification details (e.g. explaining spare parts details)..."
-                                  className="w-full p-3 bg-slate-950 border border-white/10 rounded-xl outline-none text-slate-100 text-xs focus:border-indigo-500 transition-all resize-none"
-                                  rows={2.5}
-                                />
+                          )}
+                          
+                          {job.status === 'quote_rejected' && (
+                              <div className="w-full space-y-2.5">
+                                <div className="p-4 bg-rose-500/10 border border-rose-500/20 rounded-xl text-rose-350 text-[10px] font-semibold leading-relaxed">
+                                  ⚠️ Customer rejected quote proposal. Submit a revised quote to resume work.
+                                </div>
                                 <button
-                                  disabled={updatingJobs[job._id] || !clarificationResponse.trim()}
-                                  onClick={() => handleRespondClarification(job._id)}
-                                  className="w-full bg-purple-600 hover:bg-purple-500 disabled:bg-slate-800 text-white disabled:text-slate-500 font-black py-2 rounded-xl text-xs transition-all flex justify-center items-center gap-2 cursor-pointer"
+                                  onClick={() => handleOpenQuoteModal(job)}
+                                  className="w-full bg-indigo-600 hover:bg-indigo-500 text-white font-black py-3.5 px-4 rounded-xl shadow-lg transition-all flex items-center justify-center gap-2 border-none outline-none cursor-pointer"
                                 >
-                                  {updatingJobs[job._id] ? <Loader2 size={12} className="animate-spin"/> : 'Send Explanation Response'}
+                                  <Wrench size={16} /> Revise Quote
                                 </button>
                               </div>
-                            </div>
-                        )}
-                        {job.status === 'quote_approved' && (
-                            <button
-                              disabled={updatingJobs[job._id]}
-                              onClick={() => updateJobStatus(job._id, 'in_progress')}
-                              className="w-full bg-purple-500 hover:bg-purple-600 text-white font-bold py-4 px-4 rounded-2xl shadow-xl hover:shadow-purple-500/30 transition-all duration-300 transform hover:-translate-y-1 flex items-center justify-center gap-2 disabled:opacity-50"
-                            >
-                              {updatingJobs[job._id] ? <Loader2 size={18} className="animate-spin" /> : <><Wrench size={18} /> Work In Progress</>}
-                            </button>
-                        )}
-                        {job.status === 'in_progress' && (
-                            <button
-                              disabled={updatingJobs[job._id]}
-                              onClick={() => updateJobStatus(job._id, 'completed')}
-                              className="w-full bg-emerald-500 hover:bg-emerald-600 text-white font-bold py-3.5 px-4 rounded-2xl shadow-xl hover:shadow-emerald-500/30 transition-all duration-300 transform hover:-translate-y-1 flex items-center justify-center gap-2 disabled:opacity-50"
-                            >
-                              {updatingJobs[job._id] ? <Loader2 size={18} className="animate-spin" /> : <><CheckCircle size={18} /> Mark Completed</>}
-                            </button>
-                        )}
-                        {['accepted', 'quote_approved', 'on_the_way', 'arrived', 'inspection_started', 'quote_pending', 'quote_clarification', 'quote_rejected', 'in_progress'].includes(job.status) && (
-                            <div className="space-y-2 w-full">
-                              <div className="flex gap-2">
-                                {(job.customerPhone || job.phone) && (
-                                  <a 
-                                    href={`tel:${formatPhoneLink(job.customerPhone || job.phone)}`} 
-                                    className="flex-1 bg-gradient-to-r from-emerald-500 to-emerald-600 hover:from-emerald-400 hover:to-emerald-500 text-white font-bold py-3 p-4 rounded-2xl transition-all shadow-sm flex items-center justify-center gap-2 transform hover:-translate-y-0.5 text-center"
-                                  >
-                                    <PhoneCall size={18} /> Call
-                                  </a>
+                          )}
+                          
+                          {job.status === 'quote_clarification' && (
+                              <div className="w-full bg-slate-950 border border-purple-500/20 rounded-2xl p-4 space-y-3">
+                                <div className="flex items-center gap-2 text-purple-400 font-extrabold text-[10px] uppercase tracking-wider">
+                                  <span className="flex h-1.5 w-1.5 rounded-full bg-purple-500 animate-ping"></span>
+                                  <span>📢 Clarification Needed</span>
+                                </div>
+                                {job.quoteRevisions && job.quoteRevisions.length > 0 && (
+                                  <p className="text-slate-400 text-xs italic bg-white/5 p-3 rounded-xl border border-white/5 leading-relaxed">
+                                    "{job.quoteRevisions[job.quoteRevisions.length - 1].clarificationText}"
+                                  </p>
                                 )}
+                                <div className="space-y-2">
+                                  <textarea
+                                    value={clarificationResponse}
+                                    onChange={(e) => setClarificationResponse(e.target.value)}
+                                    placeholder="Explain quote breakdown..."
+                                    className="w-full p-2.5 bg-slate-900 border border-white/10 rounded-xl outline-none text-white text-xs focus:border-indigo-500 transition-all resize-none font-semibold"
+                                    rows={2}
+                                  />
+                                  <button
+                                    disabled={updatingJobs[job._id] || !clarificationResponse.trim()}
+                                    onClick={() => handleRespondClarification(job._id)}
+                                    className="w-full bg-purple-650 hover:bg-purple-550 disabled:bg-slate-850 text-white disabled:text-slate-500 font-black py-2 rounded-xl text-xs transition-all flex justify-center items-center gap-2 border-none cursor-pointer"
+                                  >
+                                    {updatingJobs[job._id] ? <Loader2 size={12} className="animate-spin"/> : 'Send Response'}
+                                  </button>
+                                </div>
+                              </div>
+                          )}
+                          
+                          {job.status === 'quote_approved' && (
+                              <button
+                                disabled={updatingJobs[job._id]}
+                                onClick={() => updateJobStatus(job._id, 'in_progress')}
+                                className="w-full bg-purple-600 hover:bg-purple-500 text-white font-black py-4 px-4 rounded-xl shadow-lg transition-all duration-300 transform hover:-translate-y-0.5 flex items-center justify-center gap-2 border-none outline-none cursor-pointer disabled:opacity-50"
+                              >
+                                {updatingJobs[job._id] ? <Loader2 size={16} className="animate-spin" /> : <><Wrench size={16} /> Start Repair Work</>}
+                              </button>
+                          )}
+                          
+                          {job.status === 'in_progress' && (
+                              <button
+                                disabled={updatingJobs[job._id]}
+                                onClick={() => updateJobStatus(job._id, 'completed')}
+                                className="w-full bg-emerald-600 hover:bg-emerald-500 text-white font-black py-4 px-4 rounded-xl shadow-lg transition-all duration-300 transform hover:-translate-y-0.5 flex items-center justify-center gap-2 border-none outline-none cursor-pointer disabled:opacity-50"
+                              >
+                                {updatingJobs[job._id] ? <Loader2 size={16} className="animate-spin" /> : <><CheckCircle size={16} /> Complete Job</>}
+                              </button>
+                          )}
+                          
+                          {['accepted', 'quote_approved', 'on_the_way', 'arrived', 'inspection_started', 'quote_pending', 'quote_clarification', 'quote_rejected', 'in_progress'].includes(job.status) && (
+                              <div className="space-y-2 w-full">
+                                <div className="flex gap-2">
+                                  {(job.customerPhone || job.phone) && (
+                                    <a 
+                                      href={`tel:${formatPhoneLink(job.customerPhone || job.phone)}`} 
+                                      className="flex-1 bg-emerald-600/10 hover:bg-emerald-600/20 border border-emerald-500/20 text-emerald-400 font-extrabold py-3.5 rounded-xl transition-all flex items-center justify-center gap-1.5 transform hover:-translate-y-0.5 text-xs text-center"
+                                    >
+                                      <PhoneCall size={16} /> Call
+                                    </a>
+                                  )}
+                                  <button
+                                    onClick={() => setChatBookingId(job._id)}
+                                    className="relative flex-1 bg-indigo-600/10 hover:bg-indigo-600/20 border border-indigo-500/20 text-indigo-400 font-extrabold py-3.5 rounded-xl transition-all flex items-center justify-center gap-1.5 transform hover:-translate-y-0.5 text-xs cursor-pointer"
+                                    type="button"
+                                  >
+                                    <MessageSquare size={16} /> Chat
+                                    {job.unreadCount > 0 && (
+                                      <span className="absolute -top-1.5 -right-1.5 bg-rose-500 text-white rounded-full text-[10px] font-black w-5 h-5 flex items-center justify-center border-2 border-slate-950 animate-pulse shadow-md">
+                                        {job.unreadCount}
+                                      </span>
+                                    )}
+                                  </button>
+                                </div>
                                 <button
-                                  onClick={() => setChatBookingId(job._id)}
-                                  className="relative flex-1 bg-white hover:bg-indigo-50 border-2 border-slate-100 hover:border-indigo-200 text-indigo-600 font-bold py-3 p-4 rounded-2xl transition-all shadow-sm flex items-center justify-center gap-2 transform hover:-translate-y-0.5"
+                                  onClick={() => setCancelJobId(job._id)}
+                                  className="w-full bg-rose-500/5 hover:bg-rose-500/10 border border-rose-500/25 text-rose-455 font-bold py-2.5 rounded-xl transition-all flex items-center justify-center gap-1.5 text-xs cursor-pointer outline-none"
                                   type="button"
                                 >
-                                  <MessageSquare size={18} /> Chat
-                                  {job.unreadCount > 0 && (
-                                    <span className="absolute -top-2 -right-2 bg-rose-500 text-white rounded-full text-xs font-black w-6 h-6 flex items-center justify-center border-2 border-white animate-pulse shadow-md">
-                                      {job.unreadCount}
-                                    </span>
-                                  )}
+                                  <XCircle size={14} /> Cancel Job
                                 </button>
                               </div>
-                              <button
-                                onClick={() => setCancelJobId(job._id)}
-                                className="w-full bg-white hover:bg-rose-50 border border-rose-200 text-rose-600 font-bold py-2.5 rounded-xl transition-all flex items-center justify-center gap-2 text-xs cursor-pointer outline-none"
-                                type="button"
-                              >
-                                <XCircle size={14} /> Cancel Job
-                              </button>
-                            </div>
-                        )}
-                        {job.status === 'quote_pending' && (
-                           <div className="flex items-center justify-center gap-2 p-4 rounded-xl font-bold border bg-blue-50 text-blue-600 border-blue-200 shadow-sm w-full">
-                             <Clock size={18} /> Awaiting Quote Approval
-                           </div>
-                        )}
-                        {job.status === 'completed' && (
-                           <div className="space-y-3">
-                             <div className={`flex items-center justify-center gap-2 p-4 rounded-xl font-bold border ${job.paymentStatus === 'completed' ? 'bg-emerald-50 text-emerald-600 border-emerald-200 shadow-sm' : 'bg-amber-50 text-amber-600 border-amber-200 shadow-sm'}`}>
-                               {job.paymentStatus === 'completed' ? <><CheckCircle size={18} /> Paid In Full</> : <><Clock size={18} /> {job.paymentMethod === 'cash' ? 'Cash Payment Pending' : 'Awaiting Payment'}</>}
+                          )}
+
+                          {job.status === 'quote_pending' && (
+                             <div className="flex items-center justify-center gap-2 p-4 rounded-xl font-bold border border-blue-500/20 bg-blue-500/5 text-blue-400 shadow-sm w-full text-center">
+                               <Clock size={16} /> 
+                               <span className="text-xs uppercase tracking-wider">Awaiting Approval</span>
                              </div>
-                             {job.paymentStatus !== 'completed' && job.paymentMethod === 'cash' && (
+                          )}
+
+                          {job.status === 'completed' && (
+                             <div className="space-y-3 w-full">
+                               <div className={`flex items-center justify-center gap-1.5 p-4 rounded-xl font-black text-xs uppercase border tracking-wider ${
+                                 job.paymentStatus === 'completed' 
+                                   ? 'bg-emerald-500/5 border-emerald-500/25 text-emerald-400' 
+                                   : 'bg-amber-500/5 border-amber-500/25 text-amber-400'
+                               }`}>
+                                 {job.paymentStatus === 'completed' 
+                                   ? <><CheckCircle size={16} /> Paid In Full</> 
+                                   : <><Clock size={16} /> {job.paymentMethod === 'cash' ? 'Cash Pending' : 'Awaiting Online Pay'}</>
+                                 }
+                               </div>
+                               {job.paymentStatus !== 'completed' && job.paymentMethod === 'cash' && (
+                                 <button
+                                   onClick={async () => {
+                                     try {
+                                       await api.put(`/bookings/${job._id}/pay`, { paymentMethod: 'cash' });
+                                       showToast("Success", "Cash payment confirmed!", "success");
+                                       fetchJobs();
+                                     } catch (err) {
+                                       console.error("Error confirming cash payment:", err);
+                                       showToast("Error", "Could not confirm cash payment. Please try again.", "error");
+                                     }
+                                   }}
+                                   className="w-full bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-400 hover:to-teal-500 text-white font-black py-3.5 px-4 rounded-xl transition-all shadow-md flex items-center justify-center gap-2 cursor-pointer border-none"
+                                 >
+                                   <CheckCircle size={16} /> Confirm Cash Received
+                                 </button>
+                               )}
                                <button
-                                 onClick={async () => {
-                                   try {
-                                     await api.put(`/bookings/${job._id}/pay`, { paymentMethod: 'cash' });
-                                     showToast("Success", "Cash payment confirmed!", "success");
-                                     fetchJobs();
-                                   } catch (err) {
-                                     console.error("Error confirming cash payment:", err);
-                                     showToast("Error", "Could not confirm cash payment. Please try again.", "error");
-                                   }
-                                 }}
-                                 className="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-3 px-4 rounded-2xl transition-all shadow-md hover:shadow-lg flex items-center justify-center gap-2 cursor-pointer"
+                                 onClick={() => setChatBookingId(job._id)}
+                                 className="w-full bg-white/5 hover:bg-white/10 border border-white/5 text-slate-355 font-extrabold py-3.5 px-4 rounded-xl transition-all flex items-center justify-center gap-2 text-xs cursor-pointer"
                                >
-                                 <CheckCircle size={18} /> Confirm Cash Received
+                                 <MessageSquare size={16} /> Chat History
                                </button>
-                             )}
-                             <button
-                               onClick={() => setChatBookingId(job._id)}
-                               className="w-full bg-white hover:bg-indigo-50 border-2 border-slate-100 hover:border-indigo-200 text-indigo-600 font-bold py-3 px-4 rounded-2xl transition-all shadow-sm flex items-center justify-center gap-2"
-                             >
-                               <MessageSquare size={18} /> View Chat History
-                             </button>
-                           </div>
-                        )}
-                        {['cancelled', 'rejected'].includes(job.status) && (
-                           <div className="space-y-3">
-                             <div className="flex items-center justify-center gap-2 p-4 rounded-xl font-bold border bg-rose-50 text-rose-700 border-rose-200 shadow-sm">
-                               <XCircle size={18} /> {job.status === 'cancelled' ? 'Cancelled' : 'Rejected'}
                              </div>
-                             <button
-                               onClick={() => setViewReasonJob(job)}
-                               className="w-full bg-white hover:bg-rose-50 border border-rose-200 text-rose-600 font-bold py-3 px-4 rounded-2xl transition-all shadow-sm flex items-center justify-center gap-2 text-xs"
-                             >
-                               <FileText size={18} /> View Reason
-                             </button>
-                           </div>
-                        )}
-                        {isCompleted && (
-                          <button
-                            onClick={() => toggleCompletedExpand(job._id)}
-                            className="w-full mt-3 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold py-2.5 rounded-xl text-xs transition-colors"
-                          >
-                            Hide Details
-                          </button>
-                        )}
-                        {job.status === 'completed' && reviews.some(r => r.bookingId === job._id) && (
-                          <div className="mt-4 p-4 bg-amber-50 border border-amber-100 rounded-xl">
-                            <div className="flex items-center gap-1 mb-2">
-                              {[1, 2, 3, 4, 5].map(star => (
-                                <Star 
-                                  key={star} 
-                                  size={14} 
-                                  className={star <= reviews.find(r => r.bookingId === job._id).rating ? 'text-amber-500 fill-amber-500' : 'text-amber-200 fill-amber-200'} 
-                                />
-                              ))}
+                          )}
+
+                          {['cancelled', 'rejected'].includes(job.status) && (
+                             <div className="space-y-3 w-full">
+                               <div className="flex items-center justify-center gap-1.5 p-4 rounded-xl font-black text-xs uppercase border tracking-wider bg-rose-500/5 text-rose-455 border-rose-500/20">
+                                 <XCircle size={16} /> 
+                                 <span>{job.status === 'cancelled' ? 'Cancelled' : 'Rejected'}</span>
+                               </div>
+                               <button
+                                 onClick={() => setViewReasonJob(job)}
+                                 className="w-full bg-white/5 hover:bg-white/10 border border-white/5 text-slate-355 font-bold py-3.5 px-4 rounded-xl transition-all flex items-center justify-center gap-1.5 text-xs cursor-pointer"
+                               >
+                                 <FileText size={16} /> View Reason
+                               </button>
+                             </div>
+                          )}
+
+                          {isCompleted && (
+                            <button
+                              onClick={() => toggleCompletedExpand(job._id)}
+                              className="w-full mt-3 bg-white/5 hover:bg-white/10 border border-white/5 text-slate-400 font-bold py-2.5 rounded-xl text-xs transition-colors cursor-pointer"
+                            >
+                              Hide Details
+                            </button>
+                          )}
+
+                          {job.status === 'completed' && reviews.some(r => r.bookingId === job._id) && (
+                            <div className="mt-4 p-4 bg-amber-500/5 border border-amber-500/10 rounded-2xl">
+                              <div className="flex items-center gap-1 mb-2">
+                                {[1, 2, 3, 4, 5].map(star => (
+                                  <Star 
+                                    key={star} 
+                                    size={12} 
+                                    className={star <= reviews.find(r => r.bookingId === job._id).rating ? 'text-amber-400 fill-amber-400' : 'text-slate-700 fill-slate-800'} 
+                                  />
+                                ))}
+                              </div>
+                              <p className="text-xs text-slate-300 italic leading-relaxed">"{reviews.find(r => r.bookingId === job._id).comment || 'No comment provided.'}"</p>
                             </div>
-                            <p className="text-sm text-slate-700 italic">"{reviews.find(r => r.bookingId === job._id).comment || 'No comment provided.'}"</p>
-                          </div>
-                        )}
+                          )}
+                        </div>
                       </div>
                     </div>
-                  </div>
                   );
                 })}
               </div>
             )}
-          </>
+          </div>
         )}
+
         {/* Payout & Withdrawal History Section */}
         {!loading && profile?.isProfileComplete && (
-          <div className="bg-white p-6 sm:p-8 rounded-[2rem] shadow-[0_4px_20px_rgb(0,0,0,0.03)] border border-slate-100/80 mt-10">
+          <div className="bg-gradient-to-br from-slate-900/60 to-[#111827]/60 border border-white/5 p-6 sm:p-8 rounded-[2rem] shadow-2xl mt-10">
             <div className="flex flex-wrap items-center justify-between gap-4 mb-6">
               <div className="flex items-center gap-3">
-                <div className="p-3 bg-indigo-50 text-indigo-600 rounded-xl"><FileText size={20} /></div>
+                <div className="p-3 bg-indigo-500/10 text-indigo-400 border border-indigo-500/20 rounded-xl"><FileText size={20} /></div>
                 <div>
-                  <h3 className="text-xl font-bold text-slate-800">Payout & Withdrawal History</h3>
-                  <p className="text-xs text-slate-500 font-medium">Track your bank transfers and payout request status</p>
+                  <h3 className="text-lg sm:text-xl font-black text-white tracking-tight">Payout & Withdrawal History</h3>
+                  <p className="text-xs text-slate-400 font-medium">Track your bank transfers and payout request status</p>
                 </div>
               </div>
             </div>
 
             {!profile.withdrawals || profile.withdrawals.length === 0 ? (
-              <div className="text-center py-12 bg-slate-50 rounded-2xl border border-dashed border-slate-200">
-                <Coins size={36} className="text-slate-400 mx-auto mb-2 opacity-60" />
-                <p className="text-sm font-bold text-slate-500">No withdrawal requests found.</p>
-                <p className="text-xs text-slate-400 mt-1">Submit your first request once you have at least ₹500 in earnings.</p>
+              <div className="text-center py-12 bg-slate-950/40 border border-dashed border-white/5 rounded-2xl">
+                <Coins size={36} className="text-slate-600 mx-auto mb-2 opacity-60" />
+                <p className="text-xs sm:text-sm font-bold text-slate-500">No withdrawal requests found.</p>
+                <p className="text-[10px] text-slate-600 mt-1 font-semibold">Submit your first request once you have at least ₹500 in earnings.</p>
               </div>
             ) : (
-              <div className="overflow-x-auto rounded-2xl border border-slate-100">
+              <div className="overflow-x-auto rounded-2xl border border-white/5 shadow-inner">
                 <table className="w-full text-left border-collapse">
                   <thead>
-                    <tr className="bg-slate-50 text-slate-400 text-[10px] font-black uppercase tracking-wider border-b border-slate-100">
+                    <tr className="bg-slate-950/60 text-slate-400 text-[9px] font-black uppercase tracking-widest border-b border-white/5">
                       <th className="px-6 py-4">Request Date</th>
                       <th className="px-6 py-4">Bank Details</th>
                       <th className="px-6 py-4">Amount</th>
@@ -1508,9 +1580,9 @@ const TechnicianDashboard = () => {
                       <th className="px-6 py-4">Transaction ID / Notes</th>
                     </tr>
                   </thead>
-                  <tbody className="divide-y divide-slate-50 text-xs sm:text-sm font-semibold text-slate-700">
+                  <tbody className="divide-y divide-white/5 text-xs sm:text-sm font-semibold text-slate-300">
                     {profile.withdrawals.map((req) => (
-                      <tr key={req._id} className="hover:bg-slate-50/50 transition-colors">
+                      <tr key={req._id} className="hover:bg-white/[0.02] transition-colors">
                         <td className="px-6 py-4 whitespace-nowrap text-slate-500">
                           {new Date(req.createdAt).toLocaleDateString(undefined, {
                             year: 'numeric',
@@ -1519,41 +1591,41 @@ const TechnicianDashboard = () => {
                           })}
                         </td>
                         <td className="px-6 py-4">
-                          <p className="font-bold text-slate-800">{req.bankDetails?.accountName}</p>
-                          <p className="text-[11px] text-slate-400 font-medium">
+                          <p className="font-extrabold text-white">{req.bankDetails?.accountName}</p>
+                          <p className="text-[10px] text-slate-500 font-semibold mt-0.5">
                             {req.bankDetails?.accountNumber.slice(0, 4)}...{req.bankDetails?.accountNumber.slice(-4)} ({req.bankDetails?.ifscCode})
                           </p>
                           {req.bankDetails?.upiId && (
-                            <p className="text-[11px] text-indigo-500 font-bold">UPI: {req.bankDetails?.upiId}</p>
+                            <p className="text-[10px] text-indigo-400 font-bold mt-0.5">UPI: {req.bankDetails?.upiId}</p>
                           )}
                         </td>
-                        <td className="px-6 py-4 whitespace-nowrap text-slate-900 font-extrabold text-base">
+                        <td className="px-6 py-4 whitespace-nowrap text-white font-black text-base">
                           ₹{req.amount}
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap">
-                          <span className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[10px] font-black uppercase tracking-wider border ${
+                          <span className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[9px] font-black uppercase tracking-wider border ${
                             req.status === 'paid' 
-                              ? 'bg-emerald-100 text-emerald-700 border-emerald-200' 
+                              ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20' 
                               : req.status === 'approved'
-                              ? 'bg-blue-100 text-blue-700 border-blue-200 animate-pulse'
+                              ? 'bg-blue-500/10 text-blue-400 border-blue-500/20 animate-pulse'
                               : req.status === 'rejected'
-                              ? 'bg-rose-100 text-rose-700 border-rose-200'
-                              : 'bg-amber-100 text-amber-700 border-amber-200 animate-pulse'
+                              ? 'bg-rose-500/10 text-rose-455 border-rose-500/20'
+                              : 'bg-amber-500/10 text-amber-400 border-amber-500/20 animate-pulse'
                           }`}>
                             <span className={`w-1.5 h-1.5 rounded-full ${
                               req.status === 'paid' ? 'bg-emerald-500' : req.status === 'approved' ? 'bg-blue-500' : req.status === 'rejected' ? 'bg-rose-500' : 'bg-amber-500'
                             }`} />
-                            {req.status}
+                            <span>{req.status}</span>
                           </span>
                         </td>
                         <td className="px-6 py-4">
                           {req.status === 'paid' ? (
                             <div>
-                              <p className="text-[11px] font-mono text-slate-500 bg-slate-100 px-2 py-0.5 rounded border border-slate-200 w-max">{req.transactionId || 'TXN_N/A'}</p>
-                              {req.adminNotes && <p className="text-[10px] text-slate-400 font-medium mt-1">{req.adminNotes}</p>}
+                              <p className="text-[10px] font-mono text-slate-400 bg-slate-950 border border-white/5 px-2 py-0.5 rounded w-max">{req.transactionId || 'TXN_N/A'}</p>
+                              {req.adminNotes && <p className="text-[9px] text-slate-500 font-medium mt-1">{req.adminNotes}</p>}
                             </div>
                           ) : (
-                            <p className="text-[11px] text-slate-400 font-medium italic">{req.adminNotes || 'Awaiting admin processing...'}</p>
+                            <p className="text-[10px] text-slate-500 font-semibold italic">{req.adminNotes || 'Awaiting admin processing...'}</p>
                           )}
                         </td>
                       </tr>
@@ -1565,14 +1637,15 @@ const TechnicianDashboard = () => {
           </div>
         )}
 
+        {/* Loading Skeletons */}
         {loading && (
           <div className="space-y-6">
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-              <div className="h-44 bg-white border border-slate-100 rounded-3xl animate-pulse"></div>
-              <div className="h-44 bg-white border border-slate-100 rounded-3xl animate-pulse"></div>
-              <div className="h-44 bg-white border border-slate-100 rounded-3xl animate-pulse"></div>
+              <div className="h-44 bg-slate-900 border border-white/5 rounded-3xl animate-pulse"></div>
+              <div className="h-44 bg-slate-900 border border-white/5 rounded-3xl animate-pulse"></div>
+              <div className="h-44 bg-slate-900 border border-white/5 rounded-3xl animate-pulse"></div>
             </div>
-            <div className="bg-white border border-slate-100 rounded-3xl p-6 h-96 animate-pulse"></div>
+            <div className="bg-slate-900 border border-white/5 rounded-3xl p-6 h-96 animate-pulse"></div>
           </div>
         )}
 
@@ -1612,8 +1685,8 @@ const TechnicianDashboard = () => {
 
       {viewReasonJob && (
         <div className="fixed inset-0 z-[999] bg-[#0B0F19]/80 backdrop-blur-md flex items-center justify-center p-4">
-          <div className="bg-slate-900 border border-white/10 rounded-[2.5rem] p-6 sm:p-8 w-full max-w-md shadow-2xl relative animate-in fade-in zoom-in-95 duration-200 text-white">
-            <h3 className="text-xl font-black text-white mb-2">Cancellation Details</h3>
+          <div className="bg-[#111827] border border-white/10 rounded-[2.5rem] p-6 sm:p-8 w-full max-w-md shadow-2xl relative animate-in fade-in zoom-in-95 duration-200 text-white">
+            <h3 className="text-xl font-bold text-white mb-2">Cancellation Details</h3>
             <div className="space-y-4 my-6">
               <div className="p-4 bg-rose-500/10 border border-rose-500/20 rounded-2xl text-rose-300 text-xs sm:text-sm font-semibold">
                 <span className="font-extrabold text-[10px] bg-rose-500/20 text-rose-300 px-2.5 py-1 rounded uppercase tracking-wider block mb-2 w-max border border-rose-500/30">Reason Given</span>
@@ -1641,9 +1714,9 @@ const TechnicianDashboard = () => {
           <div className="bg-[#111827] border border-red-500/30 rounded-3xl w-full max-w-md overflow-hidden shadow-[0_0_50px_rgba(239,68,68,0.15)] relative animate-in fade-in zoom-in duration-300 text-white p-6 sm:p-8 space-y-6">
             <button 
               onClick={() => setCancelJobId(null)} 
-              className="absolute top-4 right-4 text-slate-400 hover:text-white bg-white/5 hover:bg-white/10 rounded-full p-2 transition-all cursor-pointer"
+              className="absolute top-4 right-4 text-slate-400 hover:text-white bg-white/5 hover:bg-white/10 rounded-full p-2 transition-all cursor-pointer border-none outline-none"
             >
-              <XCircle size={16} />
+              <X size={16} />
             </button>
             <div className="text-center space-y-2">
               <div className="w-12 h-12 bg-red-500/20 text-red-500 rounded-full flex items-center justify-center mx-auto shadow-md">
@@ -1669,14 +1742,14 @@ const TechnicianDashboard = () => {
               <button 
                 onClick={() => setCancelJobId(null)} 
                 disabled={submittingCancellation}
-                className="flex-1 border border-white/10 hover:bg-white/5 text-slate-300 font-bold py-3 rounded-xl transition-all text-xs sm:text-sm uppercase tracking-wider outline-none disabled:opacity-50 cursor-pointer"
+                className="flex-1 border border-white/10 hover:bg-white/5 text-slate-350 font-bold py-3 rounded-xl transition-all text-xs sm:text-sm uppercase tracking-wider outline-none disabled:opacity-50 cursor-pointer"
               >
                 Back
               </button>
               <button 
                 onClick={handleCancelJob} 
                 disabled={submittingCancellation}
-                className="flex-1 bg-red-600 hover:bg-red-500 text-white font-black py-3 rounded-xl transition-all flex justify-center items-center gap-2 text-xs sm:text-sm uppercase tracking-widest shadow-lg shadow-red-500/20 active:scale-[0.98] outline-none cursor-pointer"
+                className="flex-1 bg-red-600 hover:bg-red-500 text-white font-black py-3 rounded-xl transition-all flex justify-center items-center gap-2 text-xs sm:text-sm uppercase tracking-widest shadow-lg shadow-red-500/20 active:scale-[0.98] outline-none cursor-pointer border-none"
               >
                 {submittingCancellation ? (
                   <>
@@ -1709,7 +1782,7 @@ const TechnicianDashboard = () => {
               onClick={() => setShowWithdrawModal(false)} 
               className="absolute top-4 right-4 text-slate-400 hover:text-white bg-white/5 hover:bg-white/10 rounded-full p-2 transition-all cursor-pointer border-none outline-none"
             >
-              <XCircle size={18} />
+              <X size={16} />
             </button>
             
             <div className="text-center space-y-2">
@@ -1789,14 +1862,14 @@ const TechnicianDashboard = () => {
                   type="button"
                   onClick={() => setShowWithdrawModal(false)} 
                   disabled={submittingWithdraw}
-                  className="flex-1 border border-white/10 hover:bg-white/5 text-slate-300 font-bold py-3.5 rounded-xl transition-all text-xs sm:text-sm uppercase tracking-wider outline-none disabled:opacity-50 cursor-pointer"
+                  className="flex-1 border border-white/10 hover:bg-white/5 text-slate-350 font-bold py-3.5 rounded-xl transition-all text-xs sm:text-sm uppercase tracking-wider outline-none disabled:opacity-50 cursor-pointer"
                 >
                   Cancel
                 </button>
                 <button 
                   type="submit" 
                   disabled={submittingWithdraw}
-                  className="flex-1 bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-400 hover:to-teal-500 text-white font-black py-3.5 rounded-xl transition-all flex justify-center items-center gap-2 text-xs sm:text-sm uppercase tracking-widest shadow-lg shadow-emerald-500/20 active:scale-[0.98] outline-none cursor-pointer border-none"
+                  className="flex-1 bg-gradient-to-r from-emerald-500 to-teal-650 hover:from-emerald-400 hover:to-teal-500 text-white font-black py-3.5 rounded-xl transition-all flex justify-center items-center gap-2 text-xs sm:text-sm uppercase tracking-widest shadow-lg shadow-emerald-500/20 active:scale-[0.98] outline-none cursor-pointer border-none"
                 >
                   {submittingWithdraw ? (
                     <>
