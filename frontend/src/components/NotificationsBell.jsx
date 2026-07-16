@@ -129,6 +129,37 @@ const NotificationsBell = () => {
     }
   };
 
+  const formatNotificationMessage = (message) => {
+    if (!message) return '';
+    
+    let processedMessage = message;
+    const currentOrigin = window.location.origin;
+    if (!currentOrigin.includes('localhost') && !currentOrigin.includes('127.0.0.1')) {
+      processedMessage = processedMessage.replace(/https?:\/\/localhost:\d+/g, currentOrigin);
+    }
+    
+    const urlRegex = /(https?:\/\/[^\s]+)/g;
+    const parts = processedMessage.split(urlRegex);
+    
+    return parts.map((part, index) => {
+      if (part.match(urlRegex)) {
+        return (
+          <a
+            key={index}
+            href={part}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="text-indigo-600 hover:text-indigo-800 underline break-all font-bold"
+            onClick={(e) => e.stopPropagation()}
+          >
+            {part}
+          </a>
+        );
+      }
+      return part;
+    });
+  };
+
   const filteredNotifications = notifications.filter(n => {
     if (activeTab === 'all') return true;
     return n.type === activeTab;
@@ -240,7 +271,7 @@ const NotificationsBell = () => {
                             {notif.title}
                           </h4>
                           <p className="text-xs sm:text-sm text-slate-600 mt-1 leading-relaxed break-words font-medium">
-                            {notif.message}
+                            {formatNotificationMessage(notif.message)}
                           </p>
                           <span className="text-[9px] font-extrabold text-slate-400 uppercase tracking-widest mt-2 block">
                             {new Date(notif.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
