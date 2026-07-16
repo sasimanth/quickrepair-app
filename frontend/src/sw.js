@@ -3,6 +3,16 @@ import { precacheAndRoute } from 'workbox-precaching';
 // Precache list injected by Workbox build step
 precacheAndRoute(self.__WB_MANIFEST || []);
 
+// Force immediate activation of the new service worker version
+self.addEventListener('install', () => {
+  self.skipWaiting();
+});
+
+// Immediately claim client tabs to allow updates on page reload
+self.addEventListener('activate', (event) => {
+  event.waitUntil(self.clients.claim());
+});
+
 self.addEventListener('push', (event) => {
   try {
     let payload = {};
