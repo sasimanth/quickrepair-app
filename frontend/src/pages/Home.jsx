@@ -615,13 +615,13 @@ const Home = () => {
                   <>
                     <Link 
                       to="/login" 
-                      className="text-slate-400 hover:text-white font-bold transition-colors px-3 py-2 text-xs sm:text-sm"
+                      className="text-slate-400 hover:text-white font-bold transition-colors px-2 py-1.5 text-[11px] sm:px-3 sm:py-2 sm:text-xs"
                     >
                       Sign In
                     </Link>
                     <Link
                       to="/signup"
-                      className="bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white px-4 sm:px-5 py-2.5 rounded-xl text-xs sm:text-sm font-black shadow-lg shadow-blue-600/20 hover:shadow-blue-600/40 transition-all duration-300 transform hover:-translate-y-0.5"
+                      className="bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white px-3 py-2 rounded-xl text-[11px] sm:px-4 sm:py-2.5 sm:text-xs font-black shadow-lg shadow-blue-600/20 hover:shadow-blue-600/40 transition-all duration-300 transform hover:-translate-y-0.5"
                     >
                       Join Fixvo
                     </Link>
@@ -637,7 +637,7 @@ const Home = () => {
       <div className="max-w-5xl mx-auto px-4 pb-24 relative z-10">
         
         {/* 2. HERO & SMART SEARCH BAR SECTION */}
-        <section className="pt-12 md:pt-20 pb-16 text-center max-w-3xl mx-auto relative z-10">
+        <section className="pt-24 sm:pt-28 md:pt-32 pb-16 text-center max-w-3xl mx-auto relative z-10">
           <motion.div 
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
@@ -872,7 +872,7 @@ const Home = () => {
                     className="absolute inset-0 w-full h-full object-cover group-hover:scale-110 transition-transform duration-700 opacity-60"
                   />
                   <div className={`absolute inset-0 bg-gradient-to-br ${visual.gradient} opacity-80 group-hover:opacity-85 transition-opacity`}></div>
-                  <div className="absolute inset-0 p-5 flex flex-col justify-between z-10">
+                  <div className="absolute inset-0 p-4 sm:p-5 flex flex-col justify-between z-10">
                     <div className="w-10 h-10 rounded-xl bg-white/10 backdrop-blur-md flex items-center justify-center text-white border border-white/10 shadow-sm">
                       <CatIcon size={20} />
                     </div>
