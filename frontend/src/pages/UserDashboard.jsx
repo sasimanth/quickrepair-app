@@ -835,7 +835,7 @@ const UserDashboard = () => {
       },
       refunded: {
         label: 'Payment Refunded',
-        bg: 'bg-slate-800 text-slate-400 border-slate-200/80',
+        bg: 'bg-slate-800 text-slate-400 border-white/5',
         badge: 'bg-slate-700 text-slate-400 border-white/10'
       }
     };
@@ -998,10 +998,10 @@ const UserDashboard = () => {
   ];
 
   return (
-    <div className="min-h-screen bg-slate-50 text-slate-800 font-sans mt-4 sm:mt-10 pb-16">
+    <div className="min-h-screen bg-slate-950 text-white font-sans mt-4 sm:mt-10 pb-16">
       {showForm ? (
         <div className="max-w-4xl mx-auto p-4 sm:p-8 animate-in fade-in duration-300">
-          <div className="bg-white border border-slate-200/80 rounded-3xl p-6 sm:p-10 shadow-xl relative overflow-hidden">
+          <div className="bg-slate-900/60 backdrop-blur-2xl border border-slate-800/80 rounded-3xl p-6 sm:p-10 shadow-2xl relative overflow-hidden">
             <div className={`absolute top-0 left-0 h-1.5 bg-gradient-to-r from-blue-500 via-indigo-500 to-purple-500 transition-all duration-750 ${step === 1 ? 'w-1/2' : 'w-full'}`}></div>
             
             <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-8">
@@ -1010,14 +1010,14 @@ const UserDashboard = () => {
                   <Wrench size={22} />
                 </div>
                 <div>
-                  <h2 className="text-xl sm:text-2xl font-black tracking-tight text-slate-900">
+                  <h2 className="text-xl sm:text-2xl font-black tracking-tight text-white">
                     {step === 1 ? 'Schedule a Repair' : 'Select a Technician'}
                   </h2>
                   <p className="text-xs text-slate-400 mt-1 font-medium">Verify details and match with nearby experts</p>
                 </div>
               </div>
               
-              <div className="flex items-center gap-2 text-xs font-bold bg-slate-950/60 border border-slate-200/80 rounded-full px-4 py-1.5 self-start sm:self-auto">
+              <div className="flex items-center gap-2 text-xs font-bold bg-slate-950/60 border border-white/5 rounded-full px-4 py-1.5 self-start sm:self-auto">
                 <span className={`px-2 py-0.5 rounded-full ${step >= 1 ? 'bg-indigo-600/20 text-indigo-400 border border-indigo-500/30' : 'text-slate-500'}`}>1. Details</span>
                 <ChevronRight size={12} className="text-slate-650"/>
                 <span className={`px-2 py-0.5 rounded-full ${step >= 2 ? 'bg-indigo-600/20 text-indigo-400 border border-indigo-500/30' : 'text-slate-500'}`}>2. Match Tech</span>
@@ -1047,7 +1047,7 @@ const UserDashboard = () => {
                       <SearchableServiceSelector
                         value={formData.serviceId}
                         onChange={(serviceId) => setFormData({ ...formData, serviceId })}
-                        theme="light"
+                        theme="dark"
                         placeholder="Search and select a service..."
                       />
                     </div>
@@ -1058,14 +1058,14 @@ const UserDashboard = () => {
                       <input
                         type="date"
                         required
-                        className="w-full px-5 py-3 bg-white border border-slate-200 focus:border-indigo-500 focus:ring-4 focus:ring-indigo-505/20 transition-all font-semibold text-slate-800 rounded-2xl outline-none text-sm"
+                        className="w-full px-5 py-3 bg-slate-900 border border-white/5 focus:border-indigo-500 focus:ring-4 focus:ring-indigo-500/20 transition-all font-semibold text-white rounded-2xl outline-none text-sm"
                         value={formData.date}
                         onChange={(e) => setFormData({ ...formData, date: e.target.value })}
                       />
                     </div>
                   </div>
                   
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6 bg-slate-900/40 p-6 rounded-2xl border border-slate-200/80">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6 bg-slate-900/40 p-6 rounded-2xl border border-white/5">
                     {categoryId === 'repair' && (
                       <div className="space-y-2">
                         <label className="text-xs font-bold text-slate-400 uppercase tracking-widest ml-1 flex items-center gap-2">
@@ -1075,7 +1075,7 @@ const UserDashboard = () => {
                           type="text" 
                           placeholder="e.g. iPhone 13, HP Pavilion" 
                           required 
-                          className="w-full px-5 py-3 bg-slate-50 border border-slate-200 focus:border-indigo-500 focus:ring-4 focus:ring-indigo-505/20 transition-all font-semibold text-slate-800 rounded-2xl outline-none text-sm" 
+                          className="w-full px-5 py-3 bg-slate-955 border border-white/10 focus:border-indigo-500 focus:ring-4 focus:ring-indigo-500/20 transition-all font-semibold text-white rounded-2xl outline-none text-sm" 
                           value={formData.deviceType || ''} 
                           onChange={(e) => setFormData({ ...formData, deviceType: e.target.value })} 
                         />
@@ -1090,7 +1090,7 @@ const UserDashboard = () => {
                           </label>
                           <select 
                             required 
-                            className="w-full px-5 py-3 bg-slate-50 border border-slate-200 focus:border-indigo-500 focus:ring-4 focus:ring-indigo-505/20 transition-all font-semibold text-slate-800 rounded-2xl outline-none text-sm" 
+                            className="w-full px-5 py-3 bg-slate-955 border border-white/10 focus:border-indigo-500 focus:ring-4 focus:ring-indigo-500/20 transition-all font-semibold text-white rounded-2xl outline-none text-sm" 
                             value={formData.houseType || ''} 
                             onChange={(e) => setFormData({ ...formData, houseType: e.target.value })}
                           >
@@ -1257,7 +1257,7 @@ const UserDashboard = () => {
                       <SearchableAreaSelector
                         value={formData.location || ''}
                         onChange={(areaName) => setFormData({ ...formData, location: areaName })}
-                        theme="light"
+                        theme="dark"
                         placeholder="Search your area..."
                       />
                     </div>
@@ -1307,7 +1307,7 @@ const UserDashboard = () => {
                       <label className="text-xs font-bold text-slate-400 uppercase tracking-widest ml-1 flex items-center gap-2">
                         <HelpCircle size={14} className="text-slate-500"/> Describe the problem
                       </label>
-                      <div className="flex items-start gap-2.5 p-4 bg-slate-900/60 border border-slate-200/80 rounded-2xl transition-all hover:bg-slate-900">
+                      <div className="flex items-start gap-2.5 p-4 bg-slate-900/60 border border-white/5 rounded-2xl transition-all hover:bg-slate-900">
                         <input 
                           type="checkbox" 
                           id="unknownProblem" 
@@ -1345,7 +1345,7 @@ const UserDashboard = () => {
                              <input type="radio" name="serviceOption" checked={formData.serviceOption === 'inspection'} onChange={() => setFormData({...formData, serviceOption: 'inspection'})} className="mt-1 w-4.5 h-4.5 text-indigo-650 focus:ring-indigo-500 cursor-pointer" />
                              <div className="flex-grow">
                                <div className="flex items-center gap-2 flex-wrap">
-                                 <span className="font-extrabold text-slate-800 text-sm flex items-center gap-1.5"><Eye size={14} className="text-indigo-400" /> Inspection Visit</span>
+                                 <span className="font-extrabold text-slate-200 text-sm flex items-center gap-1.5"><Eye size={14} className="text-indigo-400" /> Inspection Visit</span>
                                  {formData.unknownProblem && (
                                    <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-[9px] font-black bg-indigo-600 text-white animate-pulse">
                                      ✨ Recommended
@@ -1364,7 +1364,7 @@ const UserDashboard = () => {
                              <input type="radio" name="serviceOption" checked={formData.serviceOption === 'direct'} onChange={() => setFormData({...formData, serviceOption: 'direct'})} className="mt-1 w-4.5 h-4.5 text-indigo-650 focus:ring-indigo-500 cursor-pointer" />
                              <div className="flex-grow">
                                <div className="flex items-center gap-2 flex-wrap">
-                                 <span className="font-extrabold text-slate-800 text-sm flex items-center gap-1.5"><Zap size={14} className="text-amber-400" /> Direct Repair Visit</span>
+                                 <span className="font-extrabold text-slate-200 text-sm flex items-center gap-1.5"><Zap size={14} className="text-amber-400" /> Direct Repair Visit</span>
                                  {!formData.unknownProblem && (
                                    <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-[9px] font-black bg-emerald-600 text-white">
                                      ⚡ Faster
@@ -1392,7 +1392,7 @@ const UserDashboard = () => {
                     <button 
                       type="submit" 
                       disabled={isBooking}
-                      className="flex-1 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white font-black py-3 rounded-xl shadow-lg transition-all flex items-center justify-center gap-2 cursor-pointer uppercase tracking-wider text-xs border border-slate-200/80"
+                      className="flex-1 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white font-black py-3 rounded-xl shadow-lg transition-all flex items-center justify-center gap-2 cursor-pointer uppercase tracking-wider text-xs border border-white/5"
                     >
                       {isBooking ? (
                         <>
@@ -1434,7 +1434,7 @@ const UserDashboard = () => {
                       <button
                         onClick={handleLightningMatch}
                         disabled={isBooking}
-                        className="w-full relative overflow-hidden group bg-gradient-to-r from-blue-600 via-indigo-600 to-purple-600 text-white rounded-2xl p-6 shadow-xl hover:shadow-2xl transition-all duration-300 text-left border border-slate-200/80 active:scale-[0.99] cursor-pointer outline-none"
+                        className="w-full relative overflow-hidden group bg-gradient-to-r from-blue-600 via-indigo-600 to-purple-600 text-white rounded-2xl p-6 shadow-xl hover:shadow-2xl transition-all duration-300 text-left border border-white/5 active:scale-[0.99] cursor-pointer outline-none"
                       >
                         <div className="mb-4 p-3 bg-emerald-500/10 border border-emerald-500/20 rounded-xl flex gap-3 shadow-inner">
                           <ShieldCheck size={22} className="text-emerald-400 flex-shrink-0" />
@@ -1467,13 +1467,13 @@ const UserDashboard = () => {
                         placeholder="Search technician by name, skill or area..."
                         value={techSearchQuery}
                         onChange={(e) => setTechSearchQuery(e.target.value)}
-                        className="w-full pl-10 pr-4 py-3 bg-slate-905 border border-slate-200/80 rounded-2xl focus:border-indigo-500 transition-all font-medium text-slate-100 shadow-sm outline-none text-xs"
+                        className="w-full pl-10 pr-4 py-3 bg-slate-905 border border-white/5 rounded-2xl focus:border-indigo-500 transition-all font-medium text-slate-100 shadow-sm outline-none text-xs"
                       />
                     </div>
 
                     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
                       {filteredTechnicians.length === 0 ? (
-                        <div className="col-span-full py-16 text-center bg-slate-900/40 border border-slate-200/80 rounded-3xl p-8">
+                        <div className="col-span-full py-16 text-center bg-slate-900/40 border border-white/5 rounded-3xl p-8">
                           <h3 className="text-lg font-extrabold text-white mb-2">No Technicians Found</h3>
                           <p className="text-slate-500 text-xs max-w-sm mx-auto leading-relaxed">
                             We couldn't find any professionals matching your search query.
@@ -1487,7 +1487,7 @@ const UserDashboard = () => {
                              className={`cursor-pointer rounded-2xl p-5 border-2 transition-all duration-300 relative overflow-hidden flex flex-col justify-between ${
                                selectedTech?.id === tech.id 
                                  ? 'border-indigo-500 bg-indigo-950/20 shadow-lg scale-[1.01]' 
-                                 : 'border-slate-200/80 hover:border-slate-800 bg-slate-900/40'
+                                 : 'border-white/5 hover:border-slate-800 bg-slate-900/40'
                              }`}
                            >
                              <div>
@@ -1504,7 +1504,7 @@ const UserDashboard = () => {
                                  </div>
                                </div>
                                
-                               <div className="flex items-center gap-3 mb-4 bg-slate-955 p-2.5 rounded-xl border border-slate-200/80">
+                               <div className="flex items-center gap-3 mb-4 bg-slate-955 p-2.5 rounded-xl border border-white/5">
                                  <div className="flex items-center text-amber-400 text-xs font-black">
                                    <Star size={12} className="fill-current mr-1"/>
                                    {tech.rating}
@@ -1514,7 +1514,7 @@ const UserDashboard = () => {
                                </div>
                              </div>
                              
-                             <div className="space-y-2 text-[10px] pt-3.5 border-t border-slate-200/80">
+                             <div className="space-y-2 text-[10px] pt-3.5 border-t border-white/5">
                                <div className="flex justify-between items-center">
                                  <span className="font-extrabold text-slate-500">Experience</span>
                                  <span className="font-black text-slate-300">{tech.experience || '3+ Years'}</span>
@@ -1529,14 +1529,14 @@ const UserDashboard = () => {
                       )}
                     </div>
 
-                    <div className="mt-4 p-4 bg-slate-900/60 border border-slate-200/80 rounded-2xl">
+                    <div className="mt-4 p-4 bg-slate-900/60 border border-white/5 rounded-2xl">
                       <div className="flex flex-col sm:flex-row gap-2">
                         <input 
                           type="text" 
                           placeholder="Promo Code (e.g. FIXVO10)" 
                           value={promoCode}
                           onChange={(e) => setPromoCode(e.target.value.toUpperCase())}
-                          className="flex-1 px-4 py-2 bg-slate-50 border border-slate-200 rounded-xl focus:border-indigo-500 outline-none uppercase font-semibold text-slate-800 text-xs"
+                          className="flex-1 px-4 py-2 bg-slate-950 border border-white/10 rounded-xl focus:border-indigo-500 outline-none uppercase font-semibold text-slate-100 text-xs"
                         />
                         <button 
                           onClick={(e) => {
@@ -1573,7 +1573,7 @@ const UserDashboard = () => {
                       <button 
                         onClick={handleFinalSubmit}
                         disabled={!selectedTech || isBooking}
-                        className={`flex-1 py-3 px-6 font-bold rounded-xl transition-all flex items-center justify-center gap-2 text-xs cursor-pointer border border-slate-200/80 ${selectedTech && !isBooking ? 'bg-indigo-600 hover:bg-indigo-500 text-white shadow-lg shadow-indigo-650/20' : 'bg-slate-905 text-slate-650 cursor-not-allowed shadow-none'}`}
+                        className={`flex-1 py-3 px-6 font-bold rounded-xl transition-all flex items-center justify-center gap-2 text-xs cursor-pointer border border-white/5 ${selectedTech && !isBooking ? 'bg-indigo-600 hover:bg-indigo-500 text-white shadow-lg shadow-indigo-650/20' : 'bg-slate-905 text-slate-650 cursor-not-allowed shadow-none'}`}
                       >
                         {isBooking ? <Loader2 className="animate-spin" size={16} /> : null}
                         {isBooking ? 'Booking...' : `Send Request to ${selectedTech ? selectedTech.name.split(' ')[0] : 'Technician'} 🚀`}
@@ -1593,7 +1593,7 @@ const UserDashboard = () => {
                       <div className="lg:col-span-1 space-y-6">
                         
                         {/* Profile Card */}
-                        <div className="bg-white border border-slate-200/80 rounded-3xl p-6 shadow-xl relative overflow-hidden text-center text-slate-800">
+                        <div className="bg-slate-900/60 backdrop-blur-xl border border-white/5 rounded-3xl p-6 shadow-2xl relative overflow-hidden text-center">
                           <div className="absolute top-[-30%] left-[-10%] w-32 h-32 bg-indigo-500/10 rounded-full blur-2xl pointer-events-none"></div>
                           <div className="w-20 h-20 bg-indigo-650/20 border border-indigo-500/20 rounded-2xl flex items-center justify-center text-4xl shadow-inner mx-auto mb-4 relative">
                             {profile?.avatar || '👤'}
@@ -1601,7 +1601,7 @@ const UserDashboard = () => {
                               <span className="absolute -top-1.5 -right-1.5 bg-amber-500 text-slate-950 px-2 py-0.5 rounded-lg shadow-lg border border-amber-300 text-[8px] font-black uppercase tracking-wider animate-pulse">Plus</span>
                             )}
                           </div>
-                          <h2 className="text-lg font-black tracking-tight text-slate-900 flex items-center justify-center gap-1.5 font-bold">
+                          <h2 className="text-lg font-black tracking-tight text-white flex items-center justify-center gap-1.5 font-bold">
                             {profile?.name || 'Customer'}
                             {(profile?.isEmailVerified || profile?.isPhoneVerified) && (
                               <ShieldCheck size={16} className="text-emerald-400 shrink-0" title="Verified Customer" />
@@ -1626,7 +1626,7 @@ const UserDashboard = () => {
                         </div>
 
                         {/* Sidebar Menu */}
-                        <div className="hidden lg:block bg-white border border-slate-150 rounded-3xl p-4 shadow-sm space-y-1">
+                        <div className="hidden lg:block bg-slate-900/40 border border-white/5 rounded-3xl p-4 space-y-1">
                           {sidebarItems.map(item => {
                             const IconComp = item.icon;
                             const isSelected = activeSubTab === item.id;
@@ -1635,7 +1635,9 @@ const UserDashboard = () => {
                                 key={item.id}
                                 onClick={() => setActiveSubTab(item.id)}
                                 className={`w-full flex items-center gap-3 px-4.5 py-3 rounded-2xl text-xs font-black transition-all cursor-pointer border-none outline-none text-left tracking-wide ${
-                                  isSelected ? 'bg-indigo-600 text-white shadow-md shadow-indigo-600/10' : 'text-slate-700 hover:text-indigo-650 hover:bg-indigo-50/50'
+                                  isSelected 
+                                    ? 'bg-indigo-650 text-white shadow-md shadow-indigo-600/10' 
+                                    : 'text-slate-400 hover:text-slate-205 hover:bg-slate-900/40'
                                 }`}
                               >
                                 <IconComp size={16} className={isSelected ? "text-white animate-pulse" : "text-slate-500"} />
@@ -1647,14 +1649,14 @@ const UserDashboard = () => {
                       </div>
 
                       {/* Main content pane */}
-                      <div className="lg:col-span-3 bg-white border border-slate-100 rounded-[2.5rem] p-6 sm:p-8 shadow-sm min-h-[500px]">
+                      <div className="lg:col-span-3 bg-slate-900/20 border border-white/5 rounded-[2rem] p-6 sm:p-8 shadow-inner min-h-[500px]">
                         
                         {/* OVERVIEW TAB */}
                         {activeSubTab === 'overview' && (
                           <div className="space-y-8 animate-in fade-in duration-300">
-                            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 border-b border-slate-200/80 pb-4">
+                            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 border-b border-white/5 pb-4">
                               <div>
-                                <h2 className="text-xl sm:text-2xl font-black tracking-tight text-slate-900">Welcome back, {profile?.name?.split(' ')[0] || 'Client'}! 👋</h2>
+                                <h2 className="text-xl sm:text-2xl font-black tracking-tight text-white">Welcome back, {profile?.name?.split(' ')[0] || 'Client'}! 👋</h2>
                                 <p className="text-xs text-slate-400 mt-1 font-medium font-semibold">Manage your services, wallet and account rewards</p>
                               </div>
                               <button
@@ -1667,14 +1669,14 @@ const UserDashboard = () => {
 
                             {/* Plus promo banner */}
                             {!profile?.isPremium && (
-                              <div className="bg-gradient-to-r from-amber-50/80 to-yellow-100/40 border border-amber-200 rounded-3xl p-5 flex flex-col sm:flex-row items-center justify-between gap-5 shadow-sm text-slate-800">
+                              <div className="bg-gradient-to-r from-slate-950 via-[#1E293B] to-indigo-950 border border-amber-500/30 rounded-3xl p-5 flex flex-col sm:flex-row items-center justify-between gap-5 shadow-lg">
                                 <div className="flex items-center gap-3.5 text-center sm:text-left">
                                   <div className="w-12 h-12 bg-gradient-to-br from-amber-400 to-yellow-500 text-slate-950 rounded-2xl flex items-center justify-center shrink-0 shadow-lg shadow-amber-500/20">
                                     <Sparkles size={20} className="animate-pulse" />
                                   </div>
                                   <div className="space-y-0.5">
-                                    <h3 className="text-sm font-black text-amber-900">Upgrade to Fixvo Plus</h3>
-                                    <p className="text-[10px] text-amber-800/90 font-bold max-w-sm leading-relaxed">
+                                    <h3 className="text-sm font-extrabold text-white">Upgrade to Fixvo Plus</h3>
+                                    <p className="text-[10px] text-slate-455 font-semibold max-w-sm leading-relaxed">
                                       Get 5% discount on all quotes, zero inspection fees (save ₹99), and priority technician dispatch.
                                     </p>
                                   </div>
@@ -1698,12 +1700,12 @@ const UserDashboard = () => {
                                     <div
                                       key={item.id}
                                       onClick={() => setActiveSubTab(item.id)}
-                                      className="bg-slate-50 border border-slate-200 hover:border-indigo-300 hover:bg-slate-100/50 p-5 rounded-2xl text-center cursor-pointer transition-all duration-300 hover:-translate-y-1 shadow-sm flex flex-col items-center justify-center min-h-[110px]"
+                                      className="bg-slate-900/40 border border-white/5 hover:border-indigo-500/30 hover:bg-slate-900/60 p-5 rounded-2xl text-center cursor-pointer transition-all duration-300 hover:-translate-y-1 shadow-sm flex flex-col items-center justify-center min-h-[110px]"
                                     >
                                       <div className="p-3 bg-indigo-650/10 text-indigo-405 border border-indigo-505/20 rounded-xl mb-3 shrink-0">
                                         <IconComp size={18} />
                                       </div>
-                                      <h4 className="font-extrabold text-slate-800 text-xs tracking-tight">{item.label}</h4>
+                                      <h4 className="font-extrabold text-white text-xs tracking-tight">{item.label}</h4>
                                     </div>
                                   );
                                 })}
@@ -1712,24 +1714,24 @@ const UserDashboard = () => {
 
                             {/* Bookings Preview */}
                             <div className="space-y-4">
-                              <h3 className="font-extrabold text-xs text-slate-600 uppercase tracking-widest ml-1">Recent Booking Status</h3>
+                              <h3 className="font-extrabold text-xs text-slate-455 uppercase tracking-widest ml-1">Recent Booking Status</h3>
                               {bookings.length === 0 ? (
-                                <div className="bg-slate-900/20 border border-slate-200/80 rounded-3xl p-8 text-center text-slate-550 font-bold text-sm">
+                                <div className="bg-slate-900/20 border border-white/5 rounded-3xl p-8 text-center text-slate-550 font-bold text-sm">
                                   No service bookings yet. Click "Book Repair" to request your first visit.
                                 </div>
                               ) : (
                                 <div className="space-y-4">
                                   {bookings.slice(0, 1).map(booking => (
-                                    <div key={booking._id} className="bg-white border border-slate-200 rounded-2xl p-5 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+                                    <div key={booking._id} className="bg-slate-900/40 border border-white/5 rounded-2xl p-5 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
                                       <div className="space-y-1 text-left">
                                         <span className="inline-block text-[9px] bg-indigo-500/10 text-indigo-400 border border-indigo-500/20 px-2 py-0.5 rounded uppercase tracking-wider font-extrabold">
                                           {booking.serviceName || 'Service Visit'}
                                         </span>
-                                        <h4 className="font-bold text-slate-800 text-sm">ID: #{booking._id.slice(-6).toUpperCase()} • Final Bill: ₹{booking.finalQuote || booking.amount || 0}</h4>
+                                        <h4 className="font-bold text-white text-sm">ID: #{booking._id.slice(-6).toUpperCase()} • Final Bill: ₹{booking.finalQuote || booking.amount || 0}</h4>
                                         <p className="text-[10px] text-slate-450 font-medium">Date: {booking.date ? new Date(booking.date).toLocaleDateString() : 'Pending'}</p>
                                       </div>
                                       <div className="flex items-center gap-3 w-full sm:w-auto justify-between sm:justify-end">
-                                        <span className="text-[10px] uppercase font-black tracking-wider text-slate-600 bg-slate-800 px-3 py-1 rounded-full border border-slate-200/80">
+                                        <span className="text-[10px] uppercase font-black tracking-wider text-slate-350 bg-slate-800 px-3 py-1 rounded-full border border-white/5">
                                           {booking.status}
                                         </span>
                                         <button
@@ -1750,9 +1752,9 @@ const UserDashboard = () => {
                         {/* BOOKINGS TAB */}
                         {activeSubTab === 'bookings' && (
                           <div className="space-y-6 animate-in fade-in duration-300">
-                            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 pb-4 border-b border-slate-200/80">
+                            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 pb-4 border-b border-white/5">
                               <div>
-                                <h2 className="text-xl sm:text-2xl font-black tracking-tight text-slate-900 flex items-center gap-2">
+                                <h2 className="text-xl sm:text-2xl font-black tracking-tight text-white flex items-center gap-2">
                                   <Calendar className="text-indigo-400" /> Service Bookings
                                 </h2>
                                 <p className="text-xs text-slate-400 mt-1 font-semibold">Track active repairs and check completed history</p>
@@ -1766,13 +1768,13 @@ const UserDashboard = () => {
                                   placeholder="Search bookings..."
                                   value={searchQuery}
                                   onChange={(e) => setSearchQuery(e.target.value)}
-                                  className="w-full pl-9 pr-4 py-2 bg-slate-50 border border-slate-200 rounded-xl outline-none font-semibold text-slate-800 text-xs focus:border-indigo-500 transition-all font-medium"
+                                  className="w-full pl-9 pr-4 py-2 bg-slate-950 border border-white/10 rounded-xl outline-none font-semibold text-slate-205 text-xs focus:border-indigo-500 transition-all font-medium text-slate-700"
                                 />
                               </div>
                             </div>
 
                             {/* Filter subtabs */}
-                            <div className="flex border-b border-slate-200/80 gap-1 pt-1 overflow-x-auto scrollbar-none">
+                            <div className="flex border-b border-white/5 gap-1 pt-1 overflow-x-auto scrollbar-none">
                               {['all', 'active', 'completed'].map(tab => (
                                 <button
                                   key={tab}
@@ -1780,7 +1782,7 @@ const UserDashboard = () => {
                                   className={`px-4 py-2 text-xs font-bold uppercase tracking-wider transition-all border-b-2 whitespace-nowrap outline-none cursor-pointer border-none bg-transparent ${
                                     filterTab === tab
                                       ? 'border-indigo-500 text-indigo-400'
-                                      : 'border-transparent text-slate-500 hover:text-slate-600'
+                                      : 'border-transparent text-slate-500 hover:text-slate-350'
                                   }`}
                                 >
                                   {tab === 'all' ? 'All Bookings' : tab === 'active' ? 'Active' : 'Completed'}
@@ -1798,7 +1800,7 @@ const UserDashboard = () => {
                                     <div 
                                       key={booking._id} 
                                       className={`rounded-2xl p-5 border transition-all flex flex-col justify-between ${
-                                        expandedBookings[booking._id] ? 'border-indigo-200 bg-indigo-50/50 shadow-md' : 'border-slate-200 bg-white'
+                                        expandedBookings[booking._id] ? 'border-indigo-500/40 bg-indigo-950/10 shadow-lg' : 'border-white/5 bg-slate-900/40'
                                       }`}
                                     >
                                       <div onClick={() => toggleExpand(booking._id)} className="cursor-pointer space-y-2 text-left">
@@ -1806,12 +1808,12 @@ const UserDashboard = () => {
                                           <span className="text-[9px] bg-indigo-500/10 text-indigo-400 border border-indigo-500/20 px-2 py-0.5 rounded font-black uppercase tracking-wider">
                                             {booking.serviceName || 'Service Visit'}
                                           </span>
-                                          <span className="text-[9px] bg-slate-800 text-slate-400 px-2.5 py-0.5 rounded-full border border-slate-200/80 uppercase tracking-wider font-extrabold">
+                                          <span className="text-[9px] bg-slate-800 text-slate-400 px-2.5 py-0.5 rounded-full border border-white/5 uppercase tracking-wider font-extrabold">
                                             {booking.status}
                                           </span>
                                         </div>
-                                        <h3 className="text-xl font-black text-slate-900">₹{booking.finalQuote || booking.amount || 0}</h3>
-                                        <p className="text-[10px] text-slate-600 font-medium">Date: {booking.date ? new Date(booking.date).toLocaleDateString() : 'Pending'}</p>
+                                        <h3 className="text-xl font-black text-white">₹{booking.finalQuote || booking.amount || 0}</h3>
+                                        <p className="text-[10px] text-slate-455 font-medium">Date: {booking.date ? new Date(booking.date).toLocaleDateString() : 'Pending'}</p>
                                         {booking.technicianName && booking.technicianName !== 'Unassigned' && (
                                           <span className="inline-block text-[9px] bg-indigo-500/20 text-indigo-300 font-extrabold uppercase px-2 py-0.5 rounded mt-1.5 border border-indigo-500/30">👨‍🔧 {booking.technicianName}</span>
                                         )}
@@ -1819,128 +1821,14 @@ const UserDashboard = () => {
 
                                       {/* Details Toggle content */}
                                       {expandedBookings[booking._id] && (
-                                        <div className="mt-4 pt-4 border-t border-slate-200/80 space-y-4 animate-in fade-in duration-200 text-left text-xs font-semibold">
-                                          <p className="text-slate-650 leading-relaxed font-semibold"><strong className="text-slate-800">Problem:</strong> {booking.problemDescription}</p>
-                                          <p className="text-slate-650 leading-relaxed font-semibold"><strong className="text-slate-700">Address:</strong> {booking.location}</p>
-                                          {booking.deviceType && <p className="text-slate-600"><strong className="text-slate-700">Device Type:</strong> {booking.deviceType}</p>}
-
-                                          {/* Quote Details & Approval Panel */}
-                                          {['quote_pending', 'quote_clarification', 'quote_rejected'].includes(booking.status) && (
-                                            <div className="p-5 bg-indigo-50 border border-indigo-100 rounded-2xl space-y-4 my-3 text-slate-800">
-                                              <div className="flex justify-between items-center pb-2 border-b border-indigo-100">
-                                                <h4 className="text-xs font-black uppercase tracking-wider text-indigo-700 flex items-center gap-1.5">
-                                                  <Wrench size={14} /> Service Quote Details
-                                                </h4>
-                                                <span className="text-[9px] font-extrabold uppercase bg-indigo-100 text-indigo-700 px-2.5 py-0.5 rounded">
-                                                  {booking.status.replace(/_/g, ' ')}
-                                                </span>
-                                              </div>
-
-                                              <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 text-xs">
-                                                <div>
-                                                  <p className="text-[9px] font-bold text-slate-500 uppercase tracking-widest">Inspection / Visit Fee</p>
-                                                  <p className="font-extrabold text-slate-850">₹{booking.transportCharge || 0}</p>
-                                                </div>
-                                                <div>
-                                                  <p className="text-[9px] font-bold text-slate-500 uppercase tracking-widest">Labor Cost</p>
-                                                  <p className="font-extrabold text-slate-850">₹{booking.serviceCharge || booking.amount || 0}</p>
-                                                </div>
-                                                <div>
-                                                  <p className="text-[9px] font-bold text-slate-500 uppercase tracking-widest">Parts / Accessories</p>
-                                                  <p className="font-extrabold text-slate-850">₹{booking.sparePartsCost || 0}</p>
-                                                </div>
-                                              </div>
-
-                                              <div className="border-t border-indigo-100 pt-3">
-                                                <div className="flex justify-between items-center bg-indigo-100/50 px-4 py-2.5 rounded-xl border border-indigo-100">
-                                                  <span className="text-xs font-extrabold text-indigo-700 uppercase tracking-widest">Total Invoice Price:</span>
-                                                  <span className="text-lg font-black text-indigo-905">
-                                                    ₹{(booking.serviceCharge || booking.amount || 0) + (booking.sparePartsCost || 0) + (booking.transportCharge || 0)}
-                                                  </span>
-                                                </div>
-                                              </div>
-
-                                              {booking.detectedIssues && (
-                                                <div>
-                                                  <p className="text-[9px] font-bold text-slate-500 uppercase tracking-widest">Detected Issues</p>
-                                                  <p className="text-xs font-semibold text-slate-700 italic">"{booking.detectedIssues}"</p>
-                                                </div>
-                                              )}
-
-                                              {booking.quoteReason && (
-                                                <div>
-                                                  <p className="text-[9px] font-bold text-slate-500 uppercase tracking-widest">Technician Explanation</p>
-                                                  <p className="text-xs font-semibold text-slate-700">"{booking.quoteReason}"</p>
-                                                </div>
-                                              )}
-
-                                              {booking.status === 'quote_pending' && (
-                                                <div className="space-y-3 pt-2">
-                                                  <div className="flex gap-2">
-                                                    <button
-                                                      disabled={updatingJobs[booking._id]}
-                                                      onClick={() => handleQuoteApproval(booking._id, true)}
-                                                      className="flex-1 bg-indigo-600 hover:bg-indigo-700 text-white font-black py-3 rounded-xl transition-all shadow-md active:scale-95 flex items-center justify-center gap-1.5 text-[10px] sm:text-xs uppercase tracking-widest cursor-pointer border-none outline-none"
-                                                    >
-                                                      {updatingJobs[booking._id] ? <Loader2 size={12} className="animate-spin" /> : <><CheckCircle size={14} /> Approve & Start</>}
-                                                    </button>
-                                                    <button
-                                                      disabled={updatingJobs[booking._id]}
-                                                      onClick={() => handleQuoteApproval(booking._id, false)}
-                                                      className="flex-1 bg-white hover:bg-rose-50 border border-rose-200 text-rose-600 font-bold py-3 rounded-xl transition-all flex items-center justify-center gap-1.5 text-[10px] sm:text-xs uppercase tracking-wider cursor-pointer outline-none"
-                                                    >
-                                                      {updatingJobs[booking._id] ? <Loader2 size={12} className="animate-spin" /> : <><XCircle size={14} /> Reject</>}
-                                                    </button>
-                                                  </div>
-                                                  
-                                                  <button
-                                                    onClick={() => setShowClarifyInput(prev => ({ ...prev, [booking._id]: !prev[booking._id] }))}
-                                                    className="w-full bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold py-2.5 rounded-xl text-[10px] uppercase tracking-wider border-none outline-none cursor-pointer transition-colors"
-                                                  >
-                                                    {showClarifyInput[booking._id] ? 'Hide Clarification Input' : 'Ask for Clarification'}
-                                                  </button>
-
-                                                  {showClarifyInput[booking._id] && (
-                                                    <div className="space-y-2 p-3 bg-white border border-slate-200 rounded-xl animate-in slide-in-from-top-2 duration-200">
-                                                      <label className="block text-[9px] font-bold text-slate-400 uppercase tracking-widest">What needs clarification?</label>
-                                                      <textarea
-                                                        value={clarificationText}
-                                                        onChange={(e) => setClarificationText(e.target.value)}
-                                                        placeholder="e.g., Why are these spare parts necessary? Can you explain the labor charges?"
-                                                        className="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl outline-none text-slate-800 text-xs focus:border-indigo-500 transition-all resize-none font-semibold"
-                                                        rows={2}
-                                                      />
-                                                      <button
-                                                        disabled={updatingJobs[booking._id] || !clarificationText.trim()}
-                                                        onClick={() => handleQuoteClarification(booking._id)}
-                                                        className="w-full bg-purple-600 hover:bg-purple-700 disabled:bg-slate-200 text-white disabled:text-slate-450 font-black py-2 rounded-xl text-[10px] uppercase tracking-widest transition-all flex justify-center items-center gap-1.5 cursor-pointer border-none outline-none"
-                                                      >
-                                                        {updatingJobs[booking._id] ? <Loader2 size={12} className="animate-spin"/> : 'Send Clarification Request'}
-                                                      </button>
-                                                    </div>
-                                                  )}
-                                                </div>
-                                              )}
-
-                                              {booking.status === 'quote_clarification' && (
-                                                <div className="p-3 bg-purple-50 border border-purple-100 text-purple-700 rounded-xl text-xs font-semibold leading-relaxed flex items-center gap-2">
-                                                  <Clock size={16} className="animate-pulse" />
-                                                  <span>Awaiting technician response to your clarification request.</span>
-                                                </div>
-                                              )}
-
-                                              {booking.status === 'quote_rejected' && (
-                                                <div className="p-3 bg-rose-50 border border-rose-100 text-rose-700 rounded-xl text-xs font-semibold leading-relaxed flex items-center gap-2">
-                                                  <XCircle size={16} />
-                                                  <span>You rejected this quote. Awaiting a revised quote proposal from the technician.</span>
-                                                </div>
-                                              )}
-                                            </div>
-                                          )}
+                                        <div className="mt-4 pt-4 border-t border-white/5 space-y-4 animate-in fade-in duration-200 text-left text-xs font-semibold">
+                                          <p className="text-slate-400 leading-relaxed font-medium"><strong className="text-slate-200">Problem:</strong> {booking.problemDescription}</p>
+                                          <p className="text-slate-400 leading-relaxed font-medium"><strong className="text-slate-205">Address:</strong> {booking.location}</p>
+                                          {booking.deviceType && <p className="text-slate-455"><strong className="text-slate-205">Device Type:</strong> {booking.deviceType}</p>}
                                           
                                           {/* Actions */}
                                           {booking.providerId && ['assigned', 'accepted', 'on_the_way', 'arrived', 'inspection_started', 'work_started', 'quote_pending', 'quote_clarification', 'quote_rejected'].includes(booking.status) && (
-                                            <div className="grid grid-cols-2 gap-2 pt-2 border-t border-slate-200/80">
+                                            <div className="grid grid-cols-2 gap-2 pt-2 border-t border-white/5">
                                               {(booking.providerPhone || booking.providerId?.phone) && (
                                                 <a 
                                                   href={`tel:${formatPhoneLink(booking.providerPhone || booking.providerId?.phone)}`}
@@ -1951,7 +1839,7 @@ const UserDashboard = () => {
                                               )}
                                               <button 
                                                 onClick={() => setChatBookingId(booking._id)}
-                                                className="flex items-center justify-center gap-1.5 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-wider bg-slate-100 text-slate-700 hover:bg-slate-200 border border-slate-250 cursor-pointer border-none outline-none relative"
+                                                className="flex items-center justify-center gap-1.5 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-wider bg-slate-800 text-white hover:bg-slate-700 cursor-pointer border-none outline-none relative"
                                               >
                                                 <MessageSquare size={12} /> Chat
                                                 {booking.unreadCount > 0 && (
@@ -1965,7 +1853,7 @@ const UserDashboard = () => {
                                           {!['completed', 'cancelled', 'rejected'].includes(booking.status) && (
                                             <button
                                               onClick={() => setCancelBookingId(booking._id)}
-                                              className="w-full bg-slate-50 text-rose-600 hover:bg-rose-100/50 border border-rose-200 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-wider cursor-pointer transition-colors"
+                                              className="w-full bg-slate-950 text-rose-455 hover:bg-rose-500/10 border border-rose-500/20 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-wider cursor-pointer transition-colors"
                                             >
                                               Cancel Booking
                                             </button>
@@ -2037,15 +1925,15 @@ const UserDashboard = () => {
                           {/* NOTIFICATIONS TAB */}
                           {activeSubTab === 'notifications' && (
                             <div className="space-y-6">
-                              <div className="flex justify-between items-center pb-4 border-b border-slate-200/80">
+                              <div className="flex justify-between items-center pb-4 border-b border-white/5">
                                 <div>
-                                  <h2 className="text-xl sm:text-2xl font-black tracking-tight text-slate-900 flex items-center gap-2">
+                                  <h2 className="text-xl sm:text-2xl font-black tracking-tight text-white flex items-center gap-2">
                                     <Bell className="text-indigo-400" /> Notification Center
                                   </h2>
                                   <p className="text-xs text-slate-400 mt-1 font-semibold">Review your recent billing, update alerts, and offers</p>
                                 </div>
                               </div>
-                              <div className="bg-slate-900/20 border border-slate-200/80 rounded-3xl p-6 text-center text-slate-500 font-bold text-sm">
+                              <div className="bg-slate-900/20 border border-white/5 rounded-3xl p-6 text-center text-slate-500 font-bold text-sm">
                                 All notifications are up to date. You will receive notifications in real-time here.
                               </div>
                             </div>
@@ -2066,8 +1954,8 @@ const UserDashboard = () => {
                           {/* SETTINGS TAB */}
                           {activeSubTab === 'settings' && (
                             <div className="space-y-8 animate-in fade-in duration-300">
-                              <div className="pb-4 border-b border-slate-200/80">
-                                <h2 className="text-xl sm:text-2xl font-black tracking-tight text-slate-900 flex items-center gap-2">
+                              <div className="pb-4 border-b border-white/5">
+                                <h2 className="text-xl sm:text-2xl font-black tracking-tight text-white flex items-center gap-2">
                                   <Settings className="text-indigo-400" /> Account Settings
                                 </h2>
                                 <p className="text-xs text-slate-400 mt-1 font-medium font-semibold">Control notifications, privacy, language, and security</p>
@@ -2075,7 +1963,7 @@ const UserDashboard = () => {
 
                               <div className="space-y-6 divide-y divide-white/5">
                                 <div className="space-y-4">
-                                  <h3 className="font-extrabold text-sm text-slate-800">Preferences</h3>
+                                  <h3 className="font-extrabold text-sm text-slate-200">Preferences</h3>
                                   <div className="flex justify-between items-center py-2.5">
                                     <div>
                                       <p className="text-xs sm:text-sm font-bold text-white">Interface Dark Mode</p>
@@ -2109,11 +1997,11 @@ const UserDashboard = () => {
                                 </div>
 
                                 <div className="pt-6 space-y-4">
-                                  <h3 className="font-extrabold text-sm text-slate-800">Security & Sessions</h3>
+                                  <h3 className="font-extrabold text-sm text-slate-200">Security & Sessions</h3>
                                   <div className="flex flex-col sm:flex-row gap-3">
                                     <button
                                       onClick={() => setShowSettings(true)}
-                                      className="flex-1 bg-slate-900 hover:bg-slate-850 border border-slate-200/80 hover:border-slate-700 text-white font-extrabold py-3.5 rounded-xl text-xs uppercase tracking-wider cursor-pointer outline-none"
+                                      className="flex-1 bg-slate-900 hover:bg-slate-850 border border-white/5 hover:border-slate-700 text-white font-extrabold py-3.5 rounded-xl text-xs uppercase tracking-wider cursor-pointer outline-none"
                                     >
                                       Update Account Credentials
                                     </button>
@@ -2130,7 +2018,7 @@ const UserDashboard = () => {
                                 </div>
 
                                 <div className="pt-6 space-y-4">
-                                  <h3 className="font-extrabold text-sm text-rose-600">Danger Zone</h3>
+                                  <h3 className="font-extrabold text-sm text-rose-455">Danger Zone</h3>
                                   <div className="p-4 bg-rose-500/5 border border-rose-500/10 rounded-2xl flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
                                     <div>
                                       <p className="text-xs sm:text-sm font-bold text-white">Permanently Delete Account</p>
@@ -2156,7 +2044,7 @@ const UserDashboard = () => {
                       </div>
 
                       {/* Bottom Nav for mobile */}
-                      <div className="lg:hidden fixed bottom-0 left-0 right-0 bg-slate-900/90 backdrop-blur-md border-t border-slate-200/80 px-4 py-2.5 flex justify-between z-45">
+                      <div className="lg:hidden fixed bottom-0 left-0 right-0 bg-slate-900/90 backdrop-blur-md border-t border-white/5 px-4 py-2.5 flex justify-between z-45">
                         {sidebarItems.slice(0, 5).map(item => {
                           const IconComp = item.icon;
                           const isSelected = activeSubTab === item.id;
@@ -2245,16 +2133,16 @@ const UserDashboard = () => {
                   {viewReasonBooking && (
                     <div className="fixed inset-0 z-[999] bg-[#0B0F19]/80 backdrop-blur-md flex items-center justify-center p-4">
                       <div className="bg-slate-900 border border-white/10 rounded-[2.5rem] p-6 sm:p-8 w-full max-w-md shadow-2xl relative animate-in fade-in zoom-in-95 duration-200 text-white">
-                        <h3 className="text-xl font-black text-slate-900 mb-2">Cancellation Details</h3>
+                        <h3 className="text-xl font-black text-white mb-2">Cancellation Details</h3>
                         <div className="space-y-4 my-6">
                           <div className="p-4 bg-rose-500/10 border border-rose-500/20 rounded-2xl text-rose-350 text-xs sm:text-sm font-semibold">
                             <span className="font-extrabold text-[10px] bg-rose-500/20 text-rose-350 px-2.5 py-1 rounded uppercase tracking-wider block mb-2 w-max border border-rose-500/30">Reason Given</span>
                             "{viewReasonBooking.cancellationReason || 'No reason provided.'}"
                           </div>
                           <div className="text-xs text-slate-400 font-semibold space-y-2 pl-1">
-                            <p>Cancelled By: <strong className="text-slate-800 capitalize">{viewReasonBooking.cancelledBy || 'system'}</strong></p>
+                            <p>Cancelled By: <strong className="text-slate-200 capitalize">{viewReasonBooking.cancelledBy || 'system'}</strong></p>
                             {viewReasonBooking.cancelledAt && (
-                              <p>Cancelled On: <strong className="text-slate-800">{new Date(viewReasonBooking.cancelledAt).toLocaleString()}</strong></p>
+                              <p>Cancelled On: <strong className="text-slate-200">{new Date(viewReasonBooking.cancelledAt).toLocaleString()}</strong></p>
                             )}
                           </div>
                         </div>
@@ -2292,7 +2180,7 @@ const UserDashboard = () => {
                             placeholder="Describe your reason here..."
                             value={cancellationReason}
                             onChange={(e) => setCancellationReason(e.target.value)}
-                            className="w-full px-4 py-3 rounded-xl bg-slate-900 border border-white/10 text-slate-800 outline-none text-sm font-semibold focus:border-red-500 transition-all resize-none"
+                            className="w-full px-4 py-3 rounded-xl bg-slate-900 border border-white/10 text-slate-200 outline-none text-sm font-semibold focus:border-red-500 transition-all resize-none"
                             required
                           />
                         </div>
@@ -2350,7 +2238,7 @@ const UserDashboard = () => {
                         </div>
                         <button
                           onClick={() => setToasts(prev => prev.filter(t => t.id !== toast.id))}
-                          className="text-slate-400 hover:text-slate-800 self-start transition-colors font-bold text-xs p-1"
+                          className="text-slate-400 hover:text-slate-200 self-start transition-colors font-bold text-xs p-1"
                         >
                           ✕
                         </button>
