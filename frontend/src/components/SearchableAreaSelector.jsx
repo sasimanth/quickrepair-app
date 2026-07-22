@@ -1,7 +1,17 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { MapPin, Search, Check, ChevronDown } from 'lucide-react';
 
-const defaultAreas = ['Madanapalle', 'Kadiri', 'Rayachoty', 'Galiveedu'];
+const defaultAreas = [
+  'Madanapalle', 
+  'Madanapalle Bypass', 
+  'Madanapalle Town', 
+  'Malepadu', 
+  'Kadiri', 
+  'Rayachoty', 
+  'Galiveedu',
+  'Punganoor',
+  'Vayalpadu'
+];
 
 const SearchableAreaSelector = ({
   value,

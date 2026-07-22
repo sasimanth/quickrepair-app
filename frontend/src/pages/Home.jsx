@@ -477,32 +477,31 @@ const Home = () => {
           <div className="px-4 sm:px-6">
             <div className="flex justify-between items-center h-16 sm:h-20">
               
-              {/* Logo & Location group */}
-              <div className="flex items-center gap-4">
+              {/* Logo & Brand Name */}
+              <div className="flex items-center gap-3">
                 <Link to="/" className="flex items-center gap-1.5 sm:gap-2 group">
                   <div className="w-8 h-8 sm:w-10 sm:h-10 group-hover:scale-105 group-hover:rotate-3 transition-all duration-300 shadow-lg shadow-blue-500/30 rounded-full overflow-hidden">
                     <img src={fixvoLogo} alt="Fixvo Logo" className="w-full h-full object-cover scale-110" />
                   </div>
-                  <span className="font-black text-lg sm:text-2xl tracking-tight bg-clip-text text-transparent bg-gradient-to-r from-blue-400 to-cyan-400">
+                  <span className="font-black text-lg sm:text-2xl tracking-tight text-blue-500 bg-clip-text text-transparent bg-gradient-to-r from-blue-500 via-blue-600 to-indigo-600">
                     Fixvo
                   </span>
                 </Link>
 
-                <div className="h-4 w-[1px] bg-white/10 hidden xs:block"></div>
+                <div className="h-4 w-[1px] bg-white/10 hidden sm:block"></div>
 
-                {/* Location selector dropdown */}
-                <div ref={locationRef} className="relative hidden xs:block">
+                {/* Location selector (no icon as requested) */}
+                <div ref={locationRef} className="relative hidden sm:block">
                   <button 
                     onClick={() => setIsLocationDropdownOpen(!isLocationDropdownOpen)}
-                    className="flex items-center gap-1 px-3 py-1.5 bg-white/5 border border-white/10 rounded-full hover:bg-white/10 transition text-[10px] sm:text-xs font-bold text-slate-300 hover:text-white cursor-pointer select-none"
+                    className="flex items-center gap-1.5 px-3 py-1.5 bg-white/5 border border-white/10 rounded-full hover:bg-white/10 transition text-[10px] sm:text-xs font-bold text-slate-300 hover:text-white cursor-pointer select-none"
                   >
-                    <MapPin size={12} className="text-cyan-400" />
                     <span>{selectedLocation}</span>
-                    <ChevronDown size={10} className={`transition-transform duration-200 ${isLocationDropdownOpen ? 'rotate-180' : ''}`} />
+                    <ChevronDown size={12} className={`transition-transform duration-200 ${isLocationDropdownOpen ? 'rotate-180' : ''}`} />
                   </button>
                   {isLocationDropdownOpen && (
-                    <div className="absolute left-0 mt-2 w-44 bg-[#101524]/95 border border-white/10 rounded-2xl shadow-2xl p-2 z-50 overflow-hidden animate-in fade-in slide-in-from-top-2 duration-200">
-                      {['Madanapalle', 'Kadiri', 'Rayachoty', 'Galiveedu'].map((loc) => (
+                    <div className="absolute left-0 mt-2 w-48 bg-[#101524]/95 border border-white/10 rounded-2xl shadow-2xl p-2 z-50 overflow-hidden animate-in fade-in slide-in-from-top-2 duration-200">
+                      {['Madanapalle', 'Madanapalle Bypass', 'Madanapalle Town', 'Malepadu', 'Kadiri', 'Rayachoty', 'Galiveedu'].map((loc) => (
                         <button
                           key={loc}
                           onClick={() => {
@@ -525,40 +524,36 @@ const Home = () => {
                 </div>
               </div>
 
-              {/* Profile, Auth & Notifications */}
-              <div className="flex items-center gap-3">
-                {/* Mobile Location Selector Icon (toggled inside navbar on very narrow viewports) */}
-                <div ref={locationRef} className="relative block xs:hidden">
-                  <button 
-                    onClick={() => setIsLocationDropdownOpen(!isLocationDropdownOpen)}
-                    className="p-2 text-slate-400 hover:text-white rounded-xl hover:bg-white/5 transition"
-                  >
-                    <MapPin size={18} />
-                  </button>
-                  {isLocationDropdownOpen && (
-                    <div className="absolute right-0 mt-2 w-44 bg-[#101524]/95 border border-white/10 rounded-2xl shadow-2xl p-2 z-50 overflow-hidden animate-in fade-in slide-in-from-top-2 duration-200">
-                      {['Madanapalle', 'Kadiri', 'Rayachoty', 'Galiveedu'].map((loc) => (
-                        <button
-                          key={loc}
-                          onClick={() => {
-                            setSelectedLocation(loc);
-                            localStorage.setItem('fixvo_selected_location', loc);
-                            setIsLocationDropdownOpen(false);
-                          }}
-                          className={`w-full flex items-center justify-between px-3 py-2 rounded-xl text-xs font-bold transition ${
-                            selectedLocation === loc 
-                              ? 'bg-blue-600/20 text-blue-400 border border-blue-500/20' 
-                              : 'text-slate-400 hover:text-white hover:bg-white/5 border border-transparent'
-                          }`}
-                        >
-                          <span>{loc}</span>
-                          {selectedLocation === loc && <Check size={12} className="text-blue-400" />}
-                        </button>
-                      ))}
-                    </div>
+              {/* Integrated Top Navigation Search Bar (Desktop & Tablet) */}
+              <div className="hidden lg:flex flex-1 max-w-sm mx-4 relative" ref={searchRef}>
+                <div className="relative w-full flex items-center bg-white/5 border border-white/10 focus-within:border-blue-500/50 hover:border-white/20 rounded-full px-3 py-1.5 transition backdrop-blur-md">
+                  <Search className="text-slate-400 w-4 h-4 mr-2 shrink-0" />
+                  <input 
+                    type="text"
+                    placeholder="Search repairs, cleanings, areas..."
+                    value={searchQuery}
+                    onFocus={() => setIsSearchFocused(true)}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Escape') setIsSearchFocused(false);
+                      if (e.key === 'Enter' && searchQuery.trim()) {
+                        const el = document.getElementById('explore-services');
+                        if (el) el.scrollIntoView({ behavior: 'smooth' });
+                        setIsSearchFocused(false);
+                      }
+                    }}
+                    className="w-full bg-transparent border-0 text-white text-xs font-semibold outline-none placeholder:text-slate-400"
+                  />
+                  {searchQuery && (
+                    <button onClick={() => setSearchQuery('')} className="p-1 text-slate-400 hover:text-white">
+                      <X size={12} />
+                    </button>
                   )}
                 </div>
+              </div>
 
+              {/* Profile, Auth & Notifications */}
+              <div className="flex items-center gap-2 sm:gap-3">
                 {user ? (
                   <>
                     <NotificationsBell />
@@ -854,13 +849,19 @@ const Home = () => {
             {globalCategories.map((cat) => {
               const visual = categoryVisuals[cat.id] || categoryVisuals.other;
               const CatIcon = cat.icon || Sparkles;
+              const sectionTargetId = cat.id === 'repair' ? 'repair-services' 
+                : cat.id === 'installation' ? 'installation-services' 
+                : cat.id === 'cleaning' ? 'cleaning-services' 
+                : 'other-services';
               return (
                 <motion.button
                   key={cat.id}
                   onClick={() => {
                     setActiveCategory(cat.id);
-                    const el = document.getElementById('explore-services');
-                    if (el) el.scrollIntoView({ behavior: 'smooth' });
+                    const el = document.getElementById(sectionTargetId);
+                    if (el) {
+                      el.scrollIntoView({ behavior: 'smooth' });
+                    }
                   }}
                   whileHover={{ scale: 1.03, y: -4 }}
                   whileTap={{ scale: 0.98 }}
@@ -891,50 +892,97 @@ const Home = () => {
         <section id="explore-services" className="space-y-12">
           
           {/* Dynamic Carousel: Popular Near You */}
-          <ServiceCarousel 
-            title={`Popular near ${selectedLocation}`}
-            subtitle="Top-booked services in your selected area right now."
-            items={getServicesByIds(popularNearYouIds)}
-          />
+          <div id="most-booked-services">
+            <ServiceCarousel 
+              title={`Most Booked Services near ${selectedLocation}`}
+              subtitle="The highest volume services requested by our community."
+              items={getServicesByIds(popularNearYouIds)}
+            />
+          </div>
 
-          {/* Carousel: Most Booked Services */}
-          <ServiceCarousel 
-            title="Most Booked Services"
-            subtitle="The highest volume services requested by our community."
-            items={getServicesByIds(['ac_repair', 'mobile_repair', 'washing_machine', 'refrigerator'])}
-          />
+          {/* Carousel: Repair Services */}
+          <div id="repair-services">
+            <ServiceCarousel 
+              title="Repair Services"
+              subtitle="Fast, verified diagnostics and repairs for AC, TV, fridges & washing machines."
+              items={getServicesByIds(['ac_repair', 'washing_machine', 'refrigerator', 'tv_repair', 'laptop_repair', 'mobile_repair'])}
+            />
+          </div>
 
-          {/* Carousel: Home Repair & Installation */}
-          <ServiceCarousel 
-            title="Home Repair & Installation"
-            subtitle="From structural fixes to brand-new home appliance mountings."
-            items={getServicesByIds(['electric_wiring', 'plumbing_work', 'furniture', 'ac_install'])}
-          />
+          {/* Carousel: Installation Services */}
+          <div id="installation-services">
+            <ServiceCarousel 
+              title="Installation Services"
+              subtitle="Expert mounting, wiring setup, and appliance installation."
+              items={getServicesByIds(['ac_install', 'cctv_install', 'ro_install', 'inverter_install', 'fan_install', 'lock_install'])}
+            />
+          </div>
 
           {/* Carousel: Cleaning Services */}
-          <ServiceCarousel 
-            title="Deep Cleaning Services"
-            subtitle="Eco-friendly formulas and high-pressure scrubbing machinery."
-            items={getServicesByIds(['home_clean', 'kitchen_clean', 'bathroom_clean', 'sofa_clean'])}
-          />
+          <div id="cleaning-services">
+            <ServiceCarousel 
+              title="Cleaning Services"
+              subtitle="Hygienic deep scrubbing, sanitization, and eco-friendly home care."
+              items={getServicesByIds(['home_clean', 'kitchen_clean', 'bathroom_clean', 'sofa_clean', 'water_tank_clean', 'carpet_clean'])}
+            />
+          </div>
 
-          {/* Carousel: Appliance Services */}
-          <ServiceCarousel 
-            title="Appliance Services"
-            subtitle="Specialist support for laptops, TVs, RO and surveillance hardware."
-            items={getServicesByIds(['tv_repair', 'laptop_repair', 'ro_install', 'cctv_install'])}
-          />
-
-          {/* Carousel: Recently Booked / Recommendations */}
-          <ServiceCarousel 
-            title="Recently Booked"
-            subtitle="Personalized recommendations matching your discovery history."
-            items={getServicesByIds(['ac_repair', 'laptop_repair', 'plumbing_work', 'home_clean'])}
-          />
+          {/* Carousel: Other Services */}
+          <div id="other-services">
+            <ServiceCarousel 
+              title="Other Services"
+              subtitle="Pest control, electrical rewiring, furniture assembly, and custom fixes."
+              items={getServicesByIds(['pest_control', 'electric_wiring', 'plumbing_work', 'furniture_repair', 'painting'])}
+            />
+          </div>
 
         </section>
 
-        {/* 6. FEATURED SERVICES (BENEFITS GRID) */}
+        {/* 7. DAY & NIGHT SERVICES PROMINENT SHOWCASE */}
+        <section className="mt-16 md:mt-24 relative overflow-hidden bg-gradient-to-r from-slate-950 via-[#0D1322] to-slate-950 border border-indigo-500/20 rounded-[2.5rem] p-6 sm:p-10 shadow-2xl">
+          <div className="absolute -right-10 -top-10 w-64 h-64 bg-indigo-500/10 rounded-full blur-3xl pointer-events-none"></div>
+          
+          <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-6 mb-8 relative z-10">
+            <div>
+              <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-indigo-500/20 border border-indigo-500/30 text-indigo-300 text-xs font-black uppercase tracking-wider mb-3">
+                <span>🌙</span> 24×7 Day & Night Services
+              </div>
+              <h2 className="text-2xl sm:text-4xl font-extrabold text-white">Emergency Repairs Anytime, Anywhere</h2>
+              <p className="text-slate-400 text-sm mt-1">Whether it's midnight or a Sunday holiday, verified Fixvo technicians are on call.</p>
+            </div>
+            <a 
+              href="tel:+919515980170" 
+              className="px-6 py-3 bg-gradient-to-r from-indigo-600 to-blue-600 hover:from-indigo-500 hover:to-blue-500 text-white font-extrabold text-xs sm:text-sm rounded-xl shadow-lg shadow-indigo-600/30 transition transform hover:-translate-y-0.5 flex items-center gap-2"
+            >
+              <Zap size={16} /> 24/7 Helpline: +91 95159 80170
+            </a>
+          </div>
+
+          <div className="grid grid-cols-2 md:grid-cols-5 gap-4 relative z-10">
+            {[
+              { title: "Available Anytime", desc: "Round the clock booking", icon: Clock, badge: "24/7 Live" },
+              { title: "Emergency Repairs", desc: "30-min urgent dispatch", icon: Zap, badge: "Fast Track" },
+              { title: "Late Night Support", desc: "Night technician safety", icon: ShieldCheck, badge: "Verified" },
+              { title: "Weekend Availability", desc: "Sat & Sun active slots", icon: CheckCircle2, badge: "No Extra Charge" },
+              { title: "Holiday Service", desc: "Open 365 days a year", icon: Sparkles, badge: "Open Today" }
+            ].map((item, i) => (
+              <div key={i} className="bg-white/[0.02] border border-white/10 rounded-2xl p-4 flex flex-col justify-between h-36 hover:bg-white/[0.05] transition duration-300">
+                <div className="flex justify-between items-start">
+                  <div className="w-8 h-8 rounded-lg bg-indigo-500/20 border border-indigo-500/30 flex items-center justify-center text-indigo-400">
+                    <item.icon size={16} />
+                  </div>
+                  <span className="text-[9px] font-black text-indigo-400 bg-indigo-500/10 px-2 py-0.5 rounded border border-indigo-500/20 uppercase">{item.badge}</span>
+                </div>
+                <div>
+                  <h4 className="font-extrabold text-xs text-white leading-snug">{item.title}</h4>
+                  <p className="text-[10px] text-slate-400 mt-0.5">{item.desc}</p>
+                </div>
+              </div>
+            ))}
+          </div>
+        </section>
+
+        {/* 6. WHY FIXVO EXCELS (BALANCED 6-CARD FEATURE MATRIX) */}
         <section className="mt-16 md:mt-24 bg-gradient-to-br from-white/[0.02] to-transparent border border-white/5 backdrop-blur-md rounded-[2.5rem] p-6 sm:p-10 mx-4 sm:mx-0">
           <div className="mb-8">
             <h2 className="text-2xl sm:text-4xl font-extrabold text-white tracking-tight flex items-center gap-2">
@@ -942,24 +990,25 @@ const Home = () => {
             </h2>
             <p className="text-slate-400 text-sm mt-1">Our platform standards ensure you get professional, trustworthy repair and installation solutions.</p>
           </div>
-          <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
+          <div className="grid grid-cols-2 md:grid-cols-3 gap-4 sm:gap-6">
             {[
-              { id: 'trending', label: "Trending Services", value: "AC & Mobile Repairs", icon: Zap, color: "text-amber-400", bg: "bg-amber-500/10", border: "border-amber-500/20" },
-              { id: 'rated', label: "Best Rated", value: "4.9★ Average Rating", icon: Star, color: "text-yellow-400", bg: "bg-yellow-500/10", border: "border-yellow-500/20" },
-              { id: 'booking', label: "Fast Booking", value: "Book in 10 Seconds", icon: Clock, color: "text-cyan-400", bg: "bg-cyan-500/10", border: "border-cyan-500/20" },
-              { id: 'techs', label: "Verified Technicians", value: "100% Background Check", icon: ShieldCheck, color: "text-emerald-400", bg: "bg-emerald-500/10", border: "border-emerald-500/20" },
-              { id: 'sameday', label: "Same Day Service", value: "30-Min Dispatch Option", icon: CheckCircle2, color: "text-blue-400", bg: "bg-blue-500/10", border: "border-blue-500/20" },
+              { id: 'emergency', label: "24×7 Support", value: "Instant Emergency Response", icon: Zap, color: "text-amber-400", bg: "bg-amber-500/10", border: "border-amber-500/20" },
+              { id: 'tracking', label: "Live Tracking", value: "Real-time Technician ETA", icon: MapPin, color: "text-cyan-400", bg: "bg-cyan-500/10", border: "border-cyan-500/20" },
+              { id: 'payments', label: "Digital Payments", value: "100% Secure Checkout", icon: Banknote, color: "text-indigo-400", bg: "bg-indigo-500/10", border: "border-indigo-500/20" },
+              { id: 'techs', label: "Verified Professionals", value: "Background & Police Checked", icon: ShieldCheck, color: "text-emerald-400", bg: "bg-emerald-500/10", border: "border-emerald-500/20" },
+              { id: 'sameday', label: "Same Day Service", value: "30-Min Dispatch Guarantee", icon: CheckCircle2, color: "text-blue-400", bg: "bg-blue-500/10", border: "border-blue-500/20" },
+              { id: 'pricing', label: "Transparent Pricing", value: "Upfront Quotes & No Hidden Fees", icon: Star, color: "text-yellow-400", bg: "bg-yellow-500/10", border: "border-yellow-500/20" },
             ].map((stat) => (
               <div 
                 key={stat.id}
-                className="p-5 bg-white/[0.01] hover:bg-white/[0.03] border border-white/5 rounded-[2rem] flex flex-col justify-between gap-4 transition duration-300"
+                className="p-6 bg-white/[0.01] hover:bg-white/[0.04] border border-white/5 hover:border-blue-500/30 rounded-[2rem] flex flex-col justify-between gap-4 transition duration-300 shadow-md"
               >
-                <div className={`w-10 h-10 rounded-xl ${stat.bg} ${stat.border} border flex items-center justify-center ${stat.color}`}>
-                  <stat.icon size={20} />
+                <div className={`w-12 h-12 rounded-2xl ${stat.bg} ${stat.border} border flex items-center justify-center ${stat.color}`}>
+                  <stat.icon size={22} />
                 </div>
                 <div>
                   <p className="text-[10px] text-slate-500 font-extrabold uppercase tracking-wider">{stat.label}</p>
-                  <p className="text-xs sm:text-sm font-extrabold text-white mt-1 leading-snug">{stat.value}</p>
+                  <p className="text-sm font-extrabold text-white mt-1 leading-snug">{stat.value}</p>
                 </div>
               </div>
             ))}
@@ -1069,53 +1118,74 @@ const Home = () => {
           }} />
         </div>
 
-        {/* 15. FEATURED VENTURES SECTION */}
+        {/* 8. CUSTOMER SUCCESS & SERVICE STATISTICS SECTION */}
         <section className="mt-24 sm:mt-32 border-t border-white/5 pt-24 sm:pt-32 px-4 sm:px-0">
           <div className="text-center mb-12 sm:mb-16">
-            <h2 className="text-3xl sm:text-4xl md:text-5xl font-extrabold text-white mb-4">Fixvo Ventures</h2>
-            <p className="text-slate-400 text-sm max-w-lg mx-auto">Discover futuristic ecosystems built by the team behind Fixvo home utilities.</p>
+            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-blue-500/10 border border-blue-500/20 text-blue-400 text-xs font-black uppercase tracking-wider mb-3">
+              <Star size={12} className="fill-current text-amber-400" /> Trusted by 10,000+ Households
+            </div>
+            <h2 className="text-3xl sm:text-4xl md:text-5xl font-extrabold text-white mb-4">Customer Success Stories</h2>
+            <p className="text-slate-400 text-sm max-w-lg mx-auto">Read how Fixvo delivers transparent, 30-minute doorstep service to homeowners.</p>
           </div>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-8 max-w-4xl mx-auto">
+
+          {/* Key Service Stats Matrix */}
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4 max-w-4xl mx-auto mb-12">
+            {[
+              { stat: "12,400+", label: "Completed Repairs", icon: CheckCircle2, color: "text-emerald-400" },
+              { stat: "4.9 / 5.0", label: "Average Customer Rating", icon: Star, color: "text-amber-400" },
+              { stat: "30 Mins", label: "Guaranteed Dispatch", icon: Clock, color: "text-cyan-400" },
+              { stat: "100%", label: "Verified Technicians", icon: ShieldCheck, color: "text-indigo-400" }
+            ].map((item, idx) => (
+              <div key={idx} className="bg-[#101524]/60 border border-white/10 rounded-2xl p-5 text-center">
+                <div className={`w-8 h-8 rounded-full bg-white/5 mx-auto mb-2 flex items-center justify-center ${item.color}`}>
+                  <item.icon size={18} />
+                </div>
+                <h4 className="text-xl sm:text-2xl font-black text-white">{item.stat}</h4>
+                <p className="text-[11px] text-slate-400 font-semibold mt-0.5">{item.label}</p>
+              </div>
+            ))}
+          </div>
+
+          {/* Testimonial Cards */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 max-w-4xl mx-auto">
             {[
               {
-                name: "DevPulse AI",
-                desc: "Empowering developers and tech teams with autonomous workflow subagents and intelligent coding pair-partners.",
-                badge: "Active Beta",
-                gradient: "from-cyan-500/10 via-blue-600/10 to-transparent",
-                border: "border-cyan-500/30 hover:border-cyan-400/60",
-                glow: "hover:shadow-[0_0_30px_rgba(6,182,212,0.15)]",
-                icon: Cpu,
-                tagColor: "text-cyan-400 bg-cyan-500/10 border-cyan-500/20",
-                url: "#"
+                quote: "Fixvo technician Rahul arrived in 25 minutes on a Sunday night when our main AC failed. Quick diagnosis, genuine parts, and transparent quote. Lifesaver!",
+                author: "Priya Sharma",
+                area: "Madanapalle Town",
+                rating: 5,
+                service: "AC Deep Repair"
               },
               {
-                name: "Fixvo SmartHome",
-                desc: "Next-gen home automation setups, IoT installations, surveillance planning, and intelligent lighting calibrations.",
-                badge: "Upcoming",
-                gradient: "from-indigo-500/10 via-purple-600/10 to-transparent",
-                border: "border-indigo-500/30 hover:border-indigo-400/60",
-                glow: "hover:shadow-[0_0_30px_rgba(99,102,241,0.15)]",
-                icon: Globe,
-                tagColor: "text-indigo-400 bg-indigo-500/10 border-indigo-500/20",
-                url: "#"
+                quote: "Got our RO water filter installed and tested in under an hour. The digital quote required my one-tap approval before work started. Very trustworthy!",
+                author: "K. Mohan Rao",
+                area: "Kadiri Area",
+                rating: 5,
+                service: "RO Filter Setup"
               }
-            ].map((venture, i) => (
+            ].map((story, i) => (
               <motion.div
                 key={i}
-                whileHover={{ y: -6 }}
-                className={`relative overflow-hidden bg-gradient-to-b ${venture.gradient} bg-[#101524]/60 backdrop-blur-xl border ${venture.border} ${venture.glow} rounded-[2rem] p-8 flex flex-col justify-between h-[250px] shadow-xl transition-all duration-300`}
+                whileHover={{ y: -4 }}
+                className="bg-gradient-to-b from-[#101524]/90 to-[#0B0F19] border border-white/10 rounded-[2rem] p-6 shadow-xl relative flex flex-col justify-between"
               >
-                <div className="flex justify-between items-start">
-                  <div className="w-12 h-12 rounded-2xl bg-white/5 border border-white/10 flex items-center justify-center text-white">
-                    <venture.icon size={22} className={i === 0 ? "text-cyan-400 animate-pulse" : "text-indigo-400"} />
-                  </div>
-                  <span className={`px-2.5 py-1 rounded-full text-[9px] font-black uppercase tracking-wider border ${venture.tagColor}`}>
-                    {venture.badge}
-                  </span>
-                </div>
                 <div>
-                  <h4 className="font-extrabold text-xl text-white tracking-tight">{venture.name}</h4>
-                  <p className="text-xs text-slate-400 mt-2 leading-relaxed">{venture.desc}</p>
+                  <div className="flex justify-between items-center mb-3">
+                    <div className="flex text-amber-400 text-xs">
+                      {[...Array(story.rating)].map((_, r) => (
+                        <Star key={r} size={14} className="fill-current mr-0.5" />
+                      ))}
+                    </div>
+                    <span className="text-[10px] font-black text-cyan-400 bg-cyan-500/10 px-2 py-0.5 rounded border border-cyan-500/20">{story.service}</span>
+                  </div>
+                  <p className="text-xs sm:text-sm text-slate-300 leading-relaxed font-medium italic">"{story.quote}"</p>
+                </div>
+                <div className="mt-4 pt-3 border-t border-white/5 flex items-center justify-between">
+                  <div>
+                    <h5 className="font-extrabold text-xs text-white">{story.author}</h5>
+                    <p className="text-[10px] text-slate-400 flex items-center gap-1"><MapPin size={10} className="text-blue-400" /> {story.area}</p>
+                  </div>
+                  <span className="text-[9px] font-black text-emerald-400 bg-emerald-500/10 px-2 py-0.5 rounded border border-emerald-500/20">Verified Customer</span>
                 </div>
               </motion.div>
             ))}

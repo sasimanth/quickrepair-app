@@ -45,7 +45,7 @@ const Navbar = () => {
               <div className="w-8 h-8 sm:w-10 sm:h-10 group-hover:scale-105 group-hover:rotate-3 transition-all duration-300 shadow-lg shadow-blue-500/30 rounded-full overflow-hidden">
                 <img src={fixvoLogo} alt="Fixvo Logo" className="w-full h-full object-cover scale-110" />
               </div>
-              <span className="font-extrabold text-lg sm:text-2xl tracking-tight bg-clip-text text-transparent bg-gradient-to-r from-blue-700 to-slate-900">
+              <span className="font-extrabold text-lg sm:text-2xl tracking-tight text-blue-500 bg-clip-text text-transparent bg-gradient-to-r from-blue-500 via-blue-600 to-indigo-600">
                 Fixvo
               </span>
             </Link>
