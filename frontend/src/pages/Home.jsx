@@ -490,41 +490,6 @@ const Home = () => {
                     Fixvo
                   </span>
                 </Link>
-
-                <div className="h-4 w-[1px] bg-white/10 hidden sm:block"></div>
-
-                {/* Location selector (no icon as requested) */}
-                <div ref={locationRef} className="relative hidden sm:block">
-                  <button 
-                    onClick={() => setIsLocationDropdownOpen(!isLocationDropdownOpen)}
-                    className="flex items-center gap-1.5 px-3 py-1.5 bg-white/5 border border-white/10 rounded-full hover:bg-white/10 transition text-[10px] sm:text-xs font-bold text-slate-300 hover:text-white cursor-pointer select-none"
-                  >
-                    <span>{selectedLocation}</span>
-                    <ChevronDown size={12} className={`transition-transform duration-200 ${isLocationDropdownOpen ? 'rotate-180' : ''}`} />
-                  </button>
-                  {isLocationDropdownOpen && (
-                    <div className="absolute left-0 mt-2 w-48 bg-[#101524]/95 border border-white/10 rounded-2xl shadow-2xl p-2 z-50 overflow-hidden animate-in fade-in slide-in-from-top-2 duration-200">
-                      {['Madanapalle', 'Madanapalle Bypass', 'Madanapalle Town', 'Malepadu', 'Kadiri', 'Rayachoty', 'Galiveedu'].map((loc) => (
-                        <button
-                          key={loc}
-                          onClick={() => {
-                            setSelectedLocation(loc);
-                            localStorage.setItem('fixvo_selected_location', loc);
-                            setIsLocationDropdownOpen(false);
-                          }}
-                          className={`w-full flex items-center justify-between px-3 py-2 rounded-xl text-[10px] sm:text-xs font-black transition cursor-pointer ${
-                            selectedLocation === loc 
-                              ? 'bg-blue-600/20 text-blue-400 border border-blue-500/20' 
-                              : 'text-slate-400 hover:text-white hover:bg-white/5 border border-transparent'
-                          }`}
-                        >
-                          <span>{loc}</span>
-                          {selectedLocation === loc && <Check size={12} className="text-blue-400" />}
-                        </button>
-                      ))}
-                    </div>
-                  )}
-                </div>
               </div>
 
               {/* Integrated Top Navigation Search Bar (Desktop & Tablet) */}

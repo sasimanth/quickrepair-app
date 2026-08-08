@@ -17,8 +17,18 @@ const VerifyAccount = () => {
   const [resendLoading, setResendLoading] = useState(false);
   const [resendMessage, setResendMessage] = useState('');
   const [emailSuccessMsg, setEmailSuccessMsg] = useState('');
+  const [cooldown, setCooldown] = useState(0);
 
-  // 1. Process email verification token if present in the URL query
+  // Resend cooldown timer
+  useEffect(() => {
+    let timer;
+    if (cooldown > 0) {
+      timer = setTimeout(() => setCooldown(cooldown - 1), 1000);
+    }
+    return () => clearTimeout(timer);
+  }, [cooldown]);
+
+  // 1. Process email verification token if present in URL query
   useEffect(() => {
     const query = new URLSearchParams(location.search);
     const token = query.get('token');
@@ -30,7 +40,6 @@ const VerifyAccount = () => {
         try {
           const { data } = await api.post('/auth/verify-email', { email, token });
           setEmailSuccessMsg(data.message || 'Email verified successfully!');
-          // Refresh user session state
           const meRes = await api.get('/auth/me');
           setUser(meRes.data.user);
         } catch (err) {
@@ -54,23 +63,23 @@ const VerifyAccount = () => {
         } else {
           navigate('/dashboard');
         }
-      }, 3000);
+      }, 2500);
       return () => clearTimeout(timer);
     }
   }, [user, navigate]);
 
   if (!user) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-slate-900 text-white p-6">
-        <div className="max-w-md w-full bg-slate-800/80 backdrop-blur-xl border border-slate-700/50 rounded-2xl p-8 text-center shadow-2xl">
-          <AlertCircle className="w-16 h-16 text-rose-500 mx-auto mb-4 animate-bounce" />
-          <h2 className="text-2xl font-black mb-2">Access Restrained</h2>
-          <p className="text-slate-400 mb-6">Please log in first to access the verification center.</p>
+      <div className="min-h-screen flex items-center justify-center bg-slate-50 text-slate-800 p-6 font-sans">
+        <div className="max-w-md w-full bg-white border border-slate-200 rounded-3xl p-8 text-center shadow-xl">
+          <AlertCircle className="w-14 h-14 text-rose-500 mx-auto mb-4" />
+          <h2 className="text-2xl font-black text-slate-900 mb-2">Login Required</h2>
+          <p className="text-slate-500 text-sm mb-6">Please log in to your Fixvo account to access account verification.</p>
           <button
             onClick={() => navigate('/login')}
-            className="w-full bg-indigo-600 hover:bg-indigo-500 text-white font-bold py-3 rounded-xl shadow-lg transition duration-200"
+            className="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 rounded-xl shadow-md transition duration-200 cursor-pointer"
           >
-            Go to Login
+            Go to Sign In
           </button>
         </div>
       </div>
@@ -87,28 +96,29 @@ const VerifyAccount = () => {
     setOtpLoading(true);
 
     try {
-      const { data } = await api.post('/auth/verify-otp', {
+      await api.post('/auth/verify-otp', {
         phone: user.phone,
         otp
       });
-      // Refresh user session state
       const meRes = await api.get('/auth/me');
       setUser(meRes.data.user);
     } catch (err) {
-      setOtpError(err.response?.data?.message || 'Verification failed. Please check the code.');
+      setOtpError(err.response?.data?.message || 'Verification failed. Please check the code and try again.');
     } finally {
       setOtpLoading(false);
     }
   };
 
   const handleResendCodes = async () => {
+    if (cooldown > 0) return;
     setResendLoading(true);
     setResendMessage('');
     try {
       const { data } = await api.post('/auth/resend-verification', {
         email: user.email
       });
-      setResendMessage(data.message || 'Verification links and SMS codes resent successfully!');
+      setResendMessage(data.message || 'Verification code resent successfully to your phone and email.');
+      setCooldown(60); // 60s cooldown
     } catch (err) {
       setResendMessage(err.response?.data?.message || 'Failed to resend verification requests.');
     } finally {
@@ -119,95 +129,91 @@ const VerifyAccount = () => {
   const isFullyVerified = user.isEmailVerified && user.isPhoneVerified;
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-slate-950 via-slate-900 to-indigo-950 text-white p-6">
-      <div className="max-w-xl w-full bg-slate-900/60 backdrop-blur-2xl border border-slate-800/80 rounded-3xl p-8 sm:p-10 shadow-2xl relative overflow-hidden">
+    <div className="min-h-screen flex items-center justify-center bg-slate-50 text-slate-800 p-4 sm:p-6 font-sans">
+      <div className="max-w-xl w-full bg-white border border-slate-200 rounded-3xl p-6 sm:p-10 shadow-xl relative overflow-hidden">
         
-        {/* Glow Effects */}
-        <div className="absolute -top-20 -left-20 w-48 h-48 bg-indigo-500/10 rounded-full blur-3xl pointer-events-none"></div>
-        <div className="absolute -bottom-20 -right-20 w-48 h-48 bg-emerald-500/10 rounded-full blur-3xl pointer-events-none"></div>
-
         {isFullyVerified ? (
           <div className="text-center py-6 animate-in fade-in zoom-in duration-500">
-            <CheckCircle className="w-20 h-20 text-emerald-400 mx-auto mb-6 drop-shadow-[0_0_15px_rgba(52,211,153,0.3)]" />
-            <h1 className="text-3xl font-black tracking-tight mb-3">Verification Successful!</h1>
-            <p className="text-emerald-300 font-semibold mb-6">Your Fixvo account is now active and secure.</p>
-            <div className="bg-slate-800/40 border border-slate-700/30 rounded-2xl p-4 inline-flex items-center gap-3 text-slate-400 text-sm">
-              <RefreshCw className="w-4 h-4 animate-spin text-indigo-400" />
-              <span>Redirecting you to your secure dashboard...</span>
+            <CheckCircle className="w-16 h-16 text-emerald-500 mx-auto mb-4" />
+            <h1 className="text-2xl sm:text-3xl font-black text-slate-900 mb-2">Account Fully Verified!</h1>
+            <p className="text-emerald-700 font-semibold text-sm mb-6">Your Fixvo account is active. Redirecting to your dashboard...</p>
+            <div className="bg-slate-50 border border-slate-200 rounded-2xl p-4 inline-flex items-center gap-3 text-slate-600 text-xs font-bold">
+              <RefreshCw className="w-4 h-4 animate-spin text-blue-600" />
+              <span>Redirecting now...</span>
             </div>
           </div>
         ) : (
           <div>
             <div className="text-center mb-8">
-              <div className="inline-flex items-center justify-center p-3 bg-indigo-500/10 rounded-2xl border border-indigo-500/20 text-indigo-400 mb-4">
+              <div className="inline-flex items-center justify-center p-3 bg-blue-50 text-blue-600 rounded-2xl border border-blue-100 mb-3">
                 <Lock className="w-6 h-6" />
               </div>
-              <h1 className="text-3xl font-black tracking-tight mb-2">Verify Your Account</h1>
-              <p className="text-slate-400 text-sm">
-                To prevent fraud and maintain marketplace security, please verify your email and mobile number.
+              <h1 className="text-2xl sm:text-3xl font-black text-slate-900 mb-1.5">Account Verification</h1>
+              <p className="text-slate-500 text-xs sm:text-sm max-w-md mx-auto font-medium">
+                To keep your Fixvo account secure and prevent unauthorized access, please confirm your mobile number and email.
               </p>
             </div>
 
             {resendMessage && (
-              <div className={`p-4 rounded-xl border text-sm text-center mb-6 font-semibold flex items-center justify-center gap-2 ${
+              <div className={`p-3.5 rounded-2xl border text-xs text-center mb-6 font-bold flex items-center justify-center gap-2 ${
                 resendMessage.toLowerCase().includes('failed') 
-                  ? 'bg-rose-500/10 border-rose-500/20 text-rose-300' 
-                  : 'bg-emerald-500/10 border-emerald-500/20 text-emerald-300'
+                  ? 'bg-rose-50 border-rose-200 text-rose-700' 
+                  : 'bg-emerald-50 border-emerald-200 text-emerald-700'
               }`}>
-                {resendMessage.toLowerCase().includes('failed') ? <AlertCircle className="w-4 h-4" /> : <CheckCircle className="w-4 h-4" />}
-                {resendMessage}
+                {resendMessage.toLowerCase().includes('failed') ? <AlertCircle className="w-4 h-4 shrink-0" /> : <CheckCircle className="w-4 h-4 shrink-0" />}
+                <span>{resendMessage}</span>
               </div>
             )}
 
-            <div className="space-y-6">
+            <div className="space-y-5">
               {/* EMAIL VERIFICATION SECTION */}
-              <div className={`border rounded-2xl p-6 transition-all duration-300 ${
+              <div className={`border rounded-2xl p-5 transition-all ${
                 user.isEmailVerified 
-                  ? 'bg-emerald-500/5 border-emerald-500/20' 
-                  : 'bg-slate-800/30 border-slate-700/50 hover:border-slate-700'
+                  ? 'bg-emerald-50/50 border-emerald-200' 
+                  : 'bg-slate-50/60 border-slate-200'
               }`}>
                 <div className="flex items-start gap-4">
                   <div className={`p-3 rounded-xl border ${
                     user.isEmailVerified 
-                      ? 'bg-emerald-500/10 border-emerald-500/20 text-emerald-400' 
-                      : 'bg-slate-700/30 border-slate-600/30 text-indigo-400'
+                      ? 'bg-emerald-100 border-emerald-200 text-emerald-700' 
+                      : 'bg-blue-50 border-blue-100 text-blue-600'
                   }`}>
                     <Mail className="w-5 h-5" />
                   </div>
                   <div className="flex-1">
                     <div className="flex items-center justify-between mb-1">
-                      <h3 className="font-bold text-lg">Email Address</h3>
+                      <h3 className="font-bold text-sm sm:text-base text-slate-900">Email Address</h3>
                       {user.isEmailVerified ? (
-                        <span className="text-[10px] sm:text-xs font-black bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 rounded-full px-2.5 py-0.5 uppercase tracking-wider">
+                        <span className="text-[10px] font-black bg-emerald-100 text-emerald-800 border border-emerald-200 rounded-full px-2.5 py-0.5 uppercase tracking-wider">
                           Verified
                         </span>
                       ) : (
-                        <span className="text-[10px] sm:text-xs font-black bg-amber-500/20 text-amber-400 border border-amber-500/30 rounded-full px-2.5 py-0.5 uppercase tracking-wider animate-pulse">
+                        <span className="text-[10px] font-black bg-amber-100 text-amber-800 border border-amber-200 rounded-full px-2.5 py-0.5 uppercase tracking-wider">
                           Pending
                         </span>
                       )}
                     </div>
-                    <p className="text-slate-400 text-xs break-all mb-3">{user.email}</p>
+                    <p className="text-slate-600 text-xs break-all mb-2 font-medium">{user.email}</p>
                     
                     {user.isEmailVerified ? (
-                      <p className="text-emerald-400/90 text-xs font-semibold">Your email has been confirmed.</p>
+                      <p className="text-emerald-600 text-xs font-semibold">Your email has been confirmed.</p>
                     ) : (
                       <div>
                         {emailLoading ? (
-                          <div className="flex items-center gap-2 text-indigo-400 text-xs font-semibold py-1">
+                          <div className="flex items-center gap-2 text-blue-600 text-xs font-semibold py-1">
                             <RefreshCw className="w-3.5 h-3.5 animate-spin" />
-                            Checking verification token link...
+                            Checking verification link...
                           </div>
                         ) : emailSuccessMsg ? (
-                          <p className="text-emerald-400 text-xs font-semibold">{emailSuccessMsg}</p>
+                          <p className="text-emerald-600 text-xs font-semibold">{emailSuccessMsg}</p>
                         ) : emailError ? (
-                          <p className="text-rose-400 text-xs font-semibold flex items-center gap-1">
+                          <p className="text-rose-600 text-xs font-semibold flex items-center gap-1">
                             <AlertCircle className="w-3.5 h-3.5" />
                             {emailError}
                           </p>
                         ) : (
-                          <p className="text-slate-400 text-xs">
-                            A verification link has been sent to your inbox. Please click the link to confirm.
+                          <p className="text-slate-500 text-xs">
+                            Verification email sent. Please check your inbox and tap the link to confirm.
                           </p>
                         )}
                       </div>
@@ -217,40 +223,40 @@ const VerifyAccount = () => {
               </div>
 
               {/* PHONE/SMS OTP VERIFICATION SECTION */}
-              <div className={`border rounded-2xl p-6 transition-all duration-300 ${
+              <div className={`border rounded-2xl p-5 transition-all ${
                 user.isPhoneVerified 
-                  ? 'bg-emerald-500/5 border-emerald-500/20' 
-                  : 'bg-slate-800/30 border-slate-700/50 hover:border-slate-700'
+                  ? 'bg-emerald-50/50 border-emerald-200' 
+                  : 'bg-slate-50/60 border-slate-200'
               }`}>
                 <div className="flex items-start gap-4">
                   <div className={`p-3 rounded-xl border ${
                     user.isPhoneVerified 
-                      ? 'bg-emerald-500/10 border-emerald-500/20 text-emerald-400' 
-                      : 'bg-slate-700/30 border-slate-600/30 text-indigo-400'
+                      ? 'bg-emerald-100 border-emerald-200 text-emerald-700' 
+                      : 'bg-blue-50 border-blue-100 text-blue-600'
                   }`}>
                     <Phone className="w-5 h-5" />
                   </div>
                   <div className="flex-1">
                     <div className="flex items-center justify-between mb-1">
-                      <h3 className="font-bold text-lg">Mobile Number</h3>
+                      <h3 className="font-bold text-sm sm:text-base text-slate-900">Mobile SMS OTP</h3>
                       {user.isPhoneVerified ? (
-                        <span className="text-[10px] sm:text-xs font-black bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 rounded-full px-2.5 py-0.5 uppercase tracking-wider">
+                        <span className="text-[10px] font-black bg-emerald-100 text-emerald-800 border border-emerald-200 rounded-full px-2.5 py-0.5 uppercase tracking-wider">
                           Verified
                         </span>
                       ) : (
-                        <span className="text-[10px] sm:text-xs font-black bg-amber-500/20 text-amber-400 border border-amber-500/30 rounded-full px-2.5 py-0.5 uppercase tracking-wider animate-pulse">
+                        <span className="text-[10px] font-black bg-amber-100 text-amber-800 border border-amber-200 rounded-full px-2.5 py-0.5 uppercase tracking-wider">
                           Pending
                         </span>
                       )}
                     </div>
-                    <p className="text-slate-400 text-xs mb-3">{user.phone}</p>
+                    <p className="text-slate-600 text-xs mb-3 font-medium">{user.phone}</p>
 
                     {user.isPhoneVerified ? (
-                      <p className="text-emerald-400/90 text-xs font-semibold">Mobile number is verified.</p>
+                      <p className="text-emerald-600 text-xs font-semibold">Mobile number confirmed.</p>
                     ) : (
                       <form onSubmit={handleVerifyOtp} className="space-y-3">
-                        <p className="text-slate-400 text-xs">
-                          Please enter the 6-digit verification code sent to your phone.
+                        <p className="text-slate-500 text-xs">
+                          Enter the 6-digit OTP sent to your phone SMS.
                         </p>
                         <div className="flex flex-col sm:flex-row gap-2">
                           <input
@@ -258,19 +264,19 @@ const VerifyAccount = () => {
                             maxLength={6}
                             value={otp}
                             onChange={(e) => setOtp(e.target.value.replace(/\D/g, ''))}
-                            placeholder="Enter 6-digit OTP"
-                            className="bg-slate-950/80 border border-slate-700 rounded-xl px-4 py-2.5 text-center font-mono text-lg tracking-[0.4em] focus:outline-none focus:border-indigo-500 flex-1"
+                            placeholder="6-digit OTP"
+                            className="bg-slate-50 border border-slate-300 rounded-xl px-4 py-2 text-center font-mono text-base tracking-[0.3em] text-slate-900 focus:outline-none focus:border-blue-600 focus:bg-white flex-1"
                           />
                           <button
                             type="submit"
                             disabled={otpLoading || otp.length !== 6}
-                            className="bg-indigo-600 hover:bg-indigo-500 disabled:opacity-50 disabled:cursor-not-allowed text-white font-bold px-6 py-2.5 rounded-xl transition duration-200"
+                            className="bg-blue-600 hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed text-white font-bold px-5 py-2 rounded-xl text-xs transition duration-200 cursor-pointer"
                           >
-                            {otpLoading ? <RefreshCw className="w-5 h-5 animate-spin mx-auto" /> : 'Verify Code'}
+                            {otpLoading ? <RefreshCw className="w-4 h-4 animate-spin mx-auto" /> : 'Verify Code'}
                           </button>
                         </div>
                         {otpError && (
-                          <p className="text-rose-400 text-xs font-semibold flex items-center gap-1">
+                          <p className="text-rose-600 text-xs font-semibold flex items-center gap-1 mt-1">
                             <AlertCircle className="w-3.5 h-3.5" />
                             {otpError}
                           </p>
@@ -283,25 +289,26 @@ const VerifyAccount = () => {
             </div>
 
             {/* ACTION RESEND SECTION */}
-            <div className="mt-8 pt-6 border-t border-slate-800/80 flex flex-col sm:flex-row items-center justify-between gap-4">
+            <div className="mt-8 pt-5 border-t border-slate-200 flex flex-col sm:flex-row items-center justify-between gap-4">
               <button
+                type="button"
                 onClick={handleResendCodes}
-                disabled={resendLoading}
-                className="group flex items-center gap-2 text-indigo-400 hover:text-indigo-300 font-bold text-sm transition duration-150 cursor-pointer disabled:opacity-50"
+                disabled={resendLoading || cooldown > 0}
+                className="group flex items-center gap-2 text-blue-600 hover:text-blue-700 font-bold text-xs transition cursor-pointer disabled:opacity-50"
               >
-                <RefreshCw className={`w-4 h-4 group-hover:rotate-180 transition-transform duration-500 ${resendLoading ? 'animate-spin' : ''}`} />
-                Resend Verification Code & Email
+                <RefreshCw className={`w-3.5 h-3.5 ${resendLoading ? 'animate-spin' : ''}`} />
+                {cooldown > 0 ? `Resend available in ${cooldown}s` : 'Resend Verification Code'}
               </button>
 
               <button
+                type="button"
                 onClick={() => {
-                  const { logout } = useAuth();
                   localStorage.removeItem('token');
                   window.location.href = '/login';
                 }}
-                className="text-slate-500 hover:text-slate-400 text-xs underline font-semibold transition"
+                className="text-slate-400 hover:text-slate-600 text-xs font-semibold transition bg-transparent border-0 cursor-pointer"
               >
-                Log out & use different account
+                Sign out
               </button>
             </div>
           </div>

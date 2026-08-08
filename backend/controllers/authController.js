@@ -215,14 +215,14 @@ const signup = async (req, res) => {
           console.log(`📱 [SMS DISPATCH] Verification OTP for ${phone} is: ${otp}`);
           console.log(`======================================================\n`);
 
-          // Send verification details
+          // Send verification details (real OTP/URL sent via Email/SMS, safe message in notification center)
           notifyUser({
             userId: user._id.toString(),
             email: user.email,
             phone: user.phone,
             type: 'both',
             subject: 'Verify your Fixvo Account 🔒',
-            text: `Hi ${user.name}, welcome to Fixvo! Your SMS OTP is ${otp}. To complete email verification, click this link: ${verificationUrl}`,
+            text: `Hi ${user.name}, welcome to Fixvo! Please check your email and phone SMS to verify your account.`,
           }).catch(err => console.error('Failed to send verification notification:', err));
         } catch (e) {
           console.error('Failed to initiate verification notifications:', e);
@@ -583,7 +583,7 @@ const resendVerification = async (req, res) => {
         phone: user.phone,
         type: 'both',
         subject: 'Verify your Fixvo Account (Resend) 🔒',
-        text: `Your SMS OTP is ${newOtp}. To complete email verification, click: ${verificationUrl}`,
+        text: `A new verification request was sent. Please check your email and phone SMS to complete verification.`,
       }).catch(err => console.error('Failed to resend verification:', err));
     } catch (e) {
       console.error('Failed to initiate resend alerts:', e);

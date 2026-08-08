@@ -998,7 +998,7 @@ const UserDashboard = () => {
   ];
 
   return (
-    <div className="min-h-screen bg-slate-950 text-white font-sans mt-4 sm:mt-10 pb-16">
+    <div className="min-h-screen bg-slate-50 text-slate-900 font-sans mt-4 sm:mt-8 pb-24">
       {showForm ? (
         <div className="max-w-4xl mx-auto p-4 sm:p-8 animate-in fade-in duration-300">
           <div className="bg-slate-900/60 backdrop-blur-2xl border border-slate-800/80 rounded-3xl p-6 sm:p-10 shadow-2xl relative overflow-hidden">
@@ -1586,47 +1586,46 @@ const UserDashboard = () => {
           </div>
         </div>
       ) : (
-                  <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mt-4 sm:mt-10 animate-in fade-in duration-300">
+                  <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mt-4 sm:mt-8 animate-in fade-in duration-300">
                     <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
                       
                       {/* Sidebar menu */}
                       <div className="md:col-span-1 space-y-6">
                         
                         {/* Profile Card */}
-                        <div className="bg-slate-900/60 backdrop-blur-xl border border-white/5 rounded-3xl p-6 shadow-2xl relative overflow-hidden text-center">
-                          <div className="absolute top-[-30%] left-[-10%] w-32 h-32 bg-indigo-500/10 rounded-full blur-2xl pointer-events-none"></div>
-                          <div className="w-20 h-20 bg-indigo-650/20 border border-indigo-500/20 rounded-2xl flex items-center justify-center text-4xl shadow-inner mx-auto mb-4 relative">
+                        <div className="bg-white border border-slate-200 rounded-3xl p-6 shadow-sm relative overflow-hidden text-center">
+                          <div className="w-20 h-20 bg-blue-50 border border-blue-100 rounded-2xl flex items-center justify-center text-4xl shadow-inner mx-auto mb-4 relative">
                             {profile?.avatar || '👤'}
                             {profile?.isPremium && (
-                              <span className="absolute -top-1.5 -right-1.5 bg-amber-500 text-slate-950 px-2 py-0.5 rounded-lg shadow-lg border border-amber-300 text-[8px] font-black uppercase tracking-wider animate-pulse">Plus</span>
+                              <span className="absolute -top-1.5 -right-1.5 bg-amber-500 text-white px-2 py-0.5 rounded-lg shadow border border-amber-300 text-[8px] font-black uppercase tracking-wider">Plus</span>
                             )}
                           </div>
-                          <h2 className="text-lg font-black tracking-tight text-white flex items-center justify-center gap-1.5 font-bold">
+                          <h2 className="text-lg font-black tracking-tight text-slate-900 flex items-center justify-center gap-1.5">
                             {profile?.name || 'Customer'}
                             {(profile?.isEmailVerified || profile?.isPhoneVerified) && (
-                              <ShieldCheck size={16} className="text-emerald-400 shrink-0" title="Verified Customer" />
+                              <ShieldCheck size={16} className="text-emerald-500 shrink-0" title="Verified Customer" />
                             )}
                           </h2>
-                          <p className="text-xs text-slate-400 font-medium truncate mt-0.5">{profile?.email}</p>
-                          <p className="text-xs text-slate-500 font-medium mt-0.5">{profile?.phone}</p>
+                          <p className="text-xs text-slate-500 font-medium truncate mt-0.5">{profile?.email}</p>
+                          <p className="text-xs text-slate-400 font-medium mt-0.5">{profile?.phone}</p>
                           
                           {/* Complete Profile Warning */}
                           {(!profile?.name || !profile?.phone || !profile?.address) && (
-                            <div className="mt-3.5 px-3 py-2 bg-amber-500/10 border border-amber-500/20 text-amber-300 rounded-xl text-[10px] font-black uppercase tracking-wider flex items-center justify-center gap-1">
+                            <div className="mt-3.5 px-3 py-2 bg-amber-50 border border-amber-200 text-amber-800 rounded-xl text-[10px] font-black uppercase tracking-wider flex items-center justify-center gap-1">
                               <AlertCircle size={12} /> Incomplete Profile
                             </div>
                           )}
 
                           <button
                             onClick={() => setShowSettings(true)}
-                            className="w-full mt-4 bg-slate-800 hover:bg-slate-700 text-white font-bold py-2 rounded-xl text-xs transition duration-200 cursor-pointer border-none outline-none"
+                            className="w-full mt-4 bg-slate-100 hover:bg-slate-200 text-slate-800 font-bold py-2 rounded-xl text-xs transition duration-200 cursor-pointer border-none outline-none"
                           >
                             Edit Profile
                           </button>
                         </div>
 
                         {/* Sidebar Menu */}
-                        <div className="hidden md:block bg-slate-900/40 border border-white/5 rounded-3xl p-4 space-y-1">
+                        <div className="hidden md:block bg-white border border-slate-200 rounded-3xl p-4 space-y-1 shadow-sm">
                           {sidebarItems.map(item => {
                             const IconComp = item.icon;
                             const isSelected = activeSubTab === item.id;
@@ -1634,13 +1633,13 @@ const UserDashboard = () => {
                               <button
                                 key={item.id}
                                 onClick={() => setActiveSubTab(item.id)}
-                                className={`w-full flex items-center gap-3 px-4.5 py-3 rounded-2xl text-xs font-black transition-all cursor-pointer border-none outline-none text-left tracking-wide ${
+                                className={`w-full flex items-center gap-3 px-4 py-3 rounded-2xl text-xs font-bold transition-all cursor-pointer border-none outline-none text-left tracking-wide ${
                                   isSelected 
-                                    ? 'bg-indigo-650 text-white shadow-md shadow-indigo-600/10' 
-                                    : 'text-slate-400 hover:text-slate-205 hover:bg-slate-900/40'
+                                    ? 'bg-blue-600 text-white shadow-md shadow-blue-600/20' 
+                                    : 'text-slate-600 hover:text-slate-900 hover:bg-slate-50'
                                 }`}
                               >
-                                <IconComp size={16} className={isSelected ? "text-white animate-pulse" : "text-slate-500"} />
+                                <IconComp size={16} className={isSelected ? "text-white" : "text-slate-400"} />
                                 <span>{item.label}</span>
                               </button>
                             );
@@ -1649,41 +1648,41 @@ const UserDashboard = () => {
                       </div>
 
                       {/* Main content pane */}
-                      <div className="md:col-span-3 bg-slate-900/20 border border-white/5 rounded-[2rem] p-6 sm:p-8 shadow-inner min-h-[500px]">
+                      <div className="md:col-span-3 bg-white border border-slate-200 rounded-[2rem] p-6 sm:p-8 shadow-sm min-h-[500px]">
                         
                         {/* OVERVIEW TAB */}
                         {activeSubTab === 'overview' && (
                           <div className="space-y-8 animate-in fade-in duration-300">
-                            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 border-b border-white/5 pb-4">
+                            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 border-b border-slate-100 pb-5">
                               <div>
-                                <h2 className="text-xl sm:text-2xl font-black tracking-tight text-white">Welcome back, {profile?.name?.split(' ')[0] || 'Client'}! 👋</h2>
-                                <p className="text-xs text-slate-400 mt-1 font-medium font-semibold">Manage your services, wallet and account rewards</p>
+                                <h2 className="text-xl sm:text-2xl font-black tracking-tight text-slate-900">Welcome back, {profile?.name?.split(' ')[0] || 'Client'}! 👋</h2>
+                                <p className="text-xs text-slate-500 mt-1 font-semibold">Manage your services, wallet and account rewards</p>
                               </div>
                               <button
                                 onClick={() => setShowForm(true)}
-                                className="bg-indigo-600 hover:bg-indigo-500 text-white font-black px-5 py-3 rounded-xl text-xs uppercase tracking-widest flex items-center gap-1.5 shadow-lg shadow-indigo-650/15 cursor-pointer active:scale-95 transition-all border-none outline-none"
+                                className="bg-blue-600 hover:bg-blue-700 text-white font-extrabold px-5 py-3 rounded-xl text-xs uppercase tracking-wider flex items-center gap-1.5 shadow-md shadow-blue-600/20 cursor-pointer active:scale-95 transition-all border-none outline-none"
                               >
-                                <Plus size={14} /> Book Repair
+                                <Plus size={14} /> + Book Service
                               </button>
                             </div>
 
                             {/* Plus promo banner */}
                             {!profile?.isPremium && (
-                              <div className="bg-gradient-to-r from-slate-950 via-[#1E293B] to-indigo-950 border border-amber-500/30 rounded-3xl p-5 flex flex-col sm:flex-row items-center justify-between gap-5 shadow-lg">
+                              <div className="bg-amber-50/60 border border-amber-200 rounded-3xl p-5 flex flex-col sm:flex-row items-center justify-between gap-5 shadow-sm">
                                 <div className="flex items-center gap-3.5 text-center sm:text-left">
-                                  <div className="w-12 h-12 bg-gradient-to-br from-amber-400 to-yellow-500 text-slate-950 rounded-2xl flex items-center justify-center shrink-0 shadow-lg shadow-amber-500/20">
-                                    <Sparkles size={20} className="animate-pulse" />
+                                  <div className="w-12 h-12 bg-amber-500 text-white rounded-2xl flex items-center justify-center shrink-0 shadow-md">
+                                    <Sparkles size={20} />
                                   </div>
                                   <div className="space-y-0.5">
-                                    <h3 className="text-sm font-extrabold text-white">Upgrade to Fixvo Plus</h3>
-                                    <p className="text-[10px] text-slate-455 font-semibold max-w-sm leading-relaxed">
+                                    <h3 className="text-sm font-extrabold text-slate-900">Upgrade to Fixvo Plus</h3>
+                                    <p className="text-[11px] text-slate-600 font-medium max-w-sm leading-relaxed">
                                       Get 5% discount on all quotes, zero inspection fees (save ₹99), and priority technician dispatch.
                                     </p>
                                   </div>
                                 </div>
                                 <button 
                                   onClick={() => setShowPremiumModal(true)}
-                                  className="px-4.5 py-2.5 bg-gradient-to-r from-amber-400 to-yellow-500 text-slate-950 font-black text-[10px] uppercase tracking-wider rounded-xl shadow-md cursor-pointer border-none outline-none active:scale-95 transition-all"
+                                  className="px-4.5 py-2.5 bg-amber-500 hover:bg-amber-600 text-white font-black text-[11px] uppercase tracking-wider rounded-xl shadow cursor-pointer border-none outline-none active:scale-95 transition-all shrink-0"
                                 >
                                   Upgrade to Plus
                                 </button>
@@ -1692,7 +1691,7 @@ const UserDashboard = () => {
 
                             {/* Quick actions cards */}
                             <div className="space-y-4">
-                              <h3 className="font-extrabold text-xs text-slate-450 uppercase tracking-widest ml-1">Quick Actions</h3>
+                              <h3 className="font-extrabold text-xs text-slate-400 uppercase tracking-wider ml-1">Quick Actions</h3>
                               <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
                                 {sidebarItems.filter(i => i.id !== 'overview').map(item => {
                                   const IconComp = item.icon;
@@ -1700,12 +1699,12 @@ const UserDashboard = () => {
                                     <div
                                       key={item.id}
                                       onClick={() => setActiveSubTab(item.id)}
-                                      className="bg-slate-900/40 border border-white/5 hover:border-indigo-500/30 hover:bg-slate-900/60 p-5 rounded-2xl text-center cursor-pointer transition-all duration-300 hover:-translate-y-1 shadow-sm flex flex-col items-center justify-center min-h-[110px]"
+                                      className="bg-slate-50 border border-slate-200 hover:border-blue-300 hover:bg-blue-50/50 p-5 rounded-2xl text-center cursor-pointer transition-all duration-300 hover:-translate-y-0.5 shadow-sm flex flex-col items-center justify-center min-h-[110px]"
                                     >
-                                      <div className="p-3 bg-indigo-650/10 text-indigo-405 border border-indigo-505/20 rounded-xl mb-3 shrink-0">
+                                      <div className="p-3 bg-blue-100/80 text-blue-600 border border-blue-200/50 rounded-xl mb-3 shrink-0">
                                         <IconComp size={18} />
                                       </div>
-                                      <h4 className="font-extrabold text-white text-xs tracking-tight">{item.label}</h4>
+                                      <h4 className="font-extrabold text-slate-800 text-xs tracking-tight">{item.label}</h4>
                                     </div>
                                   );
                                 })}
@@ -1714,29 +1713,29 @@ const UserDashboard = () => {
 
                             {/* Bookings Preview */}
                             <div className="space-y-4">
-                              <h3 className="font-extrabold text-xs text-slate-455 uppercase tracking-widest ml-1">Recent Booking Status</h3>
+                              <h3 className="font-extrabold text-xs text-slate-400 uppercase tracking-wider ml-1">Recent Booking Status</h3>
                               {bookings.length === 0 ? (
-                                <div className="bg-slate-900/20 border border-white/5 rounded-3xl p-8 text-center text-slate-550 font-bold text-sm">
-                                  No service bookings yet. Click "Book Repair" to request your first visit.
+                                <div className="bg-slate-50 border border-slate-200 rounded-3xl p-8 text-center text-slate-500 font-semibold text-sm">
+                                  No service bookings yet. Click "+ Book Service" to request your first visit.
                                 </div>
                               ) : (
                                 <div className="space-y-4">
                                   {bookings.slice(0, 1).map(booking => (
-                                    <div key={booking._id} className="bg-slate-900/40 border border-white/5 rounded-2xl p-5 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+                                    <div key={booking._id} className="bg-slate-50 border border-slate-200 rounded-2xl p-5 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
                                       <div className="space-y-1 text-left">
-                                        <span className="inline-block text-[9px] bg-indigo-500/10 text-indigo-400 border border-indigo-500/20 px-2 py-0.5 rounded uppercase tracking-wider font-extrabold">
+                                        <span className="inline-block text-[9px] bg-blue-100 text-blue-700 border border-blue-200 px-2 py-0.5 rounded uppercase tracking-wider font-extrabold">
                                           {booking.serviceName || 'Service Visit'}
                                         </span>
-                                        <h4 className="font-bold text-white text-sm">ID: #{booking._id.slice(-6).toUpperCase()} • Final Bill: ₹{booking.finalQuote || booking.amount || 0}</h4>
-                                        <p className="text-[10px] text-slate-450 font-medium">Date: {booking.date ? new Date(booking.date).toLocaleDateString() : 'Pending'}</p>
+                                        <h4 className="font-bold text-slate-900 text-sm">ID: #{booking._id.slice(-6).toUpperCase()} • Bill: ₹{booking.finalQuote || booking.amount || 0}</h4>
+                                        <p className="text-[11px] text-slate-500 font-medium">Date: {booking.date ? new Date(booking.date).toLocaleDateString() : 'Pending'}</p>
                                       </div>
                                       <div className="flex items-center gap-3 w-full sm:w-auto justify-between sm:justify-end">
-                                        <span className="text-[10px] uppercase font-black tracking-wider text-slate-350 bg-slate-800 px-3 py-1 rounded-full border border-white/5">
+                                        <span className="text-[10px] uppercase font-black tracking-wider text-slate-700 bg-slate-200 px-3 py-1 rounded-full border border-slate-300">
                                           {booking.status}
                                         </span>
                                         <button
                                           onClick={() => setActiveSubTab('bookings')}
-                                          className="text-xs text-indigo-400 hover:text-indigo-300 font-extrabold cursor-pointer border-none bg-transparent outline-none"
+                                          className="text-xs text-blue-600 hover:text-blue-700 font-extrabold cursor-pointer border-none bg-transparent outline-none"
                                         >
                                           View Details
                                         </button>

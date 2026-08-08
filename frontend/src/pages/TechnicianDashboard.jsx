@@ -774,19 +774,18 @@ const TechnicianDashboard = () => {
   };
 
   return (
-    <div className="min-h-screen bg-slate-950 text-white font-sans mt-4 sm:mt-10 pb-16">
+    <div className="min-h-screen bg-slate-50 text-slate-900 font-sans mt-4 sm:mt-8 pb-24">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-6 sm:space-y-10 animate-in fade-in duration-300">
         
         {/* Productivity Header & Profile Section */}
-        <div className="relative overflow-hidden rounded-[2.5rem] bg-gradient-to-br from-slate-900/80 to-[#111827]/80 border border-white/5 p-6 sm:p-8 shadow-2xl backdrop-blur-xl">
-          <div className="absolute top-[-30%] right-[-10%] w-[35%] h-[150%] bg-[radial-gradient(circle_at_center,_rgba(99,102,241,0.15),_transparent_65%)] rounded-full pointer-events-none animate-pulse"></div>
+        <div className="relative overflow-hidden rounded-[2.5rem] bg-white border border-slate-200 p-6 sm:p-8 shadow-sm">
           
           <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-6 relative z-10">
             <div className="flex flex-col sm:flex-row items-center gap-5 text-center sm:text-left w-full lg:w-auto">
-              <div className="w-20 h-20 bg-indigo-650/20 border border-indigo-500/20 rounded-2xl flex items-center justify-center text-4xl shadow-inner relative shrink-0">
+              <div className="w-20 h-20 bg-blue-50 border border-blue-100 rounded-2xl flex items-center justify-center text-4xl shadow-inner relative shrink-0">
                 {profile?.avatar || '🔧'}
                 {profile?.isVerified && (
-                  <span className="absolute -top-1.5 -right-1.5 bg-emerald-500 text-slate-950 p-1 rounded-lg shadow-lg border border-emerald-300">
+                  <span className="absolute -top-1.5 -right-1.5 bg-emerald-500 text-white p-1 rounded-lg shadow border border-emerald-300">
                     <ShieldCheck size={10} className="stroke-[3]" />
                   </span>
                 )}
@@ -794,18 +793,18 @@ const TechnicianDashboard = () => {
               
               <div className="space-y-1.5 flex-1">
                 <div className="flex flex-wrap items-center justify-center sm:justify-start gap-2">
-                  <h1 className="text-xl sm:text-2xl font-black tracking-tight text-white">{profile?.name || 'Technician'}</h1>
+                  <h1 className="text-xl sm:text-2xl font-black tracking-tight text-slate-900">{profile?.name || 'Technician'}</h1>
                   {profile?.isVerified ? (
-                    <span className="bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 font-extrabold text-[9px] px-2.5 py-0.5 rounded-full uppercase tracking-wider">Verified Partner</span>
+                    <span className="bg-emerald-100 border border-emerald-200 text-emerald-800 font-extrabold text-[9px] px-2.5 py-0.5 rounded-full uppercase tracking-wider">Verified Partner</span>
                   ) : (
-                    <span className="bg-amber-500/10 border border-amber-500/20 text-amber-400 font-extrabold text-[9px] px-2.5 py-0.5 rounded-full uppercase tracking-wider">Pending Verification</span>
+                    <span className="bg-amber-100 border border-amber-200 text-amber-800 font-extrabold text-[9px] px-2.5 py-0.5 rounded-full uppercase tracking-wider">Pending Verification</span>
                   )}
                 </div>
-                <p className="text-xs text-slate-400 font-medium">Experience: {profile?.experience || 'N/A'} • Skills: {profile?.skills?.join(', ') || 'General Repair'}</p>
+                <p className="text-xs text-slate-500 font-medium">Experience: {profile?.experience || 'N/A'} • Skills: {profile?.skills?.join(', ') || 'General Repair'}</p>
                 <div className="flex flex-wrap justify-center sm:justify-start gap-2 text-[10px] text-slate-500 font-semibold uppercase tracking-wider">
-                  <span>Rating: <strong className="text-amber-400">★ {profile?.rating || '5.0'}</strong></span>
-                  <span className="border-l border-white/10 pl-2">Jobs: <strong className="text-indigo-400">{profile?.completedJobsCount || '0'}</strong></span>
-                  <span className="border-l border-white/10 pl-2">Areas: <strong className="text-white">{profile?.address || 'Local'}</strong></span>
+                  <span>Rating: <strong className="text-amber-600">★ {profile?.rating || '5.0'}</strong></span>
+                  <span className="border-l border-slate-200 pl-2">Jobs: <strong className="text-blue-600">{profile?.completedJobsCount || '0'}</strong></span>
+                  <span className="border-l border-slate-200 pl-2">Areas: <strong className="text-slate-800">{profile?.address || 'Local'}</strong></span>
                 </div>
               </div>
             </div>
@@ -814,20 +813,20 @@ const TechnicianDashboard = () => {
             <div className="flex flex-wrap items-center gap-3 w-full lg:w-auto justify-center sm:justify-start lg:justify-end">
               {profile?.isProfileComplete && (() => {
                 const status = profile?.currentStatus || (profile?.isOnline ? 'online' : 'offline');
-                let btnClass = 'bg-slate-900 border-white/5 hover:bg-slate-850 text-slate-400';
-                let dotClass = 'bg-slate-600';
+                let btnClass = 'bg-slate-100 border-slate-200 text-slate-600';
+                let dotClass = 'bg-slate-400';
                 let label = 'Offline (Hidden)';
                 
                 if (status === 'online' || status === 'available') {
-                  btnClass = 'bg-emerald-500/10 border-emerald-500/20 text-emerald-400 hover:bg-emerald-500/20';
+                  btnClass = 'bg-emerald-50 border-emerald-200 text-emerald-700 hover:bg-emerald-100';
                   dotClass = 'bg-emerald-500 animate-pulse';
                   label = 'Online & Active';
                 } else if (status === 'on_job') {
-                  btnClass = 'bg-blue-500/10 border-blue-500/20 text-blue-400 cursor-not-allowed';
-                  dotClass = 'bg-blue-500 animate-ping';
+                  btnClass = 'bg-blue-50 border-blue-200 text-blue-700 cursor-not-allowed';
+                  dotClass = 'bg-blue-600 animate-ping';
                   label = 'On Active Job';
                 } else if (status === 'busy') {
-                  btnClass = 'bg-amber-500/10 border-amber-500/20 text-amber-400 hover:bg-amber-500/20';
+                  btnClass = 'bg-amber-50 border-amber-200 text-amber-700 hover:bg-amber-100';
                   dotClass = 'bg-amber-500 animate-pulse';
                   label = 'Busy';
                 }
@@ -836,7 +835,7 @@ const TechnicianDashboard = () => {
                   <button
                     onClick={status === 'on_job' ? null : toggleOnlineStatus}
                     disabled={status === 'on_job'}
-                    className={`flex items-center gap-2 px-5 py-3 rounded-xl font-black text-xs uppercase tracking-widest border transition-all cursor-pointer shadow-md ${btnClass}`}
+                    className={`flex items-center gap-2 px-5 py-3 rounded-xl font-black text-xs uppercase tracking-wider border transition-all cursor-pointer shadow-sm ${btnClass}`}
                   >
                     <span className={`w-2 h-2 rounded-full ${dotClass}`}></span>
                     <span>{label}</span>
@@ -846,7 +845,7 @@ const TechnicianDashboard = () => {
 
               <button
                 onClick={() => setShowSettings(true)}
-                className="bg-slate-900 hover:bg-slate-850 border border-white/5 text-slate-350 font-extrabold px-4.5 py-3 rounded-xl transition-all text-xs uppercase tracking-widest flex items-center gap-1.5 cursor-pointer outline-none"
+                className="bg-slate-100 hover:bg-slate-200 border border-slate-200 text-slate-800 font-extrabold px-4.5 py-3 rounded-xl transition-all text-xs uppercase tracking-wider flex items-center gap-1.5 cursor-pointer outline-none shadow-sm"
               >
                 <Settings size={14} /> Settings
               </button>

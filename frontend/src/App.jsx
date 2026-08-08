@@ -128,12 +128,14 @@ const PromoBanner = () => {
 const AppContent = () => {
   const location = useLocation();
   const isHome = location.pathname === '/';
+  const isDashboard = ['/dashboard', '/technician-dashboard', '/admin-dashboard'].includes(location.pathname);
+
   return (
-    <div className="min-h-screen bg-gray-50 flex flex-col relative">
+    <div className="min-h-screen bg-slate-50 flex flex-col relative">
       {isHome && <PromoBanner />}
       <Navbar />
       <main className="flex-grow flex flex-col">
-        <Suspense fallback={<LoadingSpinner text="Initializing Fixvo Secure Dashboard..." />}>
+        <Suspense fallback={<LoadingSpinner text="Initializing Fixvo Secure Platform..." />}>
           <Routes>
             <Route path="/" element={<Home />} />
             <Route path="/book" element={<Booking />} />
@@ -176,7 +178,7 @@ const AppContent = () => {
           </Routes>
         </Suspense>
       </main>
-      <Footer />
+      {!isDashboard && <Footer />}
     </div>
   );
 };
