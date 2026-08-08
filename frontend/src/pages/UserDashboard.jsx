@@ -21,7 +21,7 @@ import SavedAddresses from '../components/SavedAddresses';
 import WalletView from '../components/WalletView';
 import ReferralView from '../components/ReferralView';
 import RewardsView from '../components/RewardsView';
-import SupportView from '../components/SupportView';
+import HelpSupportView from '../components/HelpSupportView';
 
 const formatPhoneLink = (phone) => {
   if (!phone) return '';
@@ -59,9 +59,52 @@ const UserDashboard = () => {
   const [ticketForm, setTicketForm] = useState({ category: 'Booking', subject: '', message: '' });
   const [showTicketForm, setShowTicketForm] = useState(false);
 
-  // Settings states
+  // Settings & Profile states
   const [isDarkMode, setIsDarkMode] = useState(false);
   const [preferredLanguage, setPreferredLanguage] = useState('English');
+  const [filterTab, setFilterTab] = useState('all');
+  const [expandedBookings, setExpandedBookings] = useState({});
+  const toggleExpand = (id) => setExpandedBookings(prev => ({ ...prev, [id]: !prev[id] }));
+
+  const [profileForm, setProfileForm] = useState({
+    name: '',
+    email: '',
+    phone: '',
+    address: '',
+    avatar: '👤'
+  });
+  const [isEditingProfile, setIsEditingProfile] = useState(false);
+  const [savingProfile, setSavingProfile] = useState(false);
+
+  useEffect(() => {
+    if (profile) {
+      setProfileForm({
+        name: profile.name || '',
+        email: profile.email || '',
+        phone: profile.phone || '',
+        address: profile.address || profile.location || '',
+        avatar: profile.avatar || '👤'
+      });
+    }
+  }, [profile]);
+
+  const handleSaveProfile = async (e) => {
+    e.preventDefault();
+    setSavingProfile(true);
+    try {
+      const { data } = await api.put('/users/profile', profileForm);
+      setProfile(data.user || { ...profile, ...profileForm });
+      setIsEditingProfile(false);
+      if (typeof showToast === 'function') {
+        showToast('Profile Updated! ✅', 'Your profile details have been saved successfully.', 'success');
+      }
+    } catch (err) {
+      setProfile(prev => ({ ...prev, ...profileForm }));
+      setIsEditingProfile(false);
+    } finally {
+      setSavingProfile(false);
+    }
+  };
 
   const [dispatchStatus, setDispatchStatus] = useState({}); // bookingId -> { status, radius, technicianName, timeout }
   const [loading, setLoading] = useState(true);
@@ -844,15 +887,6 @@ const UserDashboard = () => {
       bg: 'bg-amber-500/10 text-amber-450 border-amber-500/20',
       badge: 'bg-amber-500/20 text-amber-400 border-amber-500/30'
     };
-  };
-
-  const [expandedBookings, setExpandedBookings] = useState({});
-  const [filterTab, setFilterTab] = useState('all');
-
-  const toggleExpand = (id) => {
-    setExpandedBookings(prev => ({ ...prev, [id]: !prev[id] }));
-  };
-
   // Saved Address Handlers
   const handleAddAddress = (e) => {
     e.preventDefault();
@@ -985,6 +1019,10 @@ const UserDashboard = () => {
   });
 
 
+  const activeBooking = bookings.find(b => ['requested', 'accepted', 'technician_assigned', 'on_the_way', 'in_progress', 'inspection_started', 'quote_pending'].includes(b.status));
+  const completedCount = bookings.filter(b => b.status === 'completed').length;
+  const activeCount = bookings.filter(b => !['completed', 'cancelled', 'rejected'].includes(b.status)).length;
+
   const sidebarItems = [
     { id: 'overview', label: 'Overview', icon: LayoutDashboard },
     { id: 'bookings', label: 'My Bookings', icon: Calendar },
@@ -1001,64 +1039,64 @@ const UserDashboard = () => {
     <div className="min-h-screen bg-slate-50 text-slate-900 font-sans mt-4 sm:mt-8 pb-24">
       {showForm ? (
         <div className="max-w-4xl mx-auto p-4 sm:p-8 animate-in fade-in duration-300">
-          <div className="bg-slate-900/60 backdrop-blur-2xl border border-slate-800/80 rounded-3xl p-6 sm:p-10 shadow-2xl relative overflow-hidden">
-            <div className={`absolute top-0 left-0 h-1.5 bg-gradient-to-r from-blue-500 via-indigo-500 to-purple-500 transition-all duration-750 ${step === 1 ? 'w-1/2' : 'w-full'}`}></div>
+          <div className="bg-white border border-slate-200 rounded-3xl p-6 sm:p-10 shadow-xl relative overflow-hidden">
+            <div className={`absolute top-0 left-0 h-1.5 bg-blue-600 transition-all duration-500 ${step === 1 ? 'w-1/2' : 'w-full'}`}></div>
             
             <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-8">
               <div className="flex items-center gap-3">
-                <div className="p-3 bg-indigo-600/20 text-indigo-400 rounded-2xl border border-indigo-500/20">
+                <div className="p-3 bg-blue-50 text-blue-600 rounded-2xl border border-blue-100">
                   <Wrench size={22} />
                 </div>
                 <div>
-                  <h2 className="text-xl sm:text-2xl font-black tracking-tight text-white">
+                  <h2 className="text-xl sm:text-2xl font-black tracking-tight text-slate-900">
                     {step === 1 ? 'Schedule a Repair' : 'Select a Technician'}
                   </h2>
-                  <p className="text-xs text-slate-400 mt-1 font-medium">Verify details and match with nearby experts</p>
+                  <p className="text-xs text-slate-500 mt-1 font-medium">Verify details and match with nearby experts</p>
                 </div>
               </div>
               
-              <div className="flex items-center gap-2 text-xs font-bold bg-slate-950/60 border border-white/5 rounded-full px-4 py-1.5 self-start sm:self-auto">
-                <span className={`px-2 py-0.5 rounded-full ${step >= 1 ? 'bg-indigo-600/20 text-indigo-400 border border-indigo-500/30' : 'text-slate-500'}`}>1. Details</span>
-                <ChevronRight size={12} className="text-slate-650"/>
-                <span className={`px-2 py-0.5 rounded-full ${step >= 2 ? 'bg-indigo-600/20 text-indigo-400 border border-indigo-500/30' : 'text-slate-500'}`}>2. Match Tech</span>
+              <div className="flex items-center gap-2 text-xs font-bold bg-slate-50 border border-slate-200 rounded-full px-4 py-1.5 self-start sm:self-auto">
+                <span className={`px-2.5 py-0.5 rounded-full ${step >= 1 ? 'bg-blue-600 text-white font-extrabold' : 'text-slate-400'}`}>1. Details</span>
+                <ChevronRight size={12} className="text-slate-400"/>
+                <span className={`px-2.5 py-0.5 rounded-full ${step >= 2 ? 'bg-blue-600 text-white font-extrabold' : 'text-slate-400'}`}>2. Match Tech</span>
               </div>
             </div>
             
             {step === 1 && (
               services.length === 0 ? (
-                <div className="flex items-center gap-3 p-4 bg-rose-500/10 text-rose-300 border border-rose-500/20 rounded-2xl">
+                <div className="flex items-center gap-3 p-4 bg-rose-50 text-rose-700 border border-rose-200 rounded-2xl">
                   <AlertCircle size={20} />
                   <p className="font-semibold text-sm">No services are currently available. Please contact support.</p>
                 </div>
               ) : (
                 <form onSubmit={handleInitialSubmit} className="space-y-6 animate-in slide-in-from-left-4 fade-in duration-500">
-                  <div className="flex items-center gap-3 bg-amber-500/10 border border-amber-500/20 rounded-2xl p-4 text-amber-300">
+                  <div className="flex items-center gap-3 bg-amber-50 border border-amber-200 rounded-2xl p-4 text-amber-900">
                     <span className="flex h-2.5 w-2.5 rounded-full bg-amber-500 animate-[ping_2s_infinite]"></span>
                     <p className="text-xs sm:text-sm font-semibold">
-                      High Demand: Only <span className="font-black text-amber-400">2 technicians</span> available near you right now.
+                      High Demand: Only <span className="font-black text-amber-700">2 technicians</span> available near you right now.
                     </p>
                   </div>
                   
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <div className="space-y-2">
-                      <label className="text-xs font-bold text-slate-400 uppercase tracking-widest ml-1 flex items-center gap-2">
-                        <Settings size={14} className="text-slate-500"/> Select Service
+                      <label className="text-xs font-bold text-slate-500 uppercase tracking-wider ml-1 flex items-center gap-2">
+                        <Settings size={14} className="text-slate-400"/> Select Service
                       </label>
                       <SearchableServiceSelector
                         value={formData.serviceId}
                         onChange={(serviceId) => setFormData({ ...formData, serviceId })}
-                        theme="dark"
+                        theme="light"
                         placeholder="Search and select a service..."
                       />
                     </div>
                     <div className="space-y-2">
-                      <label className="text-xs font-bold text-slate-400 uppercase tracking-widest ml-1 flex items-center gap-2">
-                        <Calendar size={14} className="text-slate-500"/> Preferred Date
+                      <label className="text-xs font-bold text-slate-500 uppercase tracking-wider ml-1 flex items-center gap-2">
+                        <Calendar size={14} className="text-slate-400"/> Preferred Date
                       </label>
                       <input
                         type="date"
                         required
-                        className="w-full px-5 py-3 bg-slate-900 border border-white/5 focus:border-indigo-500 focus:ring-4 focus:ring-indigo-500/20 transition-all font-semibold text-white rounded-2xl outline-none text-sm"
+                        className="w-full px-5 py-3 bg-white border border-slate-200 focus:border-blue-600 focus:ring-2 focus:ring-blue-100 transition-all font-semibold text-slate-800 rounded-2xl outline-none text-sm"
                         value={formData.date}
                         onChange={(e) => setFormData({ ...formData, date: e.target.value })}
                       />
@@ -1580,7 +1618,8 @@ const UserDashboard = () => {
                       </button>
                     </div>
                   </div>
-                )}
+                )
+              }
               </div>
             )}
           </div>
@@ -1590,42 +1629,10 @@ const UserDashboard = () => {
                     <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
                       
                       {/* Sidebar menu */}
-                      <div className="md:col-span-1 space-y-6">
+                      <div className="md:col-span-1 space-y-4">
                         
-                        {/* Profile Card */}
-                        <div className="bg-white border border-slate-200 rounded-3xl p-6 shadow-sm relative overflow-hidden text-center">
-                          <div className="w-20 h-20 bg-blue-50 border border-blue-100 rounded-2xl flex items-center justify-center text-4xl shadow-inner mx-auto mb-4 relative">
-                            {profile?.avatar || '👤'}
-                            {profile?.isPremium && (
-                              <span className="absolute -top-1.5 -right-1.5 bg-amber-500 text-white px-2 py-0.5 rounded-lg shadow border border-amber-300 text-[8px] font-black uppercase tracking-wider">Plus</span>
-                            )}
-                          </div>
-                          <h2 className="text-lg font-black tracking-tight text-slate-900 flex items-center justify-center gap-1.5">
-                            {profile?.name || 'Customer'}
-                            {(profile?.isEmailVerified || profile?.isPhoneVerified) && (
-                              <ShieldCheck size={16} className="text-emerald-500 shrink-0" title="Verified Customer" />
-                            )}
-                          </h2>
-                          <p className="text-xs text-slate-500 font-medium truncate mt-0.5">{profile?.email}</p>
-                          <p className="text-xs text-slate-400 font-medium mt-0.5">{profile?.phone}</p>
-                          
-                          {/* Complete Profile Warning */}
-                          {(!profile?.name || !profile?.phone || !profile?.address) && (
-                            <div className="mt-3.5 px-3 py-2 bg-amber-50 border border-amber-200 text-amber-800 rounded-xl text-[10px] font-black uppercase tracking-wider flex items-center justify-center gap-1">
-                              <AlertCircle size={12} /> Incomplete Profile
-                            </div>
-                          )}
-
-                          <button
-                            onClick={() => setShowSettings(true)}
-                            className="w-full mt-4 bg-slate-100 hover:bg-slate-200 text-slate-800 font-bold py-2 rounded-xl text-xs transition duration-200 cursor-pointer border-none outline-none"
-                          >
-                            Edit Profile
-                          </button>
-                        </div>
-
-                        {/* Sidebar Menu */}
-                        <div className="hidden md:block bg-white border border-slate-200 rounded-3xl p-4 space-y-1 shadow-sm">
+                        {/* Sidebar Menu Navigation */}
+                        <div className="hidden md:block bg-white border border-slate-200 rounded-3xl p-3 space-y-1 shadow-sm">
                           {sidebarItems.map(item => {
                             const IconComp = item.icon;
                             const isSelected = activeSubTab === item.id;
@@ -1653,99 +1660,170 @@ const UserDashboard = () => {
                         {/* OVERVIEW TAB */}
                         {activeSubTab === 'overview' && (
                           <div className="space-y-8 animate-in fade-in duration-300">
-                            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 border-b border-slate-100 pb-5">
-                              <div>
-                                <h2 className="text-xl sm:text-2xl font-black tracking-tight text-slate-900">Welcome back, {profile?.name?.split(' ')[0] || 'Client'}! 👋</h2>
-                                <p className="text-xs text-slate-500 mt-1 font-semibold">Manage your services, wallet and account rewards</p>
-                              </div>
-                              <button
-                                onClick={() => setShowForm(true)}
-                                className="bg-blue-600 hover:bg-blue-700 text-white font-extrabold px-5 py-3 rounded-xl text-xs uppercase tracking-wider flex items-center gap-1.5 shadow-md shadow-blue-600/20 cursor-pointer active:scale-95 transition-all border-none outline-none"
-                              >
-                                <Plus size={14} /> + Book Service
-                              </button>
-                            </div>
-
-                            {/* Plus promo banner */}
-                            {!profile?.isPremium && (
-                              <div className="bg-amber-50/60 border border-amber-200 rounded-3xl p-5 flex flex-col sm:flex-row items-center justify-between gap-5 shadow-sm">
-                                <div className="flex items-center gap-3.5 text-center sm:text-left">
-                                  <div className="w-12 h-12 bg-amber-500 text-white rounded-2xl flex items-center justify-center shrink-0 shadow-md">
-                                    <Sparkles size={20} />
-                                  </div>
-                                  <div className="space-y-0.5">
-                                    <h3 className="text-sm font-extrabold text-slate-900">Upgrade to Fixvo Plus</h3>
-                                    <p className="text-[11px] text-slate-600 font-medium max-w-sm leading-relaxed">
-                                      Get 5% discount on all quotes, zero inspection fees (save ₹99), and priority technician dispatch.
-                                    </p>
-                                  </div>
+                              {/* Welcome Banner Header */}
+                              <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 border-b border-slate-100 pb-5">
+                                <div>
+                                  <h2 className="text-xl sm:text-2xl font-black tracking-tight text-slate-900">Welcome back, {profile?.name?.split(' ')[0] || 'Client'}! 👋</h2>
+                                  <p className="text-xs text-slate-500 mt-1 font-semibold">Track active repairs, manage wallet balance, and review offers</p>
                                 </div>
-                                <button 
-                                  onClick={() => setShowPremiumModal(true)}
-                                  className="px-4.5 py-2.5 bg-amber-500 hover:bg-amber-600 text-white font-black text-[11px] uppercase tracking-wider rounded-xl shadow cursor-pointer border-none outline-none active:scale-95 transition-all shrink-0"
+                                <button
+                                  onClick={() => setShowForm(true)}
+                                  className="bg-blue-600 hover:bg-blue-700 text-white font-extrabold px-5 py-3 rounded-xl text-xs uppercase tracking-wider flex items-center gap-1.5 shadow-md shadow-blue-600/20 cursor-pointer active:scale-95 transition-all border-none outline-none"
                                 >
-                                  Upgrade to Plus
+                                  <Plus size={14} /> + Book Service
                                 </button>
                               </div>
-                            )}
 
-                            {/* Quick actions cards */}
-                            <div className="space-y-4">
-                              <h3 className="font-extrabold text-xs text-slate-400 uppercase tracking-wider ml-1">Quick Actions</h3>
-                              <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
-                                {sidebarItems.filter(i => i.id !== 'overview').map(item => {
-                                  const IconComp = item.icon;
-                                  return (
-                                    <div
-                                      key={item.id}
-                                      onClick={() => setActiveSubTab(item.id)}
-                                      className="bg-slate-50 border border-slate-200 hover:border-blue-300 hover:bg-blue-50/50 p-5 rounded-2xl text-center cursor-pointer transition-all duration-300 hover:-translate-y-0.5 shadow-sm flex flex-col items-center justify-center min-h-[110px]"
-                                    >
-                                      <div className="p-3 bg-blue-100/80 text-blue-600 border border-blue-200/50 rounded-xl mb-3 shrink-0">
-                                        <IconComp size={18} />
-                                      </div>
-                                      <h4 className="font-extrabold text-slate-800 text-xs tracking-tight">{item.label}</h4>
-                                    </div>
-                                  );
-                                })}
-                              </div>
-                            </div>
-
-                            {/* Bookings Preview */}
-                            <div className="space-y-4">
-                              <h3 className="font-extrabold text-xs text-slate-400 uppercase tracking-wider ml-1">Recent Booking Status</h3>
-                              {bookings.length === 0 ? (
-                                <div className="bg-slate-50 border border-slate-200 rounded-3xl p-8 text-center text-slate-500 font-semibold text-sm">
-                                  No service bookings yet. Click "+ Book Service" to request your first visit.
+                              {/* ACTIVE SERVICE TRACKER CARD */}
+                              <div className="space-y-3">
+                                <div className="flex justify-between items-center">
+                                  <h3 className="font-extrabold text-xs text-slate-400 uppercase tracking-wider ml-1">Active Service Status</h3>
+                                  {activeBooking && (
+                                    <span className="text-[10px] text-blue-600 font-extrabold uppercase tracking-wider bg-blue-50 px-2.5 py-0.5 rounded-full border border-blue-200 animate-pulse">Live Tracker Active</span>
+                                  )}
                                 </div>
-                              ) : (
-                                <div className="space-y-4">
-                                  {bookings.slice(0, 1).map(booking => (
-                                    <div key={booking._id} className="bg-slate-50 border border-slate-200 rounded-2xl p-5 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-                                      <div className="space-y-1 text-left">
-                                        <span className="inline-block text-[9px] bg-blue-100 text-blue-700 border border-blue-200 px-2 py-0.5 rounded uppercase tracking-wider font-extrabold">
-                                          {booking.serviceName || 'Service Visit'}
-                                        </span>
-                                        <h4 className="font-bold text-slate-900 text-sm">ID: #{booking._id.slice(-6).toUpperCase()} • Bill: ₹{booking.finalQuote || booking.amount || 0}</h4>
-                                        <p className="text-[11px] text-slate-500 font-medium">Date: {booking.date ? new Date(booking.date).toLocaleDateString() : 'Pending'}</p>
+
+                                {activeBooking ? (
+                                  <div className="bg-gradient-to-r from-blue-50/80 to-indigo-50/50 border border-blue-200 rounded-3xl p-5 sm:p-6 shadow-sm relative overflow-hidden">
+                                    <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 border-b border-blue-100/80 pb-4">
+                                      <div className="space-y-1">
+                                        <div className="flex items-center gap-2">
+                                          <span className="text-[10px] bg-blue-600 text-white px-2.5 py-0.5 rounded-full font-black uppercase tracking-wider">
+                                            {activeBooking.serviceName || 'Home Service'}
+                                          </span>
+                                          <span className="text-[10px] font-mono font-bold text-slate-500">ID: #{activeBooking._id.slice(-6).toUpperCase()}</span>
+                                        </div>
+                                        <h4 className="text-lg font-black text-slate-900 mt-1">₹{activeBooking.finalQuote || activeBooking.amount || 0}</h4>
+                                        <p className="text-xs text-slate-600 font-medium">{activeBooking.location || 'Your Saved Address'}</p>
                                       </div>
-                                      <div className="flex items-center gap-3 w-full sm:w-auto justify-between sm:justify-end">
-                                        <span className="text-[10px] uppercase font-black tracking-wider text-slate-700 bg-slate-200 px-3 py-1 rounded-full border border-slate-300">
-                                          {booking.status}
+
+                                      <div className="flex flex-col items-start sm:items-end gap-1.5">
+                                        <span className="text-xs font-black uppercase tracking-wider text-blue-800 bg-blue-100 px-3 py-1 rounded-full border border-blue-200">
+                                          {activeBooking.status.replace(/_/g, ' ')}
                                         </span>
+                                        <span className="text-[11px] text-slate-500 font-semibold flex items-center gap-1">
+                                          <Clock size={12} className="text-blue-600" />
+                                          {activeBooking.date ? new Date(activeBooking.date).toLocaleDateString() : 'Today'}
+                                        </span>
+                                      </div>
+                                    </div>
+
+                                    {/* Technician Quick Info */}
+                                    {activeBooking.technicianName && activeBooking.technicianName !== 'Unassigned' && (
+                                      <div className="flex items-center justify-between pt-4">
+                                        <div className="flex items-center gap-3">
+                                          <div className="w-10 h-10 bg-blue-100 text-blue-700 font-extrabold rounded-full flex items-center justify-center text-sm border border-blue-200">
+                                            👨‍🔧
+                                          </div>
+                                          <div>
+                                            <h5 className="font-extrabold text-xs text-slate-900">{activeBooking.technicianName}</h5>
+                                            <p className="text-[10px] text-slate-500 font-medium">Assigned Fixvo Specialist • ★ 4.9</p>
+                                          </div>
+                                        </div>
+
                                         <button
                                           onClick={() => setActiveSubTab('bookings')}
-                                          className="text-xs text-blue-600 hover:text-blue-700 font-extrabold cursor-pointer border-none bg-transparent outline-none"
+                                          className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-xs font-extrabold transition cursor-pointer border-none shadow-xs"
                                         >
                                           View Details
                                         </button>
                                       </div>
+                                    )}
+                                  </div>
+                                ) : (
+                                  <div className="bg-slate-50 border border-slate-200 rounded-3xl p-6 text-center space-y-3">
+                                    <div className="w-12 h-12 bg-blue-50 text-blue-600 rounded-full flex items-center justify-center mx-auto border border-blue-100">
+                                      <Wrench size={22} />
                                     </div>
-                                  ))}
+                                    <div>
+                                      <h4 className="font-extrabold text-sm text-slate-900">No active service bookings right now</h4>
+                                      <p className="text-xs text-slate-500 mt-0.5 font-medium">Need an AC repair, electrician, plumber, or cleaning?</p>
+                                    </div>
+                                    <button
+                                      onClick={() => setShowForm(true)}
+                                      className="inline-flex items-center gap-1.5 px-5 py-2.5 bg-blue-600 hover:bg-blue-700 text-white font-extrabold text-xs uppercase tracking-wider rounded-xl shadow-xs cursor-pointer border-none"
+                                    >
+                                      <Plus size={14} /> Book a Service
+                                    </button>
+                                  </div>
+                                )}
+                              </div>
+
+                              {/* ACCOUNT SNAPSHOT MATRIX */}
+                              <div className="space-y-3">
+                                <h3 className="font-extrabold text-xs text-slate-400 uppercase tracking-wider ml-1">Account Snapshot</h3>
+                                <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+                                  <div className="bg-white border border-slate-200 p-4 rounded-2xl text-center shadow-xs">
+                                    <span className="text-[10px] font-extrabold text-slate-400 uppercase tracking-wider block">Active Services</span>
+                                    <span className="text-2xl font-black text-blue-600 mt-1 block">{activeCount}</span>
+                                  </div>
+                                  <div className="bg-white border border-slate-200 p-4 rounded-2xl text-center shadow-xs">
+                                    <span className="text-[10px] font-extrabold text-slate-400 uppercase tracking-wider block">Completed</span>
+                                    <span className="text-2xl font-black text-emerald-600 mt-1 block">{completedCount}</span>
+                                  </div>
+                                  <div className="bg-white border border-slate-200 p-4 rounded-2xl text-center shadow-xs">
+                                    <span className="text-[10px] font-extrabold text-slate-400 uppercase tracking-wider block">Reward Points</span>
+                                    <span className="text-2xl font-black text-amber-600 mt-1 block">150</span>
+                                  </div>
+                                  <div className="bg-white border border-slate-200 p-4 rounded-2xl text-center shadow-xs">
+                                    <span className="text-[10px] font-extrabold text-slate-400 uppercase tracking-wider block">Wallet Balance</span>
+                                    <span className="text-2xl font-black text-slate-900 mt-1 block">₹{(profile?.walletBalance || 0).toFixed(0)}</span>
+                                  </div>
+                                </div>
+                              </div>
+
+                              {/* QUICK ACTIONS GRID */}
+                              <div className="space-y-3">
+                                <h3 className="font-extrabold text-xs text-slate-400 uppercase tracking-wider ml-1">Quick Actions</h3>
+                                <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+                                  {[
+                                    { id: 'bookings', label: 'My Bookings', icon: Calendar, color: 'text-blue-600', bg: 'bg-blue-50 border-blue-100' },
+                                    { id: 'addresses', label: 'Saved Addresses', icon: MapPin, color: 'text-indigo-600', bg: 'bg-indigo-50 border-indigo-100' },
+                                    { id: 'wallet', label: 'Fixvo Wallet', icon: CreditCard, color: 'text-emerald-600', bg: 'bg-emerald-50 border-emerald-100' },
+                                    { id: 'rewards', label: 'Rewards & Coupons', icon: Sparkles, color: 'text-amber-600', bg: 'bg-amber-50 border-amber-100' },
+                                    { id: 'referral', label: 'Refer & Earn', icon: User, color: 'text-purple-600', bg: 'bg-purple-50 border-purple-100' },
+                                    { id: 'support', label: 'Help & Support', icon: HelpCircle, color: 'text-rose-600', bg: 'bg-rose-50 border-rose-100' }
+                                  ].map((action) => {
+                                    const IconComp = action.icon;
+                                    return (
+                                      <div
+                                        key={action.id}
+                                        onClick={() => setActiveSubTab(action.id)}
+                                        className="bg-white border border-slate-200 hover:border-blue-300 hover:bg-blue-50/30 p-4 rounded-2xl text-center cursor-pointer transition-all duration-200 shadow-xs flex flex-col items-center justify-center min-h-[95px]"
+                                      >
+                                        <div className={`p-2.5 ${action.bg} ${action.color} border rounded-xl mb-2 shrink-0`}>
+                                          <IconComp size={18} />
+                                        </div>
+                                        <h4 className="font-extrabold text-slate-800 text-xs tracking-tight">{action.label}</h4>
+                                      </div>
+                                    );
+                                  })}
+                                </div>
+                              </div>
+
+                              {/* PLUS PROMO BANNER */}
+                              {!profile?.isPremium && (
+                                <div className="bg-amber-50/80 border border-amber-200 rounded-3xl p-5 flex flex-col sm:flex-row items-center justify-between gap-4 shadow-xs">
+                                  <div className="flex items-center gap-3 text-center sm:text-left">
+                                    <div className="w-10 h-10 bg-amber-500 text-white rounded-xl flex items-center justify-center shrink-0 shadow-xs">
+                                      <Sparkles size={18} />
+                                    </div>
+                                    <div>
+                                      <h4 className="text-xs font-extrabold text-slate-900">Upgrade to Fixvo Plus</h4>
+                                      <p className="text-[11px] text-slate-600 font-medium">
+                                        Get 5% off on quotes, zero inspection fees (save ₹99), and priority dispatch.
+                                      </p>
+                                    </div>
+                                  </div>
+                                  <button 
+                                    onClick={() => setShowPremiumModal(true)}
+                                    className="px-4 py-2 bg-amber-500 hover:bg-amber-600 text-white font-extrabold text-[10px] uppercase tracking-wider rounded-xl shadow-xs cursor-pointer border-none outline-none shrink-0"
+                                  >
+                                    Upgrade Plus
+                                  </button>
                                 </div>
                               )}
                             </div>
-                          </div>
                         )}
 
                         {/* BOOKINGS TAB */}
@@ -1940,53 +2018,162 @@ const UserDashboard = () => {
 
                           {/* SUPPORT TAB */}
                           {activeSubTab === 'support' && (
-                            <SupportView
-                              supportTickets={supportTickets}
-                              ticketForm={ticketForm}
-                              setTicketForm={setTicketForm}
-                              showTicketForm={showTicketForm}
-                              setShowTicketForm={setShowTicketForm}
-                              handleRaiseTicket={handleRaiseTicket}
-                            />
+                            <HelpSupportView />
                           )}
 
-                          {/* SETTINGS TAB */}
+                          {/* SETTINGS TAB (Centralized Profile Settings & Account Controls) */}
                           {activeSubTab === 'settings' && (
                             <div className="space-y-8 animate-in fade-in duration-300">
-                              <div className="pb-4 border-b border-white/5">
-                                <h2 className="text-xl sm:text-2xl font-black tracking-tight text-white flex items-center gap-2">
-                                  <Settings className="text-indigo-400" /> Account Settings
+                              <div className="pb-4 border-b border-slate-100">
+                                <h2 className="text-xl sm:text-2xl font-black tracking-tight text-slate-900 flex items-center gap-2">
+                                  <Settings className="text-blue-600" /> Account & Profile Settings
                                 </h2>
-                                <p className="text-xs text-slate-400 mt-1 font-medium font-semibold">Control notifications, privacy, language, and security</p>
+                                <p className="text-xs text-slate-500 mt-1 font-semibold">Manage your personal profile, security credentials, preferences, and notifications</p>
                               </div>
 
-                              <div className="space-y-6 divide-y divide-white/5">
-                                <div className="space-y-4">
-                                  <h3 className="font-extrabold text-sm text-slate-200">Preferences</h3>
-                                  <div className="flex justify-between items-center py-2.5">
+                              {/* 1. CENTRALIZED PROFILE SETTINGS */}
+                              <div className="bg-slate-50 border border-slate-200 rounded-3xl p-6 sm:p-8 space-y-6">
+                                <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 border-b border-slate-200 pb-5">
+                                  <div className="flex items-center gap-4">
+                                    <div className="w-16 h-16 bg-blue-100 text-blue-700 border border-blue-200 rounded-2xl flex items-center justify-center text-3xl shrink-0 shadow-inner">
+                                      {profileForm.avatar || '👤'}
+                                    </div>
                                     <div>
-                                      <p className="text-xs sm:text-sm font-bold text-white">Interface Dark Mode</p>
-                                      <p className="text-[10px] text-slate-500 font-medium">Uses battery saver dark visual profiles</p>
+                                      <h3 className="text-lg font-black text-slate-900 flex items-center gap-2">
+                                        {profile?.name || 'Customer Account'}
+                                        {(profile?.isEmailVerified || profile?.isPhoneVerified) && (
+                                          <ShieldCheck size={16} className="text-emerald-600 shrink-0" title="Verified Customer" />
+                                        )}
+                                      </h3>
+                                      <p className="text-xs text-slate-500 font-medium">{profile?.email}</p>
+                                    </div>
+                                  </div>
+
+                                  {!isEditingProfile ? (
+                                    <button
+                                      type="button"
+                                      onClick={() => setIsEditingProfile(true)}
+                                      className="px-5 py-2.5 bg-blue-600 hover:bg-blue-700 text-white font-extrabold text-xs uppercase tracking-wider rounded-xl shadow-xs cursor-pointer border-none"
+                                    >
+                                      Edit Profile
+                                    </button>
+                                  ) : (
+                                    <button
+                                      type="button"
+                                      onClick={() => setIsEditingProfile(false)}
+                                      className="px-4 py-2 bg-slate-200 hover:bg-slate-300 text-slate-700 font-bold text-xs rounded-xl cursor-pointer border-none"
+                                    >
+                                      Cancel Editing
+                                    </button>
+                                  )}
+                                </div>
+
+                                <form onSubmit={handleSaveProfile} className="space-y-4">
+                                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                    <div className="space-y-1.5">
+                                      <label className="text-[10px] font-extrabold text-slate-500 uppercase tracking-wider ml-1">Full Name</label>
+                                      <input
+                                        type="text"
+                                        disabled={!isEditingProfile}
+                                        value={profileForm.name}
+                                        onChange={(e) => setProfileForm({ ...profileForm, name: e.target.value })}
+                                        className="w-full px-4 py-3 bg-white border border-slate-200 rounded-xl outline-none font-bold text-slate-800 text-xs focus:border-blue-600 disabled:bg-slate-100 disabled:text-slate-600"
+                                      />
+                                    </div>
+
+                                    <div className="space-y-1.5">
+                                      <div className="flex justify-between items-center ml-1">
+                                        <label className="text-[10px] font-extrabold text-slate-500 uppercase tracking-wider">Email Address</label>
+                                        {profile?.isEmailVerified ? (
+                                          <span className="text-[9px] font-black text-emerald-700 bg-emerald-100 px-2 py-0.5 rounded border border-emerald-200 uppercase">✓ Verified</span>
+                                        ) : (
+                                          <Link to="/verify-account" className="text-[9px] font-black text-amber-700 bg-amber-100 px-2 py-0.5 rounded border border-amber-200 uppercase hover:underline">Verify</Link>
+                                        )}
+                                      </div>
+                                      <input
+                                        type="email"
+                                        disabled={!isEditingProfile}
+                                        value={profileForm.email}
+                                        onChange={(e) => setProfileForm({ ...profileForm, email: e.target.value })}
+                                        className="w-full px-4 py-3 bg-white border border-slate-200 rounded-xl outline-none font-bold text-slate-800 text-xs focus:border-blue-600 disabled:bg-slate-100 disabled:text-slate-600"
+                                      />
+                                    </div>
+
+                                    <div className="space-y-1.5">
+                                      <div className="flex justify-between items-center ml-1">
+                                        <label className="text-[10px] font-extrabold text-slate-500 uppercase tracking-wider">Mobile Number</label>
+                                        {profile?.isPhoneVerified ? (
+                                          <span className="text-[9px] font-black text-emerald-700 bg-emerald-100 px-2 py-0.5 rounded border border-emerald-200 uppercase">✓ Verified</span>
+                                        ) : (
+                                          <Link to="/verify-account" className="text-[9px] font-black text-amber-700 bg-amber-100 px-2 py-0.5 rounded border border-amber-200 uppercase hover:underline">Verify</Link>
+                                        )}
+                                      </div>
+                                      <input
+                                        type="text"
+                                        disabled={!isEditingProfile}
+                                        value={profileForm.phone}
+                                        onChange={(e) => setProfileForm({ ...profileForm, phone: e.target.value })}
+                                        className="w-full px-4 py-3 bg-white border border-slate-200 rounded-xl outline-none font-bold text-slate-800 text-xs focus:border-blue-600 disabled:bg-slate-100 disabled:text-slate-600"
+                                      />
+                                    </div>
+
+                                    <div className="space-y-1.5">
+                                      <label className="text-[10px] font-extrabold text-slate-500 uppercase tracking-wider ml-1">Default Service Location</label>
+                                      <input
+                                        type="text"
+                                        disabled={!isEditingProfile}
+                                        value={profileForm.address}
+                                        placeholder="Town, area or address"
+                                        onChange={(e) => setProfileForm({ ...profileForm, address: e.target.value })}
+                                        className="w-full px-4 py-3 bg-white border border-slate-200 rounded-xl outline-none font-bold text-slate-800 text-xs focus:border-blue-600 disabled:bg-slate-100 disabled:text-slate-600"
+                                      />
+                                    </div>
+                                  </div>
+
+                                  {isEditingProfile && (
+                                    <div className="flex gap-3 pt-2">
+                                      <button
+                                        type="submit"
+                                        disabled={savingProfile}
+                                        className="flex-1 bg-blue-600 hover:bg-blue-700 disabled:opacity-50 text-white font-extrabold py-3 rounded-xl text-xs uppercase tracking-wider cursor-pointer border-none shadow-xs"
+                                      >
+                                        {savingProfile ? 'Saving...' : 'Save Changes'}
+                                      </button>
+                                      <button
+                                        type="button"
+                                        onClick={() => setIsEditingProfile(false)}
+                                        className="px-5 bg-slate-200 hover:bg-slate-300 text-slate-700 font-bold py-3 rounded-xl text-xs cursor-pointer border-none"
+                                      >
+                                        Cancel
+                                      </button>
+                                    </div>
+                                  )}
+                                </form>
+                              </div>
+
+                              {/* 2. NOTIFICATION PREFERENCES & SECURITY */}
+                              <div className="space-y-6 divide-y divide-slate-100">
+                                <div className="space-y-4">
+                                  <h3 className="font-extrabold text-xs text-slate-500 uppercase tracking-wider">Preferences</h3>
+                                  <div className="flex justify-between items-center py-2">
+                                    <div>
+                                      <p className="text-xs sm:text-sm font-bold text-slate-900">Service Update Notifications</p>
+                                      <p className="text-[11px] text-slate-500 font-medium">Receive real-time status alerts when technician is dispatched</p>
                                     </div>
                                     <label className="relative inline-flex items-center cursor-pointer">
-                                      <input
-                                        type="checkbox"
-                                        checked={isDarkMode}
-                                        onChange={(e) => setIsDarkMode(e.target.checked)}
-                                        className="sr-only peer"
-                                      />
-                                      <div className="w-11 h-6 bg-slate-800 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-0.5 after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-indigo-650"></div>
+                                      <input type="checkbox" defaultChecked className="sr-only peer" />
+                                      <div className="w-11 h-6 bg-slate-200 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-0.5 after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
                                     </label>
                                   </div>
-                                  <div className="flex justify-between items-center py-2.5">
+                                  <div className="flex justify-between items-center py-2">
                                     <div>
-                                      <p className="text-xs sm:text-sm font-bold text-white">Preferred Language</p>
-                                      <p className="text-[10px] text-slate-500 font-medium">Select dashboard visual display language</p>
+                                      <p className="text-xs sm:text-sm font-bold text-slate-900">Preferred Language</p>
+                                      <p className="text-[11px] text-slate-500 font-medium">Select visual display language</p>
                                     </div>
                                     <select
                                       value={preferredLanguage}
                                       onChange={(e) => setPreferredLanguage(e.target.value)}
-                                      className="px-3 py-1.5 bg-slate-950 border border-white/10 rounded-xl outline-none font-bold text-white text-xs"
+                                      className="px-3 py-1.5 bg-white border border-slate-200 rounded-xl outline-none font-bold text-slate-800 text-xs"
                                     >
                                       <option value="English">English</option>
                                       <option value="Hindi">Hindi (हिंदी)</option>
@@ -1996,40 +2183,42 @@ const UserDashboard = () => {
                                 </div>
 
                                 <div className="pt-6 space-y-4">
-                                  <h3 className="font-extrabold text-sm text-slate-200">Security & Sessions</h3>
+                                  <h3 className="font-extrabold text-xs text-slate-500 uppercase tracking-wider">Security & Account Sessions</h3>
                                   <div className="flex flex-col sm:flex-row gap-3">
                                     <button
                                       onClick={() => setShowSettings(true)}
-                                      className="flex-1 bg-slate-900 hover:bg-slate-850 border border-white/5 hover:border-slate-700 text-white font-extrabold py-3.5 rounded-xl text-xs uppercase tracking-wider cursor-pointer outline-none"
+                                      className="flex-1 bg-white hover:bg-slate-50 border border-slate-200 text-slate-800 font-extrabold py-3 rounded-xl text-xs uppercase tracking-wider cursor-pointer outline-none shadow-xs"
                                     >
-                                      Update Account Credentials
+                                      Change Password / Security
                                     </button>
                                     <button
                                       onClick={async () => {
                                         localStorage.removeItem('token');
                                         window.location.href = '/login';
                                       }}
-                                      className="flex-1 bg-rose-500/10 hover:bg-rose-500/20 border border-rose-500/20 text-rose-400 font-extrabold py-3.5 rounded-xl text-xs uppercase tracking-wider cursor-pointer outline-none"
+                                      className="flex-1 bg-rose-50 hover:bg-rose-100 border border-rose-200 text-rose-700 font-extrabold py-3 rounded-xl text-xs uppercase tracking-wider cursor-pointer outline-none"
                                     >
-                                      Sign Out of All Sessions
+                                      Sign Out of Account
                                     </button>
                                   </div>
                                 </div>
 
                                 <div className="pt-6 space-y-4">
-                                  <h3 className="font-extrabold text-sm text-rose-455">Danger Zone</h3>
-                                  <div className="p-4 bg-rose-500/5 border border-rose-500/10 rounded-2xl flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+                                  <h3 className="font-extrabold text-xs text-rose-600 uppercase tracking-wider">Danger Zone</h3>
+                                  <div className="p-4 bg-rose-50 border border-rose-200 rounded-2xl flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
                                     <div>
-                                      <p className="text-xs sm:text-sm font-bold text-white">Permanently Delete Account</p>
-                                      <p className="text-[10px] text-slate-500 font-semibold mt-0.5">This action deletes all active booking logs and KYC information.</p>
+                                      <p className="text-xs sm:text-sm font-bold text-rose-900">Permanently Delete Account</p>
+                                      <p className="text-[11px] text-rose-700 font-medium mt-0.5">This action permanently removes all active booking logs and saved data.</p>
                                     </div>
                                     <button
                                       onClick={() => {
                                         if (window.confirm("Are you absolutely sure you want to request account deletion? This action is permanent and irreversible.")) {
-                                          showToast('Delete Request Filed ⚠️', 'Account deletion request received and pending admin action.', 'warning');
+                                          if (typeof showToast === 'function') {
+                                            showToast('Delete Request Filed ⚠️', 'Account deletion request received and pending admin action.', 'warning');
+                                          }
                                         }
                                       }}
-                                      className="bg-rose-600 hover:bg-rose-500 text-white font-extrabold px-4.5 py-2.5 rounded-xl text-[10px] uppercase tracking-wider cursor-pointer border-none outline-none"
+                                      className="bg-rose-600 hover:bg-rose-700 text-white font-extrabold px-4.5 py-2.5 rounded-xl text-[10px] uppercase tracking-wider cursor-pointer border-none outline-none shrink-0"
                                     >
                                       Delete Account
                                     </button>
@@ -2246,6 +2435,7 @@ const UserDashboard = () => {
                   </div>
     </div>
   );
+};
 };
 
 export default UserDashboard;
