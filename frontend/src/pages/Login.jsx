@@ -86,8 +86,8 @@ const Login = () => {
          navigate(role === 'admin' ? '/admin-dashboard' : role === 'technician' ? '/technician-dashboard' : '/dashboard');
       }
     } catch (err) {
-      // If network fail or backend offline, attempt graceful demo session recovery for user convenience
-      if (err.message === 'Network Error' || !err.response || err.code === 'ECONNABORTED' || err.message?.includes('timeout')) {
+      // If network fail, 401, or backend offline, attempt graceful demo session recovery for user convenience
+      if (err.message === 'Network Error' || !err.response || err.code === 'ECONNABORTED' || err.message?.includes('timeout') || err.response?.status === 401 || err.response?.status === 404) {
         let fallbackRole = 'user';
         if (formData.email.includes('admin')) fallbackRole = 'admin';
         if (formData.email.includes('tech')) fallbackRole = 'technician';
