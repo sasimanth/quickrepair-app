@@ -1,8 +1,14 @@
 const mongoose = require('mongoose');
 const dns = require('dns');
 
-// Fix for Windows/ISP DNS bug: Force Google Public DNS for SRV lookups
-dns.setServers(['8.8.8.8']);
+// Fix for Windows/ISP DNS bug: Force Google Public DNS for SRV lookups on Windows dev
+if (process.platform === 'win32') {
+  try {
+    dns.setServers(['8.8.8.8']);
+  } catch (e) {
+    console.warn('DNS server override ignored:', e.message);
+  }
+}
 
 // Robust MongoDB Atlas Connection File
 const connectDB = async () => {
@@ -16,16 +22,15 @@ const connectDB = async () => {
 
     // Atlas connections require strict stability checks for AWS/GCP drops
     const conn = await mongoose.connect(uri || 'mongodb://127.0.0.1:27017/fixvo', {
-      serverSelectionTimeoutMS: 5000, // Keep trying to send operations for 5 seconds
-      socketTimeoutMS: 45000,         // Close sockets after 45 seconds of inactivity
+      serverSelectionTimeoutMS: 10000, // Keep trying to send operations for 10 seconds
+      socketTimeoutMS: 45000,          // Close sockets after 45 seconds of inactivity
     });
 
     console.log(`✅ MongoDB Atlas Connected Successfully: ${conn.connection.host}`);
     
   } catch (error) {
     console.error(`❌ MongoDB Atlas Connection Error: ${error.message}`);
-    // Exit process with failure so server hosts (like Render) know to restart
-    process.exit(1);
+    // Do not terminate process so cloud web servers (Render/Railway) bind to PORT successfully
   }
 };
 
