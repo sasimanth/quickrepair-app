@@ -1,5 +1,6 @@
 import { useState, useEffect, useMemo, useRef } from 'react';
 import { Link, useLocation } from 'react-router-dom';
+import { useAuth } from '../contexts/AuthContext';
 import api from '../services/api'; 
 import { globalCategories, globalServices, getDbServices } from '../data/services';
 import SearchableServiceSelector from '../components/SearchableServiceSelector';
@@ -35,7 +36,16 @@ const formatPhoneLink = (phone) => {
 
 const UserDashboard = () => {
   const location = useLocation();
-  const [profile, setProfile] = useState(null);
+  const { user: authUser } = useAuth();
+  const [profile, setProfile] = useState(authUser || null);
+  const currentUserId = profile?.userId || profile?._id || profile?.id || authUser?._id || authUser?.id || authUser?.email || 'demo_user';
+  
+  useEffect(() => {
+    if (authUser && !profile) {
+      setProfile(authUser);
+    }
+  }, [authUser]);
+
   const [bookings, setBookings] = useState([]);
   const [activeSubTab, setActiveSubTab] = useState('overview');
   const [toasts, setToasts] = useState([]);
@@ -337,33 +347,33 @@ const UserDashboard = () => {
   }, []);
 
   useEffect(() => {
-    if (profile?.userId) {
-      const savedAdd = localStorage.getItem('saved_addresses_' + profile.userId);
+    if (currentUserId) {
+      const savedAdd = localStorage.getItem('saved_addresses_' + currentUserId);
       if (savedAdd) setAddresses(JSON.parse(savedAdd));
       else {
         const defaultAdd = [
           { id: '1', type: 'Home', name: 'Home Sweet Home', details: '123 Main St, Madanapalle', isDefault: true },
           { id: '2', type: 'Office', name: 'Fixvo HQ', details: '456 Tech Park, Madanapalle', isDefault: false }
         ];
-        localStorage.setItem('saved_addresses_' + profile.userId, JSON.stringify(defaultAdd));
+        localStorage.setItem('saved_addresses_' + currentUserId, JSON.stringify(defaultAdd));
         setAddresses(defaultAdd);
       }
 
-      const savedTx = localStorage.getItem('wallet_transactions_' + profile.userId);
+      const savedTx = localStorage.getItem('wallet_transactions_' + currentUserId);
       if (savedTx) setTransactions(JSON.parse(savedTx));
       else {
         const defaultTx = [
           { id: 'tx_1', type: 'cashback', desc: 'Welcome Cashback', amount: 50, date: new Date().toISOString() },
           { id: 'tx_2', type: 'referral', desc: 'Friend Referral Reward', amount: 100, date: new Date(Date.now() - 86400000).toISOString() }
         ];
-        localStorage.setItem('wallet_transactions_' + profile.userId, JSON.stringify(defaultTx));
+        localStorage.setItem('wallet_transactions_' + currentUserId, JSON.stringify(defaultTx));
         setTransactions(defaultTx);
       }
 
-      const savedTickets = localStorage.getItem('support_tickets_' + profile.userId);
+      const savedTickets = localStorage.getItem('support_tickets_' + currentUserId);
       if (savedTickets) setSupportTickets(JSON.parse(savedTickets));
     }
-  }, [profile?.userId]);
+  }, [currentUserId]);
 
   useEffect(() => {
     const params = new URLSearchParams(location.search);
@@ -430,10 +440,10 @@ const UserDashboard = () => {
 
   // Register private room for customer notification/alerts & sync on reconnects
   useEffect(() => {
-    if (!profile?.userId) return;
+    if (!currentUserId) return;
 
     const registerSocket = () => {
-      socket.emit('register_user', profile.userId);
+      socket.emit('register_user', currentUserId);
       fetchData(false); // Refetch bookings on reconnect
     };
 
@@ -452,17 +462,17 @@ const UserDashboard = () => {
       socket.off('connect', registerSocket);
       document.removeEventListener('visibilitychange', handleVisibilityChange);
     };
-  }, [profile?.userId]);
+  }, [currentUserId]);
 
   useEffect(() => {
-    if (!profile?.userId) return;
+    if (!currentUserId) return;
 
     const handleJobUpdate = (updatedJob) => {
       setBookings(prev => prev.map(b => b._id === updatedJob._id ? { ...b, ...updatedJob } : b));
       fetchData(false);
 
       // Strict sender-role/ID validation to prevent self-notifications
-      const isSelfGenerated = updatedJob.initiatorId === profile?.userId || updatedJob.initiatorRole === 'user';
+      const isSelfGenerated = updatedJob.initiatorId === currentUserId || updatedJob.initiatorRole === 'user';
 
       if (!isSelfGenerated) {
         const criticalStatuses = ['assigned', 'accepted', 'on_the_way', 'arrived', 'quote_pending', 'quote_clarification', 'completed'];
@@ -568,7 +578,7 @@ const UserDashboard = () => {
 
   useEffect(() => {
     const handleReceiveMessage = (newMsg) => {
-      if (newMsg.senderId !== 'system' && newMsg.senderId !== profile?.userId) {
+      if (newMsg.senderId !== 'system' && newMsg.senderId !== currentUserId) {
         const isCurrentChatOpen = chatBookingId === newMsg.bookingId;
         if (!isCurrentChatOpen) {
           playNotificationSound('low');
@@ -597,7 +607,7 @@ const UserDashboard = () => {
     return () => {
       socket.off('receive_message', handleReceiveMessage);
     };
-  }, [chatBookingId, profile?.userId]);
+  }, [chatBookingId, currentUserId]);
 
   const handleInitialSubmit = async (e) => {
     e.preventDefault();
