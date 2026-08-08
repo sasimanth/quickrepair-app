@@ -595,18 +595,54 @@ const resendVerification = async (req, res) => {
   }
 };
 
-// @desc    Verify visual CAPTCHA solution
-// @route   POST /api/auth/captcha-verify
+// @desc    Google OAuth Login / Sign up
+// @route   POST /api/auth/google
 // @access  Public
-const verifyCaptcha = async (req, res) => {
-  const { userSolution, captchaText } = req.body;
-  if (!userSolution || !captchaText) {
-    return res.status(400).json({ success: false, message: 'CAPTCHA response and solution are required.' });
+const googleAuth = async (req, res) => {
+  try {
+    const { email, name, googleId, avatar } = req.body;
+    if (!email) {
+      return res.status(400).json({ message: 'Google authentication failed: Email address is required.' });
+    }
+
+    let user = await User.findOne({ email });
+    if (!user) {
+      // Create user registered via Google OAuth
+      const randomPass = Math.random().toString(36).slice(-10) + 'A1!';
+      const salt = await bcrypt.genSalt(10);
+      const hashedPassword = await bcrypt.hash(randomPass, salt);
+
+      user = await User.create({
+        name: name || email.split('@')[0],
+        email,
+        phone: '99999' + Math.floor(10000 + Math.random() * 90000).toString(),
+        password: hashedPassword,
+        role: 'user',
+        isEmailVerified: true,
+        isPhoneVerified: false,
+        avatar: avatar || '👤'
+      });
+    } else {
+      if (!user.isEmailVerified) {
+        user.isEmailVerified = true;
+        await user.save();
+      }
+    }
+
+    const token = generateToken(user._id, user.role, user.email);
+    res.json({
+      _id: user._id,
+      name: user.name,
+      email: user.email,
+      phone: user.phone,
+      role: user.role,
+      isEmailVerified: user.isEmailVerified,
+      isPhoneVerified: user.isPhoneVerified,
+      token,
+    });
+  } catch (error) {
+    res.status(500).json({ message: error.message || 'Google login processing failed.' });
   }
-  if (userSolution.trim().toLowerCase() === captchaText.trim().toLowerCase()) {
-    return res.json({ success: true });
-  }
-  res.status(400).json({ success: false, message: 'CAPTCHA verification failed. Incorrect text.' });
 };
 
-module.exports = { signup, login, logoutUser, getMe, createAdmin, verifyEmail, verifyOtp, resendVerification, verifyCaptcha };
+module.exports = { signup, login, logoutUser, getMe, createAdmin, verifyEmail, verifyOtp, resendVerification, verifyCaptcha, googleAuth };
