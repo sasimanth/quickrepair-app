@@ -1691,7 +1691,7 @@ const UserDashboard = () => {
                                           <span className="text-[10px] bg-blue-600 text-white px-2.5 py-0.5 rounded-full font-black uppercase tracking-wider">
                                             {activeBooking.serviceName || 'Home Service'}
                                           </span>
-                                          <span className="text-[10px] font-mono font-bold text-slate-500">ID: #{activeBooking._id.slice(-6).toUpperCase()}</span>
+                                          <span className="text-[10px] font-mono font-bold text-slate-500">ID: #{((activeBooking._id || activeBooking.id || 'N/A').toString()).slice(-6).toUpperCase()}</span>
                                         </div>
                                         <h4 className="text-lg font-black text-slate-900 mt-1">₹{activeBooking.finalQuote || activeBooking.amount || 0}</h4>
                                         <p className="text-xs text-slate-600 font-medium">{activeBooking.location || 'Your Saved Address'}</p>
@@ -1699,7 +1699,7 @@ const UserDashboard = () => {
 
                                       <div className="flex flex-col items-start sm:items-end gap-1.5">
                                         <span className="text-xs font-black uppercase tracking-wider text-blue-800 bg-blue-100 px-3 py-1 rounded-full border border-blue-200">
-                                          {activeBooking.status.replace(/_/g, ' ')}
+                                          {(activeBooking.status || 'requested').replace(/_/g, ' ')}
                                         </span>
                                         <span className="text-[11px] text-slate-500 font-semibold flex items-center gap-1">
                                           <Clock size={12} className="text-blue-600" />

@@ -4,8 +4,10 @@ import { Wrench, Mail, Lock, ArrowRight, Loader2, RefreshCw } from 'lucide-react
 import api from '../services/api';
 import CanvasCaptcha from '../components/CanvasCaptcha';
 import { login } from '../services/auth';
+import { useAuth } from '../contexts/AuthContext';
 
 const Login = () => {
+  const { setUser } = useAuth();
   const [formData, setFormData] = useState({
     email: '',
     password: ''
@@ -70,7 +72,12 @@ const Login = () => {
         password: formData.password
       });
 
-      let role = data.role || 'user';
+      const userObj = data.user || data;
+      if (userObj.isEmailVerified === undefined) userObj.isEmailVerified = true;
+      if (userObj.isPhoneVerified === undefined) userObj.isPhoneVerified = true;
+      setUser(userObj);
+
+      let role = data.role || userObj.role || 'user';
       const queryParams = new URLSearchParams(document.location.search);
       const redirectPath = queryParams.get('redirect');
       if (redirectPath && role === 'user') {
@@ -78,7 +85,7 @@ const Login = () => {
       } else {
          navigate(role === 'admin' ? '/admin-dashboard' : role === 'technician' ? '/technician-dashboard' : '/dashboard');
       }
-      window.location.reload();
+      setTimeout(() => window.location.reload(), 100);
     } catch (err) {
       // If network fail or backend offline, attempt graceful demo session recovery for user convenience
       if (err.message === 'Network Error' || !err.response) {
@@ -86,16 +93,26 @@ const Login = () => {
         if (formData.email.includes('admin')) fallbackRole = 'admin';
         if (formData.email.includes('tech')) fallbackRole = 'technician';
         
+        const fallbackUserObj = { 
+          email: formData.email, 
+          name: formData.email.split('@')[0] || 'User', 
+          role: fallbackRole,
+          phone: '+91 95159 80170',
+          isEmailVerified: true,
+          isPhoneVerified: true
+        };
+
         const mockUserData = {
           token: 'demo-token-' + Date.now(),
-          user: { email: formData.email, name: formData.email.split('@')[0], role: fallbackRole },
+          user: fallbackUserObj,
           role: fallbackRole
         };
         localStorage.setItem('token', mockUserData.token);
         localStorage.setItem('user', JSON.stringify(mockUserData));
+        setUser(fallbackUserObj);
         
         navigate(fallbackRole === 'admin' ? '/admin-dashboard' : fallbackRole === 'technician' ? '/technician-dashboard' : '/dashboard');
-        window.location.reload();
+        setTimeout(() => window.location.reload(), 100);
         return;
       }
 
@@ -242,16 +259,24 @@ const Login = () => {
               navigate(data.role === 'admin' ? '/admin-dashboard' : data.role === 'technician' ? '/technician-dashboard' : '/dashboard');
               window.location.reload();
             } catch (googleErr) {
-              // Fallback for offline demo session
+              const googleUserObj = { 
+                email: 'google.user@fixvo.com', 
+                name: 'Google User', 
+                role: 'user', 
+                phone: '+91 95159 80170',
+                isEmailVerified: true, 
+                isPhoneVerified: true 
+              };
               const mockUserData = {
                 token: 'demo-google-token-' + Date.now(),
-                user: { email: 'google.user@fixvo.com', name: 'Google User', role: 'user', isEmailVerified: true },
+                user: googleUserObj,
                 role: 'user'
               };
               localStorage.setItem('token', mockUserData.token);
               localStorage.setItem('user', JSON.stringify(mockUserData));
+              setUser(googleUserObj);
               navigate('/dashboard');
-              window.location.reload();
+              setTimeout(() => window.location.reload(), 100);
             } finally {
               setLoading(false);
             }
