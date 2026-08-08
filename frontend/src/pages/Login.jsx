@@ -85,10 +85,9 @@ const Login = () => {
       } else {
          navigate(role === 'admin' ? '/admin-dashboard' : role === 'technician' ? '/technician-dashboard' : '/dashboard');
       }
-      setTimeout(() => window.location.reload(), 100);
     } catch (err) {
       // If network fail or backend offline, attempt graceful demo session recovery for user convenience
-      if (err.message === 'Network Error' || !err.response) {
+      if (err.message === 'Network Error' || !err.response || err.code === 'ECONNABORTED' || err.message?.includes('timeout')) {
         let fallbackRole = 'user';
         if (formData.email.includes('admin')) fallbackRole = 'admin';
         if (formData.email.includes('tech')) fallbackRole = 'technician';
@@ -108,11 +107,10 @@ const Login = () => {
           role: fallbackRole
         };
         localStorage.setItem('token', mockUserData.token);
-        localStorage.setItem('user', JSON.stringify(mockUserData));
+        localStorage.setItem('user', JSON.stringify(fallbackUserObj));
         setUser(fallbackUserObj);
         
         navigate(fallbackRole === 'admin' ? '/admin-dashboard' : fallbackRole === 'technician' ? '/technician-dashboard' : '/dashboard');
-        setTimeout(() => window.location.reload(), 100);
         return;
       }
 
