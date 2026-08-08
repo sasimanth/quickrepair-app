@@ -645,4 +645,23 @@ const googleAuth = async (req, res) => {
   }
 };
 
+// @desc    Verify Captcha Text
+// @route   POST /api/auth/captcha-verify
+// @access  Public
+const verifyCaptcha = async (req, res) => {
+  try {
+    const { input, expected } = req.body;
+    if (!input || !expected) {
+      return res.status(400).json({ message: 'Both input and expected captcha text are required.' });
+    }
+    if (input.trim().toUpperCase() === expected.trim().toUpperCase()) {
+      return res.json({ success: true, message: 'Captcha verified successfully.' });
+    } else {
+      return res.status(400).json({ success: false, message: 'Captcha text does not match.' });
+    }
+  } catch (error) {
+    return res.status(500).json({ message: error.message || 'Captcha verification failed.' });
+  }
+};
+
 module.exports = { signup, login, logoutUser, getMe, createAdmin, verifyEmail, verifyOtp, resendVerification, verifyCaptcha, googleAuth };
