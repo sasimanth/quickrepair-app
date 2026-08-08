@@ -5,9 +5,33 @@ import { logout as authLogout } from '../services/auth';
 const AuthContext = createContext({});
 
 export const AuthProvider = ({ children }) => {
-  const [session, setSession] = useState(null);
-  const [user, setUser] = useState(null);
-  const [loading, setLoading] = useState(true);
+  const [session, setSession] = useState(() => {
+    const token = localStorage.getItem('token');
+    const storedUser = localStorage.getItem('user');
+    if (token && storedUser) {
+      try {
+        const parsed = JSON.parse(storedUser);
+        return { token, user: parsed.user || parsed };
+      } catch (e) {}
+    }
+    return null;
+  });
+
+  const [user, setUser] = useState(() => {
+    const storedUser = localStorage.getItem('user');
+    if (storedUser) {
+      try {
+        const parsed = JSON.parse(storedUser);
+        const u = parsed.user || parsed;
+        if (u.isEmailVerified === undefined) u.isEmailVerified = true;
+        if (u.isPhoneVerified === undefined) u.isPhoneVerified = true;
+        return u;
+      } catch (e) {}
+    }
+    return null;
+  });
+
+  const [loading, setLoading] = useState(false);
 
   useEffect(() => {
     const checkAuth = async () => {
@@ -20,10 +44,13 @@ export const AuthProvider = ({ children }) => {
       try {
         const { data } = await api.get('/auth/me');
         const userObj = data.user || data;
+        if (userObj.isEmailVerified === undefined) userObj.isEmailVerified = true;
+        if (userObj.isPhoneVerified === undefined) userObj.isPhoneVerified = true;
         setUser(userObj);
         setSession({ token, user: userObj });
+        localStorage.setItem('user', JSON.stringify(userObj));
       } catch (err) {
-        console.error('Failed to authenticate via API, checking fallback session:', err.response?.data?.message || err.message);
+        console.warn('Background /auth/me check failed, keeping existing session:', err.message);
         const storedUser = localStorage.getItem('user');
         if (storedUser) {
           try {
@@ -33,11 +60,7 @@ export const AuthProvider = ({ children }) => {
             if (userObj.isPhoneVerified === undefined) userObj.isPhoneVerified = true;
             setUser(userObj);
             setSession({ token, user: userObj });
-          } catch (e) {
-            authLogout();
-          }
-        } else {
-          authLogout();
+          } catch (e) {}
         }
       } finally {
         setLoading(false);
@@ -52,8 +75,11 @@ export const AuthProvider = ({ children }) => {
     try {
       const { data } = await api.get('/auth/me');
       const userObj = data.user || data;
+      if (userObj.isEmailVerified === undefined) userObj.isEmailVerified = true;
+      if (userObj.isPhoneVerified === undefined) userObj.isPhoneVerified = true;
       setUser(userObj);
       setSession({ token, user: userObj });
+      localStorage.setItem('user', JSON.stringify(userObj));
       return userObj;
     } catch (err) {
       console.warn('Backend /auth/me call failed during loginUser, using fallback:', err.message);
@@ -63,6 +89,7 @@ export const AuthProvider = ({ children }) => {
         if (userObj.isPhoneVerified === undefined) userObj.isPhoneVerified = true;
         setUser(userObj);
         setSession({ token, user: userObj });
+        localStorage.setItem('user', JSON.stringify(userObj));
         return userObj;
       }
     }
@@ -75,10 +102,9 @@ export const AuthProvider = ({ children }) => {
     window.location.reload();
   };
 
-
   return (
     <AuthContext.Provider value={{ session, user, setUser, logout, loading, loginUser }}>
-      {!loading && children}
+      {children}
     </AuthContext.Provider>
   );
 };

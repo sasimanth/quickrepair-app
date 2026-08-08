@@ -42,10 +42,9 @@ const ScrollToTop = () => {
   return null;
 };
 
-// Lazy load dashboards for optimized performance
-const UserDashboard = lazy(() => import('./pages/UserDashboard'));
-const TechnicianDashboard = lazy(() => import('./pages/TechnicianDashboard'));
-const AdminDashboard = lazy(() => import('./pages/AdminDashboard'));
+import UserDashboard from './pages/UserDashboard';
+import TechnicianDashboard from './pages/TechnicianDashboard';
+import AdminDashboard from './pages/AdminDashboard';
 
 const PrivateRoute = ({ children, allowedRoles }) => {
   const { user } = useAuth();

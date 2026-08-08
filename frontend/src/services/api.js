@@ -9,6 +9,7 @@ if (API_URL && !API_URL.endsWith('/api') && !API_URL.endsWith('/api/')) {
 
 const api = axios.create({
   baseURL: API_URL,
+  timeout: 6000,
 });
 
 api.interceptors.request.use((config) => {
