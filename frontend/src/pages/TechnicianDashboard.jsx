@@ -506,7 +506,7 @@ const TechnicianDashboard = () => {
   }, []);
 
   const unreadNotifCount = useMemo(() => {
-    return notifications.filter(n => !n.isRead).length;
+    return (Array.isArray(notifications) ? notifications : []).filter(n => !n.isRead).length;
   }, [notifications]);
 
   useEffect(() => {

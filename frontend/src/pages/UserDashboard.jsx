@@ -580,24 +580,21 @@ const UserDashboard = () => {
     try {
       if (showLoading) setLoading(true);
       const bookingsRes = await api.get('/bookings');
-      setBookings(bookingsRes.data);
-      if (globalServices.length > 0 && !formData.serviceId && document.location.pathname !== '/book') {
-        const foundStr = localStorage.getItem('lastSelectedService');
-        if (!foundStr) {
-           // Do not default aggressively, let user select
-           // setFormData(prev => ({ ...prev, serviceId: globalServices[0].id }));
-        }
-      }
-      const profileRes = await api.get('/users/profile');
-      setProfile(profileRes.data);
+      const list = Array.isArray(bookingsRes.data) ? bookingsRes.data : (bookingsRes.data?.bookings || []);
+      setBookings(list);
 
-      // Tell WebSocket server which technicians we want to track
-      bookingsRes.data.filter(b => b.status === 'accepted' && b.providerId).forEach(b => {
-          socket.emit('track_tech', b.providerId);
+      const profileRes = await api.get('/users/profile');
+      if (profileRes.data) {
+        setProfile(profileRes.data.user || profileRes.data);
+      }
+
+      list.filter(b => b && b.status === 'accepted' && b.providerId).forEach(b => {
+        socket.emit('track_tech', b.providerId);
       });
 
-    } catch (error) { console.error('Error fetching dashboard data:', error); } 
-    finally { 
+    } catch (error) { 
+      console.error('Error fetching dashboard data:', error); 
+    } finally { 
       if (showLoading) setLoading(false); 
     }
   };
@@ -1003,10 +1000,14 @@ const UserDashboard = () => {
     showToast('Ticket Raised', 'We have received your request. Support team will respond shortly.', 'success');
   };
 
-  const filteredBookings = bookings.filter(b => {
+  const safeBookingsList = Array.isArray(bookings) ? bookings : [];
+
+  const filteredBookings = safeBookingsList.filter(b => {
+    if (!b) return false;
     const query = searchQuery.toLowerCase();
     const matchesService = (b.serviceId?.name || b.serviceName || '').toLowerCase().includes(query);
-    const matchesId = b._id.toLowerCase().includes(query);
+    const bookingIdStr = (b._id || b.id || '').toString();
+    const matchesId = bookingIdStr.toLowerCase().includes(query);
     const matchesStatus = (b.status || '').toLowerCase().includes(query);
     const matchesSearch = matchesService || matchesId || matchesStatus;
     
@@ -1019,9 +1020,9 @@ const UserDashboard = () => {
   });
 
 
-  const activeBooking = bookings.find(b => ['requested', 'accepted', 'technician_assigned', 'on_the_way', 'in_progress', 'inspection_started', 'quote_pending'].includes(b.status));
-  const completedCount = bookings.filter(b => b.status === 'completed').length;
-  const activeCount = bookings.filter(b => !['completed', 'cancelled', 'rejected'].includes(b.status)).length;
+  const activeBooking = safeBookingsList.find(b => b && ['requested', 'accepted', 'technician_assigned', 'on_the_way', 'in_progress', 'inspection_started', 'quote_pending'].includes(b.status));
+  const completedCount = safeBookingsList.filter(b => b && b.status === 'completed').length;
+  const activeCount = safeBookingsList.filter(b => b && !['completed', 'cancelled', 'rejected'].includes(b.status)).length;
 
   const sidebarItems = [
     { id: 'overview', label: 'Overview', icon: LayoutDashboard },

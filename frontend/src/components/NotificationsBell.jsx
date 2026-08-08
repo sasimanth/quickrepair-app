@@ -44,11 +44,14 @@ const NotificationsBell = () => {
   const fetchNotifications = async () => {
     try {
       const { data } = await api.get('/notifications');
-      setNotifications(data);
-      const newUnreadCount = data.filter(n => !n.isRead).length;
+      const list = Array.isArray(data) ? data : [];
+      setNotifications(list);
+      const newUnreadCount = list.filter(n => !n.isRead).length;
       setUnreadCount(newUnreadCount);
     } catch (err) {
       console.error('Failed fetching notifications', err);
+      setNotifications([]);
+      setUnreadCount(0);
     }
   };
 
@@ -160,9 +163,9 @@ const NotificationsBell = () => {
     });
   };
 
-  const filteredNotifications = notifications.filter(n => {
+  const filteredNotifications = (Array.isArray(notifications) ? notifications : []).filter(n => {
     if (activeTab === 'all') return true;
-    return n.type === activeTab;
+    return n?.type === activeTab;
   });
 
   return (
