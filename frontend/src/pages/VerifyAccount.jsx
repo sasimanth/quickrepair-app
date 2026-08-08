@@ -41,7 +41,9 @@ const VerifyAccount = () => {
           const { data } = await api.post('/auth/verify-email', { email, token });
           setEmailSuccessMsg(data.message || 'Email verified successfully!');
           const meRes = await api.get('/auth/me');
-          setUser(meRes.data.user);
+          if (meRes.data) {
+            setUser(meRes.data.user || meRes.data);
+          }
         } catch (err) {
           setEmailError(err.response?.data?.message || 'Failed to verify email. The link may have expired.');
         } finally {
@@ -101,7 +103,9 @@ const VerifyAccount = () => {
         otp
       });
       const meRes = await api.get('/auth/me');
-      setUser(meRes.data.user);
+      if (meRes.data) {
+        setUser(meRes.data.user || meRes.data);
+      }
     } catch (err) {
       setOtpError(err.response?.data?.message || 'Verification failed. Please check the code and try again.');
     } finally {
@@ -127,6 +131,8 @@ const VerifyAccount = () => {
   };
 
   const isFullyVerified = user.isEmailVerified && user.isPhoneVerified;
+
+  const isResendFailed = typeof resendMessage === 'string' && resendMessage.toLowerCase().includes('failed');
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-slate-50 text-slate-800 p-4 sm:p-6 font-sans">
@@ -156,12 +162,12 @@ const VerifyAccount = () => {
 
             {resendMessage && (
               <div className={`p-3.5 rounded-2xl border text-xs text-center mb-6 font-bold flex items-center justify-center gap-2 ${
-                resendMessage.toLowerCase().includes('failed') 
+                isResendFailed 
                   ? 'bg-rose-50 border-rose-200 text-rose-700' 
                   : 'bg-emerald-50 border-emerald-200 text-emerald-700'
               }`}>
-                {resendMessage.toLowerCase().includes('failed') ? <AlertCircle className="w-4 h-4 shrink-0" /> : <CheckCircle className="w-4 h-4 shrink-0" />}
-                <span>{resendMessage}</span>
+                {isResendFailed ? <AlertCircle className="w-4 h-4 shrink-0" /> : <CheckCircle className="w-4 h-4 shrink-0" />}
+                <span>{typeof resendMessage === 'string' ? resendMessage : JSON.stringify(resendMessage)}</span>
               </div>
             )}
 
