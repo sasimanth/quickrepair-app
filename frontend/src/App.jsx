@@ -58,11 +58,6 @@ const PrivateRoute = ({ children, allowedRoles }) => {
     return <Navigate to="/" replace />;
   }
 
-  // Redirect users who are explicitly marked as unverified
-  if (role !== 'admin' && user.isEmailVerified === false && user.isPhoneVerified === false) {
-    return <Navigate to="/verify-account" replace />;
-  }
-
   return children;
 };
 
