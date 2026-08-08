@@ -252,6 +252,29 @@ const UserDashboard = () => {
 
   const [techSearchQuery, setTechSearchQuery] = useState('');
 
+  async function fetchData(showLoading = true) {
+    try {
+      if (showLoading) setLoading(true);
+      const bookingsRes = await api.get('/bookings');
+      const list = Array.isArray(bookingsRes.data) ? bookingsRes.data : (bookingsRes.data?.bookings || []);
+      setBookings(list);
+
+      const profileRes = await api.get('/users/profile');
+      if (profileRes.data) {
+        setProfile(profileRes.data.user || profileRes.data);
+      }
+
+      list.filter(b => b && b.status === 'accepted' && b.providerId).forEach(b => {
+        socket.emit('track_tech', b.providerId);
+      });
+
+    } catch (error) { 
+      console.error('Error fetching dashboard data:', error); 
+    } finally { 
+      if (showLoading) setLoading(false); 
+    }
+  }
+
   const filteredTechnicians = useMemo(() => {
     if (!techSearchQuery.trim()) return technicians;
     const q = techSearchQuery.toLowerCase().trim();
@@ -575,29 +598,6 @@ const UserDashboard = () => {
       socket.off('receive_message', handleReceiveMessage);
     };
   }, [chatBookingId, profile?.userId]);
-
-  const fetchData = async (showLoading = true) => {
-    try {
-      if (showLoading) setLoading(true);
-      const bookingsRes = await api.get('/bookings');
-      const list = Array.isArray(bookingsRes.data) ? bookingsRes.data : (bookingsRes.data?.bookings || []);
-      setBookings(list);
-
-      const profileRes = await api.get('/users/profile');
-      if (profileRes.data) {
-        setProfile(profileRes.data.user || profileRes.data);
-      }
-
-      list.filter(b => b && b.status === 'accepted' && b.providerId).forEach(b => {
-        socket.emit('track_tech', b.providerId);
-      });
-
-    } catch (error) { 
-      console.error('Error fetching dashboard data:', error); 
-    } finally { 
-      if (showLoading) setLoading(false); 
-    }
-  };
 
   const handleInitialSubmit = async (e) => {
     e.preventDefault();
