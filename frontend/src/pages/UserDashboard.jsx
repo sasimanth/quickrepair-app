@@ -1642,6 +1642,28 @@ const UserDashboard = () => {
                       {/* Sidebar menu */}
                       <div className="md:col-span-1 space-y-4">
                         
+                        {/* Mobile Horizontal Subtab Selector Bar (< 768px) */}
+                        <div className="md:hidden flex items-center gap-2 overflow-x-auto pb-2 scrollbar-none mb-4 -mx-2 px-2">
+                          {sidebarItems.map(item => {
+                            const IconComp = item.icon;
+                            const isSelected = activeSubTab === item.id;
+                            return (
+                              <button
+                                key={item.id}
+                                onClick={() => setActiveSubTab(item.id)}
+                                className={`flex items-center gap-2 px-3.5 py-2.5 rounded-2xl text-xs font-bold whitespace-nowrap transition-all border-none outline-none cursor-pointer shrink-0 ${
+                                  isSelected 
+                                    ? 'bg-blue-600 text-white shadow-md shadow-blue-600/20' 
+                                    : 'bg-white border border-slate-200 text-slate-600'
+                                }`}
+                              >
+                                <IconComp size={15} />
+                                <span>{item.label}</span>
+                              </button>
+                            );
+                          })}
+                        </div>
+                        
                         {/* Sidebar Menu Navigation */}
                         <div className="hidden md:block bg-white border border-slate-200 rounded-3xl p-3 space-y-1 shadow-sm">
                           {sidebarItems.map(item => {
