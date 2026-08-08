@@ -35,8 +35,10 @@ const formatPhoneLink = (phone) => {
 
 const UserDashboard = () => {
   const location = useLocation();
+  const [profile, setProfile] = useState(null);
   const [bookings, setBookings] = useState([]);
   const [activeSubTab, setActiveSubTab] = useState('overview');
+  const [toasts, setToasts] = useState([]);
 
   // Address CRUD states
   const [addresses, setAddresses] = useState([
@@ -135,9 +137,7 @@ const UserDashboard = () => {
   const [uploadingImage, setUploadingImage] = useState(false);
   const [showSettings, setShowSettings] = useState(false);
   const [liveLocations, setLiveLocations] = useState({}); // { techId: [lat, lng] }
-  const [profile, setProfile] = useState(null);
   const [isPlusDismissed, setIsPlusDismissed] = useState(localStorage.getItem('fixvo_plus_dismissed') === 'true');
-  const [toasts, setToasts] = useState([]);
   const techSectionRef = useRef(null);
   
   const [cancelBookingId, setCancelBookingId] = useState(null);
