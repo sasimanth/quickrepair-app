@@ -1587,10 +1587,10 @@ const UserDashboard = () => {
         </div>
       ) : (
                   <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mt-4 sm:mt-10 animate-in fade-in duration-300">
-                    <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
+                    <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
                       
                       {/* Sidebar menu */}
-                      <div className="lg:col-span-1 space-y-6">
+                      <div className="md:col-span-1 space-y-6">
                         
                         {/* Profile Card */}
                         <div className="bg-slate-900/60 backdrop-blur-xl border border-white/5 rounded-3xl p-6 shadow-2xl relative overflow-hidden text-center">
@@ -1626,7 +1626,7 @@ const UserDashboard = () => {
                         </div>
 
                         {/* Sidebar Menu */}
-                        <div className="hidden lg:block bg-slate-900/40 border border-white/5 rounded-3xl p-4 space-y-1">
+                        <div className="hidden md:block bg-slate-900/40 border border-white/5 rounded-3xl p-4 space-y-1">
                           {sidebarItems.map(item => {
                             const IconComp = item.icon;
                             const isSelected = activeSubTab === item.id;
@@ -1649,7 +1649,7 @@ const UserDashboard = () => {
                       </div>
 
                       {/* Main content pane */}
-                      <div className="lg:col-span-3 bg-slate-900/20 border border-white/5 rounded-[2rem] p-6 sm:p-8 shadow-inner min-h-[500px]">
+                      <div className="md:col-span-3 bg-slate-900/20 border border-white/5 rounded-[2rem] p-6 sm:p-8 shadow-inner min-h-[500px]">
                         
                         {/* OVERVIEW TAB */}
                         {activeSubTab === 'overview' && (
@@ -2044,7 +2044,7 @@ const UserDashboard = () => {
                       </div>
 
                       {/* Bottom Nav for mobile */}
-                      <div className="lg:hidden fixed bottom-0 left-0 right-0 bg-slate-900/90 backdrop-blur-md border-t border-white/5 px-4 py-2.5 flex justify-between z-45">
+                      <div className="md:hidden fixed bottom-0 left-0 right-0 bg-slate-900/90 backdrop-blur-md border-t border-white/5 px-4 py-2.5 flex justify-between z-45">
                         {sidebarItems.slice(0, 5).map(item => {
                           const IconComp = item.icon;
                           const isSelected = activeSubTab === item.id;
