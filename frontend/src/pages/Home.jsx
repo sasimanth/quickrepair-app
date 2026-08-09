@@ -829,7 +829,7 @@ const Home = () => {
         </section>
 
         {/* 4. HORIZONTAL SERVICE CAROUSELS SECTION */}
-        <section id="explore-services" className="space-y-12">
+        <section id="services" className="space-y-12">
           
           {/* Dynamic Carousel: Popular Near You */}
           <div id="most-booked-services">

@@ -20,6 +20,8 @@ import TechnicianAgreement from './pages/TechnicianAgreement';
 import UserSafety from './pages/UserSafety';
 import LoadingSpinner from './components/LoadingSpinner';
 import VerifyAccount from './pages/VerifyAccount';
+import Services from './pages/Services';
+import ErrorBoundary from './components/ErrorBoundary';
 import { AuthProvider, useAuth } from './contexts/AuthContext';
 
 const ScrollToTop = () => {
@@ -155,9 +157,10 @@ const AppContent = () => {
               </PrivateRoute>
             } />
             
-            {/* Legal & Static Pages */}
+            {/* Services & Pricing Pages */}
+            <Route path="/services" element={<Services />} />
+            <Route path="/pricing" element={<Pricing />} />
             <Route path="/about" element={<About />} />
-            <Route path="/pricing" element={<Navigate to="/#pricing" replace />} />
             <Route path="/faq" element={<FAQ />} />
             <Route path="/contact" element={<Contact />} />
             <Route path="/terms" element={<Terms />} />
@@ -229,12 +232,14 @@ function App() {
   }, []);
 
   return (
-    <AuthProvider>
-      <Router>
-        <ScrollToTop />
-        <AppContent />
-      </Router>
-    </AuthProvider>
+    <ErrorBoundary>
+      <AuthProvider>
+        <Router>
+          <ScrollToTop />
+          <AppContent />
+        </Router>
+      </AuthProvider>
+    </ErrorBoundary>
   );
 }
 

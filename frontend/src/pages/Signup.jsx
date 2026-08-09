@@ -4,11 +4,13 @@ import { Wrench, Mail, Lock, User, Phone, Briefcase, MapPin, ArrowRight, Loader2
 import api from '../services/api';
 import CanvasCaptcha from '../components/CanvasCaptcha';
 import { register } from '../services/auth';
+import { useAuth } from '../contexts/AuthContext';
 import { globalServices } from '../data/services';
 import SearchableServiceSelector from '../components/SearchableServiceSelector';
 import SearchableAreaSelector from '../components/SearchableAreaSelector';
 
 const Signup = () => {
+  const { setUser } = useAuth();
   const [formData, setFormData] = useState({
     name: '',
     email: '',
@@ -145,7 +147,12 @@ const Signup = () => {
         adminSecret: formData.role === 'admin' ? formData.adminSecret : ''
       });
       
-      let role = data.role || 'user';
+      const userObj = data.user || data;
+      if (userObj.isEmailVerified === undefined) userObj.isEmailVerified = true;
+      if (userObj.isPhoneVerified === undefined) userObj.isPhoneVerified = true;
+      setUser(userObj);
+
+      let role = data.role || userObj.role || 'user';
       const queryParams = new URLSearchParams(document.location.search);
       const redirectPath = queryParams.get('redirect');
       if (redirectPath && role === 'user') {
@@ -153,7 +160,6 @@ const Signup = () => {
       } else {
          navigate(role === 'admin' ? '/admin-dashboard' : role === 'technician' ? '/technician-dashboard' : '/dashboard');
       }
-      window.location.reload();
     } catch (err) {
       setError(err.response?.data?.message || err.message || 'Failed to register.');
       handleRefreshCaptcha();

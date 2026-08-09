@@ -262,24 +262,43 @@ const UserDashboard = () => {
 
   const [techSearchQuery, setTechSearchQuery] = useState('');
 
+  const [fetchError, setFetchError] = useState(null);
+
   async function fetchData(showLoading = true) {
     try {
       if (showLoading) setLoading(true);
-      const bookingsRes = await api.get('/bookings');
-      const list = Array.isArray(bookingsRes.data) ? bookingsRes.data : (bookingsRes.data?.bookings || []);
-      setBookings(list);
+      setFetchError(null);
 
-      const profileRes = await api.get('/users/profile');
-      if (profileRes.data) {
-        setProfile(profileRes.data.user || profileRes.data);
+      let bookingFailed = false;
+      try {
+        const bookingsRes = await api.get('/bookings');
+        const list = Array.isArray(bookingsRes.data) ? bookingsRes.data : (bookingsRes.data?.bookings || []);
+        setBookings(list);
+
+        list.filter(b => b && b.status === 'accepted' && b.providerId).forEach(b => {
+          socket.emit('track_tech', b.providerId);
+        });
+      } catch (err) {
+        console.warn('Could not fetch bookings from backend API:', err.message);
+        bookingFailed = true;
       }
 
-      list.filter(b => b && b.status === 'accepted' && b.providerId).forEach(b => {
-        socket.emit('track_tech', b.providerId);
-      });
+      try {
+        const profileRes = await api.get('/users/profile');
+        if (profileRes.data) {
+          setProfile(profileRes.data.user || profileRes.data);
+        }
+      } catch (err) {
+        console.warn('Could not fetch profile from backend API:', err.message);
+      }
+
+      if (bookingFailed && !bookings.length) {
+        setFetchError('Backend server is waking up or temporarily unavailable. Showing saved local session data.');
+      }
 
     } catch (error) { 
-      console.error('Error fetching dashboard data:', error); 
+      console.error('Error fetching dashboard data:', error);
+      setFetchError('Unable to connect to Fixvo backend servers. Please retry.');
     } finally { 
       if (showLoading) setLoading(false); 
     }
@@ -894,6 +913,8 @@ const UserDashboard = () => {
       bg: 'bg-amber-500/10 text-amber-450 border-amber-500/20',
       badge: 'bg-amber-500/20 text-amber-400 border-amber-500/30'
     };
+  };
+
   // Saved Address Handlers
   const handleAddAddress = (e) => {
     e.preventDefault();
@@ -2468,7 +2489,6 @@ const UserDashboard = () => {
                   </div>
     </div>
   );
-};
 };
 
 export default UserDashboard;

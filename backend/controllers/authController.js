@@ -81,8 +81,8 @@ const signup = async (req, res) => {
     const otp = Math.floor(100000 + Math.random() * 900000).toString();
     const phoneVerificationExpires = Date.now() + 10 * 60 * 1000; // 10 minutes
 
-    // Admin is auto-verified, normal users/techs must verify
-    const isVerifiedByDefault = role === 'admin';
+    // Users, technicians, and admins are auto-verified upon successful registration
+    const isVerifiedByDefault = true;
 
     const user = await User.create({
       name,

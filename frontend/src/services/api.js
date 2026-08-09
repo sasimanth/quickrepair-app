@@ -9,7 +9,7 @@ if (API_URL && !API_URL.endsWith('/api') && !API_URL.endsWith('/api/')) {
 
 const api = axios.create({
   baseURL: API_URL,
-  timeout: 6000,
+  timeout: 25000, // 25 seconds to accommodate Render backend cold starts
 });
 
 api.interceptors.request.use((config) => {
@@ -18,6 +18,16 @@ api.interceptors.request.use((config) => {
     config.headers.Authorization = `Bearer ${token}`;
   }
   return config;
-});
+}, (error) => Promise.reject(error));
+
+api.interceptors.response.use(
+  (response) => response,
+  (error) => {
+    if (error.response && error.response.status === 401) {
+      console.warn('Unauthorized API response (401). Token may be expired.');
+    }
+    return Promise.reject(error);
+  }
+);
 
 export default api;

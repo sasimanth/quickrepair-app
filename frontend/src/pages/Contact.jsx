@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import api from '../services/api';
 
 const Contact = () => {
   const [submitted, setSubmitted] = useState(false);
@@ -18,22 +19,11 @@ const Contact = () => {
       message: formData.get('message'),
     };
     try {
-      // Use full URL or proxy handled by vite/create-react-app
-      let API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
-      if (API_URL && !API_URL.endsWith('/api') && !API_URL.endsWith('/api/')) {
-        API_URL = API_URL.endsWith('/') ? `${API_URL}api` : `${API_URL}/api`;
-      }
-      const response = await fetch(`${API_URL}/contact`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(data),
-      });
-      const resData = await response.json();
-      if (!response.ok) throw new Error(resData.message || 'Failed to send message');
+      await api.post('/contact', data);
       setSubmitted(true);
       e.target.reset();
     } catch (error) {
-      setErrorMsg(error.message);
+      setErrorMsg(error.response?.data?.message || error.message || 'Failed to send message');
     } finally {
       setLoading(false);
     }
