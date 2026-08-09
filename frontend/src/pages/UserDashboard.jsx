@@ -1135,17 +1135,17 @@ const UserDashboard = () => {
                     </div>
                   </div>
                   
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6 bg-slate-900/40 p-6 rounded-2xl border border-white/5">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6 bg-slate-50/60 p-6 rounded-2xl border border-slate-200/80">
                     {categoryId === 'repair' && (
                       <div className="space-y-2">
-                        <label className="text-xs font-bold text-slate-400 uppercase tracking-widest ml-1 flex items-center gap-2">
-                          <Smartphone size={14} className="text-slate-500"/> Device Type
+                        <label className="text-xs font-bold text-slate-500 uppercase tracking-wider ml-1 flex items-center gap-2">
+                          <Smartphone size={14} className="text-slate-400"/> Device Type
                         </label>
                         <input 
                           type="text" 
                           placeholder="e.g. iPhone 13, HP Pavilion" 
                           required 
-                          className="w-full px-5 py-3 bg-slate-955 border border-white/10 focus:border-indigo-500 focus:ring-4 focus:ring-indigo-500/20 transition-all font-semibold text-white rounded-2xl outline-none text-sm" 
+                          className="w-full px-5 py-3 bg-white border border-slate-200 focus:border-blue-600 focus:ring-2 focus:ring-blue-100 transition-all font-semibold text-slate-900 rounded-2xl outline-none text-sm" 
                           value={formData.deviceType || ''} 
                           onChange={(e) => setFormData({ ...formData, deviceType: e.target.value })} 
                         />
@@ -1155,12 +1155,12 @@ const UserDashboard = () => {
                     {categoryId === 'cleaning' && (
                       <>
                         <div className="space-y-2">
-                          <label className="text-xs font-bold text-slate-400 uppercase tracking-widest ml-1 flex items-center gap-2">
-                            <Home size={14} className="text-slate-500"/> House / Premise Type
+                          <label className="text-xs font-bold text-slate-500 uppercase tracking-wider ml-1 flex items-center gap-2">
+                            <Home size={14} className="text-slate-400"/> House / Premise Type
                           </label>
                           <select 
                             required 
-                            className="w-full px-5 py-3 bg-slate-955 border border-white/10 focus:border-indigo-500 focus:ring-4 focus:ring-indigo-500/20 transition-all font-semibold text-white rounded-2xl outline-none text-sm" 
+                            className="w-full px-5 py-3 bg-white border border-slate-200 focus:border-blue-600 focus:ring-2 focus:ring-blue-100 transition-all font-semibold text-slate-900 rounded-2xl outline-none text-sm" 
                             value={formData.houseType || ''} 
                             onChange={(e) => setFormData({ ...formData, houseType: e.target.value })}
                           >
@@ -1174,28 +1174,28 @@ const UserDashboard = () => {
                           </select>
                         </div>
                         <div className="space-y-2">
-                          <label className="text-xs font-bold text-slate-400 uppercase tracking-widest ml-1 flex items-center gap-2">
-                            <Maximize2 size={14} className="text-slate-500"/> Area Size (Sq Ft)
+                          <label className="text-xs font-bold text-slate-500 uppercase tracking-wider ml-1 flex items-center gap-2">
+                            <Maximize2 size={14} className="text-slate-400"/> Area Size (Sq Ft)
                           </label>
                           <input 
                             type="text" 
                             placeholder="e.g. 1200 sq ft" 
                             required 
-                            className="w-full px-5 py-3 bg-slate-955 border border-white/10 focus:border-indigo-500 focus:ring-4 focus:ring-indigo-500/20 transition-all font-semibold text-white rounded-2xl outline-none text-sm" 
+                            className="w-full px-5 py-3 bg-white border border-slate-200 focus:border-blue-600 focus:ring-2 focus:ring-blue-100 transition-all font-semibold text-slate-900 rounded-2xl outline-none text-sm" 
                             value={formData.areaSize || ''} 
                             onChange={(e) => setFormData({ ...formData, areaSize: e.target.value })} 
                           />
                         </div>
                         <div className="space-y-2 md:col-span-2">
-                          <label className="text-xs font-bold text-slate-400 uppercase tracking-widest ml-1 flex items-center gap-2">
-                            <Hash size={14} className="text-slate-500"/> Number of Rooms/Bathrooms
+                          <label className="text-xs font-bold text-slate-500 uppercase tracking-wider ml-1 flex items-center gap-2">
+                            <Hash size={14} className="text-slate-400"/> Number of Rooms/Bathrooms
                           </label>
                           <input 
                             type="number" 
                             min="1" 
                             placeholder="e.g. 3" 
                             required 
-                            className="w-full px-5 py-3 bg-slate-955 border border-white/10 focus:border-indigo-500 focus:ring-4 focus:ring-indigo-500/20 transition-all font-semibold text-white rounded-2xl outline-none text-sm" 
+                            className="w-full px-5 py-3 bg-white border border-slate-200 focus:border-blue-600 focus:ring-2 focus:ring-blue-100 transition-all font-semibold text-slate-900 rounded-2xl outline-none text-sm" 
                             value={formData.numberOfRooms || ''} 
                             onChange={(e) => setFormData({ ...formData, numberOfRooms: e.target.value })} 
                           />
@@ -1206,12 +1206,12 @@ const UserDashboard = () => {
                     {(categoryId === 'painting' || serviceNameLower.includes('paint')) && (
                       <>
                         <div className="space-y-2">
-                          <label className="text-xs font-bold text-slate-400 uppercase tracking-widest ml-1 flex items-center gap-2">
-                            <Home size={14} className="text-slate-500"/> Premise / Area to Paint
+                          <label className="text-xs font-bold text-slate-500 uppercase tracking-wider ml-1 flex items-center gap-2">
+                            <Home size={14} className="text-slate-400"/> Premise / Area to Paint
                           </label>
                           <select 
                             required 
-                            className="w-full px-5 py-3 bg-slate-955 border border-white/10 focus:border-indigo-500 focus:ring-4 focus:ring-indigo-500/20 transition-all font-semibold text-white rounded-2xl outline-none text-sm" 
+                            className="w-full px-5 py-3 bg-white border border-slate-200 focus:border-blue-600 focus:ring-2 focus:ring-blue-100 transition-all font-semibold text-slate-900 rounded-2xl outline-none text-sm" 
                             value={formData.houseType || ''} 
                             onChange={(e) => setFormData({ ...formData, houseType: e.target.value })}
                           >
@@ -1224,25 +1224,25 @@ const UserDashboard = () => {
                           </select>
                         </div>
                         <div className="space-y-2">
-                          <label className="text-xs font-bold text-slate-400 uppercase tracking-widest ml-1 flex items-center gap-2">
-                            <Maximize2 size={14} className="text-slate-500"/> Wall Area Size (Sq Ft)
+                          <label className="text-xs font-bold text-slate-500 uppercase tracking-wider ml-1 flex items-center gap-2">
+                            <Maximize2 size={14} className="text-slate-400"/> Wall Area Size (Sq Ft)
                           </label>
                           <input 
                             type="text" 
                             placeholder="e.g. 1500 sq ft" 
                             required 
-                            className="w-full px-5 py-3 bg-slate-955 border border-white/10 focus:border-indigo-500 focus:ring-4 focus:ring-indigo-500/20 transition-all font-semibold text-white rounded-2xl outline-none text-sm" 
+                            className="w-full px-5 py-3 bg-white border border-slate-200 focus:border-blue-600 focus:ring-2 focus:ring-blue-100 transition-all font-semibold text-slate-900 rounded-2xl outline-none text-sm" 
                             value={formData.wallArea || ''} 
                             onChange={(e) => setFormData({ ...formData, wallArea: e.target.value })} 
                           />
                         </div>
                         <div className="space-y-2">
-                          <label className="text-xs font-bold text-slate-400 uppercase tracking-widest ml-1 flex items-center gap-2">
-                            <Layers size={14} className="text-slate-500"/> Location Type
+                          <label className="text-xs font-bold text-slate-500 uppercase tracking-wider ml-1 flex items-center gap-2">
+                            <Layers size={14} className="text-slate-400"/> Location Type
                           </label>
                           <select 
                             required 
-                            className="w-full px-5 py-3 bg-slate-955 border border-white/10 focus:border-indigo-500 focus:ring-4 focus:ring-indigo-500/20 transition-all font-semibold text-white rounded-2xl outline-none text-sm" 
+                            className="w-full px-5 py-3 bg-white border border-slate-200 focus:border-blue-600 focus:ring-2 focus:ring-blue-100 transition-all font-semibold text-slate-900 rounded-2xl outline-none text-sm" 
                             value={formData.indoorOutdoor || ''} 
                             onChange={(e) => setFormData({ ...formData, indoorOutdoor: e.target.value })}
                           >
@@ -1253,12 +1253,12 @@ const UserDashboard = () => {
                           </select>
                         </div>
                         <div className="space-y-2">
-                          <label className="text-xs font-bold text-slate-400 uppercase tracking-widest ml-1 flex items-center gap-2">
-                            <Paintbrush size={14} className="text-slate-500"/> Paint Preference
+                          <label className="text-xs font-bold text-slate-500 uppercase tracking-wider ml-1 flex items-center gap-2">
+                            <Paintbrush size={14} className="text-slate-400"/> Paint Preference
                           </label>
                           <select 
                             required 
-                            className="w-full px-5 py-3 bg-slate-955 border border-white/10 focus:border-indigo-500 focus:ring-4 focus:ring-indigo-500/20 transition-all font-semibold text-white rounded-2xl outline-none text-sm" 
+                            className="w-full px-5 py-3 bg-white border border-slate-200 focus:border-blue-600 focus:ring-2 focus:ring-blue-100 transition-all font-semibold text-slate-900 rounded-2xl outline-none text-sm" 
                             value={formData.paintPreference || ''} 
                             onChange={(e) => setFormData({ ...formData, paintPreference: e.target.value })}
                           >
@@ -1275,38 +1275,38 @@ const UserDashboard = () => {
                     {categoryId === 'installation' && (
                       <>
                         <div className="space-y-2">
-                          <label className="text-xs font-bold text-slate-400 uppercase tracking-widest ml-1 flex items-center gap-2">
-                            <Tv size={14} className="text-slate-500"/> Appliance / Item to Install
+                          <label className="text-xs font-bold text-slate-500 uppercase tracking-wider ml-1 flex items-center gap-2">
+                            <Tv size={14} className="text-slate-400"/> Appliance / Item to Install
                           </label>
                           <input 
                             type="text" 
                             placeholder="e.g. Split AC 1.5 Ton, 55 inch TV" 
                             required 
-                            className="w-full px-5 py-3 bg-slate-955 border border-white/10 focus:border-indigo-500 focus:ring-4 focus:ring-indigo-500/20 transition-all font-semibold text-white rounded-2xl outline-none text-sm" 
+                            className="w-full px-5 py-3 bg-white border border-slate-200 focus:border-blue-600 focus:ring-2 focus:ring-blue-100 transition-all font-semibold text-slate-900 rounded-2xl outline-none text-sm" 
                             value={formData.applianceType || ''} 
                             onChange={(e) => setFormData({ ...formData, applianceType: e.target.value })} 
                           />
                         </div>
                         <div className="space-y-2">
-                          <label className="text-xs font-bold text-slate-400 uppercase tracking-widest ml-1 flex items-center gap-2">
-                            <MapPin size={14} className="text-slate-500"/> Installation Location
+                          <label className="text-xs font-bold text-slate-500 uppercase tracking-wider ml-1 flex items-center gap-2">
+                            <MapPin size={14} className="text-slate-400"/> Installation Location
                           </label>
                           <input 
                             type="text" 
                             placeholder="e.g. Living Room Brick Wall" 
                             required 
-                            className="w-full px-5 py-3 bg-slate-955 border border-white/10 focus:border-indigo-500 focus:ring-4 focus:ring-indigo-500/20 transition-all font-semibold text-white rounded-2xl outline-none text-sm" 
+                            className="w-full px-5 py-3 bg-white border border-slate-200 focus:border-blue-600 focus:ring-2 focus:ring-blue-100 transition-all font-semibold text-slate-900 rounded-2xl outline-none text-sm" 
                             value={formData.installationLocation || ''} 
                             onChange={(e) => setFormData({ ...formData, installationLocation: e.target.value })} 
                           />
                         </div>
                         <div className="space-y-2 md:col-span-2">
-                          <label className="text-xs font-bold text-slate-400 uppercase tracking-widest ml-1 flex items-center gap-2">
-                            <Layers size={14} className="text-slate-500"/> Accessories Needed
+                          <label className="text-xs font-bold text-slate-500 uppercase tracking-wider ml-1 flex items-center gap-2">
+                            <Layers size={14} className="text-slate-400"/> Accessories Needed
                           </label>
                           <select 
                             required 
-                            className="w-full px-5 py-3 bg-slate-955 border border-white/10 focus:border-indigo-500 focus:ring-4 focus:ring-indigo-500/20 transition-all font-semibold text-white rounded-2xl outline-none text-sm" 
+                            className="w-full px-5 py-3 bg-white border border-slate-200 focus:border-blue-600 focus:ring-2 focus:ring-blue-100 transition-all font-semibold text-slate-900 rounded-2xl outline-none text-sm" 
                             value={formData.accessoriesNeeded || ''} 
                             onChange={(e) => setFormData({ ...formData, accessoriesNeeded: e.target.value })}
                           >
@@ -1321,37 +1321,37 @@ const UserDashboard = () => {
                     )}
 
                     <div className="space-y-2">
-                      <label className="text-xs font-bold text-slate-400 uppercase tracking-widest ml-1 flex items-center gap-2">
-                        <MapPin size={14} className="text-slate-500"/> Town / Area
+                      <label className="text-xs font-bold text-slate-500 uppercase tracking-wider ml-1 flex items-center gap-2">
+                        <MapPin size={14} className="text-slate-400"/> Town / Area
                       </label>
                       <SearchableAreaSelector
                         value={formData.location || ''}
                         onChange={(areaName) => setFormData({ ...formData, location: areaName })}
-                        theme="dark"
+                        theme="light"
                         placeholder="Search your area..."
                       />
                     </div>
                   </div>
                   
                   <div className="space-y-2">
-                    <label className="text-xs font-bold text-slate-400 uppercase tracking-widest ml-1 flex items-center gap-2">
-                      <Camera size={14} className="text-slate-500"/> Device Media / Photo (Optional)
+                    <label className="text-xs font-bold text-slate-500 uppercase tracking-wider ml-1 flex items-center gap-2">
+                      <Camera size={14} className="text-slate-400"/> Device Media / Photo (Optional)
                     </label>
-                    <div className="relative group border-2 border-dashed border-slate-800 hover:border-indigo-500/60 rounded-2xl p-6 transition-all duration-300 hover:bg-indigo-950/20 flex flex-col items-center justify-center min-h-[130px] bg-slate-900/40 cursor-pointer overflow-hidden">
+                    <div className="relative group border-2 border-dashed border-slate-200 hover:border-blue-500 rounded-2xl p-6 transition-all duration-300 hover:bg-blue-50/20 flex flex-col items-center justify-center min-h-[130px] bg-slate-50/60 cursor-pointer overflow-hidden">
                       <input 
                         type="file" 
                         accept="image/*,video/mp4,video/quicktime" 
                         onChange={handleImageUpload} 
                         disabled={uploadingImage}
-                        className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10 animate-pulse" 
+                        className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10" 
                       />
                       {uploadingImage ? (
-                        <div className="flex flex-col items-center gap-2 text-indigo-400">
+                        <div className="flex flex-col items-center gap-2 text-blue-600">
                           <Loader2 size={28} className="animate-spin" />
                           <span className="text-xs font-bold uppercase tracking-wider animate-pulse">Uploading Media...</span>
                         </div>
                       ) : formData.mediaUrl ? (
-                        <div className="flex flex-col items-center text-emerald-400 relative z-20">
+                        <div className="flex flex-col items-center text-emerald-600 relative z-20">
                           <CheckCircle className="mb-2 text-emerald-500" size={28} />
                           <span className="text-xs font-bold uppercase tracking-wider">Media Uploaded!</span>
                           {formData.mediaType?.startsWith('video') ? (
@@ -1361,23 +1361,23 @@ const UserDashboard = () => {
                           )}
                         </div>
                       ) : (
-                        <div className="flex flex-col items-center text-center gap-2 text-slate-500 group-hover:text-indigo-400 transition-colors">
-                          <UploadCloud size={32} className="text-slate-600 group-hover:text-indigo-500 transition-colors" />
+                        <div className="flex flex-col items-center text-center gap-2 text-slate-400 group-hover:text-blue-600 transition-colors">
+                          <UploadCloud size={32} className="text-slate-400 group-hover:text-blue-600 transition-colors" />
                           <div>
-                            <p className="text-xs font-extrabold text-slate-300">Drag & drop or click to upload</p>
-                            <p className="text-[10px] text-slate-500 font-semibold mt-0.5">Supports images & videos (Max 10MB)</p>
+                            <p className="text-xs font-extrabold text-slate-700">Drag & drop or click to upload</p>
+                            <p className="text-[10px] text-slate-400 font-medium mt-0.5">Supports images & videos (Max 10MB)</p>
                           </div>
                         </div>
                       )}
                     </div>
                   </div>
                   
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-8 pt-6 border-t border-slate-800 items-stretch">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-8 pt-6 border-t border-slate-100 items-stretch">
                     <div className="flex flex-col h-full space-y-3">
-                      <label className="text-xs font-bold text-slate-400 uppercase tracking-widest ml-1 flex items-center gap-2">
-                        <HelpCircle size={14} className="text-slate-500"/> Describe the problem
+                      <label className="text-xs font-bold text-slate-500 uppercase tracking-wider ml-1 flex items-center gap-2">
+                        <HelpCircle size={14} className="text-slate-400"/> Describe the problem
                       </label>
-                      <div className="flex items-start gap-2.5 p-4 bg-slate-900/60 border border-white/5 rounded-2xl transition-all hover:bg-slate-900">
+                      <div className="flex items-start gap-2.5 p-4 bg-slate-50/80 border border-slate-200/80 rounded-2xl transition-all hover:bg-slate-100/50">
                         <input 
                           type="checkbox" 
                           id="unknownProblem" 
@@ -1390,58 +1390,58 @@ const UserDashboard = () => {
                               serviceOption: checked ? 'inspection' : 'direct'
                             });
                           }} 
-                          className="mt-1 w-4 h-4 text-indigo-650 rounded border-slate-700 bg-slate-950 focus:ring-indigo-500 cursor-pointer" 
+                          className="mt-0.5 w-4 h-4 text-blue-600 rounded border-slate-300 focus:ring-blue-500 cursor-pointer" 
                         />
-                        <label htmlFor="unknownProblem" className="text-xs text-slate-300 font-extrabold cursor-pointer leading-tight select-none">I don't know the exact issue (Technician will diagnose)</label>
+                        <label htmlFor="unknownProblem" className="text-xs text-slate-700 font-extrabold cursor-pointer leading-tight select-none">I don't know the exact issue (Technician will diagnose)</label>
                       </div>
                       <textarea 
                         rows="6" 
                         placeholder={formData.unknownProblem ? "Tell us what happened (e.g., screen went black, strange noise)..." : "Describe the issue you're facing in detail..."} 
                         required 
-                        className="w-full flex-grow px-5 py-4 bg-slate-950 border border-white/10 rounded-2xl focus:border-indigo-500 focus:ring-4 focus:ring-indigo-500/20 transition-all font-semibold text-slate-100 resize-none outline-none text-sm" 
+                        className="w-full flex-grow px-5 py-4 bg-white border border-slate-200 rounded-2xl focus:border-blue-600 focus:ring-2 focus:ring-blue-100 transition-all font-semibold text-slate-900 resize-none outline-none text-sm placeholder-slate-400" 
                         value={formData.problemDescription} 
                         onChange={(e) => setFormData({ ...formData, problemDescription: e.target.value })}
                       ></textarea>
                     </div>
                     
                     <div className="flex flex-col h-full space-y-3">
-                      <label className="text-xs font-bold text-slate-400 uppercase tracking-widest ml-1 flex items-center gap-2">
-                        <Wrench size={14} className="text-slate-500"/> Service Visit Type
+                      <label className="text-xs font-bold text-slate-500 uppercase tracking-wider ml-1 flex items-center gap-2">
+                        <Wrench size={14} className="text-slate-400"/> Service Visit Type
                       </label>
                       
                       <div className="flex-grow flex flex-col gap-4">
-                        <label className={`relative flex-1 block p-4 rounded-2xl border-2 cursor-pointer transition-all duration-300 ${formData.serviceOption === 'inspection' ? 'border-indigo-650 bg-indigo-950/20 shadow-md shadow-indigo-600/5' : 'border-slate-800 bg-slate-900/40 hover:border-slate-700'}`}>
+                        <label className={`relative flex-1 block p-4 rounded-2xl border-2 cursor-pointer transition-all duration-300 ${formData.serviceOption === 'inspection' ? 'border-blue-600 bg-blue-50/40 shadow-xs' : 'border-slate-200 bg-slate-50/50 hover:border-slate-300'}`}>
                            <div className="flex items-start gap-4">
-                             <input type="radio" name="serviceOption" checked={formData.serviceOption === 'inspection'} onChange={() => setFormData({...formData, serviceOption: 'inspection'})} className="mt-1 w-4.5 h-4.5 text-indigo-650 focus:ring-indigo-500 cursor-pointer" />
+                             <input type="radio" name="serviceOption" checked={formData.serviceOption === 'inspection'} onChange={() => setFormData({...formData, serviceOption: 'inspection'})} className="mt-1 w-4 h-4 text-blue-600 focus:ring-blue-500 cursor-pointer" />
                              <div className="flex-grow">
                                <div className="flex items-center gap-2 flex-wrap">
-                                 <span className="font-extrabold text-slate-200 text-sm flex items-center gap-1.5"><Eye size={14} className="text-indigo-400" /> Inspection Visit</span>
+                                 <span className="font-extrabold text-slate-900 text-sm flex items-center gap-1.5"><Eye size={14} className="text-blue-600" /> Inspection Visit</span>
                                  {formData.unknownProblem && (
-                                   <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-[9px] font-black bg-indigo-600 text-white animate-pulse">
+                                   <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-[9px] font-black bg-blue-600 text-white">
                                      ✨ Recommended
                                    </span>
                                  )}
                                </div>
-                               <span className="block text-[11px] text-slate-405 mt-2 font-medium leading-relaxed">
+                               <span className="block text-[11px] text-slate-500 mt-2 font-medium leading-relaxed">
                                  Technician visits first to diagnose and provides a quote. Free booking – pay only after quote approval.
                                </span>
                              </div>
                            </div>
                         </label>
                         
-                        <label className={`relative flex-1 block p-4 rounded-2xl border-2 cursor-pointer transition-all duration-300 ${formData.serviceOption === 'direct' ? 'border-indigo-650 bg-indigo-950/20 shadow-md shadow-indigo-600/5' : 'border-slate-800 bg-slate-900/40 hover:border-slate-700'}`}>
+                        <label className={`relative flex-1 block p-4 rounded-2xl border-2 cursor-pointer transition-all duration-300 ${formData.serviceOption === 'direct' ? 'border-blue-600 bg-blue-50/40 shadow-xs' : 'border-slate-200 bg-slate-50/50 hover:border-slate-300'}`}>
                            <div className="flex items-start gap-4">
-                             <input type="radio" name="serviceOption" checked={formData.serviceOption === 'direct'} onChange={() => setFormData({...formData, serviceOption: 'direct'})} className="mt-1 w-4.5 h-4.5 text-indigo-650 focus:ring-indigo-500 cursor-pointer" />
+                             <input type="radio" name="serviceOption" checked={formData.serviceOption === 'direct'} onChange={() => setFormData({...formData, serviceOption: 'direct'})} className="mt-1 w-4 h-4 text-blue-600 focus:ring-blue-500 cursor-pointer" />
                              <div className="flex-grow">
                                <div className="flex items-center gap-2 flex-wrap">
-                                 <span className="font-extrabold text-slate-200 text-sm flex items-center gap-1.5"><Zap size={14} className="text-amber-400" /> Direct Repair Visit</span>
+                                 <span className="font-extrabold text-slate-900 text-sm flex items-center gap-1.5"><Zap size={14} className="text-amber-500" /> Direct Repair Visit</span>
                                  {!formData.unknownProblem && (
                                    <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-[9px] font-black bg-emerald-600 text-white">
                                      ⚡ Faster
                                    </span>
                                  )}
                                </div>
-                               <span className="block text-[11px] text-slate-405 mt-2 font-medium leading-relaxed">
+                               <span className="block text-[11px] text-slate-500 mt-2 font-medium leading-relaxed">
                                  For simple, known services like cleaning or minor repairs. Technician comes prepared to fix it immediately.
                                </span>
                              </div>
@@ -1451,28 +1451,28 @@ const UserDashboard = () => {
                     </div>
                   </div>
 
-                  <div className="flex gap-4 pt-4 border-t border-slate-800">
+                  <div className="flex gap-4 pt-4 border-t border-slate-100">
                     <button 
                       type="button"
                       onClick={() => setShowForm(false)}
-                      className="py-3 px-6 font-bold text-slate-400 bg-slate-905 hover:bg-slate-800 rounded-xl transition-colors cursor-pointer"
+                      className="py-3 px-6 font-bold text-slate-600 bg-slate-100 hover:bg-slate-200 rounded-xl transition-colors cursor-pointer text-xs"
                     >
                       Back to Dashboard
                     </button>
                     <button 
                       type="submit" 
                       disabled={isBooking}
-                      className="flex-1 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white font-black py-3 rounded-xl shadow-lg transition-all flex items-center justify-center gap-2 cursor-pointer uppercase tracking-wider text-xs border border-white/5"
+                      className="flex-1 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white font-black py-3 rounded-xl shadow-md shadow-blue-600/20 transition-all flex items-center justify-center gap-2 cursor-pointer uppercase tracking-wider text-xs"
                     >
                       {isBooking ? (
                         <>
-                          <Loader2 size={16} className="animate-spin text-indigo-300" />
+                          <Loader2 size={16} className="animate-spin text-white" />
                           <span>Finding Technicians...</span>
                         </>
                       ) : (
                         <>
                           <span>Find Nearby Technicians</span>
-                          <Sparkles size={14} className="text-indigo-400" />
+                          <Sparkles size={14} className="text-blue-200" />
                         </>
                       )}
                     </button>
@@ -1498,30 +1498,30 @@ const UserDashboard = () => {
                   </div>
                 ) : (
                   <div className="space-y-6">
-                    <p className="text-slate-400 font-medium pb-2 border-b border-slate-800">We found several qualified technicians nearby. Please select one for direct assignment.</p>
+                    <p className="text-slate-600 font-medium text-xs pb-3 border-b border-slate-100">We found several qualified technicians nearby. Please select one for direct assignment.</p>
                     
                     {technicians.length > 0 && (
                       <button
                         onClick={handleLightningMatch}
                         disabled={isBooking}
-                        className="w-full relative overflow-hidden group bg-gradient-to-r from-blue-600 via-indigo-600 to-purple-600 text-white rounded-2xl p-6 shadow-xl hover:shadow-2xl transition-all duration-300 text-left border border-white/5 active:scale-[0.99] cursor-pointer outline-none"
+                        className="w-full relative overflow-hidden group bg-gradient-to-r from-blue-600 via-indigo-600 to-purple-600 text-white rounded-2xl p-5 shadow-lg hover:shadow-xl transition-all duration-300 text-left border-none active:scale-[0.99] cursor-pointer outline-none"
                       >
-                        <div className="mb-4 p-3 bg-emerald-500/10 border border-emerald-500/20 rounded-xl flex gap-3 shadow-inner">
-                          <ShieldCheck size={22} className="text-emerald-400 flex-shrink-0" />
+                        <div className="mb-3 p-3 bg-white/10 border border-white/20 rounded-xl flex gap-3 shadow-xs backdrop-blur-xs">
+                          <ShieldCheck size={22} className="text-emerald-300 flex-shrink-0" />
                           <div>
-                            <p className="font-extrabold text-emerald-300 text-xs">100% Free Booking</p>
-                            <p className="text-[10px] text-emerald-450 mt-0.5 font-medium">Final pricing is provided after inspection. Pay only after quote approval.</p>
+                            <p className="font-extrabold text-white text-xs">100% Free Booking</p>
+                            <p className="text-[10px] text-blue-100 mt-0.5 font-medium">Final pricing is provided after inspection. Pay only after quote approval.</p>
                           </div>
                         </div>
 
                         <div className="relative z-10 flex items-center justify-between">
                           <div className="flex items-center gap-3">
-                            <div className="p-2.5 bg-white/10 backdrop-blur-md rounded-xl text-white">
-                              <Sparkles size={24} />
+                            <div className="p-2.5 bg-white/15 backdrop-blur-md rounded-xl text-white">
+                              <Sparkles size={22} />
                             </div>
                             <div>
-                              <h3 className="text-lg font-black tracking-tight">{isBooking ? 'Auto-Dispatching...' : '⚡ Lightning Match'}</h3>
-                              <p className="text-indigo-200 font-medium text-xs mt-0.5">Auto-assign the highest-rated technician near you instantly</p>
+                              <h3 className="text-base font-black tracking-tight">{isBooking ? 'Auto-Dispatching...' : '⚡ Lightning Match'}</h3>
+                              <p className="text-blue-100 font-medium text-xs mt-0.5">Auto-assign the highest-rated technician near you instantly</p>
                             </div>
                           </div>
                         </div>
@@ -1530,21 +1530,21 @@ const UserDashboard = () => {
 
                     <div className="relative w-full">
                       <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none">
-                        <Search size={16} className="text-slate-500" />
+                        <Search size={16} className="text-slate-400" />
                       </div>
                       <input
                         type="text"
                         placeholder="Search technician by name, skill or area..."
                         value={techSearchQuery}
                         onChange={(e) => setTechSearchQuery(e.target.value)}
-                        className="w-full pl-10 pr-4 py-3 bg-slate-905 border border-white/5 rounded-2xl focus:border-indigo-500 transition-all font-medium text-slate-100 shadow-sm outline-none text-xs"
+                        className="w-full pl-10 pr-4 py-3 bg-slate-50 border border-slate-200 rounded-2xl focus:border-blue-600 focus:bg-white transition-all font-medium text-slate-900 outline-none text-xs"
                       />
                     </div>
 
-                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
                       {filteredTechnicians.length === 0 ? (
-                        <div className="col-span-full py-16 text-center bg-slate-900/40 border border-white/5 rounded-3xl p-8">
-                          <h3 className="text-lg font-extrabold text-white mb-2">No Technicians Found</h3>
+                        <div className="col-span-full py-12 text-center bg-slate-50 border border-slate-200 rounded-3xl p-6">
+                          <h3 className="text-base font-extrabold text-slate-900 mb-1">No Technicians Found</h3>
                           <p className="text-slate-500 text-xs max-w-sm mx-auto leading-relaxed">
                             We couldn't find any professionals matching your search query.
                           </p>
@@ -1556,42 +1556,42 @@ const UserDashboard = () => {
                              onClick={() => setSelectedTech(tech)}
                              className={`cursor-pointer rounded-2xl p-5 border-2 transition-all duration-300 relative overflow-hidden flex flex-col justify-between ${
                                selectedTech?.id === tech.id 
-                                 ? 'border-indigo-500 bg-indigo-950/20 shadow-lg scale-[1.01]' 
-                                 : 'border-white/5 hover:border-slate-800 bg-slate-900/40'
+                                 ? 'border-blue-600 bg-blue-50/40 shadow-md scale-[1.01]' 
+                                 : 'border-slate-200/80 hover:border-blue-300 bg-white hover:bg-slate-50/40 shadow-xs'
                              }`}
                            >
                              <div>
-                               <div className="flex items-center gap-3.5 mb-4">
-                                 <div className="w-12 h-12 bg-slate-850 rounded-full flex items-center justify-center text-2xl shadow-inner shrink-0">
+                               <div className="flex items-center gap-3.5 mb-3.5">
+                                 <div className="w-11 h-11 bg-blue-50 text-blue-700 rounded-full flex items-center justify-center text-xl shadow-xs shrink-0 border border-blue-100">
                                    {tech.avatar || '👨‍🔧'}
                                  </div>
                                  <div className="min-w-0">
-                                   <h3 className="font-extrabold text-slate-100 flex items-center gap-1 text-sm truncate">
+                                   <h3 className="font-extrabold text-slate-900 flex items-center gap-1 text-xs sm:text-sm truncate">
                                       {tech.name}
-                                      <ShieldCheck size={14} className="text-emerald-400 shrink-0"/>
+                                      <ShieldCheck size={14} className="text-emerald-500 shrink-0"/>
                                    </h3>
-                                   <span className="text-[9px] bg-indigo-500/10 text-indigo-400 border border-indigo-500/20 px-2 py-0.5 rounded mt-1 inline-block uppercase tracking-wider font-extrabold">Verified Pro</span>
+                                   <span className="text-[9px] bg-blue-50 text-blue-700 border border-blue-200 px-2 py-0.5 rounded-full mt-1 inline-block uppercase tracking-wider font-extrabold">Verified Pro</span>
                                  </div>
                                </div>
                                
-                               <div className="flex items-center gap-3 mb-4 bg-slate-955 p-2.5 rounded-xl border border-white/5">
-                                 <div className="flex items-center text-amber-400 text-xs font-black">
-                                   <Star size={12} className="fill-current mr-1"/>
+                               <div className="flex items-center gap-3 mb-3 bg-slate-50 p-2.5 rounded-xl border border-slate-100">
+                                 <div className="flex items-center text-amber-500 text-xs font-black">
+                                   <Star size={12} className="fill-current mr-1 text-amber-400"/>
                                    {tech.rating}
                                  </div>
-                                 <div className="h-3.5 w-px bg-slate-800"></div>
-                                 <div className="text-[10px] text-slate-400 font-extrabold">{tech.jobsCompleted || 0} Jobs Done</div>
+                                 <div className="h-3.5 w-px bg-slate-200"></div>
+                                 <div className="text-[10px] text-slate-600 font-bold">{tech.jobsCompleted || 0} Jobs Done</div>
                                </div>
                              </div>
                              
-                             <div className="space-y-2 text-[10px] pt-3.5 border-t border-white/5">
+                             <div className="space-y-1.5 text-[10px] pt-3 border-t border-slate-100">
                                <div className="flex justify-between items-center">
-                                 <span className="font-extrabold text-slate-500">Experience</span>
-                                 <span className="font-black text-slate-300">{tech.experience || '3+ Years'}</span>
-                                </div>
+                                 <span className="font-bold text-slate-500">Experience</span>
+                                 <span className="font-extrabold text-slate-900">{tech.experience || '3+ Years'}</span>
+                               </div>
                                <div className="flex justify-between items-center">
-                                 <span className="font-extrabold text-slate-500">Availability</span>
-                                 <span className="font-black text-emerald-400">{tech.distance || 'Available Now'}</span>
+                                 <span className="font-bold text-slate-500">Availability</span>
+                                 <span className="font-extrabold text-emerald-600">{tech.distance || 'Available Now'}</span>
                                </div>
                              </div>
                            </div>
@@ -1599,14 +1599,14 @@ const UserDashboard = () => {
                       )}
                     </div>
 
-                    <div className="mt-4 p-4 bg-slate-900/60 border border-white/5 rounded-2xl">
+                    <div className="mt-4 p-4 bg-slate-50 border border-slate-200/80 rounded-2xl">
                       <div className="flex flex-col sm:flex-row gap-2">
                         <input 
                           type="text" 
                           placeholder="Promo Code (e.g. FIXVO10)" 
                           value={promoCode}
                           onChange={(e) => setPromoCode(e.target.value.toUpperCase())}
-                          className="flex-1 px-4 py-2 bg-slate-950 border border-white/10 rounded-xl focus:border-indigo-500 outline-none uppercase font-semibold text-slate-100 text-xs"
+                          className="flex-1 px-4 py-2.5 bg-white border border-slate-200 rounded-xl focus:border-blue-600 outline-none uppercase font-bold text-slate-900 text-xs"
                         />
                         <button 
                           onClick={(e) => {
@@ -1624,28 +1624,28 @@ const UserDashboard = () => {
                                alert('Invalid promo code');
                              }
                           }}
-                          className="px-5 py-2 bg-slate-800 text-white font-bold rounded-xl hover:bg-slate-700 text-xs cursor-pointer border-none"
+                          className="px-5 py-2.5 bg-blue-600 text-white font-extrabold rounded-xl hover:bg-blue-700 text-xs cursor-pointer border-none shadow-xs"
                         >
                           Apply
                         </button>
                       </div>
-                      {discountAmount > 0 && <p className="text-emerald-400 text-xs font-bold mt-2">✓ 10% Discount Applied to Final Bill</p>}
+                      {discountAmount > 0 && <p className="text-emerald-600 text-xs font-bold mt-2">✓ 10% Discount Applied to Final Bill</p>}
                     </div>
 
-                    <div className="flex gap-4 pt-6 border-t border-slate-800">
+                    <div className="flex gap-4 pt-5 border-t border-slate-100">
                       <button 
                         onClick={() => setStep(1)} 
                         disabled={isBooking}
-                        className="py-3 px-6 font-bold text-slate-400 bg-slate-900 hover:bg-slate-850 rounded-xl transition-colors disabled:opacity-50 text-xs cursor-pointer"
+                        className="py-3 px-6 font-bold text-slate-600 bg-slate-100 hover:bg-slate-200 rounded-xl transition-colors disabled:opacity-50 text-xs cursor-pointer"
                       >
                         Back
                       </button>
                       <button 
                         onClick={handleFinalSubmit}
                         disabled={!selectedTech || isBooking}
-                        className={`flex-1 py-3 px-6 font-bold rounded-xl transition-all flex items-center justify-center gap-2 text-xs cursor-pointer border border-white/5 ${selectedTech && !isBooking ? 'bg-indigo-600 hover:bg-indigo-500 text-white shadow-lg shadow-indigo-650/20' : 'bg-slate-905 text-slate-650 cursor-not-allowed shadow-none'}`}
+                        className={`flex-1 py-3 px-6 font-bold rounded-xl transition-all flex items-center justify-center gap-2 text-xs cursor-pointer ${selectedTech && !isBooking ? 'bg-blue-600 hover:bg-blue-700 text-white shadow-md shadow-blue-600/10' : 'bg-slate-200 text-slate-400 cursor-not-allowed shadow-none'}`}
                       >
-                        {isBooking ? <Loader2 className="animate-spin" size={16} /> : null}
+                        {isBooking ? <Loader2 className="animate-spin text-white" size={16} /> : null}
                         {isBooking ? 'Booking...' : `Send Request to ${selectedTech ? selectedTech.name.split(' ')[0] : 'Technician'} 🚀`}
                       </button>
                     </div>
@@ -1724,7 +1724,7 @@ const UserDashboard = () => {
                                   onClick={() => setShowForm(true)}
                                   className="bg-blue-600 hover:bg-blue-700 text-white font-extrabold px-5 py-3 rounded-xl text-xs uppercase tracking-wider flex items-center gap-1.5 shadow-md shadow-blue-600/20 cursor-pointer active:scale-95 transition-all border-none outline-none"
                                 >
-                                  <Plus size={14} /> + Book Service
+                                  <Plus size={16} /> Book Service
                                 </button>
                               </div>
 
@@ -1785,20 +1785,12 @@ const UserDashboard = () => {
                                     )}
                                   </div>
                                 ) : (
-                                  <div className="bg-slate-50 border border-slate-200 rounded-3xl p-6 text-center space-y-3">
-                                    <div className="w-12 h-12 bg-blue-50 text-blue-600 rounded-full flex items-center justify-center mx-auto border border-blue-100">
-                                      <Wrench size={22} />
+                                  <div className="bg-slate-50/80 border border-slate-200/80 rounded-3xl p-6 text-center space-y-2">
+                                    <div className="w-10 h-10 bg-blue-50 text-blue-600 rounded-full flex items-center justify-center mx-auto border border-blue-100">
+                                      <Wrench size={20} />
                                     </div>
-                                    <div>
-                                      <h4 className="font-extrabold text-sm text-slate-900">No active service bookings right now</h4>
-                                      <p className="text-xs text-slate-500 mt-0.5 font-medium">Need an AC repair, electrician, plumber, or cleaning?</p>
-                                    </div>
-                                    <button
-                                      onClick={() => setShowForm(true)}
-                                      className="inline-flex items-center gap-1.5 px-5 py-2.5 bg-blue-600 hover:bg-blue-700 text-white font-extrabold text-xs uppercase tracking-wider rounded-xl shadow-xs cursor-pointer border-none"
-                                    >
-                                      <Plus size={14} /> Book a Service
-                                    </button>
+                                    <h4 className="font-extrabold text-xs text-slate-800">No active service bookings in progress</h4>
+                                    <p className="text-[11px] text-slate-500 font-medium">All completed repairs and past invoices are stored under My Bookings tab.</p>
                                   </div>
                                 )}
                               </div>
@@ -1883,37 +1875,37 @@ const UserDashboard = () => {
                         {/* BOOKINGS TAB */}
                         {activeSubTab === 'bookings' && (
                           <div className="space-y-6 animate-in fade-in duration-300">
-                            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 pb-4 border-b border-white/5">
+                            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 pb-4 border-b border-slate-100">
                               <div>
-                                <h2 className="text-xl sm:text-2xl font-black tracking-tight text-white flex items-center gap-2">
-                                  <Calendar className="text-indigo-400" /> Service Bookings
+                                <h2 className="text-xl sm:text-2xl font-black tracking-tight text-slate-900 flex items-center gap-2">
+                                  <Calendar className="text-blue-600" /> Service Bookings
                                 </h2>
-                                <p className="text-xs text-slate-400 mt-1 font-semibold">Track active repairs and check completed history</p>
+                                <p className="text-xs text-slate-500 mt-1 font-semibold">Track active repairs and check completed history</p>
                               </div>
                               
                               {/* Search input */}
                               <div className="relative w-full sm:w-72">
-                                <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-550" size={16} />
+                                <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={16} />
                                 <input
                                   type="text"
                                   placeholder="Search bookings..."
                                   value={searchQuery}
                                   onChange={(e) => setSearchQuery(e.target.value)}
-                                  className="w-full pl-9 pr-4 py-2 bg-slate-950 border border-white/10 rounded-xl outline-none font-semibold text-slate-205 text-xs focus:border-indigo-500 transition-all font-medium text-slate-700"
+                                  className="w-full pl-9 pr-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl outline-none font-semibold text-slate-900 text-xs focus:border-blue-600 focus:bg-white transition-all"
                                 />
                               </div>
                             </div>
 
                             {/* Filter subtabs */}
-                            <div className="flex border-b border-white/5 gap-1 pt-1 overflow-x-auto scrollbar-none">
+                            <div className="flex border-b border-slate-100 gap-1 pt-1 overflow-x-auto scrollbar-none">
                               {['all', 'active', 'completed'].map(tab => (
                                 <button
                                   key={tab}
                                   onClick={() => setFilterTab(tab)}
-                                  className={`px-4 py-2 text-xs font-bold uppercase tracking-wider transition-all border-b-2 whitespace-nowrap outline-none cursor-pointer border-none bg-transparent ${
+                                  className={`px-4 py-2.5 text-xs font-bold uppercase tracking-wider transition-all border-b-2 whitespace-nowrap outline-none cursor-pointer border-none bg-transparent ${
                                     filterTab === tab
-                                      ? 'border-indigo-500 text-indigo-400'
-                                      : 'border-transparent text-slate-500 hover:text-slate-350'
+                                      ? 'border-blue-600 text-blue-600 font-extrabold'
+                                      : 'border-transparent text-slate-500 hover:text-slate-900'
                                   }`}
                                 >
                                   {tab === 'all' ? 'All Bookings' : tab === 'active' ? 'Active' : 'Completed'}
@@ -1923,58 +1915,72 @@ const UserDashboard = () => {
                             {loading ? (
                               <LoadingSkeleton count={2} />
                             ) : filteredBookings.length === 0 ? (
-                              <div className="py-20 text-center text-slate-550 font-bold text-sm">No bookings found.</div>
+                              <div className="py-16 text-center text-slate-500 font-semibold text-sm bg-slate-50/50 border border-slate-100 rounded-2xl">
+                                No bookings found.
+                              </div>
                             ) : (
                               <div className="space-y-4">
                                 {filteredBookings.map((booking) => {
+                                  const status = (booking.status || 'pending').toLowerCase();
+                                  const getBadgeStyle = () => {
+                                    if (status === 'cancelled' || status === 'rejected') return 'bg-rose-50 text-rose-700 border-rose-200';
+                                    if (status === 'completed') return 'bg-emerald-50 text-emerald-700 border-emerald-200';
+                                    if (status === 'pending' || status === 'requested') return 'bg-amber-50 text-amber-700 border-amber-200';
+                                    return 'bg-blue-50 text-blue-700 border-blue-200';
+                                  };
+
                                   return (
                                     <div 
                                       key={booking._id} 
                                       className={`rounded-2xl p-5 border transition-all flex flex-col justify-between ${
-                                        expandedBookings[booking._id] ? 'border-indigo-500/40 bg-indigo-950/10 shadow-lg' : 'border-white/5 bg-slate-900/40'
+                                        expandedBookings[booking._id] 
+                                          ? 'border-blue-300 bg-blue-50/20 shadow-md' 
+                                          : 'border-slate-200/80 bg-white hover:border-blue-200 hover:bg-slate-50/40 shadow-xs'
                                       }`}
                                     >
-                                      <div onClick={() => toggleExpand(booking._id)} className="cursor-pointer space-y-2 text-left">
+                                      <div onClick={() => toggleExpand(booking._id)} className="cursor-pointer space-y-2.5 text-left">
                                         <div className="flex justify-between items-center">
-                                          <span className="text-[9px] bg-indigo-500/10 text-indigo-400 border border-indigo-500/20 px-2 py-0.5 rounded font-black uppercase tracking-wider">
+                                          <span className="text-[10px] bg-blue-50 text-blue-700 border border-blue-200 px-3 py-1 rounded-full font-extrabold uppercase tracking-wider">
                                             {booking.serviceName || 'Service Visit'}
                                           </span>
-                                          <span className="text-[9px] bg-slate-800 text-slate-400 px-2.5 py-0.5 rounded-full border border-white/5 uppercase tracking-wider font-extrabold">
+                                          <span className={`text-[10px] px-3 py-1 rounded-full border uppercase tracking-wider font-extrabold ${getBadgeStyle()}`}>
                                             {booking.status}
                                           </span>
                                         </div>
-                                        <h3 className="text-xl font-black text-white">₹{booking.finalQuote || booking.amount || 0}</h3>
-                                        <p className="text-[10px] text-slate-455 font-medium">Date: {booking.date ? new Date(booking.date).toLocaleDateString() : 'Pending'}</p>
+                                        <h3 className="text-2xl font-black text-slate-900 tracking-tight">₹{booking.finalQuote || booking.amount || 0}</h3>
+                                        <p className="text-xs text-slate-500 font-medium">Date: {booking.date ? new Date(booking.date).toLocaleDateString() : 'Pending'}</p>
                                         {booking.technicianName && booking.technicianName !== 'Unassigned' && (
-                                          <span className="inline-block text-[9px] bg-indigo-500/20 text-indigo-300 font-extrabold uppercase px-2 py-0.5 rounded mt-1.5 border border-indigo-500/30">👨‍🔧 {booking.technicianName}</span>
+                                          <span className="inline-block text-[10px] bg-indigo-50 text-indigo-700 font-bold uppercase px-2.5 py-1 rounded-full mt-1 border border-indigo-100">
+                                            👨‍🔧 {booking.technicianName}
+                                          </span>
                                         )}
                                       </div>
 
                                       {/* Details Toggle content */}
                                       {expandedBookings[booking._id] && (
-                                        <div className="mt-4 pt-4 border-t border-white/5 space-y-4 animate-in fade-in duration-200 text-left text-xs font-semibold">
-                                          <p className="text-slate-400 leading-relaxed font-medium"><strong className="text-slate-200">Problem:</strong> {booking.problemDescription}</p>
-                                          <p className="text-slate-400 leading-relaxed font-medium"><strong className="text-slate-205">Address:</strong> {booking.location}</p>
-                                          {booking.deviceType && <p className="text-slate-455"><strong className="text-slate-205">Device Type:</strong> {booking.deviceType}</p>}
+                                        <div className="mt-4 pt-4 border-t border-slate-100 space-y-3 animate-in fade-in duration-200 text-left text-xs font-semibold">
+                                          <p className="text-slate-600 leading-relaxed font-medium"><strong className="text-slate-900">Problem:</strong> {booking.problemDescription || 'General Repair'}</p>
+                                          <p className="text-slate-600 leading-relaxed font-medium"><strong className="text-slate-900">Address:</strong> {booking.location || 'Your Saved Location'}</p>
+                                          {booking.deviceType && <p className="text-slate-600"><strong className="text-slate-900">Device Type:</strong> {booking.deviceType}</p>}
                                           
                                           {/* Actions */}
                                           {booking.providerId && ['assigned', 'accepted', 'on_the_way', 'arrived', 'inspection_started', 'work_started', 'quote_pending', 'quote_clarification', 'quote_rejected'].includes(booking.status) && (
-                                            <div className="grid grid-cols-2 gap-2 pt-2 border-t border-white/5">
+                                            <div className="grid grid-cols-2 gap-2 pt-2 border-t border-slate-100">
                                               {(booking.providerPhone || booking.providerId?.phone) && (
                                                 <a 
                                                   href={`tel:${formatPhoneLink(booking.providerPhone || booking.providerId?.phone)}`}
-                                                  className="flex items-center justify-center gap-1.5 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-wider bg-emerald-600 text-white hover:bg-emerald-500 cursor-pointer no-underline text-center"
+                                                  className="flex items-center justify-center gap-1.5 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-wider bg-emerald-600 text-white hover:bg-emerald-700 cursor-pointer no-underline text-center shadow-xs"
                                                 >
                                                   <PhoneCall size={12} /> Call
                                                 </a>
                                               )}
                                               <button 
                                                 onClick={() => setChatBookingId(booking._id)}
-                                                className="flex items-center justify-center gap-1.5 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-wider bg-slate-800 text-white hover:bg-slate-700 cursor-pointer border-none outline-none relative"
+                                                className="flex items-center justify-center gap-1.5 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-wider bg-slate-800 text-white hover:bg-slate-900 cursor-pointer border-none outline-none relative shadow-xs"
                                               >
                                                 <MessageSquare size={12} /> Chat
                                                 {booking.unreadCount > 0 && (
-                                                  <span className="absolute -top-1.5 -right-1.5 bg-rose-505 text-white rounded-full text-[9px] font-black w-4.5 h-4.5 flex items-center justify-center border border-slate-900 animate-pulse">{booking.unreadCount}</span>
+                                                  <span className="absolute -top-1.5 -right-1.5 bg-rose-600 text-white rounded-full text-[9px] font-black w-4.5 h-4.5 flex items-center justify-center border border-white animate-pulse">{booking.unreadCount}</span>
                                                 )}
                                               </button>
                                             </div>
@@ -1984,7 +1990,7 @@ const UserDashboard = () => {
                                           {!['completed', 'cancelled', 'rejected'].includes(booking.status) && (
                                             <button
                                               onClick={() => setCancelBookingId(booking._id)}
-                                              className="w-full bg-slate-950 text-rose-455 hover:bg-rose-500/10 border border-rose-500/20 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-wider cursor-pointer transition-colors"
+                                              className="w-full bg-rose-50 text-rose-700 hover:bg-rose-100 border border-rose-200 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-wider cursor-pointer transition-colors"
                                             >
                                               Cancel Booking
                                             </button>
@@ -1994,7 +2000,7 @@ const UserDashboard = () => {
                                           {booking.status === 'completed' && !['completed', 'cash_pending'].includes(booking.paymentStatus) && (
                                             <button
                                               onClick={() => setPaymentBooking(booking)}
-                                              className="w-full bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white py-3 rounded-xl text-[10px] font-black uppercase tracking-widest cursor-pointer border-none shadow-md"
+                                              className="w-full bg-blue-600 hover:bg-blue-700 text-white py-3 rounded-xl text-[10px] font-black uppercase tracking-widest cursor-pointer border-none shadow-md shadow-blue-600/10"
                                             >
                                               Pay Now Online
                                             </button>
@@ -2004,9 +2010,9 @@ const UserDashboard = () => {
 
                                       <button
                                         onClick={() => toggleExpand(booking._id)}
-                                        className="mt-4 text-[10px] font-extrabold text-indigo-400 hover:text-indigo-300 uppercase tracking-widest text-left cursor-pointer border-none bg-transparent outline-none"
+                                        className="mt-3 text-[11px] font-extrabold text-blue-600 hover:text-blue-700 uppercase tracking-wider text-left cursor-pointer border-none bg-transparent outline-none"
                                       >
-                                        {expandedBookings[booking._id] ? 'Hide Details' : 'View Full Details'}
+                                        {expandedBookings[booking._id] ? 'Hide Details ▲' : 'View Full Details ▼'}
                                       </button>
                                     </div>
                                   );
