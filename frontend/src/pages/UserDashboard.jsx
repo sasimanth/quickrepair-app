@@ -1064,7 +1064,7 @@ const UserDashboard = () => {
     { id: 'referral', label: 'Refer & Earn', icon: User },
     { id: 'notifications', label: 'Notifications', icon: Bell },
     { id: 'support', label: 'Help & Support', icon: HelpCircle },
-    { id: 'settings', label: 'Settings', icon: Settings },
+    { id: 'menu', label: 'Menu & Account', icon: Menu },
   ];
 
   return (
@@ -1570,7 +1570,7 @@ const UserDashboard = () => {
                                       {tech.name}
                                       <ShieldCheck size={14} className="text-emerald-500 shrink-0"/>
                                    </h3>
-                                   <span className="text-[9px] bg-blue-50 text-blue-700 border border-blue-200 px-2 py-0.5 rounded-full mt-1 inline-block uppercase tracking-wider font-extrabold">Verified Pro</span>
+                                   <span className="text-[9px] bg-blue-50 text-blue-700 border border-blue-200 px-2 py-0.5 rounded-full"></span>
                                  </div>
                                </div>
                                
@@ -2285,40 +2285,105 @@ const UserDashboard = () => {
                                   </div>
                                 </div>
                               </div>
-                            </div>
-                          )}
+                             </div>
+                           )}
 
-                        </div>
-                      </div>
+                              {/* MENU TAB (Urban Company Style Account Menu) */}
+                              {activeSubTab === 'menu' && (
+                                <div className="space-y-6 animate-in fade-in duration-300">
+                                  <div className="pb-4 border-b border-slate-100 flex justify-between items-center">
+                                    <div>
+                                      <h2 className="text-xl sm:text-2xl font-black tracking-tight text-slate-900 flex items-center gap-2">
+                                        <Menu className="text-blue-600" /> Account Menu & Services
+                                      </h2>
+                                      <p className="text-xs text-slate-500 mt-1 font-semibold">Access all service bookings, wallet, rewards, addresses, and account settings</p>
+                                    </div>
+                                    <button
+                                      onClick={() => setShowSettings(true)}
+                                      className="px-3.5 py-1.5 bg-blue-50 text-blue-700 hover:bg-blue-100 border border-blue-200 font-bold text-xs rounded-xl flex items-center gap-1.5 cursor-pointer"
+                                    >
+                                      <Settings size={14} /> Profile
+                                    </button>
+                                  </div>
 
-                      {/* Bottom Nav for mobile */}
-                      <div className="md:hidden fixed bottom-0 left-0 right-0 bg-slate-900/90 backdrop-blur-md border-t border-white/5 px-4 py-2.5 flex justify-between z-45">
-                        {sidebarItems.slice(0, 5).map(item => {
-                          const IconComp = item.icon;
-                          const isSelected = activeSubTab === item.id;
+                                  {/* Menu List Cards */}
+                                  <div className="space-y-3">
+                                    {[
+                                      { id: 'bookings', title: 'My Service Bookings', desc: 'Track active repair orders, scheduled visits, completed history', icon: Calendar, color: 'text-blue-600 bg-blue-50 border-blue-200' },
+                                      { id: 'booking-form', title: 'Book a New Service', desc: 'Instant repair booking for home appliances, electrical, plumbing', icon: Wrench, color: 'text-indigo-600 bg-indigo-50 border-indigo-200', isAction: true },
+                                      { id: 'wallet', title: 'Wallet & Fixvo Cash', desc: `Available Balance: ₹${(profile?.walletBalance || 0).toFixed(0)} • Cashback & transactions`, icon: CreditCard, color: 'text-emerald-600 bg-emerald-50 border-emerald-200' },
+                                      { id: 'rewards', title: 'Rewards & Promo Vouchers', desc: 'Active coupons, reward points, and special discounts', icon: Sparkles, color: 'text-amber-600 bg-amber-50 border-amber-200' },
+                                      { id: 'addresses', title: 'Saved Addresses', desc: `${addresses.length} saved addresses (Home, Work, Service locations)`, icon: MapPin, color: 'text-rose-600 bg-rose-50 border-rose-200' },
+                                      { id: 'referral', title: 'Refer & Earn Rewards', desc: 'Invite friends and earn ₹100 Fixvo cash per referral', icon: User, color: 'text-purple-600 bg-purple-50 border-purple-200' },
+                                      { id: 'support', title: 'Customer Help & Support', desc: '24/7 support hotline, FAQs, raise ticket', icon: HelpCircle, color: 'text-blue-600 bg-blue-50 border-blue-200' },
+                                      { id: 'settings', title: 'Account Settings & Profile', desc: 'Update name, phone, email, and personal preferences', icon: Settings, color: 'text-slate-700 bg-slate-100 border-slate-200', isModal: true }
+                                    ].map((ch) => {
+                                      const IconComp = ch.icon;
+                                      return (
+                                        <div
+                                          key={ch.id}
+                                          onClick={() => {
+                                            if (ch.isModal) {
+                                              setShowSettings(true);
+                                            } else if (ch.isAction) {
+                                              setShowForm(true);
+                                            } else {
+                                              setActiveSubTab(ch.id);
+                                            }
+                                          }}
+                                          className="bg-white border border-slate-200/90 hover:border-blue-300 hover:shadow-md p-4 sm:p-5 rounded-2xl flex items-center justify-between gap-4 cursor-pointer transition-all duration-200 group"
+                                        >
+                                          <div className="flex items-center gap-4">
+                                            <div className={`p-3 rounded-2xl border ${ch.color} shrink-0 group-hover:scale-105 transition-transform`}>
+                                              <IconComp size={20} />
+                                            </div>
+                                            <div>
+                                              <h3 className="font-extrabold text-slate-900 text-sm group-hover:text-blue-600 transition-colors">{ch.title}</h3>
+                                              <p className="text-xs text-slate-500 font-medium mt-0.5">{ch.desc}</p>
+                                            </div>
+                                          </div>
+                                          <ChevronRight size={18} className="text-slate-400 group-hover:text-blue-600 group-hover:translate-x-1 transition-all" />
+                                        </div>
+                                      );
+                                    })}
+                                  </div>
+                                </div>
+                              )}
+
+                         </div>
+                       </div>
+
+                      {/* Urban Company Style Mobile Bottom Navigation Bar */}
+                      <nav className="md:hidden fixed bottom-0 left-0 right-0 bg-white border-t border-slate-200 py-2 px-4 flex justify-around items-center z-50 shadow-lg">
+                        {[
+                          { id: 'overview', label: 'Home', icon: Home },
+                          { id: 'bookings', label: 'Bookings', icon: Calendar },
+                          { id: 'book', label: 'Book', icon: Plus, isAction: true },
+                          { id: 'wallet', label: 'Wallet', icon: CreditCard },
+                          { id: 'menu', label: 'Menu', icon: Menu }
+                        ].map(nav => {
+                          const IconComp = nav.icon;
+                          const isActive = activeSubTab === nav.id;
                           return (
                             <button
-                              key={item.id}
-                              onClick={() => setActiveSubTab(item.id)}
-                              className={`flex flex-col items-center gap-1 cursor-pointer border-none bg-transparent outline-none ${
-                                isSelected ? 'text-indigo-400' : 'text-slate-500 hover:text-slate-400'
+                              key={nav.id}
+                              onClick={() => {
+                                if (nav.isAction) {
+                                  setShowForm(true);
+                                } else {
+                                  setActiveSubTab(nav.id);
+                                }
+                              }}
+                              className={`flex flex-col items-center justify-center gap-1 transition-all border-none outline-none cursor-pointer bg-transparent ${
+                                isActive ? 'text-blue-600 font-extrabold' : 'text-slate-400 hover:text-slate-700'
                               }`}
                             >
-                              <IconComp size={18} />
-                              <span className="text-[8px] font-bold">{item.label.split(' ')[0]}</span>
+                              <IconComp size={20} className={isActive ? 'text-blue-600 stroke-[2.5]' : ''} />
+                              <span className="text-[10px] tracking-tight">{nav.label}</span>
                             </button>
                           );
                         })}
-                        <button
-                          onClick={() => setActiveSubTab('settings')}
-                          className={`flex flex-col items-center gap-1 cursor-pointer border-none bg-transparent outline-none ${
-                            activeSubTab === 'settings' ? 'text-indigo-400' : 'text-slate-500 hover:text-slate-400'
-                          }`}
-                        >
-                          <Settings size={18} />
-                          <span className="text-[8px] font-bold">Settings</span>
-                        </button>
-                      </div>
+                      </nav>
 
                     </div>
                   )}

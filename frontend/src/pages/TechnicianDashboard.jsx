@@ -1357,15 +1357,15 @@ const TechnicianDashboard = () => {
               </div>
             )}
 
-            {/* 7. MENU / CHAPTERS TAB (Urban Company Style Account Chapters Menu) */}
+            {/* 7. MENU TAB (Urban Company Style Account Menu) */}
             {activeSubTab === 'menu' && (
               <div className="space-y-6 animate-in fade-in duration-300">
                 <div className="pb-4 border-b border-slate-100 flex justify-between items-center">
                   <div>
                     <h2 className="text-xl sm:text-2xl font-black tracking-tight text-slate-900 flex items-center gap-2">
-                      <Menu className="text-blue-600" /> Menu & Account Chapters
+                      <Menu className="text-blue-600" /> Account Menu & Services
                     </h2>
-                    <p className="text-xs text-slate-500 mt-1 font-semibold">Access all dashboard chapters, tools, credentials, and settings</p>
+                    <p className="text-xs text-slate-500 mt-1 font-semibold">Access all dashboard sections, tools, credentials, and settings</p>
                   </div>
                   <button
                     onClick={() => setShowSettings(true)}
@@ -1375,15 +1375,15 @@ const TechnicianDashboard = () => {
                   </button>
                 </div>
 
-                {/* Chapters List Cards */}
+                {/* Menu List Cards */}
                 <div className="space-y-3">
                   {[
-                    { id: 'jobs', title: 'Chapter 1: Repair Requests & Orders', desc: 'Incoming jobs, active route, quote proposals, completed history', icon: Briefcase, color: 'text-blue-600 bg-blue-50 border-blue-200' },
-                    { id: 'earnings', title: 'Chapter 2: Wallet & Bank Payouts', desc: 'Gross earnings, platform fees, instant bank withdrawal', icon: Wallet, color: 'text-emerald-600 bg-emerald-50 border-emerald-200' },
-                    { id: 'reviews', title: 'Chapter 3: Ratings & Performance Score', desc: '★ 4.9 customer rating score and review feedback', icon: Star, color: 'text-amber-600 bg-amber-50 border-amber-200' },
-                    { id: 'notifications', title: 'Chapter 4: Notification Center & Alerts', desc: 'Push alert settings, lock screen sound chimes, alert log', icon: Bell, color: 'text-purple-600 bg-purple-50 border-purple-200' },
-                    { id: 'support', title: 'Chapter 5: Partner Support & Guidelines', desc: '24/7 technician hotline, commission rules, guidelines', icon: HelpCircle, color: 'text-rose-600 bg-rose-50 border-rose-200' },
-                    { id: 'settings', title: 'Chapter 6: Account Settings & Identity', desc: 'Update skills, service areas, experience, and profile', icon: Settings, color: 'text-slate-700 bg-slate-100 border-slate-200', isModal: true }
+                    { id: 'jobs', title: 'Repair Requests & Orders', desc: 'Incoming jobs, active route, quote proposals, completed history', icon: Briefcase, color: 'text-blue-600 bg-blue-50 border-blue-200' },
+                    { id: 'earnings', title: 'Wallet & Bank Payouts', desc: 'Gross earnings, platform fees, instant bank withdrawal', icon: Wallet, color: 'text-emerald-600 bg-emerald-50 border-emerald-200' },
+                    { id: 'reviews', title: 'Ratings & Performance Score', desc: '★ 4.9 customer rating score and review feedback', icon: Star, color: 'text-amber-600 bg-amber-50 border-amber-200' },
+                    { id: 'notifications', title: 'Notification Center & Alerts', desc: 'Push alert settings, lock screen sound chimes, alert log', icon: Bell, color: 'text-purple-600 bg-purple-50 border-purple-200' },
+                    { id: 'support', title: 'Partner Support & Guidelines', desc: '24/7 technician hotline, commission rules, guidelines', icon: HelpCircle, color: 'text-rose-600 bg-rose-50 border-rose-200' },
+                    { id: 'settings', title: 'Account Settings & Identity', desc: 'Update skills, service areas, experience, and profile', icon: Settings, color: 'text-slate-700 bg-slate-100 border-slate-200', isModal: true }
                   ].map((ch) => {
                     const IconComp = ch.icon;
                     return (
