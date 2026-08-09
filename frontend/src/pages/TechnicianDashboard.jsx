@@ -4,7 +4,7 @@ import api from '../services/api';
 import { globalServices } from '../data/services';
 import { subscribeToPushNotifications } from '../services/pushNotification';
 import { requestFcmPermission } from '../services/firebase';
-import { Calendar, MapPin, Smartphone, AlertCircle, Clock, CheckCircle, PackageSearch, XCircle, Plus, LayoutDashboard, Wrench, Settings, Briefcase, Star, User, ChevronRight, MessageSquare, Camera, UploadCloud, Loader2, Shield, ShieldCheck, ShieldAlert, Sparkles, IndianRupee, Wallet, Coins, ArrowUpRight, ArrowDownLeft, FileText, Bell, CreditCard, Banknote, HelpCircle, Truck, Home, Search, Eye, Zap, Maximize2, Hash, Layers, Paintbrush, Tv, X, RefreshCw, PhoneCall } from 'lucide-react';
+import { Calendar, MapPin, Smartphone, AlertCircle, Clock, CheckCircle, PackageSearch, XCircle, Plus, LayoutDashboard, Wrench, Settings, Briefcase, Star, User, ChevronRight, MessageSquare, Camera, UploadCloud, Loader2, Shield, ShieldCheck, ShieldAlert, Sparkles, IndianRupee, Wallet, Coins, ArrowUpRight, ArrowDownLeft, FileText, Bell, CreditCard, Banknote, HelpCircle, Truck, Home, Search, Eye, Zap, Maximize2, Hash, Layers, Paintbrush, Tv, X, RefreshCw, PhoneCall, Menu } from 'lucide-react';
 import ChatModal from '../components/ChatModal';
 import SettingsModal from '../components/SettingsModal';
 import VerificationModal from '../components/VerificationModal';
@@ -38,7 +38,7 @@ const TechnicianDashboard = () => {
     typeof Notification !== 'undefined' ? Notification.permission : 'granted'
   );
   
-  // Navigation active subtab state
+  // Navigation active subtab state: 'overview' | 'jobs' | 'earnings' | 'reviews' | 'notifications' | 'support' | 'menu'
   const [activeSubTab, setActiveSubTab] = useState('overview');
 
   const handleEnableNotifications = async () => {
@@ -631,22 +631,6 @@ const TechnicianDashboard = () => {
     }
   };
 
-  const handleRespondClarification = async (bookingId) => {
-    if (!clarificationResponse.trim()) return;
-    setUpdatingJobs(prev => ({ ...prev, [bookingId]: true }));
-    try {
-      await api.put(`/bookings/${bookingId}/respond-quote`, { responseText: clarificationResponse });
-      setClarificationResponse('');
-      showToast('Response Sent 📢', 'Quote response sent back to customer.', 'success');
-      fetchJobs();
-    } catch (error) {
-       const errorMsg = error.response?.data?.message || error.message || 'Unknown error';
-       alert(`Failed to respond: ${errorMsg}`);
-    } finally {
-       setUpdatingJobs(prev => ({ ...prev, [bookingId]: false }));
-    }
-  };
-
   const handleWithdrawal = async (e) => {
     if (e && e.preventDefault) e.preventDefault();
     
@@ -721,143 +705,91 @@ const TechnicianDashboard = () => {
     { id: 'reviews', label: 'Ratings & Reviews', icon: Star },
     { id: 'notifications', label: 'Notifications', icon: Bell },
     { id: 'support', label: 'Help & Support', icon: HelpCircle },
-    { id: 'settings', label: 'Settings', icon: Settings },
+    { id: 'menu', label: 'Menu / Chapters', icon: Menu },
   ];
 
   return (
-    <div className="min-h-screen bg-slate-50 text-slate-900 font-sans mt-4 sm:mt-8 pb-24">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-6 sm:space-y-8 animate-in fade-in duration-300">
-        
-        {/* Productivity Header & Profile Section */}
-        <div className="relative overflow-hidden rounded-[2.5rem] bg-white border border-slate-200 p-6 sm:p-8 shadow-sm">
-          <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-6 relative z-10">
-            <div className="flex flex-col sm:flex-row items-center gap-5 text-center sm:text-left w-full lg:w-auto">
-              <div className="w-20 h-20 bg-blue-50 border border-blue-100 rounded-2xl flex items-center justify-center text-4xl shadow-inner relative shrink-0">
-                {profile?.avatar || '🔧'}
-                {profile?.isVerified && (
-                  <span className="absolute -top-1.5 -right-1.5 bg-emerald-500 text-white p-1 rounded-lg shadow border border-emerald-300">
-                    <ShieldCheck size={10} className="stroke-[3]" />
-                  </span>
-                )}
-              </div>
-              
-              <div className="space-y-1.5 flex-1">
-                <div className="flex flex-wrap items-center justify-center sm:justify-start gap-2">
-                  <h1 className="text-xl sm:text-2xl font-black tracking-tight text-slate-900">{profile?.name || 'Technician'}</h1>
-                  {profile?.isVerified ? (
-                    <span className="bg-emerald-100 border border-emerald-200 text-emerald-800 font-extrabold text-[9px] px-2.5 py-0.5 rounded-full uppercase tracking-wider">Verified Partner</span>
-                  ) : (
-                    <span className="bg-amber-100 border border-amber-200 text-amber-800 font-extrabold text-[9px] px-2.5 py-0.5 rounded-full uppercase tracking-wider">Pending Verification</span>
-                  )}
-                </div>
-                <p className="text-xs text-slate-500 font-medium">Experience: {profile?.experience || 'N/A'} • Skills: {profile?.skills?.join(', ') || 'General Repair'}</p>
-                <div className="flex flex-wrap justify-center sm:justify-start gap-2 text-[10px] text-slate-500 font-semibold uppercase tracking-wider">
-                  <span>Rating: <strong className="text-amber-600">★ {profile?.rating || '5.0'}</strong></span>
-                  <span className="border-l border-slate-200 pl-2">Jobs: <strong className="text-blue-600">{profile?.completedJobsCount || '0'}</strong></span>
-                  <span className="border-l border-slate-200 pl-2">Areas: <strong className="text-slate-800">{profile?.address || 'Local'}</strong></span>
-                </div>
-              </div>
+    <div className="min-h-screen bg-slate-50 text-slate-900 font-sans pb-24 select-none">
+      
+      {/* Sleek Urban Company Style Compact Native Top Header (Replaces big profile card) */}
+      <header className="sticky top-0 z-40 bg-white border-b border-slate-200 shadow-xs px-4 sm:px-8 py-3.5 flex items-center justify-between">
+        <div className="flex items-center gap-3">
+          <div className="w-10 h-10 bg-blue-50 border border-blue-100 rounded-xl flex items-center justify-center text-xl shadow-inner shrink-0 relative">
+            {profile?.avatar || '🔧'}
+            {profile?.isVerified && (
+              <span className="absolute -bottom-1 -right-1 bg-emerald-500 text-white rounded-full p-0.5 shadow">
+                <ShieldCheck size={10} />
+              </span>
+            )}
+          </div>
+          <div>
+            <div className="flex items-center gap-2">
+              <h1 className="text-sm sm:text-base font-extrabold text-slate-900 leading-tight">
+                {profile?.name || 'Technician'}
+              </h1>
+              {profile?.isVerified ? (
+                <span className="bg-emerald-100 border border-emerald-200 text-emerald-800 text-[9px] font-extrabold px-2 py-0.5 rounded-full uppercase tracking-wider">Verified</span>
+              ) : (
+                <span className="bg-amber-100 border border-amber-200 text-amber-800 text-[9px] font-extrabold px-2 py-0.5 rounded-full uppercase tracking-wider">Pending</span>
+              )}
             </div>
-
-            {/* Quick Actions Panel */}
-            <div className="flex flex-wrap items-center gap-3 w-full lg:w-auto justify-center sm:justify-start lg:justify-end">
-              {profile?.isProfileComplete && (() => {
-                const status = profile?.currentStatus || (profile?.isOnline ? 'online' : 'offline');
-                let btnClass = 'bg-slate-100 border-slate-200 text-slate-600';
-                let dotClass = 'bg-slate-400';
-                let label = 'Offline (Hidden)';
-                
-                if (status === 'online' || status === 'available') {
-                  btnClass = 'bg-emerald-50 border-emerald-200 text-emerald-700 hover:bg-emerald-100';
-                  dotClass = 'bg-emerald-500 animate-pulse';
-                  label = 'Online & Active';
-                } else if (status === 'on_job') {
-                  btnClass = 'bg-blue-50 border-blue-200 text-blue-700 cursor-not-allowed';
-                  dotClass = 'bg-blue-600 animate-ping';
-                  label = 'On Active Job';
-                } else if (status === 'busy') {
-                  btnClass = 'bg-amber-50 border-amber-200 text-amber-700 hover:bg-amber-100';
-                  dotClass = 'bg-amber-500 animate-pulse';
-                  label = 'Busy';
-                }
-
-                return (
-                  <button
-                    onClick={status === 'on_job' ? null : toggleOnlineStatus}
-                    disabled={status === 'on_job'}
-                    className={`flex items-center gap-2 px-5 py-3 rounded-xl font-black text-xs uppercase tracking-wider border transition-all cursor-pointer shadow-sm ${btnClass}`}
-                  >
-                    <span className={`w-2 h-2 rounded-full ${dotClass}`}></span>
-                    <span>{label}</span>
-                  </button>
-                );
-              })()}
-
-              <button
-                onClick={() => setShowSettings(true)}
-                className="bg-slate-100 hover:bg-slate-200 border border-slate-200 text-slate-800 font-extrabold px-4.5 py-3 rounded-xl transition-all text-xs uppercase tracking-wider flex items-center gap-1.5 cursor-pointer outline-none shadow-sm"
-              >
-                <Settings size={14} /> Settings
-              </button>
-              
-              <button
-                onClick={() => fetchJobs(true)}
-                disabled={refreshing}
-                className="bg-blue-600 hover:bg-blue-700 text-white font-extrabold px-4.5 py-3 rounded-xl transition-all text-xs uppercase tracking-wider flex items-center gap-1.5 cursor-pointer outline-none disabled:opacity-50 shadow-md shadow-blue-600/10"
-              >
-                <RefreshCw size={14} className={refreshing ? 'animate-spin' : ''} /> Refresh
-              </button>
-            </div>
+            <p className="text-[11px] text-slate-500 font-medium">★ {profile?.rating || '5.0'} Score • {profile?.completedJobsCount || '0'} Jobs</p>
           </div>
         </div>
 
-        {/* 2-Column Dashboard Grid: Sidebar Menu + Active Subtab Pane */}
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
-          
-          {/* Mobile Horizontal Subtab Bar (< 768px) */}
-          <div className="md:hidden col-span-1 flex items-center gap-2 overflow-x-auto pb-2 scrollbar-none mb-2 -mx-2 px-2">
-            {sidebarItems.map(item => {
-              const IconComp = item.icon;
-              const isSelected = activeSubTab === item.id;
-              return (
-                <button
-                  key={item.id}
-                  onClick={() => {
-                    if (item.id === 'settings') {
-                      setShowSettings(true);
-                    } else {
-                      setActiveSubTab(item.id);
-                    }
-                  }}
-                  className={`flex items-center gap-2 px-3.5 py-2.5 rounded-2xl text-xs font-bold whitespace-nowrap transition-all border-none outline-none cursor-pointer shrink-0 ${
-                    isSelected 
-                      ? 'bg-blue-600 text-white shadow-md shadow-blue-600/20' 
-                      : 'bg-white border border-slate-200 text-slate-600'
-                  }`}
-                >
-                  <IconComp size={15} />
-                  <span>{item.label}</span>
-                </button>
-              );
-            })}
-          </div>
+        {/* Header Action Switches */}
+        <div className="flex items-center gap-2">
+          {profile?.isProfileComplete && (() => {
+            const status = profile?.currentStatus || (profile?.isOnline ? 'online' : 'offline');
+            const isOnline = status === 'online' || status === 'available';
+            
+            return (
+              <button
+                onClick={status === 'on_job' ? null : toggleOnlineStatus}
+                disabled={status === 'on_job'}
+                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-black uppercase tracking-wider border transition-all cursor-pointer shadow-xs ${
+                  isOnline ? 'bg-emerald-50 text-emerald-700 border-emerald-200' : 'bg-slate-100 text-slate-600 border-slate-200'
+                }`}
+              >
+                <span className={`w-2 h-2 rounded-full ${isOnline ? 'bg-emerald-500 animate-pulse' : 'bg-slate-400'}`}></span>
+                <span className="hidden sm:inline">{isOnline ? 'Online' : 'Offline'}</span>
+              </button>
+            );
+          })()}
 
-          {/* Desktop Left Sidebar Navigation */}
+          <button
+            onClick={() => fetchJobs(true)}
+            disabled={refreshing}
+            className="p-2 text-slate-600 hover:text-slate-900 bg-slate-100 hover:bg-slate-200 rounded-full border border-slate-200 transition cursor-pointer"
+            title="Refresh Dashboard"
+          >
+            <RefreshCw size={16} className={refreshing ? 'animate-spin text-blue-600' : ''} />
+          </button>
+
+          <button
+            onClick={() => setShowSettings(true)}
+            className="p-2 text-slate-600 hover:text-slate-900 bg-slate-100 hover:bg-slate-200 rounded-full border border-slate-200 transition cursor-pointer"
+            title="Account Settings"
+          >
+            <Settings size={16} />
+          </button>
+        </div>
+      </header>
+
+      {/* Main Container */}
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mt-4 sm:mt-6 animate-in fade-in duration-300">
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+
+          {/* Desktop Left Sidebar Menu */}
           <div className="hidden md:block md:col-span-1 space-y-4">
-            <div className="bg-white border border-slate-200 rounded-3xl p-3 space-y-1 shadow-sm">
+            <div className="bg-white border border-slate-200 rounded-3xl p-3 space-y-1 shadow-sm sticky top-20">
               {sidebarItems.map(item => {
                 const IconComp = item.icon;
                 const isSelected = activeSubTab === item.id;
                 return (
                   <button
                     key={item.id}
-                    onClick={() => {
-                      if (item.id === 'settings') {
-                        setShowSettings(true);
-                      } else {
-                        setActiveSubTab(item.id);
-                      }
-                    }}
+                    onClick={() => setActiveSubTab(item.id)}
                     className={`w-full flex items-center gap-3 px-4 py-3 rounded-2xl text-xs font-bold transition-all cursor-pointer border-none outline-none text-left tracking-wide ${
                       isSelected 
                         ? 'bg-blue-600 text-white shadow-md shadow-blue-600/20' 
@@ -873,12 +805,12 @@ const TechnicianDashboard = () => {
           </div>
 
           {/* Right Main Content Pane */}
-          <div className="md:col-span-3 bg-white border border-slate-200 rounded-[2rem] p-6 sm:p-8 shadow-sm min-h-[500px]">
+          <div className="md:col-span-3 bg-white border border-slate-200 rounded-[2rem] p-5 sm:p-8 shadow-sm min-h-[500px]">
 
             {/* 1. OVERVIEW TAB */}
             {activeSubTab === 'overview' && (
-              <div className="space-y-8 animate-in fade-in duration-300">
-                <div className="border-b border-slate-100 pb-5">
+              <div className="space-y-6 animate-in fade-in duration-300">
+                <div className="border-b border-slate-100 pb-4">
                   <h2 className="text-xl sm:text-2xl font-black tracking-tight text-slate-900">Welcome back, {profile?.name?.split(' ')[0] || 'Technician'}! 🛠️</h2>
                   <p className="text-xs text-slate-500 mt-1 font-semibold">Monitor active repair jobs, track earnings, and respond to incoming customer requests</p>
                 </div>
@@ -904,8 +836,8 @@ const TechnicianDashboard = () => {
 
                 {/* Active Job Tracker Banner */}
                 <div className="space-y-3">
-                  <div className="flex justify-between items-center">
-                    <h3 className="font-extrabold text-xs text-slate-400 uppercase tracking-wider ml-1">Active Job Live Tracker</h3>
+                  <div className="flex justify-between items-center ml-1">
+                    <h3 className="font-extrabold text-xs text-slate-400 uppercase tracking-wider">Active Job Live Tracker</h3>
                     {activeJob && (
                       <span className="text-[10px] text-blue-600 font-extrabold uppercase tracking-wider bg-blue-50 px-2.5 py-0.5 rounded-full border border-blue-200 animate-pulse">Live Work Active</span>
                     )}
@@ -990,41 +922,6 @@ const TechnicianDashboard = () => {
                     </div>
                   </div>
                 </div>
-
-                {/* Quick Actions Grid */}
-                <div className="space-y-3">
-                  <h3 className="font-extrabold text-xs text-slate-400 uppercase tracking-wider ml-1">Quick Actions</h3>
-                  <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
-                    {[
-                      { id: 'jobs', label: 'My Repair Jobs', icon: Briefcase, color: 'text-blue-600', bg: 'bg-blue-50 border-blue-100' },
-                      { id: 'earnings', label: 'Earnings & Payouts', icon: Wallet, color: 'text-emerald-600', bg: 'bg-emerald-50 border-emerald-100' },
-                      { id: 'reviews', label: 'Ratings & Reviews', icon: Star, color: 'text-amber-600', bg: 'bg-amber-50 border-amber-100' },
-                      { id: 'notifications', label: 'Notifications', icon: Bell, color: 'text-purple-600', bg: 'bg-purple-50 border-purple-100' },
-                      { id: 'support', label: 'Help & Support', icon: HelpCircle, color: 'text-rose-600', bg: 'bg-rose-50 border-rose-100' },
-                      { id: 'settings', label: 'Profile Settings', icon: Settings, color: 'text-slate-600', bg: 'bg-slate-100 border-slate-200' }
-                    ].map((action) => {
-                      const IconComp = action.icon;
-                      return (
-                        <div
-                          key={action.id}
-                          onClick={() => {
-                            if (action.id === 'settings') {
-                              setShowSettings(true);
-                            } else {
-                              setActiveSubTab(action.id);
-                            }
-                          }}
-                          className="bg-white border border-slate-200 hover:border-blue-300 hover:bg-blue-50/30 p-4 rounded-2xl text-center cursor-pointer transition-all duration-200 shadow-xs flex flex-col items-center justify-center min-h-[95px]"
-                        >
-                          <div className={`p-2.5 ${action.bg} ${action.color} border rounded-xl mb-2 shrink-0`}>
-                            <IconComp size={18} />
-                          </div>
-                          <h4 className="font-extrabold text-slate-800 text-xs tracking-tight">{action.label}</h4>
-                        </div>
-                      );
-                    })}
-                  </div>
-                </div>
               </div>
             )}
 
@@ -1071,8 +968,6 @@ const TechnicianDashboard = () => {
                 ) : (
                   <div className="space-y-4">
                     {filteredJobs.map((job) => {
-                      const isCompleted = job.status === 'completed';
-
                       return (
                         <div 
                           key={job._id} 
@@ -1281,7 +1176,7 @@ const TechnicianDashboard = () => {
                   </div>
                 </div>
 
-                {/* Payout & Withdrawal History Table */}
+                {/* Payout History Table */}
                 <div className="space-y-4 pt-4">
                   <h3 className="font-extrabold text-xs text-slate-500 uppercase tracking-wider ml-1">Payout & Bank Withdrawal History</h3>
                   <div className="bg-white rounded-3xl border border-slate-200 overflow-hidden divide-y divide-slate-100 shadow-sm">
@@ -1339,7 +1234,6 @@ const TechnicianDashboard = () => {
                   <p className="text-xs text-slate-500 mt-1 font-semibold">Review customer ratings, service feedback, and performance stars</p>
                 </div>
 
-                {/* Score Summary Banner */}
                 <div className="bg-amber-50/80 border border-amber-200 rounded-3xl p-6 flex flex-col sm:flex-row items-center justify-between gap-4">
                   <div className="flex items-center gap-4 text-center sm:text-left">
                     <div className="w-16 h-16 bg-amber-500 text-white rounded-2xl flex items-center justify-center font-black text-2xl shadow-xs">
@@ -1356,7 +1250,6 @@ const TechnicianDashboard = () => {
                   </div>
                 </div>
 
-                {/* Review Cards List */}
                 <div className="space-y-4 pt-2">
                   {reviews.length === 0 ? (
                     <div className="py-12 text-center text-slate-500 font-semibold text-xs bg-slate-50/50 border border-slate-100 rounded-2xl">
@@ -1464,9 +1357,92 @@ const TechnicianDashboard = () => {
               </div>
             )}
 
+            {/* 7. MENU / CHAPTERS TAB (Urban Company Style Account Chapters Menu) */}
+            {activeSubTab === 'menu' && (
+              <div className="space-y-6 animate-in fade-in duration-300">
+                <div className="pb-4 border-b border-slate-100 flex justify-between items-center">
+                  <div>
+                    <h2 className="text-xl sm:text-2xl font-black tracking-tight text-slate-900 flex items-center gap-2">
+                      <Menu className="text-blue-600" /> Menu & Account Chapters
+                    </h2>
+                    <p className="text-xs text-slate-500 mt-1 font-semibold">Access all dashboard chapters, tools, credentials, and settings</p>
+                  </div>
+                  <button
+                    onClick={() => setShowSettings(true)}
+                    className="px-3.5 py-1.5 bg-blue-50 text-blue-700 hover:bg-blue-100 border border-blue-200 font-bold text-xs rounded-xl flex items-center gap-1.5 cursor-pointer"
+                  >
+                    <Settings size={14} /> Profile
+                  </button>
+                </div>
+
+                {/* Chapters List Cards */}
+                <div className="space-y-3">
+                  {[
+                    { id: 'jobs', title: 'Chapter 1: Repair Requests & Orders', desc: 'Incoming jobs, active route, quote proposals, completed history', icon: Briefcase, color: 'text-blue-600 bg-blue-50 border-blue-200' },
+                    { id: 'earnings', title: 'Chapter 2: Wallet & Bank Payouts', desc: 'Gross earnings, platform fees, instant bank withdrawal', icon: Wallet, color: 'text-emerald-600 bg-emerald-50 border-emerald-200' },
+                    { id: 'reviews', title: 'Chapter 3: Ratings & Performance Score', desc: '★ 4.9 customer rating score and review feedback', icon: Star, color: 'text-amber-600 bg-amber-50 border-amber-200' },
+                    { id: 'notifications', title: 'Chapter 4: Notification Center & Alerts', desc: 'Push alert settings, lock screen sound chimes, alert log', icon: Bell, color: 'text-purple-600 bg-purple-50 border-purple-200' },
+                    { id: 'support', title: 'Chapter 5: Partner Support & Guidelines', desc: '24/7 technician hotline, commission rules, guidelines', icon: HelpCircle, color: 'text-rose-600 bg-rose-50 border-rose-200' },
+                    { id: 'settings', title: 'Chapter 6: Account Settings & Identity', desc: 'Update skills, service areas, experience, and profile', icon: Settings, color: 'text-slate-700 bg-slate-100 border-slate-200', isModal: true }
+                  ].map((ch) => {
+                    const IconComp = ch.icon;
+                    return (
+                      <div
+                        key={ch.id}
+                        onClick={() => {
+                          if (ch.isModal) {
+                            setShowSettings(true);
+                          } else {
+                            setActiveSubTab(ch.id);
+                          }
+                        }}
+                        className="bg-white border border-slate-200/90 hover:border-blue-300 hover:shadow-md p-4 sm:p-5 rounded-2xl flex items-center justify-between gap-4 cursor-pointer transition-all duration-200 group"
+                      >
+                        <div className="flex items-center gap-4">
+                          <div className={`p-3 rounded-2xl border ${ch.color} shrink-0 group-hover:scale-105 transition-transform`}>
+                            <IconComp size={20} />
+                          </div>
+                          <div>
+                            <h3 className="font-extrabold text-slate-900 text-sm group-hover:text-blue-600 transition-colors">{ch.title}</h3>
+                            <p className="text-xs text-slate-500 font-medium mt-0.5">{ch.desc}</p>
+                          </div>
+                        </div>
+                        <ChevronRight size={18} className="text-slate-400 group-hover:text-blue-600 group-hover:translate-x-1 transition-all" />
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
+
           </div>
         </div>
       </div>
+
+      {/* Sleek Mobile Bottom App Navigation Bar (Urban Company Mobile App Layout) */}
+      <nav className="md:hidden fixed bottom-0 left-0 right-0 bg-white border-t border-slate-200 py-2 px-4 flex justify-around items-center z-50 shadow-lg">
+        {[
+          { id: 'overview', label: 'Home', icon: Home },
+          { id: 'jobs', label: 'Jobs', icon: Briefcase },
+          { id: 'earnings', label: 'Earnings', icon: Wallet },
+          { id: 'menu', label: 'Menu', icon: Menu }
+        ].map(nav => {
+          const IconComp = nav.icon;
+          const isActive = activeSubTab === nav.id;
+          return (
+            <button
+              key={nav.id}
+              onClick={() => setActiveSubTab(nav.id)}
+              className={`flex flex-col items-center justify-center gap-1 transition-all border-none outline-none cursor-pointer bg-transparent ${
+                isActive ? 'text-blue-600 font-extrabold' : 'text-slate-400 hover:text-slate-700'
+              }`}
+            >
+              <IconComp size={20} className={isActive ? 'text-blue-600 stroke-[2.5]' : ''} />
+              <span className="text-[10px] tracking-tight">{nav.label}</span>
+            </button>
+          );
+        })}
+      </nav>
 
       {/* Chat Modal */}
       {chatBookingId && (
@@ -1854,7 +1830,7 @@ const TechnicianDashboard = () => {
       )}
 
       {/* Toast Alerts Stack */}
-      <div className="fixed bottom-5 right-5 z-[100] flex flex-col gap-3 w-full max-w-sm pointer-events-none px-4 sm:px-0">
+      <div className="fixed bottom-16 sm:bottom-5 right-5 z-[100] flex flex-col gap-3 w-full max-w-sm pointer-events-none px-4 sm:px-0">
         {toasts.map(toast => (
           <div
             key={toast.id}

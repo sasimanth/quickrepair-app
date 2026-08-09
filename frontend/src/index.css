@@ -20,10 +20,20 @@
 @layer base {
   html {
     scroll-behavior: smooth;
+    touch-action: manipulation;
+    -webkit-text-size-adjust: 100%;
   }
   body {
     @apply antialiased text-slate-900 bg-slate-50;
     font-family: 'Outfit', sans-serif;
+    touch-action: manipulation;
+    user-select: none;
+    -webkit-user-select: none;
+    overflow-x: hidden;
+  }
+  input, textarea, select {
+    user-select: auto;
+    -webkit-user-select: auto;
   }
 }
 

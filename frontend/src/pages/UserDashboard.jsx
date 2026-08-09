@@ -2405,30 +2405,30 @@ const UserDashboard = () => {
                   )}
 
                   {cancelBookingId && (
-                    <div className="fixed inset-0 bg-[#0B0F19]/80 backdrop-blur-md flex items-center justify-center p-4 z-[999] animate-in fade-in duration-300">
-                      <div className="bg-[#111827] border border-red-500/30 rounded-3xl w-full max-w-md overflow-hidden shadow-[0_0_50px_rgba(239,68,68,0.15)] relative animate-in fade-in zoom-in duration-300 text-white p-6 sm:p-8 space-y-6">
+                    <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-4 z-[999] animate-in fade-in duration-300">
+                      <div className="bg-white border border-slate-200 rounded-[2.5rem] w-full max-w-md overflow-hidden shadow-2xl relative text-slate-900 p-6 sm:p-8 space-y-6">
                         <button 
                           onClick={() => setCancelBookingId(null)} 
-                          className="absolute top-4 right-4 text-slate-400 hover:text-white bg-white/5 hover:bg-white/10 rounded-full p-2 transition-all cursor-pointer border-none outline-none"
+                          className="absolute top-4 right-4 text-slate-400 hover:text-slate-700 bg-slate-100 rounded-full p-2 transition-all cursor-pointer border-none"
                         >
                           <X size={16} />
                         </button>
                         <div className="text-center space-y-2">
-                          <div className="w-12 h-12 bg-red-500/20 text-red-500 rounded-full flex items-center justify-center mx-auto shadow-md">
+                          <div className="w-12 h-12 bg-rose-100 text-rose-600 rounded-full flex items-center justify-center mx-auto shadow-xs">
                             <AlertCircle size={24} />
                           </div>
-                          <h3 className="text-xl font-bold tracking-tight text-white">Cancel Booking Request</h3>
-                          <p className="text-slate-400 text-xs font-medium">Please let us know the reason for cancelling this booking.</p>
+                          <h3 className="text-xl font-bold tracking-tight text-slate-900">Cancel Booking Request</h3>
+                          <p className="text-slate-500 text-xs font-medium">Please let us know the reason for cancelling this booking.</p>
                         </div>
                         
                         <div className="space-y-3">
-                          <label className="block text-xs font-bold text-slate-400 uppercase tracking-widest">Reason for Cancellation</label>
+                          <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider">Reason for Cancellation</label>
                           <textarea
                             rows="4"
                             placeholder="Describe your reason here..."
                             value={cancellationReason}
                             onChange={(e) => setCancellationReason(e.target.value)}
-                            className="w-full px-4 py-3 rounded-xl bg-slate-900 border border-white/10 text-slate-200 outline-none text-sm font-semibold focus:border-red-500 transition-all resize-none"
+                            className="w-full px-4 py-3 rounded-2xl bg-white border border-slate-200 text-slate-900 outline-none text-sm font-semibold focus:border-blue-600 transition-all resize-none"
                             required
                           />
                         </div>
@@ -2437,14 +2437,14 @@ const UserDashboard = () => {
                           <button 
                             onClick={() => setCancelBookingId(null)} 
                             disabled={submittingCancellation}
-                            className="flex-1 border border-white/10 hover:bg-white/5 text-slate-355 font-bold py-3 rounded-xl transition-all text-xs sm:text-sm uppercase tracking-wider outline-none disabled:opacity-50 cursor-pointer"
+                            className="flex-1 border border-slate-200 hover:bg-slate-100 text-slate-700 font-bold py-3 rounded-xl transition-all text-xs uppercase tracking-wider cursor-pointer"
                           >
                             Back
                           </button>
                           <button 
                             onClick={handleCancelBooking} 
                             disabled={submittingCancellation}
-                            className="flex-1 bg-red-600 hover:bg-red-500 text-white font-black py-3 rounded-xl transition-all flex justify-center items-center gap-2 text-xs sm:text-sm uppercase tracking-widest shadow-lg shadow-red-500/20 active:scale-[0.98] outline-none cursor-pointer"
+                            className="flex-1 bg-rose-600 hover:bg-rose-700 text-white font-black py-3 rounded-xl transition-all flex justify-center items-center gap-2 text-xs uppercase tracking-wider shadow-md border-none cursor-pointer"
                           >
                             {submittingCancellation ? (
                               <>
