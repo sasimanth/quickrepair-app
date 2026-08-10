@@ -144,6 +144,7 @@ const UserDashboard = () => {
   const [services, setServices] = useState(globalServices);
   const [searchQuery, setSearchQuery] = useState('');
   
+  // Booking Form & Tech match states
   const [step, setStep] = useState(1);
   const [fetchingTechs, setFetchingTechs] = useState(false);
   const [technicians, setTechnicians] = useState([]);
@@ -161,7 +162,7 @@ const UserDashboard = () => {
   const [uploadingImage, setUploadingImage] = useState(false);
   const [showSettings, setShowSettings] = useState(false);
   const [liveLocations, setLiveLocations] = useState({});
-  const [isPlusDismissed, setIsPlusDismissed] = useState(localStorage.getItem('fixvo_plus_dismissed') === 'true');
+  const techSectionRef = useRef(null);
 
   const [cancelBookingId, setCancelBookingId] = useState(null);
   const [cancellationReason, setCancellationReason] = useState('');
@@ -178,7 +179,7 @@ const UserDashboard = () => {
       setBookings(prev => prev.map(b => b._id === cancelBookingId ? { ...b, status: 'cancelled', cancellationReason } : b));
       setCancelBookingId(null);
       setCancellationReason('');
-      showToast('Booking Cancelled ❌', 'Your booking was cancelled.', 'info');
+      showToast('Booking Cancelled ❌', 'Your booking request was successfully cancelled.', 'info');
       fetchData(false);
     } catch (err) {
       alert(err.response?.data?.message || "Failed to cancel booking.");
@@ -188,7 +189,24 @@ const UserDashboard = () => {
   };
 
   const [formData, setFormData] = useState({
-    serviceId: initialService || '', date: '', deviceType: '', problemDescription: '', location: '', detailedAddress: '', landmark: '', gpsLocation: null, imageUrl: '',
+    serviceId: initialService || '',
+    date: new Date().toISOString().split('T')[0],
+    deviceType: '',
+    houseType: '',
+    areaSize: '',
+    numberOfRooms: '',
+    wallArea: '',
+    indoorOutdoor: '',
+    paintPreference: '',
+    vehicleModel: '',
+    vehicleServiceType: 'Doorstep Visit',
+    applianceBrand: '',
+    problemDescription: '',
+    location: 'Madanapalle Main Town',
+    detailedAddress: '',
+    landmark: '',
+    gpsLocation: null,
+    imageUrl: '',
     serviceOption: 'direct',
     unknownProblem: false
   });
@@ -267,6 +285,12 @@ const UserDashboard = () => {
     });
   }, [technicians, techSearchQuery]);
 
+  const selectedServiceObj = useMemo(() => {
+    return services.find(s => s.id === formData.serviceId) || globalServices.find(s => s.id === formData.serviceId);
+  }, [services, formData.serviceId]);
+  const categoryId = selectedServiceObj ? selectedServiceObj.categoryId : '';
+  const serviceNameLower = selectedServiceObj?.name?.toLowerCase() || '';
+
   useEffect(() => {
     getDbServices().then(setServices);
     fetchData(true);
@@ -299,11 +323,59 @@ const UserDashboard = () => {
     }
   }, [currentUserId]);
 
+  const handleImageUpload = (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+    if (file.size > 5 * 1024 * 1024) {
+      alert("File is too large! Please select an image under 5MB.");
+      return;
+    }
+    setUploadingImage(true);
+    const reader = new FileReader();
+    reader.onloadend = () => {
+      setFormData(prev => ({ ...prev, imageUrl: reader.result }));
+      setUploadingImage(false);
+    };
+    reader.onerror = () => {
+      alert('Failed to process image. Please try again.');
+      setUploadingImage(false);
+    };
+    reader.readAsDataURL(file);
+  };
+
+  const handleAutoDetectLocation = () => {
+    if (navigator.geolocation) {
+      navigator.geolocation.getCurrentPosition(
+        (pos) => {
+          setFormData(prev => ({ 
+            ...prev, 
+            gpsLocation: { lat: pos.coords.latitude, lng: pos.coords.longitude },
+            landmark: prev.landmark || `GPS Pin: ${pos.coords.latitude.toFixed(4)}, ${pos.coords.longitude.toFixed(4)}`
+          }));
+          showToast('GPS Location Detected 📍', 'Current coordinates attached to booking request.', 'success', true);
+        },
+        () => {
+          alert("Please allow location access in your browser to share live GPS.");
+        }
+      );
+    } else {
+      alert("Geolocation is not supported by your browser.");
+    }
+  };
+
   const handleInitialSubmit = async (e) => {
     e.preventDefault();
+    if (!formData.serviceId) {
+      alert('Please select a service.');
+      return;
+    }
     setStep(2);
     setFetchingTechs(true);
-    
+
+    setTimeout(() => {
+      techSectionRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }, 100);
+
     try {
       const queryParams = new URLSearchParams();
       if (formData.location) queryParams.append('area', formData.location);
@@ -312,33 +384,179 @@ const UserDashboard = () => {
       const res = await api.get(`/technicians/nearby${queryString}`);
       setTechnicians(res.data || []);
     } catch (err) {
-      console.error('Failed to fetch nearby technicians', err);
+      console.error('Failed to fetch technicians', err);
+      setTechnicians([]);
     } finally {
       setFetchingTechs(false);
     }
   };
 
+  const [isBooking, setIsBooking] = useState(false);
+
   const handleFinalSubmit = async (e) => {
-    e.preventDefault();
-    if (!selectedTech) return;
+    if (e) e.preventDefault();
+    if (!selectedTech) {
+      alert("Please select a technician first.");
+      return;
+    }
+    if (isBooking) return;
     
     try {
+      setIsBooking(true);
       const selectedServiceName = globalServices.find(s => s.id === formData.serviceId)?.name || 'Unknown Service';
       const payload = {
         ...formData,
         service: selectedServiceName,
-        providerId: selectedTech.id
+        providerId: selectedTech.id,
+        promoCode: promoCode,
+        discountPercentage: discountAmount
       };
       await api.post('/bookings', payload);
       
-      showToast('Booking Created! 🚀', 'Your booking request has been sent to technician.', 'success');
+      showToast('Booking Request Submitted 🚀', 'Your booking request has been sent to the technician.', 'success');
+      localStorage.removeItem('pendingBooking');
       setShowForm(false);
       setStep(1);
       setSelectedTech(null);
       fetchData(false);
     } catch (error) {
-      alert(error.response?.data?.message || 'Failed to create booking.');
+      console.error("Booking submission error:", error);
+      const errMsg = error.response?.data?.message || 'Unable to process booking. Please try again.';
+      showToast('Booking Failed ❌', errMsg, 'error');
+    } finally {
+      setIsBooking(false);
     }
+  };
+
+  const handleLightningMatch = async () => {
+    if (technicians.length === 0 || isBooking) return;
+    const bestTech = [...technicians].sort((a, b) => {
+      if ((b.rating || 0) !== (a.rating || 0)) return (b.rating || 0) - (a.rating || 0);
+      return (b.jobsCompleted || 0) - (a.jobsCompleted || 0);
+    })[0];
+
+    setSelectedTech(bestTech);
+    setIsBooking(true);
+
+    setTimeout(async () => {
+      try {
+        const selectedServiceName = globalServices.find(s => s.id === formData.serviceId)?.name || 'Unknown Service';
+        const payload = {
+          ...formData,
+          service: selectedServiceName,
+          providerId: bestTech.id,
+          promoCode: promoCode,
+          discountPercentage: discountAmount
+        };
+        await api.post('/bookings', payload);
+
+        showToast('Technician Assigned Successfully! 👨‍🔧', `Matched with top expert ${bestTech.name}.`, 'success');
+        localStorage.removeItem('pendingBooking');
+        setShowForm(false);
+        setStep(1);
+        setSelectedTech(null);
+        fetchData(false);
+      } catch (error) {
+        console.error("Lightning match failed:", error);
+        const errMsg = error.response?.data?.message || 'Auto-dispatch failed. Please select a technician manually.';
+        showToast('Auto-Dispatch Failed ❌', errMsg, 'error');
+      } finally {
+        setIsBooking(false);
+      }
+    }, 1200);
+  };
+
+  // Saved Address Handlers
+  const handleAddAddress = (e) => {
+    e.preventDefault();
+    if (!addressForm.name || !addressForm.details) return;
+
+    const newAddress = {
+      id: addressEditId || Date.now().toString(),
+      type: addressForm.type || 'Home',
+      name: addressForm.name,
+      details: addressForm.details,
+      isDefault: addressForm.isDefault
+    };
+
+    let updatedAddresses = [];
+    if (addressEditId) {
+      updatedAddresses = addresses.map(addr => addr.id === addressEditId ? newAddress : addr);
+    } else {
+      updatedAddresses = [...addresses, newAddress];
+    }
+
+    if (newAddress.isDefault) {
+      updatedAddresses = updatedAddresses.map(addr => addr.id === newAddress.id ? addr : { ...addr, isDefault: false });
+    }
+
+    setAddresses(updatedAddresses);
+    if (currentUserId) {
+      localStorage.setItem('saved_addresses_' + currentUserId, JSON.stringify(updatedAddresses));
+    }
+
+    setAddressForm({ type: 'Home', name: '', details: '', isDefault: false });
+    setAddressEditId(null);
+    setShowAddressForm(false);
+    showToast(addressEditId ? 'Address Updated ✅' : 'Address Saved ✅', 'Your service address has been saved.', 'success', true);
+  };
+
+  const handleDeleteAddress = (id) => {
+    const updated = addresses.filter(addr => addr.id !== id);
+    if (addresses.find(addr => addr.id === id)?.isDefault && updated.length > 0) {
+      updated[0].isDefault = true;
+    }
+    setAddresses(updated);
+    if (currentUserId) {
+      localStorage.setItem('saved_addresses_' + currentUserId, JSON.stringify(updated));
+    }
+    showToast('Address Deleted 🗑️', 'Address removed from your saved list.', 'info', true);
+  };
+
+  const handleMarkAddressDefault = (id) => {
+    const updated = addresses.map(addr => ({
+      ...addr,
+      isDefault: addr.id === id
+    }));
+    setAddresses(updated);
+    if (currentUserId) {
+      localStorage.setItem('saved_addresses_' + currentUserId, JSON.stringify(updated));
+    }
+    showToast('Default Address Changed ✅', 'Your default service address has been updated.', 'success', true);
+  };
+
+  // Wallet Top Up handler
+  const handleAddWalletMoney = (e) => {
+    e.preventDefault();
+    const amount = Number(walletAddAmount);
+    if (isNaN(amount) || amount <= 0) {
+      alert("Please enter a valid amount.");
+      return;
+    }
+
+    const newBalance = (profile?.walletBalance || 0) + amount;
+    const updatedProfile = profile ? { ...profile, walletBalance: newBalance } : { walletBalance: newBalance };
+    setProfile(updatedProfile);
+    localStorage.setItem('user', JSON.stringify(updatedProfile));
+
+    const newTx = {
+      id: 'tx_' + Date.now(),
+      type: 'credit',
+      desc: 'Wallet Top Up',
+      amount,
+      date: new Date().toISOString()
+    };
+    const updatedTxs = [newTx, ...transactions];
+    setTransactions(updatedTxs);
+
+    if (currentUserId) {
+      localStorage.setItem('wallet_transactions_' + currentUserId, JSON.stringify(updatedTxs));
+    }
+
+    api.put('/users/profile', { walletBalance: newBalance }).catch(() => {});
+
+    setWalletAddAmount('');
+    showToast('Top Up Successful 🎉', `₹${amount} added successfully to your Fixvo Wallet!`, 'success');
   };
 
   const getStatusBadge = (status) => {
@@ -430,74 +648,483 @@ const UserDashboard = () => {
         
         {/* Booking Form View */}
         {showForm ? (
-          <div className="bg-white border border-slate-200 rounded-3xl p-6 sm:p-10 shadow-xl space-y-6">
-            <div className="flex items-center justify-between border-b border-slate-100 pb-4">
+          <div className="bg-white border border-slate-200 rounded-3xl p-6 sm:p-10 shadow-xl relative overflow-hidden space-y-6">
+            <div className={`absolute top-0 left-0 h-1.5 bg-blue-600 transition-all duration-500 ${step === 1 ? 'w-1/2' : 'w-full'}`}></div>
+            
+            {/* Form Top Header */}
+            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 pb-4 border-b border-slate-100">
               <div className="flex items-center gap-3">
                 <div className="p-3 bg-blue-50 text-blue-600 rounded-2xl border border-blue-100">
                   <Wrench size={22} />
                 </div>
                 <div>
-                  <h2 className="text-xl sm:text-2xl font-black text-slate-900">Book Repair Service</h2>
-                  <p className="text-xs text-slate-500">Select service, schedule time, and confirm booking</p>
+                  <h2 className="text-xl sm:text-2xl font-black tracking-tight text-slate-900">
+                    {step === 1 ? 'Schedule a Service Booking' : 'Select Expert Technician'}
+                  </h2>
+                  <p className="text-xs text-slate-500 mt-0.5 font-medium">Verify details and match with top-rated local technicians</p>
                 </div>
               </div>
-              <button 
-                onClick={() => setShowForm(false)}
-                className="p-2 bg-slate-100 hover:bg-slate-200 text-slate-600 rounded-full border border-slate-200 transition cursor-pointer"
-              >
-                <X size={18} />
-              </button>
+              
+              <div className="flex items-center gap-3 self-start sm:self-auto">
+                <div className="flex items-center gap-1.5 text-xs font-bold bg-slate-50 border border-slate-200 rounded-full px-3.5 py-1.5">
+                  <span className={`px-2.5 py-0.5 rounded-full ${step >= 1 ? 'bg-blue-600 text-white font-black' : 'text-slate-400'}`}>1. Details</span>
+                  <ChevronRight size={12} className="text-slate-400"/>
+                  <span className={`px-2.5 py-0.5 rounded-full ${step >= 2 ? 'bg-blue-600 text-white font-black' : 'text-slate-400'}`}>2. Match Tech</span>
+                </div>
+                <button 
+                  onClick={() => { setShowForm(false); setStep(1); setSelectedTech(null); }}
+                  className="p-2 bg-slate-100 hover:bg-slate-200 text-slate-600 rounded-full border border-slate-200 transition cursor-pointer"
+                >
+                  <X size={18} />
+                </button>
+              </div>
             </div>
 
-            <form onSubmit={handleInitialSubmit} className="space-y-6">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div className="space-y-2">
-                  <label className="text-xs font-bold text-slate-500 uppercase tracking-wider">Select Service</label>
-                  <SearchableServiceSelector
-                    value={formData.serviceId}
-                    onChange={(serviceId) => setFormData({ ...formData, serviceId })}
-                    theme="light"
-                  />
+            {/* STEP 1: Details */}
+            {step === 1 && (
+              <form onSubmit={handleInitialSubmit} className="space-y-6 animate-in slide-in-from-left-4 fade-in duration-300">
+                <div className="flex items-center gap-3 bg-amber-50 border border-amber-200 rounded-2xl p-4 text-amber-900">
+                  <span className="flex h-2.5 w-2.5 rounded-full bg-amber-500 animate-[ping_2s_infinite]"></span>
+                  <p className="text-xs sm:text-sm font-semibold">
+                    High Demand Notice: Only <span className="font-black text-amber-700">2 technicians</span> available near you right now.
+                  </p>
                 </div>
-                <div className="space-y-2">
-                  <label className="text-xs font-bold text-slate-500 uppercase tracking-wider">Select City / Area</label>
-                  <SearchableAreaSelector
-                    value={formData.location}
-                    onChange={(location) => setFormData({ ...formData, location })}
-                    theme="light"
-                  />
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <div className="space-y-2">
+                    <label className="text-xs font-bold text-slate-600 uppercase tracking-wider flex items-center gap-2 ml-1">
+                      <Settings size={14} className="text-blue-600"/> Select Service
+                    </label>
+                    <SearchableServiceSelector
+                      value={formData.serviceId}
+                      onChange={(serviceId) => setFormData({ ...formData, serviceId })}
+                      theme="light"
+                      placeholder="Search and select a service..."
+                    />
+                  </div>
+
+                  <div className="space-y-2">
+                    <label className="text-xs font-bold text-slate-600 uppercase tracking-wider flex items-center gap-2 ml-1">
+                      <Calendar size={14} className="text-blue-600"/> Preferred Service Date
+                    </label>
+                    <input
+                      type="date"
+                      required
+                      className="w-full px-4 py-3 bg-white border border-slate-200 focus:border-blue-600 focus:ring-2 focus:ring-blue-100 transition-all font-semibold text-slate-900 rounded-2xl outline-none text-xs"
+                      value={formData.date}
+                      onChange={(e) => setFormData({ ...formData, date: e.target.value })}
+                    />
+                  </div>
                 </div>
-              </div>
 
-              <div className="space-y-2">
-                <label className="text-xs font-bold text-slate-500 uppercase tracking-wider">Problem Description</label>
-                <textarea
-                  rows="3"
-                  value={formData.problemDescription}
-                  onChange={(e) => setFormData({ ...formData, problemDescription: e.target.value })}
-                  placeholder="Describe what needs repair..."
-                  className="w-full px-4 py-3 rounded-2xl bg-white border border-slate-200 font-semibold text-slate-900 outline-none text-sm focus:border-blue-600 transition-all resize-none"
-                  required
-                />
-              </div>
+                {/* Dynamic Category Specific Inputs with Pure White Background Theme */}
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6 bg-slate-50 p-6 rounded-2xl border border-slate-200">
+                  {categoryId === 'repair' && (
+                    <div className="space-y-2 col-span-full md:col-span-1">
+                      <label className="text-xs font-bold text-slate-700 uppercase tracking-wider flex items-center gap-2">
+                        <Smartphone size={14} className="text-blue-600"/> Device Type / Brand
+                      </label>
+                      <input
+                        type="text"
+                        placeholder="e.g. iPhone 13 Pro, HP Pavilion Laptop, Samsung Fridge"
+                        required
+                        className="w-full px-4 py-3 bg-white border border-slate-200 focus:border-blue-600 font-semibold text-slate-900 rounded-xl outline-none text-xs"
+                        value={formData.deviceType || ''}
+                        onChange={(e) => setFormData({ ...formData, deviceType: e.target.value })}
+                      />
+                    </div>
+                  )}
 
-              <div className="flex justify-end gap-3 pt-2">
-                <button
-                  type="button"
-                  onClick={() => setShowForm(false)}
-                  className="px-5 py-3 border border-slate-200 text-slate-600 font-bold rounded-xl text-xs uppercase tracking-wider cursor-pointer"
-                >
-                  Cancel
-                </button>
-                <button
-                  type="submit"
-                  disabled={fetchingTechs || !formData.serviceId}
-                  className="px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white font-extrabold rounded-xl text-xs uppercase tracking-wider shadow-md cursor-pointer border-none"
-                >
-                  {fetchingTechs ? 'Searching Technicians...' : 'Find Technicians Nearby'}
-                </button>
+                  {categoryId === 'cleaning' && (
+                    <>
+                      <div className="space-y-2">
+                        <label className="text-xs font-bold text-slate-700 uppercase tracking-wider flex items-center gap-2">
+                          <Home size={14} className="text-blue-600"/> House / Premise Type
+                        </label>
+                        <select
+                          required
+                          className="w-full px-4 py-3 bg-white border border-slate-200 focus:border-blue-600 font-semibold text-slate-900 rounded-xl outline-none text-xs"
+                          value={formData.houseType || ''}
+                          onChange={(e) => setFormData({ ...formData, houseType: e.target.value })}
+                        >
+                          <option value="">Select premise type</option>
+                          <option value="1 BHK">1 BHK Apartment</option>
+                          <option value="2 BHK">2 BHK Apartment</option>
+                          <option value="3 BHK">3 BHK Apartment</option>
+                          <option value="4 BHK">4 BHK+ Apartment</option>
+                          <option value="Villa">Independent House / Villa</option>
+                          <option value="Office">Commercial Office Space</option>
+                        </select>
+                      </div>
+
+                      <div className="space-y-2">
+                        <label className="text-xs font-bold text-slate-700 uppercase tracking-wider flex items-center gap-2">
+                          <Maximize2 size={14} className="text-blue-600"/> Area Size (Sq Ft)
+                        </label>
+                        <input
+                          type="text"
+                          placeholder="e.g. 1200 sq ft"
+                          required
+                          className="w-full px-4 py-3 bg-white border border-slate-200 focus:border-blue-600 font-semibold text-slate-900 rounded-xl outline-none text-xs"
+                          value={formData.areaSize || ''}
+                          onChange={(e) => setFormData({ ...formData, areaSize: e.target.value })}
+                        />
+                      </div>
+                    </>
+                  )}
+
+                  {(categoryId === 'painting' || serviceNameLower.includes('paint')) && (
+                    <>
+                      <div className="space-y-2">
+                        <label className="text-xs font-bold text-slate-700 uppercase tracking-wider flex items-center gap-2">
+                          <Home size={14} className="text-blue-600"/> Premise Area to Paint
+                        </label>
+                        <select
+                          required
+                          className="w-full px-4 py-3 bg-white border border-slate-200 focus:border-blue-600 font-semibold text-slate-900 rounded-xl outline-none text-xs"
+                          value={formData.houseType || ''}
+                          onChange={(e) => setFormData({ ...formData, houseType: e.target.value })}
+                        >
+                          <option value="">Select option</option>
+                          <option value="1 BHK">1 BHK Interior</option>
+                          <option value="2 BHK">2 BHK Interior</option>
+                          <option value="3 BHK">3 BHK Interior</option>
+                          <option value="Single Room">Single Room / Accent Wall</option>
+                          <option value="Exterior">Exterior Painting</option>
+                        </select>
+                      </div>
+
+                      <div className="space-y-2">
+                        <label className="text-xs font-bold text-slate-700 uppercase tracking-wider flex items-center gap-2">
+                          <Maximize2 size={14} className="text-blue-600"/> Wall Area Size (Sq Ft)
+                        </label>
+                        <input
+                          type="text"
+                          placeholder="e.g. 1500 sq ft"
+                          required
+                          className="w-full px-4 py-3 bg-white border border-slate-200 focus:border-blue-600 font-semibold text-slate-900 rounded-xl outline-none text-xs"
+                          value={formData.wallArea || ''}
+                          onChange={(e) => setFormData({ ...formData, wallArea: e.target.value })}
+                        />
+                      </div>
+                    </>
+                  )}
+
+                  {(categoryId === 'vehicle' || serviceNameLower.includes('bike') || serviceNameLower.includes('car')) && (
+                    <>
+                      <div className="space-y-2">
+                        <label className="text-xs font-bold text-slate-700 uppercase tracking-wider flex items-center gap-2">
+                          <Truck size={14} className="text-blue-600"/> Vehicle Brand & Model
+                        </label>
+                        <input
+                          type="text"
+                          placeholder="e.g. Honda City 2021, Royal Enfield Classic 350"
+                          required
+                          className="w-full px-4 py-3 bg-white border border-slate-200 focus:border-blue-600 font-semibold text-slate-900 rounded-xl outline-none text-xs"
+                          value={formData.vehicleModel || ''}
+                          onChange={(e) => setFormData({ ...formData, vehicleModel: e.target.value })}
+                        />
+                      </div>
+                      <div className="space-y-2">
+                        <label className="text-xs font-bold text-slate-700 uppercase tracking-wider flex items-center gap-2">
+                          <Wrench size={14} className="text-blue-600"/> Service Option
+                        </label>
+                        <select
+                          required
+                          className="w-full px-4 py-3 bg-white border border-slate-200 focus:border-blue-600 font-semibold text-slate-900 rounded-xl outline-none text-xs"
+                          value={formData.vehicleServiceType || ''}
+                          onChange={(e) => setFormData({ ...formData, vehicleServiceType: e.target.value })}
+                        >
+                          <option value="Doorstep Visit">Doorstep Mechanic Visit</option>
+                          <option value="Full Service">Full General Service & Water Wash</option>
+                          <option value="Emergency Breakdown">Roadside Breakdown Support</option>
+                        </select>
+                      </div>
+                    </>
+                  )}
+
+                  {(categoryId === 'appliance' || serviceNameLower.includes('ac') || serviceNameLower.includes('washing')) && (
+                    <div className="space-y-2 col-span-full md:col-span-1">
+                      <label className="text-xs font-bold text-slate-700 uppercase tracking-wider flex items-center gap-2">
+                        <Tv size={14} className="text-blue-600"/> Appliance Brand / Capacity
+                      </label>
+                      <input
+                        type="text"
+                        placeholder="e.g. Voltas 1.5 Ton Split AC, IFB 7kg Front Load"
+                        required
+                        className="w-full px-4 py-3 bg-white border border-slate-200 focus:border-blue-600 font-semibold text-slate-900 rounded-xl outline-none text-xs"
+                        value={formData.applianceBrand || ''}
+                        onChange={(e) => setFormData({ ...formData, applianceBrand: e.target.value })}
+                      />
+                    </div>
+                  )}
+
+                  <div className="space-y-2 col-span-full">
+                    <label className="text-xs font-bold text-slate-700 uppercase tracking-wider flex items-center gap-2">
+                      <AlertCircle size={14} className="text-blue-600"/> Describe Issue / Problem in Detail
+                    </label>
+                    <textarea
+                      rows={3}
+                      required
+                      placeholder="e.g. AC is not cooling properly, makes squeaking noise when turned on..."
+                      className="w-full p-4 bg-white border border-slate-200 focus:border-blue-600 font-semibold text-slate-900 rounded-xl outline-none text-xs resize-none"
+                      value={formData.problemDescription}
+                      onChange={(e) => setFormData({ ...formData, problemDescription: e.target.value })}
+                    />
+                  </div>
+                </div>
+
+                {/* Location & Address Section */}
+                <div className="space-y-4 pt-2">
+                  <h3 className="font-extrabold text-xs text-slate-900 uppercase tracking-wider flex items-center gap-2">
+                    <MapPin size={16} className="text-blue-600" /> Doorstep Service Address
+                  </h3>
+                  
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div className="space-y-1.5">
+                      <label className="text-[10px] font-bold text-slate-500 uppercase tracking-wider ml-1">Area / Locality</label>
+                      <SearchableAreaSelector
+                        value={formData.location}
+                        onChange={(location) => setFormData({ ...formData, location })}
+                        theme="light"
+                      />
+                    </div>
+
+                    <div className="space-y-1.5">
+                      <label className="text-[10px] font-bold text-slate-500 uppercase tracking-wider ml-1">Landmark / Nearby Spot</label>
+                      <input
+                        type="text"
+                        placeholder="e.g. Near RTC Bus Stand, Opp SBI Bank"
+                        className="w-full px-4 py-3 bg-white border border-slate-200 focus:border-blue-600 font-semibold text-slate-900 rounded-xl outline-none text-xs"
+                        value={formData.landmark || ''}
+                        onChange={(e) => setFormData({ ...formData, landmark: e.target.value })}
+                      />
+                    </div>
+                  </div>
+
+                  <div className="space-y-1.5">
+                    <label className="text-[10px] font-bold text-slate-500 uppercase tracking-wider ml-1">Full Street Address & House/Flat No.</label>
+                    <input
+                      type="text"
+                      required
+                      placeholder="e.g. Door No 4-12, Green Park Colony, Madanapalle"
+                      className="w-full px-4 py-3 bg-white border border-slate-200 focus:border-blue-600 font-semibold text-slate-900 rounded-xl outline-none text-xs"
+                      value={formData.detailedAddress || ''}
+                      onChange={(e) => setFormData({ ...formData, detailedAddress: e.target.value })}
+                    />
+                  </div>
+
+                  <div className="flex flex-wrap items-center justify-between gap-3 pt-2">
+                    <button
+                      type="button"
+                      onClick={handleAutoDetectLocation}
+                      className="px-4 py-2 bg-blue-50 hover:bg-blue-100 text-blue-700 border border-blue-200 rounded-xl font-bold text-xs flex items-center gap-1.5 cursor-pointer transition-all"
+                    >
+                      <MapPin size={14} /> Detect GPS Location
+                    </button>
+
+                    <label className="flex items-center gap-2 cursor-pointer bg-slate-50 hover:bg-slate-100 border border-slate-200 px-4 py-2 rounded-xl transition-all">
+                      <UploadCloud size={14} className="text-blue-600" />
+                      <span className="text-xs font-bold text-slate-700">
+                        {uploadingImage ? 'Uploading Image...' : formData.imageUrl ? 'Photo Attached ✓' : 'Upload Inspection Photo (Optional)'}
+                      </span>
+                      <input type="file" accept="image/*" onChange={handleImageUpload} className="hidden" />
+                    </label>
+                  </div>
+                </div>
+
+                {/* Form Action CTAs */}
+                <div className="flex justify-end gap-3 pt-4 border-t border-slate-100">
+                  <button
+                    type="button"
+                    onClick={() => { setShowForm(false); setStep(1); setSelectedTech(null); }}
+                    className="px-5 py-3 border border-slate-200 text-slate-600 font-bold rounded-xl text-xs uppercase tracking-wider cursor-pointer hover:bg-slate-50"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    type="submit"
+                    disabled={fetchingTechs || !formData.serviceId}
+                    className="px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white font-extrabold rounded-xl text-xs uppercase tracking-wider shadow-md shadow-blue-600/10 cursor-pointer border-none flex items-center gap-2"
+                  >
+                    {fetchingTechs ? 'Searching Experts...' : 'Next: Choose Technician →'}
+                  </button>
+                </div>
+              </form>
+            )}
+
+            {/* STEP 2: Match Technician */}
+            {step === 2 && (
+              <div ref={techSectionRef} className="space-y-6 animate-in slide-in-from-right-4 fade-in duration-300">
+                {fetchingTechs ? (
+                  <div className="flex flex-col items-center py-16 space-y-6 text-center">
+                    <div className="relative flex items-center justify-center w-20 h-20">
+                      <span className="absolute inline-flex h-full w-full rounded-full bg-blue-400 opacity-75 animate-ping"></span>
+                      <div className="relative z-10 w-14 h-14 bg-blue-600 rounded-full flex items-center justify-center shadow-lg text-white font-extrabold">
+                        <Search className="w-6 h-6 animate-spin text-white" />
+                      </div>
+                    </div>
+                    <div className="space-y-1">
+                      <p className="font-extrabold text-slate-900 text-base">Scanning Madanapalle Area...</p>
+                      <p className="text-xs text-slate-500 font-medium">Connecting with available top-rated technicians near you...</p>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="space-y-6">
+                    {/* Instant Lightning Dispatch Card */}
+                    {technicians.length > 0 && (
+                      <button
+                        onClick={handleLightningMatch}
+                        disabled={isBooking}
+                        className="w-full bg-gradient-to-r from-blue-600 via-indigo-600 to-purple-600 text-white rounded-2xl p-5 shadow-lg hover:shadow-xl transition-all text-left cursor-pointer border-none outline-none relative overflow-hidden group"
+                      >
+                        <div className="flex items-center justify-between">
+                          <div className="flex items-center gap-3">
+                            <div className="p-2.5 bg-white/20 backdrop-blur-md rounded-xl text-white">
+                              <Sparkles size={22} />
+                            </div>
+                            <div>
+                              <h3 className="text-base font-black tracking-tight flex items-center gap-1.5">
+                                {isBooking ? 'Auto-Dispatching...' : '⚡ Lightning Match (Instant Auto-Assign)'}
+                              </h3>
+                              <p className="text-blue-100 font-medium text-xs mt-0.5">Auto-assign the highest-rated technician near you instantly with 1 click</p>
+                            </div>
+                          </div>
+                          <span className="bg-white/20 text-white px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-wider shrink-0">
+                            Recommended
+                          </span>
+                        </div>
+                      </button>
+                    )}
+
+                    {/* Search Technicians Input */}
+                    <div className="relative w-full">
+                      <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-400">
+                        <Search size={16} />
+                      </div>
+                      <input
+                        type="text"
+                        placeholder="Search technician by name, skill, or locality..."
+                        value={techSearchQuery}
+                        onChange={(e) => setTechSearchQuery(e.target.value)}
+                        className="w-full pl-10 pr-4 py-3 bg-white border border-slate-200 rounded-xl focus:border-blue-600 font-medium text-slate-900 shadow-xs outline-none text-xs"
+                      />
+                    </div>
+
+                    {/* Technician Cards List */}
+                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                      {filteredTechnicians.length === 0 ? (
+                        <div className="col-span-full py-12 text-center bg-slate-50 border border-slate-200 rounded-2xl p-6 text-slate-500 font-semibold text-xs">
+                          No technicians found matching your search. Try adjusting the search term.
+                        </div>
+                      ) : (
+                        filteredTechnicians.map((tech) => {
+                          const isSelected = selectedTech?.id === tech.id;
+                          return (
+                            <div
+                              key={tech.id}
+                              onClick={() => setSelectedTech(tech)}
+                              className={`cursor-pointer rounded-2xl p-4 border-2 transition-all flex flex-col justify-between ${
+                                isSelected
+                                  ? 'border-blue-600 bg-blue-50/50 shadow-md scale-[1.01]'
+                                  : 'border-slate-200 bg-white hover:border-slate-300'
+                              }`}
+                            >
+                              <div>
+                                <div className="flex items-center gap-3 mb-3">
+                                  <div className="w-10 h-10 bg-slate-100 rounded-full flex items-center justify-center text-xl shadow-inner shrink-0">
+                                    {tech.avatar || '👨‍🔧'}
+                                  </div>
+                                  <div className="min-w-0">
+                                    <h3 className="font-extrabold text-slate-900 text-sm truncate flex items-center gap-1">
+                                      {tech.name}
+                                      <ShieldCheck size={14} className="text-blue-600 shrink-0" />
+                                    </h3>
+                                    <span className="text-[9px] bg-blue-100 text-blue-800 font-black uppercase tracking-wider px-2 py-0.5 rounded mt-0.5 inline-block">
+                                      Verified Pro
+                                    </span>
+                                  </div>
+                                </div>
+
+                                <div className="flex items-center gap-2 mb-3 bg-slate-50 p-2 rounded-xl border border-slate-100 text-xs">
+                                  <span className="flex items-center text-amber-500 font-black">
+                                    <Star size={12} className="fill-current mr-1"/> {tech.rating || '4.9'}
+                                  </span>
+                                  <span className="text-slate-300">•</span>
+                                  <span className="text-[10px] text-slate-600 font-bold">{tech.jobsCompleted || 50}+ Jobs</span>
+                                </div>
+                              </div>
+
+                              <div className="space-y-1.5 text-[10px] pt-3 border-t border-slate-100 mt-2">
+                                <div className="flex justify-between items-center text-slate-600 font-semibold">
+                                  <span>Service Fee:</span>
+                                  <strong className="text-slate-900">₹{tech.baseFee || 199} Base</strong>
+                                </div>
+                                <div className="flex justify-between items-center text-slate-600 font-semibold">
+                                  <span>Location:</span>
+                                  <strong className="text-emerald-700">{tech.distance || tech.area || 'Available Now'}</strong>
+                                </div>
+                              </div>
+                            </div>
+                          );
+                        })
+                      )}
+                    </div>
+
+                    {/* Promo Code Box */}
+                    <div className="p-4 bg-slate-50 border border-slate-200 rounded-2xl">
+                      <div className="flex gap-2">
+                        <input
+                          type="text"
+                          placeholder="Enter Promo Code (e.g. FIXVO10)"
+                          value={promoCode}
+                          onChange={(e) => setPromoCode(e.target.value.toUpperCase())}
+                          className="flex-1 px-4 py-2.5 bg-white border border-slate-200 rounded-xl focus:border-blue-600 outline-none uppercase font-bold text-slate-900 text-xs"
+                        />
+                        <button
+                          type="button"
+                          onClick={(e) => {
+                            e.preventDefault();
+                            if (promoCode === 'FIXVO10' || promoCode === 'WELCOME100') {
+                              setDiscountAmount(10);
+                              alert('Promo code applied! 10% discount added to final quote.');
+                            } else {
+                              setDiscountAmount(0);
+                              alert('Invalid promo code');
+                            }
+                          }}
+                          className="px-5 py-2.5 bg-slate-900 hover:bg-black text-white font-bold rounded-xl text-xs cursor-pointer border-none"
+                        >
+                          Apply
+                        </button>
+                      </div>
+                      {discountAmount > 0 && <p className="text-emerald-700 text-xs font-bold mt-2">✓ 10% Discount Applied to Final Bill</p>}
+                    </div>
+
+                    {/* Final Action CTAs */}
+                    <div className="flex justify-between items-center pt-4 border-t border-slate-100">
+                      <button
+                        type="button"
+                        onClick={() => setStep(1)}
+                        disabled={isBooking}
+                        className="px-5 py-3 border border-slate-200 text-slate-600 font-bold rounded-xl text-xs uppercase tracking-wider cursor-pointer hover:bg-slate-50"
+                      >
+                        ← Back to Details
+                      </button>
+
+                      <button
+                        type="button"
+                        onClick={handleFinalSubmit}
+                        disabled={isBooking || !selectedTech}
+                        className="px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white font-extrabold rounded-xl text-xs uppercase tracking-wider shadow-md shadow-blue-600/10 cursor-pointer border-none flex items-center gap-2"
+                      >
+                        {isBooking ? 'Booking...' : selectedTech ? `Confirm & Book ${selectedTech.name}` : 'Select a Tech to Continue'}
+                      </button>
+                    </div>
+                  </div>
+                )}
               </div>
-            </form>
+            )}
           </div>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
@@ -649,18 +1276,26 @@ const UserDashboard = () => {
               {activeSubTab === 'addresses' && (
                 <SavedAddresses 
                   addresses={addresses} 
-                  onAddAddress={handleAddAddress}
-                  onDeleteAddress={handleDeleteAddress}
-                  onMakeDefault={handleMarkAddressDefault}
+                  handleAddAddress={handleAddAddress}
+                  handleDeleteAddress={handleDeleteAddress}
+                  handleMarkAddressDefault={handleMarkAddressDefault}
+                  showAddressForm={showAddressForm}
+                  setShowAddressForm={setShowAddressForm}
+                  addressEditId={addressEditId}
+                  setAddressEditId={setAddressEditId}
+                  addressForm={addressForm}
+                  setAddressForm={setAddressForm}
                 />
               )}
 
               {/* WALLET TAB */}
               {activeSubTab === 'wallet' && (
                 <WalletView 
-                  balance={profile?.walletBalance || 0}
+                  profile={profile}
                   transactions={transactions}
-                  onAddMoney={handleAddWalletMoney}
+                  walletAddAmount={walletAddAmount}
+                  setWalletAddAmount={setWalletAddAmount}
+                  handleAddWalletMoney={handleAddWalletMoney}
                 />
               )}
 
