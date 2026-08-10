@@ -2,6 +2,7 @@ import React, { useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import AuthModal from '../components/AuthModal';
+import { Loader2, Wrench } from 'lucide-react';
 
 const Booking = () => {
   const { user } = useAuth();
@@ -18,14 +19,14 @@ const Booking = () => {
   if (user) return null;
 
   return (
-    <div className="min-h-screen bg-[#0B0F19] flex items-center justify-center relative overflow-hidden">
-      {/* Background Gradients to match premium Home theme */}
-      <div className="absolute top-[-10%] left-[-10%] w-[50%] h-[50%] bg-blue-600/10 rounded-full blur-[100px] pointer-events-none"></div>
-      <div className="absolute bottom-[-10%] right-[-10%] w-[50%] h-[50%] bg-purple-600/10 rounded-full blur-[100px] pointer-events-none"></div>
-      
-      <div className="text-center relative z-10 p-6">
-        <h2 className="text-2xl font-black text-white mb-2 tracking-tight">Redirecting to Secure Booking...</h2>
-        <p className="text-slate-400 text-sm font-semibold">Please authenticate to continue with your service request.</p>
+    <div className="min-h-screen bg-slate-50 flex items-center justify-center relative font-sans p-4">
+      <div className="text-center bg-white border border-slate-200 rounded-3xl p-8 max-w-md w-full shadow-xl space-y-4">
+        <div className="w-14 h-14 bg-blue-50 text-blue-600 rounded-2xl border border-blue-100 flex items-center justify-center mx-auto shadow-inner">
+          <Wrench size={28} />
+        </div>
+        <h2 className="text-xl font-black text-slate-900 tracking-tight">Redirecting to Secure Booking...</h2>
+        <p className="text-xs text-slate-500 font-semibold">Please authenticate to continue with your doorstep service request.</p>
+        <Loader2 size={24} className="animate-spin text-blue-600 mx-auto" />
       </div>
 
       <AuthModal 
