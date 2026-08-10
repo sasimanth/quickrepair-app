@@ -97,8 +97,8 @@ const Footer = () => {
                 </Link>
               </li>
               <li>
-                <Link to="/services" className={getLinkClass('/services')}>
-                  {isActive('/services') && <span className="w-1.5 h-1.5 rounded-full bg-blue-400 animate-pulse"></span>}
+                <Link to="/#services" className={getLinkClass('/#services')}>
+                  {isActive('/#services') && <span className="w-1.5 h-1.5 rounded-full bg-blue-400 animate-pulse"></span>}
                   Services
                 </Link>
               </li>

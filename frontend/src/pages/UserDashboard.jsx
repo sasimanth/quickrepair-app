@@ -866,6 +866,36 @@ const UserDashboard = () => {
                   </p>
                 </div>
 
+                {/* Service Visit Mode Options */}
+                <div className="space-y-2">
+                  <label className="text-xs font-bold text-slate-700 uppercase tracking-wider flex items-center gap-2 ml-1">
+                    <Wrench size={14} className="text-blue-600"/> Select Service Booking Option
+                  </label>
+                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                    {[
+                      { id: 'direct', label: '⚡ Direct Technician Visit', desc: 'Doorstep repair visit with instant on-site solution', tag: 'Standard' },
+                      { id: 'inspection', label: '🔍 Inspection & Diagnosis', desc: 'Root cause diagnosis & itemized quote prior to repair', tag: '₹99 Inspection' },
+                      { id: 'emergency', label: '🚨 Emergency 30-Min Dispatch', desc: 'Priority urgent booking for water leakages or short circuit', tag: 'Priority' }
+                    ].map(opt => (
+                      <div
+                        key={opt.id}
+                        onClick={() => setFormData({ ...formData, serviceOption: opt.id })}
+                        className={`p-4 rounded-2xl border-2 transition-all cursor-pointer ${
+                          formData.serviceOption === opt.id
+                            ? 'border-blue-600 bg-blue-50/60 shadow-xs scale-[1.01]'
+                            : 'border-slate-200 bg-white hover:border-slate-300'
+                        }`}
+                      >
+                        <div className="flex justify-between items-center mb-1">
+                          <span className="font-extrabold text-slate-900 text-xs">{opt.label}</span>
+                          <span className="text-[10px] font-black text-blue-700 bg-blue-100 px-2 py-0.5 rounded-full">{opt.tag}</span>
+                        </div>
+                        <p className="text-[11px] text-slate-500 font-medium leading-relaxed">{opt.desc}</p>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                   <div className="space-y-2">
                     <label className="text-xs font-bold text-slate-600 uppercase tracking-wider flex items-center gap-2 ml-1">
@@ -1555,6 +1585,15 @@ const UserDashboard = () => {
                                     Pay Now Online
                                   </button>
                                 )}
+
+                                {b.status === 'completed' && (
+                                  <button
+                                    onClick={() => setReviewBooking(b)}
+                                    className="w-full bg-amber-500 hover:bg-amber-600 text-white font-extrabold py-3 rounded-xl text-xs uppercase tracking-wider cursor-pointer border-none shadow-md shadow-amber-500/10 flex justify-center items-center gap-1.5"
+                                  >
+                                    <Star size={14} className="fill-current" /> Rate & Review Technician
+                                  </button>
+                                )}
                               </div>
                             )}
 
@@ -1740,9 +1779,23 @@ const UserDashboard = () => {
           booking={paymentBooking}
           onClose={() => setPaymentBooking(null)}
           onSuccess={() => {
+            const b = paymentBooking;
             setPaymentBooking(null);
+            setReviewBooking(b);
             fetchData();
             showToast("Payment Complete 🎉", "Thank you for your payment!", "success");
+          }}
+        />
+      )}
+
+      {reviewBooking && (
+        <ReviewModal
+          booking={reviewBooking}
+          onClose={() => setReviewBooking(null)}
+          onSuccess={() => {
+            setReviewBooking(null);
+            fetchData();
+            showToast("Review Submitted ⭐", "Your rating has been saved and sent to technician.", "success");
           }}
         />
       )}
