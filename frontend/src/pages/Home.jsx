@@ -1181,7 +1181,7 @@ const Home = () => {
                
                <div className="w-full md:w-[320px] shrink-0 bg-[#0B0F19]/80 backdrop-blur-xl border border-white/10 rounded-3xl p-6 sm:p-8 text-center relative z-10 shadow-2xl">
                  <div className="inline-flex items-center justify-center px-4 py-1.5 bg-amber-500/20 text-amber-400 border border-amber-500/30 rounded-full text-[10px] sm:text-xs font-bold uppercase tracking-widest mb-6">Premium Tier</div>
-                 <h3 className="text-4xl sm:text-5xl font-black text-white mb-2 tracking-tight">₹499<span className="text-sm sm:text-lg text-slate-500 font-medium tracking-normal">/yr</span></h3>
+                 <h3 className="text-4xl sm:text-5xl font-black text-white mb-2 tracking-tight">₹999<span className="text-sm sm:text-lg text-slate-500 font-medium tracking-normal">/yr</span></h3>
                  <p className="text-xs sm:text-sm text-slate-400 mb-8 font-medium">Billed annually. Cancel anytime.</p>
                  <button 
                    onClick={() => handleBookingClick()}
