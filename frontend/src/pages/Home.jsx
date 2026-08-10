@@ -29,7 +29,9 @@ import {
   X,
   Cpu,
   Globe,
-  Bell
+  Bell,
+  ArrowRight,
+  PhoneCall
 } from 'lucide-react';
 import { FaInstagram, FaLinkedin, FaXTwitter, FaWhatsapp } from 'react-icons/fa6';
 import founderImg from '../assets/sasi_founder.jpeg';
@@ -97,28 +99,16 @@ const locationPopularMap = {
 
 const LoadingSkeleton = () => (
   <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-32 pb-24 space-y-12 animate-pulse text-white">
-    {/* Navbar Skeleton */}
     <div className="h-16 bg-white/5 border border-white/10 rounded-[2rem] w-full mb-12"></div>
-    {/* Welcome & Welcome Search Skeleton */}
     <div className="space-y-4 max-w-xl mx-auto text-center">
       <div className="h-4 bg-white/5 rounded-full w-24 mx-auto"></div>
       <div className="h-10 bg-white/5 rounded-2xl w-3/4 mx-auto"></div>
       <div className="h-14 bg-white/5 rounded-2xl w-full"></div>
     </div>
-    {/* Category Grid Skeleton */}
     <div className="grid grid-cols-2 md:grid-cols-4 gap-4 sm:gap-6 pt-8">
       {[1, 2, 3, 4].map(i => (
         <div key={i} className="h-32 bg-white/5 border border-white/10 rounded-[2rem]"></div>
       ))}
-    </div>
-    {/* Carousels Skeleton */}
-    <div className="space-y-4 pt-10">
-      <div className="h-6 bg-white/5 rounded-lg w-1/4"></div>
-      <div className="flex gap-4 overflow-hidden">
-        {[1, 2, 3, 4].map(i => (
-          <div key={i} className="h-60 bg-white/5 border border-white/10 rounded-[2rem] w-64 shrink-0"></div>
-        ))}
-      </div>
     </div>
   </div>
 );
@@ -160,7 +150,7 @@ const Home = () => {
   useEffect(() => {
     getDbServices().then((dbServices) => {
       setServices(dbServices);
-      setTimeout(() => setLoading(false), 1200); // Premium skeleton loader timer
+      setTimeout(() => setLoading(false), 800);
     });
   }, []);
 
@@ -222,6 +212,13 @@ const Home = () => {
     return '/dashboard';
   };
 
+  const scrollToSection = (id) => {
+    const el = document.getElementById(id);
+    if (el) {
+      el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+  };
+
   // Autocomplete Suggestions logic
   const getSuggestions = () => {
     if (!searchQuery.trim()) return null;
@@ -274,13 +271,12 @@ const Home = () => {
       handleBookingClick(valueId);
     } else if (type === 'category') {
       setActiveCategory(valueId);
-      const el = document.getElementById('explore-services');
-      if (el) el.scrollIntoView({ behavior: 'smooth' });
+      scrollToSection('services');
     } else if (type === 'area') {
       setSelectedLocation(query);
       localStorage.setItem('fixvo_selected_location', query);
     } else if (type === 'technician') {
-      window.location.href = `/dashboard?action=book&techId=${valueId}&service=mobile_repair`;
+      handleBookingClick('mobile_repair');
     }
   };
 
@@ -439,7 +435,7 @@ const Home = () => {
                         e.stopPropagation();
                         handleBookingClick(service.id);
                       }}
-                      className="w-full py-3 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white text-xs font-black uppercase tracking-wider rounded-xl transition duration-200 cursor-pointer shadow-lg active:scale-95"
+                      className="w-full py-3 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white text-xs font-black uppercase tracking-wider rounded-xl transition duration-200 cursor-pointer shadow-lg active:scale-95 border-none"
                     >
                       Quick Book
                     </button>
@@ -453,7 +449,6 @@ const Home = () => {
     );
   };
 
-  // Helper to extract services by IDs
   const getServicesByIds = (ids) => {
     return ids.map(id => services.find(s => s.id === id)).filter(Boolean);
   };
@@ -470,35 +465,79 @@ const Home = () => {
 
   return (
     <div className="relative w-full min-h-screen bg-[#0B0F19] text-white overflow-x-hidden font-sans">
-      {/* Background Gradients */}
+      {/* Dynamic Ambient Light Gradients */}
       <div className="absolute top-[-5%] left-[-10%] w-[70%] h-[50%] bg-blue-600/15 rounded-full blur-[120px] pointer-events-none"></div>
       <div className="absolute top-[15%] right-[-10%] w-[60%] h-[60%] bg-purple-600/10 rounded-full blur-[120px] pointer-events-none"></div>
 
-      {/* 1. CUSTOM PREMIUM STICKY HEADER */}
+      {/* 1. CUSTOM PREMIUM STICKY HEADER WITH QUICK LINKS */}
       <div className="sticky top-4 inset-x-0 z-50 flex justify-center px-4 pointer-events-none">
-        <nav className="relative pointer-events-auto bg-[#0B0F19]/70 backdrop-blur-2xl border border-white/10 shadow-[0_8px_30px_rgb(0,0,0,0.3)] rounded-[2rem] w-full max-w-5xl transition-all duration-500">
+        <nav className="relative pointer-events-auto bg-[#0B0F19]/80 backdrop-blur-2xl border border-white/10 shadow-[0_8px_30px_rgb(0,0,0,0.4)] rounded-[2rem] w-full max-w-5xl transition-all duration-500">
           <div className="px-4 sm:px-6">
             <div className="flex justify-between items-center h-16 sm:h-20">
               
-              {/* Logo & Brand Name */}
-              <div className="flex items-center gap-3">
-                <Link to="/" className="flex items-center gap-1.5 sm:gap-2 group">
-                  <div className="w-8 h-8 sm:w-10 sm:h-10 group-hover:scale-105 group-hover:rotate-3 transition-all duration-300 shadow-lg shadow-blue-500/30 rounded-full overflow-hidden">
+              {/* Logo & Navigation Links */}
+              <div className="flex items-center gap-6">
+                <Link to="/" className="flex items-center gap-2 group">
+                  <div className="w-9 h-9 sm:w-10 sm:h-10 group-hover:scale-105 group-hover:rotate-3 transition-all duration-300 shadow-lg shadow-blue-500/30 rounded-full overflow-hidden">
                     <img src={fixvoLogo} alt="Fixvo Logo" className="w-full h-full object-cover scale-110" />
                   </div>
-                  <span className="font-black text-lg sm:text-2xl tracking-tight text-blue-500 bg-clip-text text-transparent bg-gradient-to-r from-blue-500 via-blue-600 to-indigo-600">
+                  <span className="font-black text-xl sm:text-2xl tracking-tight text-blue-500 bg-clip-text text-transparent bg-gradient-to-r from-blue-500 via-blue-600 to-indigo-600">
                     Fixvo
                   </span>
                 </Link>
+
+                {/* Desktop Nav Quick Scroll Links */}
+                <div className="hidden md:flex items-center gap-5 text-xs font-extrabold text-slate-300">
+                  <button onClick={() => scrollToSection('services')} className="hover:text-white transition cursor-pointer bg-transparent border-none">
+                    Services
+                  </button>
+                  <button onClick={() => scrollToSection('pricing')} className="hover:text-amber-400 transition cursor-pointer bg-transparent border-none">
+                    Fixvo Plus
+                  </button>
+                  <button onClick={() => scrollToSection('emergency-section')} className="hover:text-cyan-400 transition cursor-pointer bg-transparent border-none">
+                    24/7 Helpline
+                  </button>
+                  <button onClick={() => scrollToSection('why-fixvo')} className="hover:text-blue-400 transition cursor-pointer bg-transparent border-none">
+                    Why Us
+                  </button>
+                </div>
               </div>
 
               {/* Profile, Auth & Notifications */}
               <div className="flex items-center gap-2 sm:gap-3">
+                {/* Location selector dropdown */}
+                <div ref={locationRef} className="relative hidden sm:block">
+                  <button
+                    onClick={() => setIsLocationDropdownOpen(!isLocationDropdownOpen)}
+                    className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-white/5 border border-white/10 text-xs font-bold text-slate-300 hover:text-white transition cursor-pointer"
+                  >
+                    <MapPin size={12} className="text-cyan-400" />
+                    <span>{selectedLocation}</span>
+                    <ChevronDown size={12} className="text-slate-400" />
+                  </button>
+                  {isLocationDropdownOpen && (
+                    <div className="absolute right-0 mt-2 w-44 bg-[#101524] border border-white/10 rounded-2xl shadow-xl p-2 z-50 text-xs font-bold">
+                      {['Madanapalle', 'Kadiri', 'Rayachoty', 'Galiveedu'].map(loc => (
+                        <button
+                          key={loc}
+                          onClick={() => {
+                            setSelectedLocation(loc);
+                            localStorage.setItem('fixvo_selected_location', loc);
+                            setIsLocationDropdownOpen(false);
+                          }}
+                          className={`w-full text-left px-3 py-2 rounded-xl transition ${selectedLocation === loc ? 'bg-blue-600 text-white' : 'text-slate-300 hover:bg-white/5'}`}
+                        >
+                          📍 {loc}
+                        </button>
+                      ))}
+                    </div>
+                  )}
+                </div>
+
                 {user ? (
                   <>
                     <NotificationsBell />
 
-                    {/* Custom Profile Dropdown Menu */}
                     <div ref={profileRef} className="relative ml-1">
                       <button
                         onClick={() => setIsProfileMenuOpen(!isProfileMenuOpen)}
@@ -507,7 +546,7 @@ const Home = () => {
                         {name ? name[0] : 'U'}
                       </button>
                       {isProfileMenuOpen && (
-                        <div className="absolute right-0 mt-3 w-64 bg-[#101524]/95 backdrop-blur-2xl border border-white/10 rounded-2xl shadow-2xl p-4 z-50 text-left animate-in fade-in slide-in-from-top-2 duration-200">
+                        <div className="absolute right-0 mt-3 w-64 bg-[#101524]/98 backdrop-blur-2xl border border-white/10 rounded-2xl shadow-2xl p-4 z-50 text-left animate-in fade-in slide-in-from-top-2 duration-200">
                           <div className="border-b border-white/10 pb-3 mb-3">
                             <h4 className="font-extrabold text-xs sm:text-sm text-white truncate">{name?.split('@')[0]}</h4>
                             <p className="text-[10px] text-slate-400 truncate mt-0.5">{user?.email}</p>
@@ -556,7 +595,7 @@ const Home = () => {
                     </Link>
                     <Link
                       to="/signup"
-                      className="bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white px-3 py-2 rounded-xl text-[11px] sm:px-4 sm:py-2.5 sm:text-xs font-black shadow-lg shadow-blue-600/20 hover:shadow-blue-600/40 transition-all duration-300 transform hover:-translate-y-0.5"
+                      className="bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white px-3.5 py-2 rounded-xl text-[11px] sm:px-4 sm:py-2.5 sm:text-xs font-black shadow-lg shadow-blue-600/20 hover:shadow-blue-600/40 transition-all duration-300 transform hover:-translate-y-0.5"
                     >
                       Join Fixvo
                     </Link>
@@ -579,9 +618,13 @@ const Home = () => {
             transition={{ duration: 0.6 }}
             className="space-y-6"
           >
-            <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-white/5 border border-white/10 backdrop-blur-sm shadow-sm select-none">
+            <div 
+              onClick={() => scrollToSection('emergency-section')}
+              className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-white/5 border border-white/10 backdrop-blur-sm shadow-sm select-none cursor-pointer hover:bg-white/10 transition-all"
+            >
               <span className="flex h-2.5 w-2.5 rounded-full bg-emerald-500 animate-pulse"></span>
               <span className="text-[10px] sm:text-xs font-bold text-emerald-400 uppercase tracking-widest">30-Minute Dispatch Guarantee</span>
+              <ChevronRight size={12} className="text-emerald-400" />
             </div>
 
             <h1 className="text-4xl sm:text-5xl md:text-6xl font-black text-white tracking-tight leading-[1.1]">
@@ -611,7 +654,7 @@ const Home = () => {
                 {searchQuery && (
                   <button 
                     onClick={() => setSearchQuery('')}
-                    className="p-2 text-slate-400 hover:text-white rounded-lg transition mr-1"
+                    className="p-2 text-slate-400 hover:text-white rounded-lg transition mr-1 cursor-pointer border-none bg-transparent"
                   >
                     <X size={16} />
                   </button>
@@ -656,7 +699,7 @@ const Home = () => {
                                   <span>{item}</span>
                                   <button 
                                     onClick={(e) => removeHistoryItem(e, item)}
-                                    className="p-1 text-slate-500 hover:text-rose-400 transition"
+                                    className="p-1 text-slate-500 hover:text-rose-400 transition cursor-pointer border-none bg-transparent"
                                   >
                                     <X size={12} />
                                   </button>
@@ -698,7 +741,7 @@ const Home = () => {
                                     <button
                                       key={s.id}
                                       onClick={() => handleSearchSelect(s.name, 'service', s.id)}
-                                      className="w-full text-left px-3 py-2 rounded-xl text-slate-300 hover:text-white hover:bg-white/5 flex items-center justify-between text-xs font-bold transition cursor-pointer"
+                                      className="w-full text-left px-3 py-2 rounded-xl text-slate-300 hover:text-white hover:bg-white/5 flex items-center justify-between text-xs font-bold transition cursor-pointer border-none bg-transparent"
                                     >
                                       <span>{s.name}</span>
                                       <span className="text-[10px] font-black text-cyan-400 px-2 py-0.5 rounded bg-cyan-500/10 border border-cyan-500/20 uppercase tracking-wide">Starting {s.price}</span>
@@ -716,7 +759,7 @@ const Home = () => {
                                     <button
                                       key={c.id}
                                       onClick={() => handleSearchSelect(c.name, 'category', c.id)}
-                                      className="w-full text-left px-3 py-2 rounded-xl text-slate-300 hover:text-white hover:bg-white/5 flex items-center gap-2 text-xs font-bold transition cursor-pointer"
+                                      className="w-full text-left px-3 py-2 rounded-xl text-slate-300 hover:text-white hover:bg-white/5 flex items-center gap-2 text-xs font-bold transition cursor-pointer border-none bg-transparent"
                                     >
                                       <Sparkles size={12} className="text-indigo-400" />
                                       <span>{c.name}</span>
@@ -725,49 +768,10 @@ const Home = () => {
                                 </div>
                               </div>
                             )}
-
-                            {suggestions.areas.length > 0 && (
-                              <div>
-                                <p className="text-[10px] font-black uppercase tracking-wider text-slate-500 mb-1.5">Locations</p>
-                                <div className="space-y-0.5">
-                                  {suggestions.areas.map(a => (
-                                    <button
-                                      key={a}
-                                      onClick={() => handleSearchSelect(a, 'area')}
-                                      className="w-full text-left px-3 py-2 rounded-xl text-slate-300 hover:text-white hover:bg-white/5 flex items-center gap-2 text-xs font-bold transition cursor-pointer"
-                                    >
-                                      <MapPin size={12} className="text-cyan-400" />
-                                      <span>{a}</span>
-                                    </button>
-                                  ))}
-                                </div>
-                              </div>
-                            )}
-
-                            {suggestions.technicians.length > 0 && (
-                              <div>
-                                <p className="text-[10px] font-black uppercase tracking-wider text-slate-500 mb-1.5">Online Technicians</p>
-                                <div className="space-y-0.5">
-                                  {suggestions.technicians.map(t => (
-                                    <button
-                                      key={t.id}
-                                      onClick={() => handleSearchSelect(t.name, 'technician', t.id)}
-                                      className="w-full text-left px-3 py-2 rounded-xl text-slate-300 hover:text-white hover:bg-white/5 flex items-center justify-between text-xs font-bold transition cursor-pointer"
-                                    >
-                                      <div className="flex items-center gap-2">
-                                        <div className="w-5 h-5 rounded-full bg-slate-900 border border-white/10 flex items-center justify-center text-[10px]">👨‍🔧</div>
-                                        <span>{t.name}</span>
-                                      </div>
-                                      <span className="text-[10px] text-slate-400">{t.rating} ★ • {t.area}</span>
-                                    </button>
-                                  ))}
-                                </div>
-                              </div>
-                            )}
                           </>
                         ) : (
                           <div className="py-6 text-center text-xs text-slate-500 font-semibold italic">
-                            No matching services, categories, or technicians found for "{searchQuery}"
+                            No matching services or categories found for "{searchQuery}"
                           </div>
                         )}
                       </div>
@@ -798,14 +802,11 @@ const Home = () => {
                   key={cat.id}
                   onClick={() => {
                     setActiveCategory(cat.id);
-                    const el = document.getElementById(sectionTargetId);
-                    if (el) {
-                      el.scrollIntoView({ behavior: 'smooth' });
-                    }
+                    scrollToSection(sectionTargetId);
                   }}
                   whileHover={{ scale: 1.03, y: -4 }}
                   whileTap={{ scale: 0.98 }}
-                  className="relative h-32 sm:h-40 rounded-[2rem] overflow-hidden group border border-white/5 hover:border-blue-500/30 transition-all duration-300 text-left shadow-lg cursor-pointer w-full"
+                  className="relative h-32 sm:h-40 rounded-[2rem] overflow-hidden group border border-white/5 hover:border-blue-500/30 transition-all duration-300 text-left shadow-lg cursor-pointer w-full bg-transparent"
                 >
                   <img 
                     src={visual.img} 
@@ -878,8 +879,8 @@ const Home = () => {
 
         </section>
 
-        {/* 7. DAY & NIGHT SERVICES PROMINENT SHOWCASE */}
-        <section className="mt-16 md:mt-24 relative overflow-hidden bg-gradient-to-r from-slate-950 via-[#0D1322] to-slate-950 border border-indigo-500/20 rounded-[2.5rem] p-6 sm:p-10 shadow-2xl">
+        {/* 5. DAY & NIGHT SERVICES PROMINENT SHOWCASE */}
+        <section id="emergency-section" className="mt-16 md:mt-24 relative overflow-hidden bg-gradient-to-r from-slate-950 via-[#0D1322] to-slate-950 border border-indigo-500/20 rounded-[2.5rem] p-6 sm:p-10 shadow-2xl">
           <div className="absolute -right-10 -top-10 w-64 h-64 bg-indigo-500/10 rounded-full blur-3xl pointer-events-none"></div>
           
           <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-6 mb-8 relative z-10">
@@ -892,9 +893,9 @@ const Home = () => {
             </div>
             <a 
               href="tel:+919515980170" 
-              className="px-6 py-3 bg-gradient-to-r from-indigo-600 to-blue-600 hover:from-indigo-500 hover:to-blue-500 text-white font-extrabold text-xs sm:text-sm rounded-xl shadow-lg shadow-indigo-600/30 transition transform hover:-translate-y-0.5 flex items-center gap-2"
+              className="px-6 py-3 bg-gradient-to-r from-indigo-600 to-blue-600 hover:from-indigo-500 hover:to-blue-500 text-white font-extrabold text-xs sm:text-sm rounded-xl shadow-lg shadow-indigo-600/30 transition transform hover:-translate-y-0.5 flex items-center gap-2 no-underline"
             >
-              <Zap size={16} /> 24/7 Helpline: +91 95159 80170
+              <PhoneCall size={16} /> 24/7 Helpline: +91 95159 80170
             </a>
           </div>
 
@@ -922,8 +923,8 @@ const Home = () => {
           </div>
         </section>
 
-        {/* 6. WHY FIXVO EXCELS (BALANCED 6-CARD FEATURE MATRIX) */}
-        <section className="mt-16 md:mt-24 bg-gradient-to-br from-white/[0.02] to-transparent border border-white/5 backdrop-blur-md rounded-[2.5rem] p-6 sm:p-10 mx-4 sm:mx-0">
+        {/* 6. WHY FIXVO EXCELS */}
+        <section id="why-fixvo" className="mt-16 md:mt-24 bg-gradient-to-br from-white/[0.02] to-transparent border border-white/5 backdrop-blur-md rounded-[2.5rem] p-6 sm:p-10 mx-4 sm:mx-0">
           <div className="mb-8">
             <h2 className="text-2xl sm:text-4xl font-extrabold text-white tracking-tight flex items-center gap-2">
               <Sparkles className="text-cyan-400 w-6 h-6 animate-pulse" /> Why Fixvo Excels
@@ -955,7 +956,7 @@ const Home = () => {
           </div>
         </section>
 
-        {/* 13. TRUST & TRANSPARENCY SECTION */}
+        {/* 7. TRUST & TRANSPARENCY SECTION */}
         <section className="mt-16 md:mt-24 border-t border-white/5 pt-16 md:pt-24 px-4 sm:px-0">
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 sm:gap-16 items-center">
             <div>
@@ -1016,29 +1017,25 @@ const Home = () => {
                       <span>Labor Charge:</span>
                       <span className="text-slate-300 font-semibold">₹250</span>
                     </div>
-                    <div className="flex justify-between text-emerald-400 font-bold">
-                      <span>Plus Member Discount (5%):</span>
-                      <span>-₹55</span>
-                    </div>
                   </div>
 
                   <div className="flex justify-between items-end border-t border-white/10 pt-3">
                      <div>
                        <p className="text-[10px] text-slate-500 uppercase font-bold tracking-wider">Fixed Total Invoice</p>
-                       <p className="text-xl sm:text-2xl font-black text-white">₹1045</p>
-                     </div>
-                     <div className="flex gap-2">
-                        <button type="button" className="p-2 border border-white/10 rounded-lg text-slate-400 hover:text-white" title="View before/after photo proof"><Camera size={18}/></button>
+                       <p className="text-xl sm:text-2xl font-black text-white">₹1100</p>
                      </div>
                   </div>
                 </div>
                 <div className="flex gap-3">
-                  <button type="button" className="flex-1 bg-white/5 hover:bg-white/10 border border-white/10 text-slate-400 hover:text-white font-bold py-3 text-xs sm:text-sm rounded-xl transition-all">Reject Quote</button>
-                  <button type="button" className="flex-1 bg-gradient-to-r from-emerald-500 to-emerald-600 hover:from-emerald-400 hover:to-emerald-500 text-white font-black py-3 text-xs sm:text-sm rounded-xl shadow-lg shadow-emerald-500/20 transition-all">Approve & Start</button>
+                  <button 
+                    onClick={() => handleBookingClick('ac_repair')} 
+                    type="button" 
+                    className="w-full bg-gradient-to-r from-emerald-500 to-emerald-600 hover:from-emerald-400 hover:to-emerald-500 text-white font-black py-3 text-xs sm:text-sm rounded-xl shadow-lg shadow-emerald-500/20 transition-all border-none cursor-pointer"
+                  >
+                    Approve & Start Work →
+                  </button>
                 </div>
               </div>
-              
-              <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-[120%] h-[120%] bg-gradient-to-r from-blue-500/20 to-purple-500/20 blur-3xl -z-10 rounded-full pointer-events-none"></div>
             </div>
           </div>
         </section>
@@ -1068,7 +1065,6 @@ const Home = () => {
             <p className="text-slate-400 text-sm max-w-lg mx-auto">Read how Fixvo delivers transparent, 30-minute doorstep service to homeowners.</p>
           </div>
 
-          {/* Key Service Stats Matrix */}
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4 max-w-4xl mx-auto mb-12">
             {[
               { stat: "12,400+", label: "Completed Repairs", icon: CheckCircle2, color: "text-emerald-400" },
@@ -1086,7 +1082,6 @@ const Home = () => {
             ))}
           </div>
 
-          {/* Testimonial Cards */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6 max-w-4xl mx-auto">
             {[
               {
@@ -1134,15 +1129,15 @@ const Home = () => {
 
         {/* Urgent Repair dispatch Call block */}
         <div className="mt-24 sm:mt-32 relative z-10 bg-gradient-to-br from-white/5 to-white/[0.02] backdrop-blur-xl rounded-[2rem] p-8 sm:p-12 border border-white/10 text-center mx-4 sm:mx-0">
-            <div className="w-16 h-16 bg-emerald-500/20 rounded-full flex items-center justify-center text-emerald-400 mx-auto mb-6">
-              <Zap size={32} />
-            </div>
-            <h2 className="text-3xl sm:text-4xl md:text-5xl font-extrabold text-white mb-4">Urgent Repair Needed?</h2>
-            <p className="text-base sm:text-lg text-slate-400 mb-8 max-w-2xl mx-auto">Skip the booking form and call us directly for an instant technician dispatch. We prioritize emergencies.</p>
-            <a href="tel:+919515980170" className="inline-flex items-center gap-3 px-8 sm:px-10 py-4 sm:py-5 bg-gradient-to-r from-emerald-500 to-emerald-600 text-white font-extrabold text-lg sm:text-xl rounded-2xl shadow-xl shadow-emerald-500/30 hover:scale-105 transition-transform">
-              <MessageCircle /> 
-              <span className="hidden sm:inline">Call Now:</span> +91 95159 80170
-            </a>
+          <div className="w-16 h-16 bg-emerald-500/20 rounded-full flex items-center justify-center text-emerald-400 mx-auto mb-6">
+            <Zap size={32} />
+          </div>
+          <h2 className="text-3xl sm:text-4xl md:text-5xl font-extrabold text-white mb-4">Urgent Repair Needed?</h2>
+          <p className="text-base sm:text-lg text-slate-400 mb-8 max-w-2xl mx-auto">Skip the booking form and call us directly for an instant technician dispatch. We prioritize emergencies.</p>
+          <a href="tel:+919515980170" className="inline-flex items-center gap-3 px-8 sm:px-10 py-4 sm:py-5 bg-gradient-to-r from-emerald-500 to-emerald-600 text-white font-extrabold text-lg sm:text-xl rounded-2xl shadow-xl shadow-emerald-500/30 hover:scale-105 transition-transform no-underline">
+            <MessageCircle /> 
+            <span className="hidden sm:inline">Call Now:</span> +91 95159 80170
+          </a>
         </div>
 
         {/* Fixvo Plus Member section */}
@@ -1189,8 +1184,8 @@ const Home = () => {
                  <h3 className="text-4xl sm:text-5xl font-black text-white mb-2 tracking-tight">₹499<span className="text-sm sm:text-lg text-slate-500 font-medium tracking-normal">/yr</span></h3>
                  <p className="text-xs sm:text-sm text-slate-400 mb-8 font-medium">Billed annually. Cancel anytime.</p>
                  <button 
-                   onClick={() => navigate('/dashboard?action=premium')}
-                   className="w-full bg-gradient-to-r from-amber-500 to-yellow-600 hover:from-amber-400 hover:to-yellow-500 text-[#0B0F19] font-black py-4 rounded-xl shadow-[0_0_20px_rgba(245,158,11,0.3)] hover:shadow-[0_0_30px_rgba(245,158,11,0.5)] transition-all duration-300 transform hover:-translate-y-1 text-sm sm:text-base cursor-pointer"
+                   onClick={() => handleBookingClick()}
+                   className="w-full bg-gradient-to-r from-amber-500 to-yellow-600 hover:from-amber-400 hover:to-yellow-500 text-[#0B0F19] font-black py-4 rounded-xl shadow-[0_0_20px_rgba(245,158,11,0.3)] hover:shadow-[0_0_30px_rgba(245,158,11,0.5)] transition-all duration-300 transform hover:-translate-y-1 text-sm sm:text-base cursor-pointer border-none"
                  >
                    Get Fixvo Plus
                  </button>
@@ -1261,27 +1256,27 @@ const Home = () => {
 
         {/* CTA section bottom banner */}
         <div className="mt-24 sm:mt-32 pt-16 border-t border-white/5 text-center px-4 sm:px-0">
-            <motion.div 
-               initial={{ opacity: 0, scale: 0.95 }}
-               whileInView={{ opacity: 1, scale: 1 }}
-               viewport={{ once: true }}
-               className="bg-gradient-to-br from-blue-900/40 to-indigo-900/40 border border-blue-500/20 rounded-[2rem] sm:rounded-[3rem] p-8 sm:p-12 lg:p-20 relative overflow-hidden shadow-2xl shadow-blue-900/20"
-             >
-                <div className="absolute top-0 right-0 p-8 w-full h-full opacity-30 pointer-events-none">
-                  <div className="absolute top-[-20%] right-[-10%] w-[50%] h-[50%] bg-blue-500/50 rounded-full blur-[100px]"></div>
-                </div>
-                
-                <h2 className="text-3xl sm:text-4xl md:text-5xl font-extrabold text-white mb-4 sm:mb-6 relative z-10">Stop guessing. Get it fixed.</h2>
-                <p className="text-lg sm:text-xl text-blue-200/80 mb-8 sm:mb-10 max-w-2xl mx-auto relative z-10">
-                  Book now and get a <span className="text-white font-bold">100% Free Inspection</span> on your first booking.
-                </p>
-                <button
-                  onClick={() => handleBookingClick()}
-                  className="inline-flex relative z-10 px-8 sm:px-10 py-4 sm:py-5 bg-white text-blue-900 font-extrabold rounded-2xl shadow-xl hover:shadow-2xl hover:scale-105 transition-all duration-300 items-center justify-center gap-2 w-full sm:w-auto border-none cursor-pointer outline-none font-sans"
-                >
-                  <span className="text-lg sm:text-xl font-bold">Book Now in 10 Seconds</span>
-                </button>
-             </motion.div>
+          <motion.div 
+            initial={{ opacity: 0, scale: 0.95 }}
+            whileInView={{ opacity: 1, scale: 1 }}
+            viewport={{ once: true }}
+            className="bg-gradient-to-br from-blue-900/40 to-indigo-900/40 border border-blue-500/20 rounded-[2rem] sm:rounded-[3rem] p-8 sm:p-12 lg:p-20 relative overflow-hidden shadow-2xl shadow-blue-900/20"
+          >
+            <div className="absolute top-0 right-0 p-8 w-full h-full opacity-30 pointer-events-none">
+              <div className="absolute top-[-20%] right-[-10%] w-[50%] h-[50%] bg-blue-500/50 rounded-full blur-[100px]"></div>
+            </div>
+            
+            <h2 className="text-3xl sm:text-4xl md:text-5xl font-extrabold text-white mb-4 sm:mb-6 relative z-10">Stop guessing. Get it fixed.</h2>
+            <p className="text-lg sm:text-xl text-blue-200/80 mb-8 sm:mb-10 max-w-2xl mx-auto relative z-10">
+              Book now and get a <span className="text-white font-bold">100% Free Inspection</span> on your first booking.
+            </p>
+            <button
+              onClick={() => handleBookingClick()}
+              className="inline-flex relative z-10 px-8 sm:px-10 py-4 sm:py-5 bg-white text-blue-900 font-extrabold rounded-2xl shadow-xl hover:shadow-2xl hover:scale-105 transition-all duration-300 items-center justify-center gap-2 w-full sm:w-auto border-none cursor-pointer outline-none font-sans"
+            >
+              <span className="text-lg sm:text-xl font-bold">Book Now in 10 Seconds</span>
+            </button>
+          </motion.div>
         </div>
 
       {showAuthModal && (
