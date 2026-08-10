@@ -164,6 +164,53 @@ const UserDashboard = () => {
   const [liveLocations, setLiveLocations] = useState({});
   const techSectionRef = useRef(null);
 
+  // Quote Action states
+  const [updatingJobs, setUpdatingJobs] = useState({});
+  const [clarificationText, setClarificationText] = useState('');
+  const [showClarifyInput, setShowClarifyInput] = useState({});
+
+  const handleQuoteClarification = async (bookingId) => {
+    if (!clarificationText.trim()) return;
+    setUpdatingJobs(prev => ({ ...prev, [bookingId]: true }));
+    try {
+      await api.put(`/bookings/${bookingId}/clarify-quote`, { clarificationText });
+      setClarificationText('');
+      setShowClarifyInput(prev => ({ ...prev, [bookingId]: false }));
+      showToast('Clarification Sent 📢', 'Clarification request sent to technician.', 'success');
+      fetchData(false);
+    } catch (error) {
+       const errorMsg = error.response?.data?.message || error.message || 'Unknown error';
+       alert(`Failed to request clarification: ${errorMsg}`);
+       console.error(error);
+    } finally {
+       setUpdatingJobs(prev => ({ ...prev, [bookingId]: false }));
+    }
+  };
+
+  const handleQuoteApproval = async (bookingId, approved) => {
+    if (updatingJobs[bookingId]) return;
+    // Optimistic update
+    setBookings(prev => prev.map(b => b._id === bookingId ? { ...b, status: approved ? 'in_progress' : 'quote_rejected' } : b));
+    setUpdatingJobs(prev => ({ ...prev, [bookingId]: true }));
+    
+    try {
+      await api.put(`/bookings/${bookingId}/approve-quote`, { approved });
+      showToast(
+        approved ? 'Quote Approved! ✅' : 'Quote Declined ❌',
+        approved ? 'Technician has been notified to resume work.' : 'Work suspended until technician submits a revised quote.',
+        approved ? 'success' : 'warning'
+      );
+      fetchData(false);
+    } catch (error) {
+       const errorMsg = error.response?.data?.message || error.message || 'Unknown error';
+       alert(`Failed to update quote status: ${errorMsg}`);
+       console.error(error);
+       fetchData(false);
+    } finally {
+       setUpdatingJobs(prev => ({ ...prev, [bookingId]: false }));
+    }
+  };
+
   const [cancelBookingId, setCancelBookingId] = useState(null);
   const [cancellationReason, setCancellationReason] = useState('');
   const [submittingCancellation, setSubmittingCancellation] = useState(false);
@@ -568,7 +615,9 @@ const UserDashboard = () => {
       on_the_way: { color: 'bg-orange-50 text-orange-700 border-orange-200', icon: Truck, label: 'Tech On Way' },
       arrived: { color: 'bg-blue-50 text-blue-700 border-blue-200', icon: MapPin, label: 'Tech Arrived' },
       in_progress: { color: 'bg-indigo-50 text-indigo-700 border-indigo-200', icon: Wrench, label: 'In Progress' },
-      quote_pending: { color: 'bg-purple-50 text-purple-700 border-purple-200', icon: CreditCard, label: 'Quote Pending' },
+      quote_pending: { color: 'bg-purple-100 text-purple-800 border-purple-300 font-extrabold', icon: CreditCard, label: 'Quote Pending Approval' },
+      quote_clarification: { color: 'bg-amber-100 text-amber-800 border-amber-300 font-extrabold', icon: MessageSquare, label: 'Question Sent to Tech' },
+      quote_rejected: { color: 'bg-rose-100 text-rose-800 border-rose-300 font-extrabold', icon: XCircle, label: 'Quote Declined' },
       completed: { color: 'bg-emerald-50 text-emerald-700 border-emerald-200', icon: CheckCircle, label: 'Completed' },
       rejected: { color: 'bg-rose-50 text-rose-700 border-rose-200', icon: XCircle, label: 'Rejected' },
       cancelled: { color: 'bg-rose-50 text-rose-700 border-rose-200', icon: XCircle, label: 'Cancelled' }
@@ -583,7 +632,25 @@ const UserDashboard = () => {
   };
 
   const safeBookingsList = Array.isArray(bookings) ? bookings : [];
-  const activeBooking = safeBookingsList.find(b => b && ['requested', 'accepted', 'assigned', 'on_the_way', 'in_progress', 'inspection_started', 'quote_pending'].includes(b.status));
+  
+  const filteredBookings = safeBookingsList.filter(b => {
+    if (!b) return false;
+    const query = searchQuery.toLowerCase();
+    const matchesService = (b.serviceId?.name || b.serviceName || '').toLowerCase().includes(query);
+    const bookingIdStr = (b._id || b.id || '').toString();
+    const matchesId = bookingIdStr.toLowerCase().includes(query);
+    const matchesStatus = (b.status || '').toLowerCase().includes(query);
+    const matchesSearch = matchesService || matchesId || matchesStatus;
+
+    if (filterTab === 'active') {
+      return matchesSearch && !['completed', 'cancelled'].includes(b.status);
+    } else if (filterTab === 'completed') {
+      return matchesSearch && b.status === 'completed';
+    }
+    return matchesSearch;
+  });
+
+  const activeBooking = safeBookingsList.find(b => b && ['requested', 'accepted', 'assigned', 'on_the_way', 'in_progress', 'inspection_started', 'quote_pending', 'quote_clarification'].includes(b.status));
 
   const sidebarItems = [
     { id: 'overview', label: 'Overview', icon: LayoutDashboard },
@@ -596,6 +663,115 @@ const UserDashboard = () => {
     { id: 'support', label: 'Help & Support', icon: HelpCircle },
     { id: 'menu', label: 'Menu & Account', icon: Menu },
   ];
+
+  // Helper component to render quote approval card
+  const renderQuoteProposalCard = (b) => {
+    if (b.status !== 'quote_pending' && b.status !== 'quote_clarification') return null;
+
+    return (
+      <div className="mt-3 p-4 sm:p-5 bg-gradient-to-br from-amber-50 to-orange-50/70 rounded-2xl border border-amber-300 shadow-sm space-y-4 animate-in fade-in duration-200">
+        <div className="flex justify-between items-center pb-3 border-b border-amber-200/80">
+          <h4 className="text-slate-900 font-extrabold text-sm flex items-center gap-2">
+            <CreditCard size={18} className="text-amber-600"/> Technician Quote Proposal
+          </h4>
+          <span className="text-amber-900 text-[10px] font-black uppercase tracking-wider bg-amber-200/90 px-2.5 py-1 rounded-full border border-amber-300 animate-pulse">
+            Approval Required
+          </span>
+        </div>
+
+        {/* Cost Breakdown Matrix */}
+        <div className="bg-white p-3.5 rounded-xl border border-amber-200/80 space-y-2 text-xs">
+          <div className="flex justify-between text-slate-600 font-semibold">
+            <span>Service & Labour Charge:</span>
+            <strong className="text-slate-900">₹{b.serviceCharge || 199}</strong>
+          </div>
+          <div className="flex justify-between text-slate-600 font-semibold">
+            <span>Spare Parts & Material:</span>
+            <strong className="text-slate-900">₹{b.sparePartsCost || 0}</strong>
+          </div>
+          <div className="flex justify-between text-slate-600 font-semibold pb-2 border-b border-slate-100">
+            <span>Visiting & Transport Fee:</span>
+            <strong className="text-slate-900">₹{b.transportCharge || 50}</strong>
+          </div>
+          <div className="flex justify-between items-center pt-1">
+            <span className="text-xs font-black text-slate-900 uppercase tracking-wider">Total Guaranteed Quote:</span>
+            <span className="text-xl font-black text-emerald-700">₹{b.finalQuote || b.amount || 0}</span>
+          </div>
+        </div>
+
+        {/* Diagnosis & Explanation */}
+        <div className="bg-white p-3.5 rounded-xl border border-amber-200/80 text-xs space-y-1.5">
+          {b.detectedIssues && (
+            <div>
+              <p className="text-amber-900 font-extrabold text-[11px]">Diagnosed Problem:</p>
+              <p className="text-slate-700 italic font-medium">"{b.detectedIssues}"</p>
+            </div>
+          )}
+          <p className="text-blue-900 font-extrabold text-[11px]">Technician's Note & Explanation:</p>
+          <p className="text-slate-700 italic font-medium">"{b.quoteReason || 'Diagnosed root cause and replaced necessary parts for repair.'}"</p>
+          {b.quotePhoto && (
+            <div className="mt-2 rounded-lg overflow-hidden border border-slate-200 shadow-xs">
+              <img src={b.quotePhoto} className="w-full h-32 object-cover" alt="Inspection Proof" />
+            </div>
+          )}
+        </div>
+
+        {/* Question & Clarification Input */}
+        {showClarifyInput[b._id] ? (
+          <div className="space-y-2 bg-white p-3 rounded-xl border border-amber-200">
+            <input
+              type="text"
+              placeholder="Ask technician a question about this quote..."
+              value={clarificationText}
+              onChange={(e) => setClarificationText(e.target.value)}
+              className="w-full px-3.5 py-2 bg-slate-50 border border-slate-200 rounded-lg text-xs font-semibold text-slate-900 outline-none focus:border-blue-600"
+            />
+            <div className="flex justify-end gap-2">
+              <button
+                onClick={() => setShowClarifyInput(prev => ({ ...prev, [b._id]: false }))}
+                className="px-3 py-1 text-slate-500 font-bold text-xs cursor-pointer border-none bg-transparent"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={() => handleQuoteClarification(b._id)}
+                disabled={updatingJobs[b._id]}
+                className="px-4 py-1.5 bg-blue-600 hover:bg-blue-700 text-white font-extrabold text-xs rounded-lg border-none cursor-pointer"
+              >
+                Send Question
+              </button>
+            </div>
+          </div>
+        ) : (
+          <button
+            onClick={() => setShowClarifyInput(prev => ({ ...prev, [b._id]: true }))}
+            className="text-[11px] font-extrabold text-amber-900 hover:text-amber-950 underline cursor-pointer bg-transparent border-none p-0"
+          >
+            💬 Have a question about this quote? Ask technician
+          </button>
+        )}
+
+        {/* Accept & Reject Action Buttons */}
+        <div className="grid grid-cols-2 gap-3 pt-1">
+          <button
+            disabled={updatingJobs[b._id]}
+            onClick={() => handleQuoteApproval(b._id, false)}
+            className="w-full bg-white hover:bg-rose-50 border border-rose-300 text-rose-700 font-extrabold py-3 rounded-xl text-xs uppercase tracking-wider transition-all cursor-pointer shadow-xs flex justify-center items-center gap-1.5"
+          >
+            {updatingJobs[b._id] ? <Loader2 size={14} className="animate-spin"/> : '✕ Decline Quote'}
+          </button>
+
+          <button
+            disabled={updatingJobs[b._id]}
+            onClick={() => handleQuoteApproval(b._id, true)}
+            className="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-extrabold py-3 rounded-xl text-xs uppercase tracking-wider transition-all cursor-pointer shadow-md shadow-emerald-600/10 flex justify-center items-center gap-1.5 border-none"
+          >
+            {updatingJobs[b._id] ? <Loader2 size={14} className="animate-spin"/> : '✓ Approve & Start Work'}
+          </button>
+        </div>
+      </div>
+    );
+  };
 
   return (
     <div className="min-h-screen bg-slate-50 text-slate-900 font-sans pb-24 select-none">
@@ -717,7 +893,7 @@ const UserDashboard = () => {
                   </div>
                 </div>
 
-                {/* Dynamic Category Specific Inputs with Pure White Background Theme */}
+                {/* Dynamic Category Specific Inputs */}
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6 bg-slate-50 p-6 rounded-2xl border border-slate-200">
                   {categoryId === 'repair' && (
                     <div className="space-y-2 col-span-full md:col-span-1">
@@ -1176,7 +1352,7 @@ const UserDashboard = () => {
                     </div>
 
                     {activeBooking ? (
-                      <div className="bg-gradient-to-r from-blue-50/80 to-indigo-50/50 border border-blue-200 rounded-3xl p-5 sm:p-6 shadow-xs relative overflow-hidden">
+                      <div className="bg-gradient-to-r from-blue-50/80 to-indigo-50/50 border border-blue-200 rounded-3xl p-5 sm:p-6 shadow-xs relative overflow-hidden space-y-4">
                         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 border-b border-blue-100/80 pb-4">
                           <div className="space-y-1">
                             <div className="flex items-center gap-2">
@@ -1194,14 +1370,36 @@ const UserDashboard = () => {
                           </div>
                         </div>
 
-                        <div className="flex items-center justify-between pt-4">
+                        {/* Render Quote proposal card if pending quote approval */}
+                        {renderQuoteProposalCard(activeBooking)}
+
+                        <div className="flex items-center justify-between pt-2">
                           <p className="text-xs font-semibold text-slate-600">Assigned Tech: <strong className="text-slate-900">{activeBooking.technicianName || 'Expert Pro'}</strong></p>
-                          <button
-                            onClick={() => setActiveSubTab('bookings')}
-                            className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-xs font-extrabold border-none cursor-pointer"
-                          >
-                            View Order Details
-                          </button>
+                          <div className="flex gap-2">
+                            {(activeBooking.providerPhone || activeBooking.providerId?.phone) && (
+                              <a 
+                                href={`tel:${formatPhoneLink(activeBooking.providerPhone || activeBooking.providerId?.phone)}`}
+                                className="px-3 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-extrabold flex items-center gap-1 no-underline"
+                              >
+                                <PhoneCall size={12} /> Call
+                              </a>
+                            )}
+                            <button
+                              onClick={() => setChatBookingId(activeBooking._id)}
+                              className="px-3.5 py-1.5 bg-slate-800 hover:bg-slate-900 text-white rounded-xl text-xs font-extrabold border-none cursor-pointer flex items-center gap-1 relative"
+                            >
+                              <MessageSquare size={12} /> Chat
+                              {activeBooking.unreadCount > 0 && (
+                                <span className="absolute -top-1.5 -right-1.5 bg-rose-600 text-white rounded-full text-[9px] font-black w-4.5 h-4.5 flex items-center justify-center border border-white animate-pulse">{activeBooking.unreadCount}</span>
+                              )}
+                            </button>
+                            <button
+                              onClick={() => setActiveSubTab('bookings')}
+                              className="px-3.5 py-1.5 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-xs font-extrabold border-none cursor-pointer"
+                            >
+                              View Details
+                            </button>
+                          </div>
                         </div>
                       </div>
                     ) : (
@@ -1240,33 +1438,135 @@ const UserDashboard = () => {
               {/* BOOKINGS TAB */}
               {activeSubTab === 'bookings' && (
                 <div className="space-y-6 animate-in fade-in duration-300">
-                  <div className="pb-4 border-b border-slate-100 flex justify-between items-center">
+                  <div className="pb-4 border-b border-slate-100 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
                     <div>
                       <h2 className="text-xl sm:text-2xl font-black tracking-tight text-slate-900 flex items-center gap-2">
                         <Calendar className="text-blue-600" /> My Service Bookings
                       </h2>
-                      <p className="text-xs text-slate-500 mt-1 font-semibold">Track active repair orders, scheduled visits, and completed history</p>
+                      <p className="text-xs text-slate-500 mt-1 font-semibold">Track active repair orders, review technician quotes, and payment history</p>
+                    </div>
+
+                    {/* Filter Tabs */}
+                    <div className="flex items-center gap-1.5 bg-slate-100 p-1 rounded-xl border border-slate-200 text-xs font-bold">
+                      <button
+                        onClick={() => setFilterTab('all')}
+                        className={`px-3 py-1.5 rounded-lg transition-all border-none cursor-pointer ${filterTab === 'all' ? 'bg-white text-blue-600 shadow-xs' : 'text-slate-600 hover:text-slate-900 bg-transparent'}`}
+                      >
+                        All ({safeBookingsList.length})
+                      </button>
+                      <button
+                        onClick={() => setFilterTab('active')}
+                        className={`px-3 py-1.5 rounded-lg transition-all border-none cursor-pointer ${filterTab === 'active' ? 'bg-white text-blue-600 shadow-xs' : 'text-slate-600 hover:text-slate-900 bg-transparent'}`}
+                      >
+                        Active
+                      </button>
+                      <button
+                        onClick={() => setFilterTab('completed')}
+                        className={`px-3 py-1.5 rounded-lg transition-all border-none cursor-pointer ${filterTab === 'completed' ? 'bg-white text-blue-600 shadow-xs' : 'text-slate-600 hover:text-slate-900 bg-transparent'}`}
+                      >
+                        Completed
+                      </button>
                     </div>
                   </div>
 
-                  {safeBookingsList.length === 0 ? (
+                  {filteredBookings.length === 0 ? (
                     <div className="py-16 text-center text-slate-500 font-semibold text-sm bg-slate-50/50 border border-slate-100 rounded-2xl">
-                      No repair bookings found in your account.
+                      No repair bookings found in this view.
                     </div>
                   ) : (
                     <div className="space-y-4">
-                      {safeBookingsList.map(b => (
-                        <div key={b._id || b.id} className="bg-white border border-slate-200 rounded-3xl p-5 shadow-xs space-y-4">
-                          <div className="flex justify-between items-center border-b border-slate-100 pb-3">
-                            <span className="font-black text-slate-900 text-sm">{b.serviceName || 'Home Repair'}</span>
-                            {getStatusBadge(b.status)}
+                      {filteredBookings.map(b => {
+                        const isExpanded = expandedBookings[b._id || b.id];
+                        return (
+                          <div id={`booking-card-${b._id || b.id}`} key={b._id || b.id} className="bg-white border border-slate-200 rounded-3xl p-5 shadow-xs space-y-4">
+                            <div className="flex justify-between items-start border-b border-slate-100 pb-3">
+                              <div className="space-y-0.5">
+                                <div className="flex items-center gap-2">
+                                  <span className="font-black text-slate-900 text-sm sm:text-base">{b.serviceName || 'Home Repair Service'}</span>
+                                  <span className="text-[10px] font-mono font-bold text-slate-400">#{((b._id || b.id || '').toString()).slice(-6).toUpperCase()}</span>
+                                </div>
+                                <p className="text-xs text-slate-500 font-medium">{b.location}</p>
+                              </div>
+                              <div className="flex flex-col items-end gap-1">
+                                {getStatusBadge(b.status)}
+                                <span className="text-[10px] text-slate-400 font-semibold">
+                                  {b.date ? new Date(b.date).toLocaleDateString() : 'Today'}
+                                </span>
+                              </div>
+                            </div>
+
+                            <div className="flex justify-between items-center text-xs bg-slate-50 p-3 rounded-2xl border border-slate-100">
+                              <div className="space-y-0.5">
+                                <span className="text-[10px] text-slate-400 uppercase font-extrabold tracking-wider block">Quoted Amount</span>
+                                <strong className="text-slate-900 text-base">₹{b.finalQuote || b.amount || 0}</strong>
+                              </div>
+                              <div className="text-right space-y-0.5">
+                                <span className="text-[10px] text-slate-400 uppercase font-extrabold tracking-wider block">Assigned Technician</span>
+                                <strong className="text-slate-800 font-bold">{b.technicianName || 'Expert Pro'}</strong>
+                              </div>
+                            </div>
+
+                            {/* QUOTE PROPOSAL CARD IF PENDING APPROVAL */}
+                            {renderQuoteProposalCard(b)}
+
+                            {/* Details Toggle Content */}
+                            {isExpanded && (
+                              <div className="pt-3 border-t border-slate-100 space-y-3 text-xs font-semibold animate-in fade-in duration-200">
+                                <p className="text-slate-600 leading-relaxed font-medium"><strong className="text-slate-900">Problem Description:</strong> {b.problemDescription || 'General Service & Repair'}</p>
+                                <p className="text-slate-600 leading-relaxed font-medium"><strong className="text-slate-900">Address Details:</strong> {b.detailedAddress || b.location}</p>
+                                {b.landmark && <p className="text-slate-600"><strong className="text-slate-900">Landmark:</strong> {b.landmark}</p>}
+                                {b.deviceType && <p className="text-slate-600"><strong className="text-slate-900">Device Type:</strong> {b.deviceType}</p>}
+
+                                {/* Quick Actions */}
+                                <div className="grid grid-cols-2 gap-2 pt-2 border-t border-slate-100">
+                                  {(b.providerPhone || b.providerId?.phone) && (
+                                    <a 
+                                      href={`tel:${formatPhoneLink(b.providerPhone || b.providerId?.phone)}`}
+                                      className="flex items-center justify-center gap-1.5 py-2.5 rounded-xl text-xs font-black uppercase tracking-wider bg-emerald-600 text-white hover:bg-emerald-700 cursor-pointer no-underline text-center shadow-xs"
+                                    >
+                                      <PhoneCall size={14} /> Call Technician
+                                    </a>
+                                  )}
+                                  <button 
+                                    onClick={() => setChatBookingId(b._id)}
+                                    className="flex items-center justify-center gap-1.5 py-2.5 rounded-xl text-xs font-black uppercase tracking-wider bg-slate-800 text-white hover:bg-slate-900 cursor-pointer border-none outline-none relative shadow-xs"
+                                  >
+                                    <MessageSquare size={14} /> Chat
+                                    {b.unreadCount > 0 && (
+                                      <span className="absolute -top-1.5 -right-1.5 bg-rose-600 text-white rounded-full text-[9px] font-black w-4.5 h-4.5 flex items-center justify-center border border-white animate-pulse">{b.unreadCount}</span>
+                                    )}
+                                  </button>
+                                </div>
+
+                                {!['completed', 'cancelled', 'rejected'].includes(b.status) && (
+                                  <button
+                                    onClick={() => setCancelBookingId(b._id)}
+                                    className="w-full bg-rose-50 text-rose-700 hover:bg-rose-100 border border-rose-200 py-2.5 rounded-xl text-xs font-extrabold uppercase tracking-wider cursor-pointer transition-colors"
+                                  >
+                                    Cancel Booking
+                                  </button>
+                                )}
+
+                                {b.status === 'completed' && !['completed', 'cash_pending'].includes(b.paymentStatus) && (
+                                  <button
+                                    onClick={() => setPaymentBooking(b)}
+                                    className="w-full bg-blue-600 hover:bg-blue-700 text-white py-3 rounded-xl text-xs font-extrabold uppercase tracking-wider cursor-pointer border-none shadow-md shadow-blue-600/10"
+                                  >
+                                    Pay Now Online
+                                  </button>
+                                )}
+                              </div>
+                            )}
+
+                            <button
+                              onClick={() => toggleExpand(b._id || b.id)}
+                              className="w-full pt-1 text-[11px] font-extrabold text-blue-600 hover:text-blue-700 uppercase tracking-wider text-center cursor-pointer border-none bg-transparent outline-none"
+                            >
+                              {isExpanded ? 'Hide Details ▲' : 'View Full Details & Actions ▼'}
+                            </button>
                           </div>
-                          <div className="flex justify-between items-center text-xs">
-                            <span className="text-slate-500 font-medium">Quoted Price: <strong className="text-slate-900">₹{b.finalQuote || b.amount || 0}</strong></span>
-                            <span className="text-slate-500 font-medium">Date: {b.date ? new Date(b.date).toLocaleDateString() : 'Today'}</span>
-                          </div>
-                        </div>
-                      ))}
+                        );
+                      })}
                     </div>
                   )}
                 </div>
@@ -1433,6 +1733,52 @@ const UserDashboard = () => {
             showToast("Settings Updated ✅", "Settings updated successfully", "success");
           }}
         />
+      )}
+
+      {paymentBooking && (
+        <PaymentModal 
+          booking={paymentBooking}
+          onClose={() => setPaymentBooking(null)}
+          onSuccess={() => {
+            setPaymentBooking(null);
+            fetchData();
+            showToast("Payment Complete 🎉", "Thank you for your payment!", "success");
+          }}
+        />
+      )}
+
+      {cancelBookingId && (
+        <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-xs z-50 flex items-center justify-center p-4">
+          <div className="bg-white border border-slate-200 rounded-3xl p-6 max-w-md w-full shadow-2xl space-y-4 animate-in zoom-in-95 duration-200">
+            <div className="flex items-center gap-3 text-rose-600">
+              <AlertCircle size={24} />
+              <h3 className="font-extrabold text-base text-slate-900">Cancel Booking Request</h3>
+            </div>
+            <p className="text-xs text-slate-600 font-medium">Please let us know the reason for cancellation:</p>
+            <textarea
+              rows={3}
+              value={cancellationReason}
+              onChange={(e) => setCancellationReason(e.target.value)}
+              placeholder="Reason for cancelling (e.g., changed mind, technician delayed...)"
+              className="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl text-xs font-semibold text-slate-900 outline-none focus:border-blue-600 resize-none"
+            />
+            <div className="flex justify-end gap-2 pt-2">
+              <button
+                onClick={() => setCancelBookingId(null)}
+                className="px-4 py-2 border border-slate-200 text-slate-600 font-bold rounded-xl text-xs cursor-pointer hover:bg-slate-50"
+              >
+                Keep Booking
+              </button>
+              <button
+                onClick={handleCancelBooking}
+                disabled={submittingCancellation}
+                className="px-5 py-2 bg-rose-600 hover:bg-rose-700 text-white font-extrabold text-xs rounded-xl shadow-xs cursor-pointer border-none"
+              >
+                {submittingCancellation ? 'Cancelling...' : 'Confirm Cancel'}
+              </button>
+            </div>
+          </div>
+        </div>
       )}
 
       {/* Toast Stack */}
