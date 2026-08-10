@@ -63,12 +63,7 @@ const NearbyTechnicians = () => {
     let list = localTechniciansPool;
     if (searchQuery.trim()) {
       const q = searchQuery.toLowerCase().trim();
-      list = list.filter(t => 
-        t.area.toLowerCase().includes(q) || 
-        t.name.toLowerCase().includes(q) ||
-        (t.defaultServiceId && t.defaultServiceId.toLowerCase().includes(q)) ||
-        (t.skills && t.skills.some(s => s.toLowerCase().includes(q)))
-      );
+      list = list.filter(t => t.area.toLowerCase().includes(q) || t.name.toLowerCase().includes(q));
     }
     if (selectedServiceId) {
       list = list.filter(t => t.defaultServiceId === selectedServiceId);

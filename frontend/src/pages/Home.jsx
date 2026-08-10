@@ -20,7 +20,6 @@ import {
   Sparkles,
   MapPin,
   ChevronDown,
-  ChevronUp,
   LogOut,
   LayoutDashboard,
   UserCircle2,
@@ -146,20 +145,6 @@ const Home = () => {
   const profileRef = useRef(null);
   const topSearchRef = useRef(null);
   const heroSearchRef = useRef(null);
-
-  const [showScrollTop, setShowScrollTop] = useState(false);
-
-  useEffect(() => {
-    const handleScroll = () => {
-      if (window.scrollY > 350) {
-        setShowScrollTop(true);
-      } else {
-        setShowScrollTop(false);
-      }
-    };
-    window.addEventListener('scroll', handleScroll);
-    return () => window.removeEventListener('scroll', handleScroll);
-  }, []);
 
   // Initialize and simulate skeleton screen
   useEffect(() => {
@@ -484,8 +469,8 @@ const Home = () => {
       <div className="absolute top-[-5%] left-[-10%] w-[70%] h-[50%] bg-blue-600/15 rounded-full blur-[120px] pointer-events-none"></div>
       <div className="absolute top-[15%] right-[-10%] w-[60%] h-[60%] bg-purple-600/10 rounded-full blur-[120px] pointer-events-none"></div>
 
-      {/* 1. CUSTOM PREMIUM FIXED STICKY HEADER WITH QUICK LINKS */}
-      <div className="fixed top-3 inset-x-0 z-[100] flex justify-center px-4 pointer-events-none">
+      {/* 1. CUSTOM PREMIUM STICKY HEADER WITH QUICK LINKS */}
+      <div className="sticky top-4 inset-x-0 z-50 flex justify-center px-4 pointer-events-none">
         <nav className="relative pointer-events-auto bg-[#0B0F19]/80 backdrop-blur-2xl border border-white/10 shadow-[0_8px_30px_rgb(0,0,0,0.4)] rounded-[2rem] w-full max-w-5xl transition-all duration-500">
           <div className="px-4 sm:px-6">
             <div className="flex justify-between items-center h-16 sm:h-20">
@@ -1196,7 +1181,7 @@ const Home = () => {
                
                <div className="w-full md:w-[320px] shrink-0 bg-[#0B0F19]/80 backdrop-blur-xl border border-white/10 rounded-3xl p-6 sm:p-8 text-center relative z-10 shadow-2xl">
                  <div className="inline-flex items-center justify-center px-4 py-1.5 bg-amber-500/20 text-amber-400 border border-amber-500/30 rounded-full text-[10px] sm:text-xs font-bold uppercase tracking-widest mb-6">Premium Tier</div>
-                 <h3 className="text-4xl sm:text-5xl font-black text-white mb-2 tracking-tight">₹999<span className="text-sm sm:text-lg text-slate-500 font-medium tracking-normal">/yr</span></h3>
+                 <h3 className="text-4xl sm:text-5xl font-black text-white mb-2 tracking-tight">₹499<span className="text-sm sm:text-lg text-slate-500 font-medium tracking-normal">/yr</span></h3>
                  <p className="text-xs sm:text-sm text-slate-400 mb-8 font-medium">Billed annually. Cancel anytime.</p>
                  <button 
                    onClick={() => handleBookingClick()}
@@ -1323,17 +1308,6 @@ const Home = () => {
       )}
 
       </div>
-
-      {/* Floating Scroll To Top Arrow */}
-      {showScrollTop && (
-        <button
-          onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
-          className="fixed bottom-6 right-6 z-50 p-3.5 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white rounded-full shadow-2xl transition-all duration-300 transform hover:scale-110 active:scale-95 cursor-pointer border border-white/20 flex items-center justify-center"
-          title="Scroll to Top"
-        >
-          <ChevronUp size={22} className="stroke-[3]" />
-        </button>
-      )}
 
       <style>{`
         .hide-scrollbar::-webkit-scrollbar {
