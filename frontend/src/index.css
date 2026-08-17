@@ -23,16 +23,15 @@
     scroll-behavior: smooth;
     touch-action: manipulation;
     -webkit-text-size-adjust: 100%;
+    background-color: #F8FAFC;
   }
   body {
-    @apply antialiased text-slate-900 bg-slate-50/60;
+    @apply antialiased text-slate-900 bg-slate-50;
     font-family: 'Plus Jakarta Sans', 'Outfit', sans-serif;
     touch-action: manipulation;
-    user-select: none;
-    -webkit-user-select: none;
     overflow-x: hidden;
   }
-  input, textarea, select {
+  input, textarea, select, button, a {
     user-select: auto;
     -webkit-user-select: auto;
   }
