@@ -1502,6 +1502,42 @@ const UserDashboard = () => {
                           </div>
                         </div>
 
+                        {/* Series-A Interactive Order Progress Timeline */}
+                        <div className="bg-white/80 p-4 rounded-2xl border border-blue-100 space-y-2">
+                          <div className="flex justify-between items-center text-[10px] font-black uppercase tracking-wider text-slate-400">
+                            <span>Order Progress</span>
+                            <span className="text-blue-600 font-extrabold flex items-center gap-1">
+                              <Clock size={10} /> Live Status
+                            </span>
+                          </div>
+                          <div className="grid grid-cols-4 gap-1 relative pt-1">
+                            {[
+                              { key: 'pending', label: 'Requested' },
+                              { key: 'accepted', label: 'Assigned' },
+                              { key: 'on_the_way', label: 'En Route' },
+                              { key: 'completed', label: 'Completed' }
+                            ].map((st, idx) => {
+                              const orderMap = { pending: 1, assigned: 2, accepted: 2, on_the_way: 3, arrived: 3, quote_submitted: 3, quote_approved: 3, completed: 4 };
+                              const currentStep = orderMap[activeBooking.status] || 1;
+                              const isActive = (idx + 1) <= currentStep;
+                              const isCurrent = (idx + 1) === currentStep;
+
+                              return (
+                                <div key={st.key} className="flex flex-col items-center gap-1 text-center">
+                                  <div className={`w-full h-1.5 rounded-full transition-all duration-500 ${
+                                    isActive ? 'bg-blue-600 shadow-xs' : 'bg-slate-200'
+                                  }`}></div>
+                                  <span className={`text-[9px] font-extrabold ${
+                                    isCurrent ? 'text-blue-600 font-black' : isActive ? 'text-slate-800' : 'text-slate-400'
+                                  }`}>
+                                    {st.label}
+                                  </span>
+                                </div>
+                              );
+                            })}
+                          </div>
+                        </div>
+
                         {/* Render Quote proposal card if pending quote approval */}
                         {renderQuoteProposalCard(activeBooking)}
 
