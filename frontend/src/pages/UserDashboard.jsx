@@ -870,8 +870,62 @@ const UserDashboard = () => {
                   </p>
                 </div>
 
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  <div className="space-y-2">
+                {/* Service Mode Selector Cards (Diagnostic Inspection vs Direct Repair) */}
+                <div className="space-y-2">
+                  <label className="text-xs font-bold text-slate-600 uppercase tracking-wider flex items-center gap-2 ml-1">
+                    <Zap size={14} className="text-blue-600"/> Booking Service Mode
+                  </label>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    <div
+                      onClick={() => setFormData(prev => ({ ...prev, serviceOption: 'inspection', unknownProblem: false }))}
+                      className={`p-4 rounded-2xl border-2 cursor-pointer transition-all flex items-start gap-3 ${
+                        formData.serviceOption === 'inspection'
+                          ? 'border-blue-600 bg-blue-50/60 shadow-xs'
+                          : 'border-slate-200 bg-white hover:border-slate-300'
+                      }`}
+                    >
+                      <div className={`p-2.5 rounded-xl border ${formData.serviceOption === 'inspection' ? 'bg-blue-600 text-white border-blue-600' : 'bg-slate-100 text-slate-600 border-slate-200'}`}>
+                        <Search size={18} />
+                      </div>
+                      <div>
+                        <div className="flex items-center gap-1.5">
+                          <h4 className="font-extrabold text-xs text-slate-900">Diagnostic Inspection Visit</h4>
+                          <span className="text-[9px] font-black uppercase px-2 py-0.5 rounded bg-blue-100 text-blue-800">
+                            {profile?.isPremium ? 'Free (Fixvo Plus)' : '₹99 Fee'}
+                          </span>
+                        </div>
+                        <p className="text-[11px] text-slate-500 font-medium mt-0.5">
+                          Technician visits to inspect, diagnose, and provide a fixed quote before work starts.
+                        </p>
+                      </div>
+                    </div>
+
+                    <div
+                      onClick={() => setFormData(prev => ({ ...prev, serviceOption: 'direct', unknownProblem: false }))}
+                      className={`p-4 rounded-2xl border-2 cursor-pointer transition-all flex items-start gap-3 ${
+                        formData.serviceOption === 'direct'
+                          ? 'border-blue-600 bg-blue-50/60 shadow-xs'
+                          : 'border-slate-200 bg-white hover:border-slate-300'
+                      }`}
+                    >
+                      <div className={`p-2.5 rounded-xl border ${formData.serviceOption === 'direct' ? 'bg-blue-600 text-white border-blue-600' : 'bg-slate-100 text-slate-600 border-slate-200'}`}>
+                        <Wrench size={18} />
+                      </div>
+                      <div>
+                        <div className="flex items-center gap-1.5">
+                          <h4 className="font-extrabold text-xs text-slate-900">Direct Service & Repair</h4>
+                          <span className="text-[9px] font-black uppercase px-2 py-0.5 rounded bg-emerald-100 text-emerald-800">Standard Rate</span>
+                        </div>
+                        <p className="text-[11px] text-slate-500 font-medium mt-0.5">
+                          Direct repair request when you already know the issue. Pay on completion.
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  <div className="space-y-2 md:col-span-1">
                     <label className="text-xs font-bold text-slate-600 uppercase tracking-wider flex items-center gap-2 ml-1">
                       <Settings size={14} className="text-blue-600"/> Select Service
                     </label>
@@ -883,9 +937,9 @@ const UserDashboard = () => {
                     />
                   </div>
 
-                  <div className="space-y-2">
+                  <div className="space-y-2 md:col-span-1">
                     <label className="text-xs font-bold text-slate-600 uppercase tracking-wider flex items-center gap-2 ml-1">
-                      <Calendar size={14} className="text-blue-600"/> Preferred Service Date
+                      <Calendar size={14} className="text-blue-600"/> Service Date
                     </label>
                     <input
                       type="date"
@@ -894,6 +948,22 @@ const UserDashboard = () => {
                       value={formData.date}
                       onChange={(e) => setFormData({ ...formData, date: e.target.value })}
                     />
+                  </div>
+
+                  <div className="space-y-2 md:col-span-1">
+                    <label className="text-xs font-bold text-slate-600 uppercase tracking-wider flex items-center gap-2 ml-1">
+                      <Clock size={14} className="text-blue-600"/> Time Slot
+                    </label>
+                    <select
+                      className="w-full px-4 py-3 bg-white border border-slate-200 focus:border-blue-600 focus:ring-2 focus:ring-blue-100 transition-all font-semibold text-slate-900 rounded-2xl outline-none text-xs"
+                      value={formData.timeSlot || 'ASAP'}
+                      onChange={(e) => setFormData({ ...formData, timeSlot: e.target.value })}
+                    >
+                      <option value="ASAP">⚡ Instant ASAP (30-45 Mins)</option>
+                      <option value="Morning (9 AM - 12 PM)">🌅 Morning (9 AM - 12 PM)</option>
+                      <option value="Afternoon (12 PM - 4 PM)">☀️ Afternoon (12 PM - 4 PM)</option>
+                      <option value="Evening (4 PM - 8 PM)">🌆 Evening (4 PM - 8 PM)</option>
+                    </select>
                   </div>
                 </div>
 
@@ -1346,6 +1416,64 @@ const UserDashboard = () => {
                     </div>
                   </div>
 
+                  {/* Fixvo Plus Membership Teaser Banner */}
+                  {!profile?.isPremium && (
+                    <div className="bg-gradient-to-r from-amber-500 via-orange-500 to-yellow-500 text-white p-4 sm:p-5 rounded-3xl shadow-lg flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 relative overflow-hidden">
+                      <div className="flex items-center gap-3">
+                        <div className="p-3 bg-white/20 backdrop-blur-md rounded-2xl text-white">
+                          <Sparkles size={24} />
+                        </div>
+                        <div>
+                          <div className="flex items-center gap-2">
+                            <h3 className="font-black text-sm sm:text-base">Upgrade to FIXVO PLUS ⭐</h3>
+                            <span className="bg-black/20 text-white text-[9px] font-black uppercase px-2 py-0.5 rounded-full">VIP Status</span>
+                          </div>
+                          <p className="text-xs text-amber-100 font-medium mt-0.5">
+                            Get ₹0 Inspection Fees, 5% extra discount on every job, and priority dispatch!
+                          </p>
+                        </div>
+                      </div>
+                      <button
+                        onClick={() => setShowPremiumModal(true)}
+                        className="px-4 py-2.5 bg-slate-900 hover:bg-black text-white font-extrabold rounded-xl text-xs uppercase tracking-wider shadow-md border-none cursor-pointer shrink-0"
+                      >
+                        Explore Membership →
+                      </button>
+                    </div>
+                  )}
+
+                  {/* Quick Category Action Bar */}
+                  <div className="space-y-3">
+                    <div className="flex justify-between items-center ml-1">
+                      <h3 className="font-extrabold text-xs text-slate-400 uppercase tracking-wider">Quick Book Service Category</h3>
+                      <span className="text-[10px] text-emerald-600 font-extrabold uppercase tracking-wider bg-emerald-50 px-2 py-0.5 rounded-full border border-emerald-200">Instant Dispatch</span>
+                    </div>
+                    <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-7 gap-2.5">
+                      {[
+                        { id: 'ac_repair', label: 'AC Repair', icon: '❄️' },
+                        { id: 'washing_machine', label: 'Appliance', icon: '🧺' },
+                        { id: 'plumbing_work', label: 'Plumbing', icon: '🚰' },
+                        { id: 'electric_wiring', label: 'Electrical', icon: '⚡' },
+                        { id: 'bathroom_clean', label: 'Cleaning', icon: '🧹' },
+                        { id: 'furniture_repair', label: 'Carpentry', icon: '🔨' },
+                        { id: 'painting', label: 'Painting', icon: '🎨' },
+                      ].map(cat => (
+                        <button
+                          key={cat.id}
+                          onClick={() => {
+                            setFormData(prev => ({ ...prev, serviceId: cat.id }));
+                            setShowForm(true);
+                            setStep(1);
+                          }}
+                          className="bg-white hover:bg-blue-50/70 border border-slate-200 hover:border-blue-300 p-3 rounded-2xl flex flex-col items-center justify-center gap-1.5 transition-all cursor-pointer shadow-2xs group"
+                        >
+                          <span className="text-2xl group-hover:scale-110 transition-transform">{cat.icon}</span>
+                          <span className="text-[11px] font-extrabold text-slate-800 group-hover:text-blue-600">{cat.label}</span>
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+
                   {/* Active Booking Tracker */}
                   <div className="space-y-3">
                     <div className="flex justify-between items-center ml-1">
@@ -1561,7 +1689,7 @@ const UserDashboard = () => {
                                 )}
 
                                 {b.status === 'completed' && (
-                                  <div className="pt-1">
+                                  <div className="pt-1 space-y-2">
                                     {b.isReviewed ? (
                                       <div className="flex items-center justify-center gap-1.5 py-2.5 bg-amber-50 text-amber-800 border border-amber-200 rounded-xl text-xs font-extrabold">
                                         <Star size={14} className="fill-amber-400 text-amber-500" /> Reviewed ⭐
@@ -1574,6 +1702,26 @@ const UserDashboard = () => {
                                         <Star size={14} className="fill-white" /> Leave Review ⭐
                                       </button>
                                     )}
+
+                                    <button
+                                      onClick={() => {
+                                        setFormData(prev => ({
+                                          ...prev,
+                                          serviceId: b.serviceId?._id || b.serviceId || '',
+                                          deviceType: b.deviceType || '',
+                                          problemDescription: b.problemDescription || '',
+                                          location: b.location || prev.location,
+                                          detailedAddress: b.detailedAddress || prev.detailedAddress,
+                                          landmark: b.landmark || prev.landmark
+                                        }));
+                                        setShowForm(true);
+                                        setStep(1);
+                                        showToast('Re-Booking Pre-filled 🚀', `Details pre-filled for ${b.serviceName || 'service'}.`, 'success');
+                                      }}
+                                      className="w-full bg-slate-100 hover:bg-slate-200 text-slate-700 border border-slate-300 py-2.5 rounded-xl text-xs font-extrabold uppercase tracking-wider cursor-pointer transition-colors flex items-center justify-center gap-1.5"
+                                    >
+                                      <RefreshCw size={12} /> Re-Book Service
+                                    </button>
                                   </div>
                                 )}
                               </div>
