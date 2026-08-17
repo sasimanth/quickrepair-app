@@ -1,0 +1,19 @@
+{
+  "short_name": "FIXVO",
+  "name": "FIXVO - On-Demand Home & Device Repair Services",
+  "description": "Book expert technicians for home appliances, electronics, AC, plumbing, electrical, and cleaning services.",
+  "icons": [
+    {
+      "src": "/fixvo-icon.png",
+      "type": "image/png",
+      "sizes": "192x192 512x512",
+      "purpose": "any maskable"
+    }
+  ],
+  "start_url": "/",
+  "background_color": "#0B0F19",
+  "theme_color": "#2563EB",
+  "display": "standalone",
+  "orientation": "portrait",
+  "categories": ["lifestyle", "utilities", "business"]
+}
