@@ -603,7 +603,8 @@ const updateBookingStatus = async (req, res) => {
     // Call Automated Notification System
     await triggerNotifications(req, updatedBooking, status);
 
-    res.json(updatedBooking);
+    const enrichedArr = await enrichBookingsWithChat([updatedBooking], req.user.id);
+    res.json(enrichedArr[0] || updatedBooking);
   } catch (error) {
     res.status(400).json({ message: error.message });
   }

@@ -63,6 +63,10 @@ const UserDashboard = () => {
 
   const [bookings, setBookings] = useState([]);
   const [activeSubTab, setActiveSubTab] = useState('overview');
+  const switchTab = (tabId) => {
+    setShowForm(false);
+    setActiveSubTab(tabId);
+  };
   const [toasts, setToasts] = useState([]);
 
   // Address CRUD states
@@ -1314,7 +1318,7 @@ const UserDashboard = () => {
                   return (
                     <button
                       key={item.id}
-                      onClick={() => setActiveSubTab(item.id)}
+                      onClick={() => switchTab(item.id)}
                       className={`w-full flex items-center gap-3 px-4 py-3 rounded-2xl text-xs font-bold transition-all cursor-pointer border-none outline-none text-left tracking-wide ${
                         isSelected 
                           ? 'bg-blue-600 text-white shadow-md shadow-blue-600/20' 
@@ -1394,7 +1398,7 @@ const UserDashboard = () => {
                               )}
                             </button>
                             <button
-                              onClick={() => setActiveSubTab('bookings')}
+                              onClick={() => switchTab('bookings')}
                               className="px-3.5 py-1.5 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-xs font-extrabold border-none cursor-pointer"
                             >
                               View Details
@@ -1555,6 +1559,23 @@ const UserDashboard = () => {
                                     Pay Now Online
                                   </button>
                                 )}
+
+                                {b.status === 'completed' && (
+                                  <div className="pt-1">
+                                    {b.isReviewed ? (
+                                      <div className="flex items-center justify-center gap-1.5 py-2.5 bg-amber-50 text-amber-800 border border-amber-200 rounded-xl text-xs font-extrabold">
+                                        <Star size={14} className="fill-amber-400 text-amber-500" /> Reviewed ⭐
+                                      </div>
+                                    ) : (
+                                      <button
+                                        onClick={() => setReviewBooking(b)}
+                                        className="w-full bg-amber-500 hover:bg-amber-600 text-white font-extrabold py-2.5 rounded-xl text-xs uppercase tracking-wider cursor-pointer border-none shadow-sm flex items-center justify-center gap-1.5"
+                                      >
+                                        <Star size={14} className="fill-white" /> Leave Review ⭐
+                                      </button>
+                                    )}
+                                  </div>
+                                )}
                               </div>
                             )}
 
@@ -1654,7 +1675,7 @@ const UserDashboard = () => {
                             } else if (ch.isAction) {
                               setShowForm(true);
                             } else {
-                              setActiveSubTab(ch.id);
+                              switchTab(ch.id);
                             }
                           }}
                           className="bg-white border border-slate-200/90 hover:border-blue-300 hover:shadow-md p-4 sm:p-5 rounded-2xl flex items-center justify-between gap-4 cursor-pointer transition-all duration-200 group"
@@ -1699,7 +1720,7 @@ const UserDashboard = () => {
                 if (nav.isAction) {
                   setShowForm(true);
                 } else {
-                  setActiveSubTab(nav.id);
+                  switchTab(nav.id);
                 }
               }}
               className={`flex flex-col items-center justify-center gap-1 transition-all border-none outline-none cursor-pointer bg-transparent ${
@@ -1743,6 +1764,19 @@ const UserDashboard = () => {
             setPaymentBooking(null);
             fetchData();
             showToast("Payment Complete 🎉", "Thank you for your payment!", "success");
+          }}
+        />
+      )}
+
+      {reviewBooking && (
+        <ReviewModal
+          booking={reviewBooking}
+          onClose={() => setReviewBooking(null)}
+          onSuccess={() => {
+            setBookings(prev => prev.map(item => (item._id === reviewBooking._id || item.id === reviewBooking.id) ? { ...item, isReviewed: true } : item));
+            setReviewBooking(null);
+            fetchData(false);
+            showToast("Review Submitted ⭐", "Thank you for your rating!", "success");
           }}
         />
       )}

@@ -15,9 +15,13 @@ const normalizePhone = (phone) => {
 };
 
 const validatePassword = (password) => {
-  // Min 8 characters, at least 1 uppercase, 1 lowercase, 1 number, 1 special character
-  const regex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$/;
-  return regex.test(password);
+  // Min 8 characters, at least 1 uppercase, 1 lowercase, 1 number, 1 special character (any non-alphanumeric)
+  if (!password || password.length < 8) return false;
+  const hasLower = /[a-z]/.test(password);
+  const hasUpper = /[A-Z]/.test(password);
+  const hasNumber = /\d/.test(password);
+  const hasSpecial = /[^A-Za-z0-9]/.test(password);
+  return hasLower && hasUpper && hasNumber && hasSpecial;
 };
 
 // @desc    Register new user
@@ -650,7 +654,8 @@ const googleAuth = async (req, res) => {
 // @access  Public
 const verifyCaptcha = async (req, res) => {
   try {
-    const { input, expected } = req.body;
+    const input = req.body.input || req.body.userSolution;
+    const expected = req.body.expected || req.body.captchaText;
     if (!input || !expected) {
       return res.status(400).json({ message: 'Both input and expected captcha text are required.' });
     }

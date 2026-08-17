@@ -37,8 +37,16 @@ const AuthModal = ({ onClose, onSuccess }) => {
         setError('Please enter a valid phone number (at least 10 digits).');
         return;
       }
-      if (formData.password.length < 6) {
-        setError('Password must be at least 6 characters.');
+      if (formData.password.length < 8) {
+        setError('Password must be at least 8 characters long.');
+        return;
+      }
+      const hasLower = /[a-z]/.test(formData.password);
+      const hasUpper = /[A-Z]/.test(formData.password);
+      const hasNumber = /\d/.test(formData.password);
+      const hasSpecial = /[^A-Za-z0-9]/.test(formData.password);
+      if (!hasLower || !hasUpper || !hasNumber || !hasSpecial) {
+        setError('Password must include uppercase, lowercase, number, and a special character.');
         return;
       }
     }

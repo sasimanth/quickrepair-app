@@ -521,7 +521,19 @@ const TechnicianDashboard = () => {
     setUpdatingJobs(prev => ({ ...prev, [id]: true }));
     
     try {
-      await api.put(`/bookings/${id}/status`, { status, rejectionReason });
+      const { data: updatedBooking } = await api.put(`/bookings/${id}/status`, { status, rejectionReason });
+      if (updatedBooking && updatedBooking._id) {
+        setJobs(prevJobs => prevJobs.map(job => job._id === id ? { ...job, ...updatedBooking } : job));
+      }
+      const activeStatuses = ['accepted', 'on_the_way', 'arrived', 'inspection_started', 'quote_approved', 'in_progress'];
+      if (activeStatuses.includes(status)) {
+        setJobTab('active');
+        setActiveSubTab('jobs');
+      } else if (status === 'completed') {
+        setJobTab('completed');
+      } else if (['cancelled', 'rejected'].includes(status)) {
+        setJobTab('cancelled');
+      }
       await fetchJobs(true);
     } catch (error) { 
       showToast('❌ Update Failed', `Failed to update status to ${status.replace(/_/g, ' ').toUpperCase()}`, 'error');
