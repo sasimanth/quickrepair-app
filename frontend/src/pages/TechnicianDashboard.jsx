@@ -912,25 +912,53 @@ const TechnicianDashboard = () => {
                   )}
                 </div>
 
-                {/* Performance Snapshot Matrix */}
+                {/* Performance Snapshot Matrix - Series A Funded Startup Aesthetics */}
                 <div className="space-y-3">
-                  <h3 className="font-extrabold text-xs text-slate-400 uppercase tracking-wider ml-1">Performance Snapshot</h3>
+                  <div className="flex justify-between items-center ml-1">
+                    <h3 className="font-extrabold text-xs text-slate-400 uppercase tracking-wider">Performance Snapshot</h3>
+                    <span className="text-[10px] font-black uppercase text-emerald-700 bg-emerald-50 px-2.5 py-0.5 rounded-full border border-emerald-200 flex items-center gap-1">
+                      <Sparkles size={12} className="text-emerald-500"/> Verified Pro Partner
+                    </span>
+                  </div>
                   <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
-                    <div className="bg-white border border-slate-200 p-4 rounded-2xl text-center shadow-xs">
+                    <div className="bg-gradient-to-br from-white via-slate-50 to-blue-50/40 border border-slate-200/90 p-4 sm:p-5 rounded-3xl text-left shadow-xs relative overflow-hidden group hover:shadow-md transition-all">
+                      <div className="w-8 h-8 rounded-xl bg-blue-100 text-blue-600 flex items-center justify-center mb-2 font-bold">
+                        <Wrench size={18} />
+                      </div>
                       <span className="text-[10px] font-extrabold text-slate-400 uppercase tracking-wider block">Active Jobs</span>
-                      <span className="text-2xl font-black text-blue-600 mt-1 block">{activeJobsCount}</span>
+                      <span className="text-2xl sm:text-3xl font-black text-slate-900 mt-1 block">{activeJobsCount}</span>
                     </div>
-                    <div className="bg-white border border-slate-200 p-4 rounded-2xl text-center shadow-xs">
-                      <span className="text-[10px] font-extrabold text-slate-400 uppercase tracking-wider block">Jobs Completed</span>
-                      <span className="text-2xl font-black text-emerald-600 mt-1 block">{completedJobsCount}</span>
+
+                    <div className="bg-gradient-to-br from-white via-slate-50 to-emerald-50/40 border border-slate-200/90 p-4 sm:p-5 rounded-3xl text-left shadow-xs relative overflow-hidden group hover:shadow-md transition-all">
+                      <div className="w-8 h-8 rounded-xl bg-emerald-100 text-emerald-600 flex items-center justify-center mb-2 font-bold">
+                        <CheckCircle size={18} />
+                      </div>
+                      <span className="text-[10px] font-extrabold text-slate-400 uppercase tracking-wider block">Completed Jobs</span>
+                      <span className="text-2xl sm:text-3xl font-black text-emerald-600 mt-1 block">{completedJobsCount}</span>
                     </div>
-                    <div className="bg-white border border-slate-200 p-4 rounded-2xl text-center shadow-xs">
+
+                    <div className="bg-gradient-to-br from-white via-slate-50 to-amber-50/40 border border-slate-200/90 p-4 sm:p-5 rounded-3xl text-left shadow-xs relative overflow-hidden group hover:shadow-md transition-all">
+                      <div className="w-8 h-8 rounded-xl bg-amber-100 text-amber-600 flex items-center justify-center mb-2 font-bold">
+                        <Star size={18} className="fill-amber-400 text-amber-500" />
+                      </div>
                       <span className="text-[10px] font-extrabold text-slate-400 uppercase tracking-wider block">Rating Score</span>
-                      <span className="text-2xl font-black text-amber-600 mt-1 block">★ {profile?.rating || '5.0'}</span>
+                      <span className="text-2xl sm:text-3xl font-black text-amber-600 mt-1 block">★ {profile?.rating || '5.0'}</span>
                     </div>
-                    <div className="bg-white border border-slate-200 p-4 rounded-2xl text-center shadow-xs">
-                      <span className="text-[10px] font-extrabold text-slate-400 uppercase tracking-wider block">Wallet Balance</span>
-                      <span className="text-2xl font-black text-slate-900 mt-1 block">₹{(profile?.walletBalance || 0).toFixed(0)}</span>
+
+                    <div className="bg-gradient-to-br from-white via-slate-50 to-indigo-50/40 border border-slate-200/90 p-4 sm:p-5 rounded-3xl text-left shadow-xs relative overflow-hidden group hover:shadow-md transition-all flex flex-col justify-between">
+                      <div>
+                        <div className="w-8 h-8 rounded-xl bg-indigo-100 text-indigo-600 flex items-center justify-center mb-2 font-bold">
+                          <Wallet size={18} />
+                        </div>
+                        <span className="text-[10px] font-extrabold text-slate-400 uppercase tracking-wider block">Wallet Balance</span>
+                        <span className="text-2xl sm:text-3xl font-black text-slate-900 mt-1 block">₹{(profile?.walletBalance || 0).toFixed(0)}</span>
+                      </div>
+                      <button
+                        onClick={handleOpenWithdrawModal}
+                        className="mt-2 text-[10px] font-extrabold text-blue-600 hover:text-blue-700 uppercase tracking-wider underline cursor-pointer border-none bg-transparent text-left"
+                      >
+                        Withdraw Funds →
+                      </button>
                     </div>
                   </div>
                 </div>
@@ -1086,7 +1114,15 @@ const TechnicianDashboard = () => {
                               )}
 
                               {['accepted', 'quote_approved', 'on_the_way', 'arrived', 'inspection_started', 'quote_pending', 'in_progress'].includes(job.status) && (
-                                <div className="flex items-center gap-2">
+                                <div className="flex flex-wrap items-center gap-2">
+                                  <a
+                                    href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(job.detailedAddress || job.location || 'Madanapalle')}`}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    className="px-4 py-2.5 bg-blue-50 hover:bg-blue-100 text-blue-700 border border-blue-200 font-extrabold rounded-xl text-xs uppercase tracking-wider cursor-pointer no-underline shadow-xs flex items-center gap-1.5"
+                                  >
+                                    <MapPin size={14} /> Directions
+                                  </a>
                                   {(job.customerPhone || job.phone) && (
                                     <a
                                       href={`tel:${formatPhoneLink(job.customerPhone || job.phone)}`}
