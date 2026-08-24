@@ -1,20 +1,32 @@
 import React, { useState } from 'react';
-import { User, Copy, Share2, Award, Users, Gift, Clock, CheckCircle2 } from 'lucide-react';
+import { User, Copy, Share2, Award, Users, Gift, Clock, CheckCircle2, Link2 } from 'lucide-react';
 
 const ReferralView = ({ profile, showToast }) => {
   const refCode = profile?.referralCode || 'FIXVO100';
-  const [copied, setCopied] = useState(false);
+  const referralLink = `https://fixvo-frontend.vercel.app/signup?ref=${refCode}`;
+  
+  const [copiedCode, setCopiedCode] = useState(false);
+  const [copiedLink, setCopiedLink] = useState(false);
 
   const handleCopyCode = () => {
     navigator.clipboard.writeText(refCode);
-    setCopied(true);
+    setCopiedCode(true);
     if (showToast) {
       showToast('Referral Code Copied! 📋', `Code ${refCode} has been copied to your clipboard.`, 'success', true);
     }
-    setTimeout(() => setCopied(false), 2000);
+    setTimeout(() => setCopiedCode(false), 2000);
   };
 
-  const inviteText = encodeURIComponent(`Hey! Sign up on Fixvo using my code *${refCode}* and get ₹50 welcome cashback instantly on your first service visit. Book here: https://fixvo.co`);
+  const handleCopyLink = () => {
+    navigator.clipboard.writeText(referralLink);
+    setCopiedLink(true);
+    if (showToast) {
+      showToast('Referral Link Copied! 🔗', `Link ${referralLink} copied to your clipboard.`, 'success', true);
+    }
+    setTimeout(() => setCopiedLink(false), 2000);
+  };
+
+  const inviteText = encodeURIComponent(`Hey! Sign up on Fixvo using my code *${refCode}* and get ₹50 welcome cashback instantly on your first service visit. Register here: ${referralLink}`);
   const whatsappUrl = `https://api.whatsapp.com/send?text=${inviteText}`;
 
   return (
@@ -39,18 +51,40 @@ const ReferralView = ({ profile, showToast }) => {
           </p>
         </div>
 
-        {/* Copy code input */}
-        <div className="flex max-w-xs mx-auto border border-slate-200 bg-white rounded-2xl overflow-hidden p-1.5 items-center justify-between shadow-xs">
-          <span className="font-extrabold text-sm uppercase tracking-widest pl-3.5 text-slate-900">{refCode}</span>
-          <button
-            type="button"
-            onClick={handleCopyCode}
-            className={`px-4 py-2.5 rounded-xl text-xs font-extrabold transition-all uppercase tracking-wider flex items-center gap-1.5 cursor-pointer border-none ${
-              copied ? 'bg-emerald-600 text-white' : 'bg-blue-600 hover:bg-blue-700 text-white'
-            }`}
-          >
-            <Copy size={13} /> {copied ? 'Copied' : 'Copy Code'}
-          </button>
+        {/* Display Official Vercel Referral Link */}
+        <div className="bg-white p-4 rounded-2xl border border-slate-200 shadow-xs max-w-md mx-auto space-y-3">
+          <div className="space-y-1 text-left">
+            <label className="text-[10px] font-extrabold text-slate-400 uppercase tracking-wider block">Your Personal Referral Link</label>
+            <div className="flex items-center gap-2 bg-slate-50 p-2.5 rounded-xl border border-slate-200">
+              <Link2 size={16} className="text-blue-600 shrink-0" />
+              <input 
+                type="text"
+                readOnly
+                value={referralLink}
+                className="w-full bg-transparent border-none outline-none font-mono text-xs font-bold text-slate-800 select-all"
+              />
+              <button
+                type="button"
+                onClick={handleCopyLink}
+                className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all shrink-0 cursor-pointer border-none ${
+                  copiedLink ? 'bg-emerald-600 text-white' : 'bg-blue-600 hover:bg-blue-700 text-white'
+                }`}
+              >
+                {copiedLink ? 'Copied!' : 'Copy Link'}
+              </button>
+            </div>
+          </div>
+
+          <div className="flex items-center justify-between pt-2 border-t border-slate-100">
+            <span className="text-xs font-bold text-slate-500">Referral Code: <strong className="text-slate-900 tracking-wider uppercase font-black">{refCode}</strong></span>
+            <button
+              type="button"
+              onClick={handleCopyCode}
+              className="text-xs font-extrabold text-blue-600 hover:text-blue-700 underline cursor-pointer border-none bg-transparent"
+            >
+              {copiedCode ? '✓ Code Copied' : 'Copy Code Only'}
+            </button>
+          </div>
         </div>
 
         <a
@@ -68,8 +102,8 @@ const ReferralView = ({ profile, showToast }) => {
         <h4 className="font-extrabold text-xs text-slate-500 uppercase tracking-wider">How It Works</h4>
         <div className="grid grid-cols-1 sm:grid-cols-4 gap-4 text-left pt-2">
           {[
-            { step: '1', title: 'Share Code', desc: 'Send your referral code to friends or family.' },
-            { step: '2', title: 'Friend Registers', desc: 'Your friend enters your code during signup.' },
+            { step: '1', title: 'Share Link', desc: 'Send your fixvo-frontend.vercel.app link to friends.' },
+            { step: '2', title: 'Friend Registers', desc: 'Your friend registers using your unique link.' },
             { step: '3', title: 'First Service', desc: 'Friend completes their first repair or service visit.' },
             { step: '4', title: 'Get Rewarded', desc: '₹100 credited directly to your Fixvo wallet!' }
           ].map((item) => (

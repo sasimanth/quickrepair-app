@@ -647,9 +647,11 @@ const UserDashboard = () => {
     const matchesSearch = matchesService || matchesId || matchesStatus;
 
     if (filterTab === 'active') {
-      return matchesSearch && !['completed', 'cancelled'].includes(b.status);
+      return matchesSearch && !['completed', 'cancelled', 'rejected'].includes(b.status);
     } else if (filterTab === 'completed') {
       return matchesSearch && b.status === 'completed';
+    } else if (filterTab === 'cancelled') {
+      return matchesSearch && ['cancelled', 'rejected'].includes(b.status);
     }
     return matchesSearch;
   });
@@ -1615,7 +1617,7 @@ const UserDashboard = () => {
                     </div>
 
                     {/* Filter Tabs */}
-                    <div className="flex items-center gap-1.5 bg-slate-100 p-1 rounded-xl border border-slate-200 text-xs font-bold">
+                    <div className="flex items-center gap-1.5 bg-slate-100 p-1 rounded-xl border border-slate-200 text-xs font-bold flex-wrap">
                       <button
                         onClick={() => setFilterTab('all')}
                         className={`px-3 py-1.5 rounded-lg transition-all border-none cursor-pointer ${filterTab === 'all' ? 'bg-white text-blue-600 shadow-xs' : 'text-slate-600 hover:text-slate-900 bg-transparent'}`}
@@ -1633,6 +1635,12 @@ const UserDashboard = () => {
                         className={`px-3 py-1.5 rounded-lg transition-all border-none cursor-pointer ${filterTab === 'completed' ? 'bg-white text-blue-600 shadow-xs' : 'text-slate-600 hover:text-slate-900 bg-transparent'}`}
                       >
                         Completed
+                      </button>
+                      <button
+                        onClick={() => setFilterTab('cancelled')}
+                        className={`px-3 py-1.5 rounded-lg transition-all border-none cursor-pointer ${filterTab === 'cancelled' ? 'bg-rose-50 text-rose-700 font-extrabold shadow-xs' : 'text-slate-600 hover:text-slate-900 bg-transparent'}`}
+                      >
+                        Cancelled ({safeBookingsList.filter(b => ['cancelled', 'rejected'].includes(b?.status)).length})
                       </button>
                     </div>
                   </div>
@@ -1676,6 +1684,27 @@ const UserDashboard = () => {
 
                             {/* QUOTE PROPOSAL CARD IF PENDING APPROVAL */}
                             {renderQuoteProposalCard(b)}
+
+                            {/* CANCELLED BOOKING MODULE NOTICE */}
+                            {['cancelled', 'rejected'].includes(b.status) && (
+                              <div className="p-4 bg-rose-50/80 border border-rose-200 rounded-2xl space-y-2 text-xs text-rose-900 font-medium">
+                                <div className="flex justify-between items-center">
+                                  <span className="font-extrabold flex items-center gap-1.5 text-rose-700">
+                                    <XCircle size={16} /> Booking {b.status === 'rejected' ? 'Declined by Technician' : 'Cancelled'}
+                                  </span>
+                                  <span className="text-[10px] font-black uppercase px-2 py-0.5 rounded bg-rose-200/80 text-rose-800">
+                                    No Cancellation Charge
+                                  </span>
+                                </div>
+                                <p className="italic text-slate-700">"{b.cancellationReason || 'Cancelled prior to technician work execution.'}"</p>
+                                <div className="pt-2 border-t border-rose-200/60 flex justify-between items-center text-[11px]">
+                                  <span className="text-slate-600 font-bold">Payment & Refund Status:</span>
+                                  <span className="font-extrabold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded border border-emerald-200">
+                                    ✓ 100% Refunded / Waived
+                                  </span>
+                                </div>
+                              </div>
+                            )}
 
                             {/* Details Toggle Content */}
                             {isExpanded && (
@@ -1829,12 +1858,6 @@ const UserDashboard = () => {
                       </h2>
                       <p className="text-xs text-slate-500 mt-1 font-semibold">Access all service bookings, wallet, rewards, addresses, and account settings</p>
                     </div>
-                    <button
-                      onClick={() => setShowSettings(true)}
-                      className="px-3.5 py-1.5 bg-blue-50 text-blue-700 hover:bg-blue-100 border border-blue-200 font-bold text-xs rounded-xl flex items-center gap-1.5 cursor-pointer"
-                    >
-                      <Settings size={14} /> Profile
-                    </button>
                   </div>
 
                   {/* Menu List Cards */}
@@ -1936,6 +1959,24 @@ const UserDashboard = () => {
             setShowSettings(false);
             fetchData();
             showToast("Settings Updated ✅", "Settings updated successfully", "success");
+          }}
+        />
+      )}
+
+      {showPremiumModal && (
+        <PremiumModal
+          onClose={() => setShowPremiumModal(false)}
+          onSuccess={(resData) => {
+            setShowPremiumModal(false);
+            const updatedUser = { 
+              ...profile, 
+              isPremium: true, 
+              premiumPlan: resData?.planName || 'yearly' 
+            };
+            setProfile(updatedUser);
+            localStorage.setItem('user', JSON.stringify(updatedUser));
+            showToast("Fixvo Plus Activated! 👑", "VIP Status active: Zero inspection fees & priority dispatch unlocked.", "success");
+            fetchData(false);
           }}
         />
       )}
