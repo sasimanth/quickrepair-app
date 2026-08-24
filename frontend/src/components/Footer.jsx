@@ -1,6 +1,6 @@
 import React from 'react';
 import { Link, useLocation } from 'react-router-dom';
-import { FaInstagram, FaLinkedin, FaXTwitter, FaYoutube } from 'react-icons/fa6';
+import { FaInstagram, FaLinkedin, FaXTwitter, FaYoutube, FaArrowUp } from 'react-icons/fa6';
 import fixvoLogo from '../assets/logos/fixvo-app-icon-dark.png';
 
 const Footer = () => {
@@ -97,10 +97,19 @@ const Footer = () => {
                 </Link>
               </li>
               <li>
-                <Link to="/services" className={getLinkClass('/services')}>
-                  {isActive('/services') && <span className="w-1.5 h-1.5 rounded-full bg-blue-400 animate-pulse"></span>}
+                <a 
+                  href="/#services" 
+                  onClick={(e) => {
+                    if (location.pathname === '/') {
+                      e.preventDefault();
+                      document.getElementById('services')?.scrollIntoView({ behavior: 'smooth' });
+                    }
+                  }}
+                  className={getLinkClass('/#services')}
+                >
+                  {isActive('/#services') && <span className="w-1.5 h-1.5 rounded-full bg-blue-400 animate-pulse"></span>}
                   Services
-                </Link>
+                </a>
               </li>
               <li>
                 <Link to="/book" className={getLinkClass('/book')}>
@@ -204,10 +213,18 @@ const Footer = () => {
           </div>
         </div>
 
-        <div className="border-t border-gray-800 mt-12 pt-8 flex flex-col md:flex-row items-center justify-between">
+        <div className="border-t border-gray-800 mt-12 pt-8 flex flex-col md:flex-row items-center justify-between gap-4">
           <p className="text-sm text-gray-500">© 2026 Fixvo. All rights reserved.</p>
-          <div className="flex space-x-4 mt-4 md:mt-0 text-sm text-gray-500">
+          <div className="flex items-center gap-4 text-sm text-gray-500">
              <span>Crafted with passion for fast service.</span>
+             <button
+               onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
+               className="p-2.5 bg-blue-600/90 hover:bg-blue-500 text-white rounded-xl shadow-lg transition-all duration-300 transform hover:-translate-y-1 flex items-center gap-2 text-xs font-bold cursor-pointer border border-blue-400/30"
+               title="Back to top"
+             >
+               <FaArrowUp size={14} />
+               <span>Top</span>
+             </button>
           </div>
         </div>
       </div>

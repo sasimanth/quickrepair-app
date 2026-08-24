@@ -14,6 +14,7 @@ import {
   CheckCircle2, 
   ChevronRight, 
   MessageCircle,
+  PhoneCall,
   Camera,
   Banknote,
   Search,
@@ -30,8 +31,7 @@ import {
   Cpu,
   Globe,
   Bell,
-  ArrowRight,
-  PhoneCall
+  ArrowRight
 } from 'lucide-react';
 import { FaInstagram, FaLinkedin, FaXTwitter, FaWhatsapp } from 'react-icons/fa6';
 import founderImg from '../assets/sasi_founder.jpeg';
@@ -475,7 +475,7 @@ const Home = () => {
           <div className="px-4 sm:px-6">
             <div className="flex justify-between items-center h-16 sm:h-20">
               
-              {/* Logo & Navigation Links */}
+              {/* Logo & Brand */}
               <div className="flex items-center gap-6">
                 <Link to="/" className="flex items-center gap-2 group">
                   <div className="w-9 h-9 sm:w-10 sm:h-10 group-hover:scale-105 group-hover:rotate-3 transition-all duration-300 shadow-lg shadow-blue-500/30 rounded-full overflow-hidden">
@@ -485,54 +485,10 @@ const Home = () => {
                     Fixvo
                   </span>
                 </Link>
-
-                {/* Desktop Nav Quick Scroll Links */}
-                <div className="hidden md:flex items-center gap-5 text-xs font-extrabold text-slate-300">
-                  <button onClick={() => scrollToSection('services')} className="hover:text-white transition cursor-pointer bg-transparent border-none">
-                    Services
-                  </button>
-                  <button onClick={() => scrollToSection('pricing')} className="hover:text-amber-400 transition cursor-pointer bg-transparent border-none">
-                    Fixvo Plus
-                  </button>
-                  <button onClick={() => scrollToSection('emergency-section')} className="hover:text-cyan-400 transition cursor-pointer bg-transparent border-none">
-                    24/7 Helpline
-                  </button>
-                  <button onClick={() => scrollToSection('why-fixvo')} className="hover:text-blue-400 transition cursor-pointer bg-transparent border-none">
-                    Why Us
-                  </button>
-                </div>
               </div>
 
               {/* Profile, Auth & Notifications */}
               <div className="flex items-center gap-2 sm:gap-3">
-                {/* Location selector dropdown */}
-                <div ref={locationRef} className="relative hidden sm:block">
-                  <button
-                    onClick={() => setIsLocationDropdownOpen(!isLocationDropdownOpen)}
-                    className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-white/5 border border-white/10 text-xs font-bold text-slate-300 hover:text-white transition cursor-pointer"
-                  >
-                    <MapPin size={12} className="text-cyan-400" />
-                    <span>{selectedLocation}</span>
-                    <ChevronDown size={12} className="text-slate-400" />
-                  </button>
-                  {isLocationDropdownOpen && (
-                    <div className="absolute right-0 mt-2 w-44 bg-[#101524] border border-white/10 rounded-2xl shadow-xl p-2 z-50 text-xs font-bold">
-                      {['Madanapalle', 'Kadiri', 'Rayachoty', 'Galiveedu'].map(loc => (
-                        <button
-                          key={loc}
-                          onClick={() => {
-                            setSelectedLocation(loc);
-                            localStorage.setItem('fixvo_selected_location', loc);
-                            setIsLocationDropdownOpen(false);
-                          }}
-                          className={`w-full text-left px-3 py-2 rounded-xl transition ${selectedLocation === loc ? 'bg-blue-600 text-white' : 'text-slate-300 hover:bg-white/5'}`}
-                        >
-                          📍 {loc}
-                        </button>
-                      ))}
-                    </div>
-                  )}
-                </div>
 
                 {user ? (
                   <>
@@ -835,7 +791,7 @@ const Home = () => {
           {/* Dynamic Carousel: Popular Near You */}
           <div id="most-booked-services">
             <ServiceCarousel 
-              title={`Most Booked Services near ${selectedLocation}`}
+              title="Most Booked Services"
               subtitle="The highest volume services requested by our community."
               items={getServicesByIds(popularNearYouIds)}
             />
@@ -1135,7 +1091,7 @@ const Home = () => {
           <h2 className="text-3xl sm:text-4xl md:text-5xl font-extrabold text-white mb-4">Urgent Repair Needed?</h2>
           <p className="text-base sm:text-lg text-slate-400 mb-8 max-w-2xl mx-auto">Skip the booking form and call us directly for an instant technician dispatch. We prioritize emergencies.</p>
           <a href="tel:+919515980170" className="inline-flex items-center gap-3 px-8 sm:px-10 py-4 sm:py-5 bg-gradient-to-r from-emerald-500 to-emerald-600 text-white font-extrabold text-lg sm:text-xl rounded-2xl shadow-xl shadow-emerald-500/30 hover:scale-105 transition-transform no-underline">
-            <MessageCircle /> 
+            <PhoneCall size={22} /> 
             <span className="hidden sm:inline">Call Now:</span> +91 95159 80170
           </a>
         </div>

@@ -15,34 +15,34 @@ export const globalServices = [
   // Repair
   { id: 'ac_repair', categoryId: 'repair', name: 'AC Repair', icon: Wind, color: 'text-sky-500', bg: 'bg-sky-500/20', img: 'https://images.unsplash.com/photo-1621905251189-08b45d6a269e?q=80&w=600&auto=format&fit=crop' },
   { id: 'washing_machine', categoryId: 'repair', name: 'Washing Machine Repair', icon: Disc, color: 'text-indigo-500', bg: 'bg-indigo-500/20', img: 'https://images.unsplash.com/photo-1626806787461-102c1bfaaea1?q=80&w=600&auto=format&fit=crop' },
-  { id: 'refrigerator', categoryId: 'repair', name: 'Refrigerator Repair', icon: Snowflake, color: 'text-teal-500', bg: 'bg-teal-500/20', img: 'https://images.unsplash.com/photo-1584622650111-993a426fbf0a?q=80&w=600&auto=format&fit=crop' },
+  { id: 'refrigerator', categoryId: 'repair', name: 'Refrigerator Repair', icon: Snowflake, color: 'text-teal-500', bg: 'bg-teal-500/20', img: 'https://images.unsplash.com/photo-1571175443880-49e1d25b2bc5?q=80&w=600&auto=format&fit=crop' },
   { id: 'microwave', categoryId: 'repair', name: 'Microwave Repair', icon: Sparkles, color: 'text-orange-500', bg: 'bg-orange-500/20', img: 'https://images.unsplash.com/photo-1574269909862-7e1d70bb8078?q=80&w=600&auto=format&fit=crop' },
   { id: 'tv_repair', categoryId: 'repair', name: 'TV Repair', icon: Tv, color: 'text-purple-500', bg: 'bg-purple-500/20', img: 'https://images.unsplash.com/photo-1593359677879-a4bb92f829d1?q=80&w=600&auto=format&fit=crop' },
   { id: 'laptop_repair', categoryId: 'repair', name: 'Laptop Repair', icon: Smartphone, color: 'text-slate-500', bg: 'bg-slate-500/20', img: 'https://images.unsplash.com/photo-1597872200969-2b65d56bd16b?q=80&w=600&auto=format&fit=crop' },
   { id: 'mobile_repair', categoryId: 'repair', name: 'Mobile Repair', icon: Smartphone, color: 'text-rose-500', bg: 'bg-rose-500/20', img: 'https://images.unsplash.com/photo-1597740985671-2a8a3b80502e?q=80&w=600&auto=format&fit=crop' },
   
   // Installation
-  { id: 'ac_install', categoryId: 'installation', name: 'AC Installation', icon: Wind, color: 'text-sky-500', bg: 'bg-sky-500/20', img: 'https://images.unsplash.com/photo-1621905251189-08b45d6a269e?q=80&w=600&auto=format&fit=crop' },
+  { id: 'ac_install', categoryId: 'installation', name: 'AC Installation', icon: Wind, color: 'text-sky-500', bg: 'bg-sky-500/20', img: 'https://images.unsplash.com/photo-1621905252507-b35492cc74b4?q=80&w=600&auto=format&fit=crop' },
   { id: 'cctv_install', categoryId: 'installation', name: 'CCTV Installation', icon: Hammer, color: 'text-zinc-500', bg: 'bg-zinc-500/20', img: 'https://images.unsplash.com/photo-1557200134-90327ee9fafa?q=80&w=600&auto=format&fit=crop' },
-  { id: 'ro_install', categoryId: 'installation', name: 'RO Installation', icon: Droplets, color: 'text-blue-500', bg: 'bg-blue-500/20', img: 'https://images.unsplash.com/photo-1584622781564-1d987f7333c1?q=80&w=600&auto=format&fit=crop' },
+  { id: 'ro_install', categoryId: 'installation', name: 'RO Installation', icon: Droplets, color: 'text-blue-500', bg: 'bg-blue-500/20', img: 'https://images.unsplash.com/photo-1548839140-29a749e1cf4e?q=80&w=600&auto=format&fit=crop' },
   { id: 'inverter_install', categoryId: 'installation', name: 'Inverter Installation', icon: Zap, color: 'text-amber-500', bg: 'bg-amber-500/20', img: 'https://images.unsplash.com/photo-1498084393753-b411b2d26b34?q=80&w=600&auto=format&fit=crop' },
-  { id: 'fan_install', categoryId: 'installation', name: 'Ceiling Fan Installation', icon: Wind, color: 'text-slate-500', bg: 'bg-slate-500/20', img: 'https://images.unsplash.com/photo-1582213782179-e0d53f98f2ca?q=80&w=600&auto=format&fit=crop' },
-  { id: 'lock_install', categoryId: 'installation', name: 'Door Lock Installation', icon: Hammer, color: 'text-yellow-600', bg: 'bg-yellow-600/20', img: 'https://images.unsplash.com/photo-1522708323590-d24dbb6b0267?q=80&w=600&auto=format&fit=crop' },
+  { id: 'fan_install', categoryId: 'installation', name: 'Ceiling Fan Installation', icon: Wind, color: 'text-slate-500', bg: 'bg-slate-500/20', img: 'https://images.unsplash.com/photo-1615873968403-89e068629265?q=80&w=600&auto=format&fit=crop' },
+  { id: 'lock_install', categoryId: 'installation', name: 'Door Lock Installation', icon: Hammer, color: 'text-yellow-600', bg: 'bg-yellow-600/20', img: 'https://images.unsplash.com/photo-1558002038-1055907df827?q=80&w=600&auto=format&fit=crop' },
   { id: 'furniture', categoryId: 'installation', name: 'Furniture Assembly', icon: Hammer, color: 'text-orange-500', bg: 'bg-orange-500/20', img: 'https://images.unsplash.com/photo-1581539250439-c96689b516dd?q=80&w=600&auto=format&fit=crop' },
 
   // Cleaning
   { id: 'sofa_clean', categoryId: 'cleaning', name: 'Sofa Cleaning', icon: Sparkles, color: 'text-rose-500', bg: 'bg-rose-500/20', img: 'https://images.unsplash.com/photo-1493663284031-b7e3aefcae8e?q=80&w=600&auto=format&fit=crop' },
-  { id: 'bathroom_clean', categoryId: 'cleaning', name: 'Bathroom Deep Cleaning', icon: Bath, color: 'text-cyan-500', bg: 'bg-cyan-500/20', img: 'https://images.unsplash.com/photo-1584622781564-1d987f7333c1?q=80&w=600&auto=format&fit=crop' },
-  { id: 'water_tank_clean', categoryId: 'cleaning', name: 'Water Tank Cleaning', icon: Droplets, color: 'text-blue-600', bg: 'bg-blue-600/20', img: 'https://images.unsplash.com/photo-1584622650111-993a426fbf0a?q=80&w=600&auto=format&fit=crop' },
+  { id: 'bathroom_clean', categoryId: 'cleaning', name: 'Bathroom Deep Cleaning', icon: Bath, color: 'text-cyan-500', bg: 'bg-cyan-500/20', img: 'https://images.unsplash.com/photo-1620626011761-996317b8d101?q=80&w=600&auto=format&fit=crop' },
+  { id: 'water_tank_clean', categoryId: 'cleaning', name: 'Water Tank Cleaning', icon: Droplets, color: 'text-blue-600', bg: 'bg-blue-600/20', img: 'https://images.unsplash.com/photo-1500382017468-9049fed747ef?q=80&w=600&auto=format&fit=crop' },
   { id: 'carpet_clean', categoryId: 'cleaning', name: 'Carpet Cleaning', icon: Sparkles, color: 'text-indigo-400', bg: 'bg-indigo-400/20', img: 'https://images.unsplash.com/photo-1600585154340-be6161a56a0c?q=80&w=600&auto=format&fit=crop' },
   { id: 'kitchen_clean', categoryId: 'cleaning', name: 'Kitchen Cleaning', icon: Utensils, color: 'text-yellow-500', bg: 'bg-yellow-500/20', img: 'https://images.unsplash.com/photo-1556911220-e15b29be8c8f?q=80&w=600&auto=format&fit=crop' },
   { id: 'home_clean', categoryId: 'cleaning', name: 'Full Home Cleaning', icon: Home, color: 'text-emerald-500', bg: 'bg-emerald-500/20', img: 'https://images.unsplash.com/photo-1527515637462-cff94eecc1ac?q=80&w=600&auto=format&fit=crop' },
 
   // Other Services
-  { id: 'pest_control', categoryId: 'other', name: 'Pest Control', icon: MoreHorizontal, color: 'text-zinc-500', bg: 'bg-zinc-500/20', img: 'https://images.unsplash.com/photo-1504328345606-18bbc8c9d7d1?q=80&w=600&auto=format&fit=crop' },
-  { id: 'electric_wiring', categoryId: 'other', name: 'Electric Wiring', icon: Zap, color: 'text-amber-500', bg: 'bg-amber-500/20', img: 'https://images.unsplash.com/photo-1621905251189-08b45d6a269e?q=80&w=600&auto=format&fit=crop' },
+  { id: 'pest_control', categoryId: 'other', name: 'Pest Control', icon: MoreHorizontal, color: 'text-zinc-500', bg: 'bg-zinc-500/20', img: 'https://images.unsplash.com/photo-1632833239869-a37e3a5806d2?q=80&w=600&auto=format&fit=crop' },
+  { id: 'electric_wiring', categoryId: 'other', name: 'Electric Wiring', icon: Zap, color: 'text-amber-500', bg: 'bg-amber-500/20', img: 'https://images.unsplash.com/photo-1621905251918-48416bd8575a?q=80&w=600&auto=format&fit=crop' },
   { id: 'plumbing_work', categoryId: 'other', name: 'Plumbing Work', icon: Wrench, color: 'text-blue-500', bg: 'bg-blue-500/20', img: 'https://images.unsplash.com/photo-1585704032915-c3400ca199e7?q=80&w=600&auto=format&fit=crop' },
-  { id: 'furniture_repair', categoryId: 'other', name: 'Furniture Repair', icon: Hammer, color: 'text-orange-600', bg: 'bg-orange-600/20', img: 'https://images.unsplash.com/photo-1581539250439-c96689b516dd?q=80&w=600&auto=format&fit=crop' },
+  { id: 'furniture_repair', categoryId: 'other', name: 'Furniture Repair', icon: Hammer, color: 'text-orange-600', bg: 'bg-orange-600/20', img: 'https://images.unsplash.com/photo-1538688525198-9b88f6f53126?q=80&w=600&auto=format&fit=crop' },
   { id: 'painting', categoryId: 'other', name: 'Painting', icon: MoreHorizontal, color: 'text-pink-500', bg: 'bg-pink-500/20', img: 'https://images.unsplash.com/photo-1589939705384-5185137a7f0f?q=80&w=600&auto=format&fit=crop' },
 ];
 
