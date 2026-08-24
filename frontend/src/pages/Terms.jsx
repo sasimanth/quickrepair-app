@@ -20,26 +20,23 @@ const Terms = () => {
   }, []);
 
   const defaultContent = `
-    <h2>1. Welcome and Role of the Platform</h2>
-    <p>Welcome to Fixvo. By registering, downloading, or using our platform, you agree to comply with and be bound by these Terms & Conditions. Fixvo acts strictly as an on-demand marketplace connecting customers with independent, qualified repair and maintenance technicians. We do not provide physical repair services directly and are not employers of the technicians.</p>
+    <h2>1. Marketplace Facilitator Agreement</h2>
+    <p>By accessing or using Fixvo, you agree to these Terms & Conditions. Fixvo operates strictly as an on-demand technology marketplace matching customers with independent, verified service professionals ("Technicians"). Fixvo is not a direct employer of technicians nor a direct repair provider.</p>
     
-    <h2>2. User Responsibilities</h2>
-    <p>Users must provide accurate, complete, and current information when creating a booking, including exact address details, contact numbers, and description of the device or issue. Users must ensure a safe, respectful, and cooperative working environment for the technician upon arrival.</p>
+    <h2>2. User Obligations</h2>
+    <p>Users must provide truthful, complete service address information, contact phone numbers, and device failure descriptions. Users must ensure safe, reasonable access for matched technicians to conduct physical diagnostic inspections and repair tasks.</p>
     
-    <h2>3. Technician Responsibilities</h2>
-    <p>Technicians agree to perform services with professional skill and diligence, represent their qualifications honestly, maintain necessary background checks, and respect user privacy. Technicians must coordinate all quote proposals and work approvals strictly through the Fixvo application.</p>
+    <h2>3. Diagnostic Quotes & Service Approvals</h2>
+    <p>All service quotes generated on-site must be submitted, itemized, and approved inside the Fixvo application prior to commencement of repair work. Direct verbal agreements or side-payments outside the app void service warranties and platform guarantees.</p>
     
-    <h2>4. Service Booking and Quote Terms</h2>
-    <p>All service bookings are processed through the platform. Any diagnostic inspections result in a cost estimate or quote. Work may only begin after the customer has explicitly approved the quote in-app. Technicians are prohibited from modifying quotes or charging additional fees outside the approved quote structure.</p>
+    <h2>4. Payments & Platform Commission</h2>
+    <p>Payments must be settled via integrated digital channels or logged cash payments inside the application. Fixvo retains a 10% platform facilitation fee on completed service work. Off-platform payment requests or soliciting off-platform arrangements violate these Terms and lead to permanent account termination.</p>
     
-    <h2>5. Payment Policies</h2>
-    <p>Payments for services completed must be processed through the platform using integrated online payment options or confirmed cash-on-service payments. Any off-platform payments or direct solicitation violate these terms, void service warranties, and will result in immediate account termination.</p>
+    <h2>5. Disputes & Service Guarantee</h2>
+    <p>Any service dispute must be filed with Fixvo Support within 48 hours of job completion. Fixvo facilitates dispute investigation and warranty claim reviews up to the original labor charge amount.</p>
     
-    <h2>6. Cancellation and Dispute Handling</h2>
-    <p>Cancellations are governed by our Cancellation Policy. Disputes between users and technicians should be reported to Fixvo Support within 48 hours. While Fixvo facilitates resolution, final liability for service quality and performance remains between the customer and the independent technician.</p>
-    
-    <h2>7. Limitations of Liability</h2>
-    <p>To the maximum extent permitted by law, Fixvo shall not be liable for any indirect, incidental, special, exemplary, or consequential damages, including personal injury or property damage, arising out of or in connection with any service matches facilitated by the platform.</p>
+    <h2>6. Contact Legal Counsel</h2>
+    <p>For questions or inquiries regarding these Terms & Conditions, please contact <strong>legal@fixvo.in</strong> or phone <strong>+91 95159 80170</strong>.</p>
   `;
 
   return (
@@ -52,13 +49,18 @@ const Terms = () => {
           </div>
         ) : (
           <>
+            <div className="flex items-center gap-2 mb-4">
+              <span className="text-xs font-bold px-3 py-1 bg-indigo-50 text-indigo-700 border border-indigo-100 rounded-full uppercase tracking-wider">
+                Fixvo Legal Notice
+              </span>
+            </div>
             <h1 className="text-4xl font-extrabold text-slate-900 mb-2">{doc?.title || 'Terms & Conditions'}</h1>
-            <p className="text-slate-500 mb-10 font-medium">
-              Last Updated: {doc?.updatedAt ? new Date(doc.updatedAt).toLocaleDateString(undefined, { month: 'long', year: 'numeric' }) : 'May 2026'} | Version V{doc?.version || 1}
+            <p className="text-slate-500 mb-10 font-medium text-sm">
+              Last Updated: {doc?.updatedAt ? new Date(doc.updatedAt).toLocaleDateString(undefined, { month: 'long', year: 'numeric' }) : 'August 2026'} | Version V{doc?.version || 1}
             </p>
             
             <div 
-              className="prose max-w-none text-slate-700 space-y-6"
+              className="prose max-w-none text-slate-700 space-y-6 text-sm leading-relaxed"
               dangerouslySetInnerHTML={{ __html: doc?.content || defaultContent }}
             />
           </>

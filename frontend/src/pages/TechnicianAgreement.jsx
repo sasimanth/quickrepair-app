@@ -20,20 +20,20 @@ const TechnicianAgreement = () => {
   }, []);
 
   const defaultContent = `
-    <h2>1. Service Quality & Professional Standards</h2>
-    <p>As a verified technician on Fixvo, you represent and warrant that you possess the necessary technical skills, equipment, and experience to carry out repair services. You agree to deliver high-quality services, maintain a professional and respectful demeanor, and keep your overall rating above 4.2 stars.</p>
+    <h2>1. Independent Contractor Partner Status</h2>
+    <p>Technicians operate as independent contractors on the Fixvo marketplace platform. Nothing in this agreement creates an employer-employee, agency, or joint venture relationship. Technicians maintain control over their work schedules, accepted service requests, and geographic service zones.</p>
     
-    <h2>2. Conduct Guidelines and Safety</h2>
-    <p>Technicians must wear proper identification, arrive within the scheduled time windows, and provide transparent diagnosis feedback. You are strictly prohibited from soliciting customers for off-platform repairs, sharing user contact details with third parties, or performing unauthorized activities.</p>
+    <h2>2. Quality Metrics & Star Rating Maintenance</h2>
+    <p>Technicians agree to provide professional workmanship, maintain clean work environments, wear proper safety gear, and maintain a minimum customer rating of 4.2 out of 5 stars. Falling below 4.2 stars may trigger retraining or temporary account suspension.</p>
     
-    <h2>3. Commission Rules and Wallet Balances</h2>
-    <p>Fixvo retains a standard 10% platform commission on the gross total of all completed bookings (including labour and materials). The remaining 90% is credited to your technician wallet balance. Cash payments collected directly from customers are logged, and the 10% platform commission due is deducted from your online wallet balance.</p>
+    <h2>3. 10% Platform Commission & Wallet Settlement</h2>
+    <p>Fixvo deducts a standard 10% platform commission on completed work orders. For cash payments collected directly from customers, the 10% commission is deducted from your online technician wallet balance. Cash collections must be logged in-app immediately upon completion.</p>
     
-    <h2>4. Payouts and Withdrawals</h2>
-    <p>Technicians can request a withdrawal of their available online balance to their registered bank account or UPI ID. The minimum payout request is ₹500. Withdrawal requests are processed by Admin within 24 to 48 hours.</p>
+    <h2>4. Wallet Payout Minimums & Processing</h2>
+    <p>Technicians can initiate payouts to their registered UPI ID or verified bank account once their available wallet balance reaches ₹500 or more. Withdrawal requests are processed within 24 to 48 business hours by Fixvo Finance Operations.</p>
     
-    <h2>5. Account Suspension Policies</h2>
-    <p>Fixvo reserves the right to suspend or terminate technician accounts immediately for: rating drops below 4.2, safety violations, fraudulent quotes, off-platform soliciting, excessive cancellations, or failing background check updates.</p>
+    <h2>5. Anti-Solicitation & Zero Tolerance Grounds</h2>
+    <p>Soliciting Fixvo customers for off-platform repairs, sharing user contact details, falsifying parts quotes, or failing background check re-verifications will result in immediate permanent account termination and forfeiture of pending wallet bonuses.</p>
   `;
 
   return (
@@ -46,13 +46,18 @@ const TechnicianAgreement = () => {
           </div>
         ) : (
           <>
-            <h1 className="text-4xl font-extrabold text-slate-900 mb-2">{doc?.title || 'Technician Agreement'}</h1>
-            <p className="text-slate-500 mb-10 font-medium">
-              Last Updated: {doc?.updatedAt ? new Date(doc.updatedAt).toLocaleDateString(undefined, { month: 'long', year: 'numeric' }) : 'May 2026'} | Version V{doc?.version || 1}
+            <div className="flex items-center gap-2 mb-4">
+              <span className="text-xs font-bold px-3 py-1 bg-indigo-50 text-indigo-700 border border-indigo-100 rounded-full uppercase tracking-wider">
+                Fixvo Partner Agreement
+              </span>
+            </div>
+            <h1 className="text-4xl font-extrabold text-slate-900 mb-2">{doc?.title || 'Technician Service Agreement'}</h1>
+            <p className="text-slate-500 mb-10 font-medium text-sm">
+              Last Updated: {doc?.updatedAt ? new Date(doc.updatedAt).toLocaleDateString(undefined, { month: 'long', year: 'numeric' }) : 'August 2026'} | Version V{doc?.version || 1}
             </p>
             
             <div 
-              className="prose max-w-none text-slate-700 space-y-6"
+              className="prose max-w-none text-slate-700 space-y-6 text-sm leading-relaxed"
               dangerouslySetInnerHTML={{ __html: doc?.content || defaultContent }}
             />
           </>

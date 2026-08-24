@@ -20,23 +20,20 @@ const UserSafety = () => {
   }, []);
 
   const defaultContent = `
-    <h2>1. Respectful Communication</h2>
-    <p>Fixvo is committed to providing a safe and friendly community. Customers and technicians must treat each other with respect, courtesy, and professional dignity. Abusive language, harassment, discrimination, or physical confrontation of any kind will result in immediate and permanent ban from the platform.</p>
+    <h2>1. Zero Tolerance & Professional Conduct</h2>
+    <p>Fixvo is dedicated to fostering a safe, trustworthy ecosystem for both homeowners and technicians. Discrimination, abusive language, physical threats, harassment, or unsafe work site conditions are strictly prohibited. Any violation results in immediate permanent ban and referral to local authorities where applicable.</p>
     
-    <h2>2. Fraud Prevention and Quote Integrity</h2>
-    <p>All quotes must be documented, itemized, and approved inside the Fixvo app. Technicians are prohibited from inflating pricing artificially or using low-quality materials. Customers must not attempt to alter agreed prices or request work beyond the scope of approved quotes without updating the invoice.</p>
+    <h2>2. Background Verification & ID Badges</h2>
+    <p>Every technician operating on Fixvo undergoes mandatory background verification, identity check, and skill qualification testing. Matched technicians wear official Fixvo digital/physical badges. Users must verify the technician's name and photo in-app before granting home access.</p>
     
-    <h2>3. Prohibited Activities</h2>
-    <p>To protect the safety of all users, the following are strictly prohibited:</p>
-    <ul>
-      <li>Bypassing the platform to arrange off-platform services or cash agreements.</li>
-      <li>Sharing private phone numbers or personal credentials for off-platform work.</li>
-      <li>Impersonation, sharing accounts, or allowing unverified individuals to complete assigned jobs.</li>
-      <li>Submitting fake reviews, false reports, or promotional spam.</li>
-    </ul>
+    <h2>3. Quote Transparency & Fraud Prevention</h2>
+    <p>To eliminate pricing fraud, all job diagnostics, parts estimates, and labor charges must be submitted as an itemized quote within the Fixvo application. Verbal side-negotiations or off-platform payment solicitations are prohibited and void safety protections and warranty coverage.</p>
     
-    <h2>4. Reporting Violations</h2>
-    <p>If you encounter safety issues, fraud attempts, or violations of these guidelines, please report them immediately to <strong>support@fixvo.in</strong> or use the in-app help center. We take all reports seriously and investigate promptly.</p>
+    <h2>4. Prohibition of Off-Platform Direct Solicitation</h2>
+    <p>Soliciting off-platform work or bypassing the platform for direct cash jobs is strictly forbidden. Off-platform work voids all platform insurance, 30-day labor guarantees, and identity verification protections.</p>
+    
+    <h2>5. Incident Reporting & Safety Assistance</h2>
+    <p>If you experience any safety concern, suspicious behavior, or billing dispute during a service call, contact our 24/7 Safety Desk immediately at <strong>support@fixvo.in</strong> or helpline <strong>+91 95159 80170</strong>.</p>
   `;
 
   return (
@@ -49,13 +46,18 @@ const UserSafety = () => {
           </div>
         ) : (
           <>
+            <div className="flex items-center gap-2 mb-4">
+              <span className="text-xs font-bold px-3 py-1 bg-indigo-50 text-indigo-700 border border-indigo-100 rounded-full uppercase tracking-wider">
+                Fixvo Safety Standard
+              </span>
+            </div>
             <h1 className="text-4xl font-extrabold text-slate-900 mb-2">{doc?.title || 'User Safety Guidelines'}</h1>
-            <p className="text-slate-500 mb-10 font-medium">
-              Last Updated: {doc?.updatedAt ? new Date(doc.updatedAt).toLocaleDateString(undefined, { month: 'long', year: 'numeric' }) : 'May 2026'} | Version V{doc?.version || 1}
+            <p className="text-slate-500 mb-10 font-medium text-sm">
+              Last Updated: {doc?.updatedAt ? new Date(doc.updatedAt).toLocaleDateString(undefined, { month: 'long', year: 'numeric' }) : 'August 2026'} | Version V{doc?.version || 1}
             </p>
             
             <div 
-              className="prose max-w-none text-slate-700 space-y-6"
+              className="prose max-w-none text-slate-700 space-y-6 text-sm leading-relaxed"
               dangerouslySetInnerHTML={{ __html: doc?.content || defaultContent }}
             />
           </>

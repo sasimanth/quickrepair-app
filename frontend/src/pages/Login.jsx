@@ -3,6 +3,7 @@ import { useNavigate, Link } from 'react-router-dom';
 import { Wrench, Mail, Lock, ArrowRight, Loader2, RefreshCw } from 'lucide-react';
 import api from '../services/api';
 import CanvasCaptcha from '../components/CanvasCaptcha';
+import GoogleAuthModal from '../components/GoogleAuthModal';
 import { login } from '../services/auth';
 import { useAuth } from '../contexts/AuthContext';
 
@@ -14,6 +15,7 @@ const Login = () => {
   });
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
+  const [isGoogleModalOpen, setIsGoogleModalOpen] = useState(false);
   const navigate = useNavigate();
 
   // Security CAPTCHA States
@@ -242,45 +244,9 @@ const Login = () => {
 
         <button
           type="button"
-          onClick={async () => {
-            setError('');
-            setLoading(true);
-            try {
-              // Attempt Google login API post
-              const { data } = await api.post('/auth/google', {
-                email: 'user.google@fixvo.com',
-                name: 'Google User',
-                avatar: '🌐'
-              });
-              localStorage.setItem('token', data.token);
-              localStorage.setItem('user', JSON.stringify(data));
-              navigate(data.role === 'admin' ? '/admin-dashboard' : data.role === 'technician' ? '/technician-dashboard' : '/dashboard');
-              window.location.reload();
-            } catch (googleErr) {
-              const googleUserObj = { 
-                email: 'google.user@fixvo.com', 
-                name: 'Google User', 
-                role: 'user', 
-                phone: '+91 95159 80170',
-                isEmailVerified: true, 
-                isPhoneVerified: true 
-              };
-              const mockUserData = {
-                token: 'demo-google-token-' + Date.now(),
-                user: googleUserObj,
-                role: 'user'
-              };
-              localStorage.setItem('token', mockUserData.token);
-              localStorage.setItem('user', JSON.stringify(mockUserData));
-              setUser(googleUserObj);
-              navigate('/dashboard');
-              setTimeout(() => window.location.reload(), 100);
-            } finally {
-              setLoading(false);
-            }
-          }}
+          onClick={() => setIsGoogleModalOpen(true)}
           disabled={loading}
-          className="w-full py-3.5 bg-white border-2 border-slate-200 hover:bg-slate-50 text-slate-800 font-bold rounded-2xl shadow-sm transition-all flex items-center justify-center gap-3 cursor-pointer outline-none"
+          className="w-full py-3.5 bg-white border-2 border-slate-200 hover:bg-slate-50 text-slate-800 font-bold rounded-2xl shadow-sm transition-all flex items-center justify-center gap-3 cursor-pointer outline-none hover:border-slate-300 transform hover:-translate-y-0.5"
         >
           <svg className="w-5 h-5 shrink-0" viewBox="0 0 24 24">
             <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
@@ -291,7 +257,6 @@ const Login = () => {
           <span>Continue with Google</span>
         </button>
         
-
         <p className="mt-10 text-center text-slate-500 font-medium">
           New to Fixvo?{' '}
           <Link to="/signup" className="text-blue-600 font-bold hover:text-blue-700 hover:underline transition-colors">
@@ -299,6 +264,11 @@ const Login = () => {
           </Link>
         </p>
       </div>
+
+      <GoogleAuthModal 
+        isOpen={isGoogleModalOpen} 
+        onClose={() => setIsGoogleModalOpen(false)} 
+      />
     </div>
   );
 };
