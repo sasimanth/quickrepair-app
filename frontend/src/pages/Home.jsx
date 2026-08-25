@@ -583,41 +583,41 @@ const Home = () => {
             className="space-y-6"
           >
             {/* Eyebrow Badge */}
-            <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-sky-500/10 border border-sky-500/20 backdrop-blur-sm text-xs font-black uppercase tracking-widest text-sky-400">
-              <Sparkles size={13} className="text-sky-400" />
-              <span>Premium Home Services in Madanapalle & Region</span>
+            <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-blue-500/10 border border-blue-500/20 backdrop-blur-sm text-xs font-black uppercase tracking-widest text-blue-400">
+              <Zap size={13} className="text-amber-400 fill-current" />
+              <span>⚡ 30-Minute Dispatch Guarantee • Madanapalle & Region</span>
             </div>
 
             {/* Headline */}
             <h1 className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-black text-white tracking-tight leading-[1.05]">
-              Home care that feels <br />
+              Instant Doorstep Repairs & <br />
               <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-400 via-sky-300 to-cyan-400">
-                beautifully under control.
+                Certified Home Care.
               </span>
             </h1>
 
             {/* Subtitle */}
             <p className="text-slate-400 text-sm sm:text-base md:text-lg max-w-2xl mx-auto leading-relaxed font-normal">
-              Verified professionals, clear pricing, and tracked visits. Fixvo makes home service booking feel calm, modern, and in control.
+              Book background-checked local technicians for AC, appliance, plumbing, and deep home cleaning with fixed upfront quotes and zero hidden fees.
             </p>
 
-            {/* 4 Trust Pills (Fixipy Benchmark) */}
+            {/* 4 Trust Pills (Fixvo Unique) */}
             <div className="flex flex-wrap justify-center gap-2.5 pt-2">
               <div className="flex items-center gap-2 rounded-full border border-white/10 bg-white/5 px-3.5 py-1.5 backdrop-blur-md">
-                <ShieldCheck size={14} className="text-sky-400" />
-                <span className="text-xs font-bold text-slate-200">Verified Pros</span>
+                <ShieldCheck size={14} className="text-blue-400" />
+                <span className="text-xs font-bold text-slate-200">Certified Technicians</span>
               </div>
               <div className="flex items-center gap-2 rounded-full border border-white/10 bg-white/5 px-3.5 py-1.5 backdrop-blur-md">
-                <Clock size={14} className="text-sky-400" />
-                <span className="text-xs font-bold text-slate-200">30-min Response</span>
+                <Clock size={14} className="text-cyan-400" />
+                <span className="text-xs font-bold text-slate-200">30-Min Dispatch</span>
               </div>
               <div className="flex items-center gap-2 rounded-full border border-white/10 bg-white/5 px-3.5 py-1.5 backdrop-blur-md">
                 <Star size={14} className="text-amber-400 fill-current" />
-                <span className="text-xs font-bold text-slate-200">4.9 rating</span>
+                <span className="text-xs font-bold text-slate-200">4.9/5 Rating</span>
               </div>
               <div className="flex items-center gap-2 rounded-full border border-white/10 bg-white/5 px-3.5 py-1.5 backdrop-blur-md">
                 <CheckCircle2 size={14} className="text-emerald-400" />
-                <span className="text-xs font-bold text-slate-200">Money Back Guarantee</span>
+                <span className="text-xs font-bold text-slate-200">Upfront Digital Quotes</span>
               </div>
             </div>
 
@@ -783,16 +783,16 @@ const Home = () => {
               </AnimatePresence>
             </div>
 
-            {/* Service Promise Cards & App Live Preview (Fixipy Benchmark) */}
+            {/* Service Promise Cards & App Live Preview (Fixvo Unique) */}
             <div className="grid gap-4 sm:grid-cols-2 pt-6 text-left">
               <div className="rounded-2xl border border-white/10 bg-white/[0.03] p-5 backdrop-blur-md">
                 <div className="flex items-center gap-3">
                   <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-emerald-500/20 text-emerald-400">
-                    <Sparkles size={20} />
+                    <ShieldCheck size={20} />
                   </span>
                   <div>
-                    <p className="text-[10px] font-black uppercase tracking-[0.18em] text-slate-400">Service promise</p>
-                    <p className="text-sm font-extrabold text-white">Clean visits. Clear estimates. Fast support.</p>
+                    <p className="text-[10px] font-black uppercase tracking-[0.18em] text-slate-400">Fixvo Guarantee</p>
+                    <p className="text-sm font-extrabold text-white">Upfront digital estimates. Police-verified fixers.</p>
                   </div>
                 </div>
               </div>
@@ -803,8 +803,8 @@ const Home = () => {
                     <MapPin size={20} />
                   </span>
                   <div>
-                    <p className="text-[10px] font-black uppercase tracking-[0.18em] text-slate-400">Currently serving</p>
-                    <p className="text-sm font-extrabold text-white">Madanapalle, Kadiri, Rayachoty, Angallu & region.</p>
+                    <p className="text-[10px] font-black uppercase tracking-[0.18em] text-slate-400">Active Coverage</p>
+                    <p className="text-sm font-extrabold text-white">Madanapalle, Kadiri, Rayachoty, Galiveedu & region.</p>
                   </div>
                 </div>
               </div>
@@ -1317,56 +1317,57 @@ const Home = () => {
         </div>
 
         {/* 9. TRUST & VERIFICATION METRICS GRID (Fixipy Benchmark) */}
+        {/* 9. TRUST & VERIFICATION METRICS GRID (Fixvo Unique) */}
         <section className="mt-24 sm:mt-32 border-t border-white/5 pt-20 px-4 sm:px-0">
           <div className="mb-12 text-center max-w-2xl mx-auto">
-            <span className="inline-block rounded-full bg-sky-500/10 px-3.5 py-1 text-xs font-black uppercase tracking-widest text-sky-400 border border-sky-500/20 mb-3">
-              Trust & Verification
+            <span className="inline-block rounded-full bg-blue-500/10 px-3.5 py-1 text-xs font-black uppercase tracking-widest text-blue-400 border border-blue-500/20 mb-3">
+              The Fixvo Advantage
             </span>
             <h2 className="text-3xl sm:text-4xl md:text-5xl font-black text-white tracking-tight">
-              Results that speak for themselves.
+              Built on Speed, Transparency, and Local Trust.
             </h2>
             <p className="text-slate-400 text-sm sm:text-base mt-2 leading-relaxed">
-              Reliability should be visible before the technician arrives. These are the numbers we optimize for every day.
+              We optimize every single dispatch to get a background-checked technician to your door in 30 minutes.
             </p>
           </div>
 
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4 sm:gap-6">
             <div className="rounded-3xl border border-white/10 bg-white/[0.02] p-6 text-center hover:bg-white/[0.04] transition">
-              <p className="text-[10px] font-extrabold uppercase tracking-widest text-slate-400 mb-2">Metric 01</p>
-              <p className="text-3xl sm:text-4xl md:text-5xl font-black text-white tracking-tight">1,500+</p>
-              <p className="text-xs font-bold text-slate-400 mt-2">Bookings completed</p>
+              <p className="text-[10px] font-extrabold uppercase tracking-widest text-slate-400 mb-2">Repairs Done</p>
+              <p className="text-3xl sm:text-4xl md:text-5xl font-black text-white tracking-tight">12,400+</p>
+              <p className="text-xs font-bold text-slate-400 mt-2">Doorstep jobs delivered</p>
             </div>
             <div className="rounded-3xl border border-white/10 bg-white/[0.02] p-6 text-center hover:bg-white/[0.04] transition">
-              <p className="text-[10px] font-extrabold uppercase tracking-widest text-slate-400 mb-2">Metric 02</p>
+              <p className="text-[10px] font-extrabold uppercase tracking-widest text-slate-400 mb-2">User Score</p>
               <p className="text-3xl sm:text-4xl md:text-5xl font-black text-white tracking-tight">4.9 / 5</p>
-              <p className="text-xs font-bold text-slate-400 mt-2">Average rating</p>
+              <p className="text-xs font-bold text-slate-400 mt-2">Average customer rating</p>
             </div>
             <div className="rounded-3xl border border-white/10 bg-white/[0.02] p-6 text-center hover:bg-white/[0.04] transition">
-              <p className="text-[10px] font-extrabold uppercase tracking-widest text-slate-400 mb-2">Metric 03</p>
-              <p className="text-3xl sm:text-4xl md:text-5xl font-black text-white tracking-tight">120+</p>
-              <p className="text-xs font-bold text-slate-400 mt-2">Verified Pros in region</p>
+              <p className="text-[10px] font-extrabold uppercase tracking-widest text-slate-400 mb-2">Local Pros</p>
+              <p className="text-3xl sm:text-4xl md:text-5xl font-black text-white tracking-tight">150+</p>
+              <p className="text-xs font-bold text-slate-400 mt-2">Verified fixers in region</p>
             </div>
             <div className="rounded-3xl border border-white/10 bg-white/[0.02] p-6 text-center hover:bg-white/[0.04] transition">
-              <p className="text-[10px] font-extrabold uppercase tracking-widest text-slate-400 mb-2">Metric 04</p>
-              <p className="text-3xl sm:text-4xl md:text-5xl font-black text-white tracking-tight">30 min</p>
-              <p className="text-xs font-bold text-slate-400 mt-2">Average response time</p>
+              <p className="text-[10px] font-extrabold uppercase tracking-widest text-slate-400 mb-2">Arrival Time</p>
+              <p className="text-3xl sm:text-4xl md:text-5xl font-black text-white tracking-tight">30 Mins</p>
+              <p className="text-xs font-bold text-slate-400 mt-2">Guaranteed dispatch window</p>
             </div>
           </div>
         </section>
 
-        {/* 10. GET STARTED & MOBILE ROLLOUT SECTION (Fixipy Benchmark) */}
+        {/* 10. GET STARTED & MOBILE ROLLOUT SECTION (Fixvo Unique) */}
         <section className="mt-24 sm:mt-32">
           <div className="relative overflow-hidden rounded-[2.5rem] border border-white/10 bg-gradient-to-br from-slate-900 via-slate-900 to-indigo-950/80 p-8 sm:p-12 shadow-2xl">
             <div className="grid gap-8 lg:grid-cols-2 items-center">
               <div>
-                <span className="inline-block rounded-full bg-sky-500/10 px-3 py-1 text-xs font-black uppercase tracking-widest text-sky-400 border border-sky-500/20 mb-4">
-                  Get Started
+                <span className="inline-block rounded-full bg-blue-500/10 px-3 py-1 text-xs font-black uppercase tracking-widest text-blue-400 border border-blue-500/20 mb-4">
+                  Fixvo Mobile App
                 </span>
                 <h2 className="text-3xl sm:text-4xl md:text-5xl font-black text-white tracking-tight leading-tight">
-                  A better home service habit starts now.
+                  Your Home Repairs, Simplified on Mobile.
                 </h2>
                 <p className="mt-4 text-sm sm:text-base text-slate-300 leading-relaxed max-w-lg">
-                  Open the app, choose the job, confirm the quote, and track the visit. No scattered calls. No vague pricing.
+                  Request instant repairs, track technician arrival live on the map, and approve digital job estimates right from your phone.
                 </p>
 
                 <div className="flex flex-wrap gap-3 mt-8">
@@ -1374,7 +1375,7 @@ const Home = () => {
                     onClick={() => setIsAppModalOpen(true)}
                     className="px-6 py-3.5 bg-white text-slate-950 font-black text-xs sm:text-sm rounded-full shadow-lg hover:bg-slate-100 transition cursor-pointer border-none flex items-center gap-2"
                   >
-                    <Smartphone size={16} className="text-sky-600" />
+                    <Smartphone size={16} className="text-blue-600" />
                     <span>Open App</span>
                     <ArrowRight size={14} />
                   </button>
@@ -1382,27 +1383,27 @@ const Home = () => {
                     to="/technician-agreement"
                     className="px-6 py-3.5 bg-slate-800 text-white font-black text-xs sm:text-sm rounded-full border border-slate-700 hover:bg-slate-700 transition cursor-pointer no-underline"
                   >
-                    Become a Pro
+                    Earn As A Fixer
                   </Link>
                 </div>
               </div>
 
               <div className="space-y-4">
-                {/* Why teams choose Fixvo */}
+                {/* Why Homeowners Choose Fixvo */}
                 <div className="rounded-2xl border border-white/10 bg-white/[0.03] p-5 backdrop-blur-md">
-                  <p className="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-3">Why teams choose Fixvo</p>
+                  <p className="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-3">Why Homeowners Trust Fixvo</p>
                   <ul className="space-y-2 text-xs font-semibold text-slate-300">
                     <li className="flex items-center gap-2">
-                      <span className="w-1.5 h-1.5 rounded-full bg-sky-400"></span>
-                      <span>Transparent pricing before confirmation</span>
+                      <span className="w-1.5 h-1.5 rounded-full bg-blue-400"></span>
+                      <span>Upfront digital estimates approved before work begins</span>
                     </li>
                     <li className="flex items-center gap-2">
-                      <span className="w-1.5 h-1.5 rounded-full bg-sky-400"></span>
-                      <span>Money-back guarantee on service issues</span>
+                      <span className="w-1.5 h-1.5 rounded-full bg-blue-400"></span>
+                      <span>Direct emergency helpline with 30-minute dispatch</span>
                     </li>
                     <li className="flex items-center gap-2">
-                      <span className="w-1.5 h-1.5 rounded-full bg-sky-400"></span>
-                      <span>Technicians routed by skill and job type</span>
+                      <span className="w-1.5 h-1.5 rounded-full bg-blue-400"></span>
+                      <span>100% background-checked and police-verified fixers</span>
                     </li>
                   </ul>
                 </div>

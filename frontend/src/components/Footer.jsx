@@ -36,17 +36,17 @@ const Footer = () => {
 
         <div className="container mx-auto px-4 max-w-6xl relative z-10">
 
-          {/* Pre-Footer Banner (Fixipy Benchmark) */}
+          {/* Pre-Footer Banner (Fixvo Unique) */}
           <div className="relative mb-14 overflow-hidden rounded-[2rem] border border-slate-800 bg-gradient-to-r from-slate-900 via-slate-900 to-indigo-950/80 p-6 md:p-10 shadow-2xl">
             <div className="absolute inset-y-0 right-0 hidden w-1/3 bg-[radial-gradient(circle_at_center,rgba(14,165,233,0.15),transparent_65%)] md:block"></div>
             <div className="relative flex flex-col gap-6 md:flex-row md:items-center md:justify-between">
               <div className="max-w-2xl">
-                <p className="text-xs font-black uppercase tracking-[0.24em] text-sky-400">Ready when you are</p>
+                <p className="text-xs font-black uppercase tracking-[0.24em] text-blue-400">FAST. TRUSTED. DONE.</p>
                 <h2 className="mt-2 font-black text-2xl md:text-3xl text-white tracking-tight">
-                  Book a reliable fixer without the usual back-and-forth.
+                  Need a certified fixer at your doorstep today?
                 </h2>
                 <p className="mt-2 text-sm text-slate-400 leading-relaxed">
-                  Upfront estimates, background-verified professionals, and real-time status updates from booking to completion.
+                  Book certified Fixvo technicians in under 10 seconds with 30-minute emergency dispatch and fixed upfront quotes.
                 </p>
               </div>
               <div className="flex flex-col sm:flex-row gap-3">
