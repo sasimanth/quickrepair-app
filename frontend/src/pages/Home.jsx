@@ -1316,45 +1316,6 @@ const Home = () => {
           </motion.div>
         </div>
 
-        {/* 9. TRUST & VERIFICATION METRICS GRID (Fixipy Benchmark) */}
-        {/* 9. TRUST & VERIFICATION METRICS GRID (Fixvo Unique) */}
-        <section className="mt-24 sm:mt-32 border-t border-white/5 pt-20 px-4 sm:px-0">
-          <div className="mb-12 text-center max-w-2xl mx-auto">
-            <span className="inline-block rounded-full bg-blue-500/10 px-3.5 py-1 text-xs font-black uppercase tracking-widest text-blue-400 border border-blue-500/20 mb-3">
-              The Fixvo Advantage
-            </span>
-            <h2 className="text-3xl sm:text-4xl md:text-5xl font-black text-white tracking-tight">
-              Built on Speed, Transparency, and Local Trust.
-            </h2>
-            <p className="text-slate-400 text-sm sm:text-base mt-2 leading-relaxed">
-              We optimize every single dispatch to get a background-checked technician to your door in 30 minutes.
-            </p>
-          </div>
-
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4 sm:gap-6">
-            <div className="rounded-3xl border border-white/10 bg-white/[0.02] p-6 text-center hover:bg-white/[0.04] transition">
-              <p className="text-[10px] font-extrabold uppercase tracking-widest text-slate-400 mb-2">Repairs Done</p>
-              <p className="text-3xl sm:text-4xl md:text-5xl font-black text-white tracking-tight">12,400+</p>
-              <p className="text-xs font-bold text-slate-400 mt-2">Doorstep jobs delivered</p>
-            </div>
-            <div className="rounded-3xl border border-white/10 bg-white/[0.02] p-6 text-center hover:bg-white/[0.04] transition">
-              <p className="text-[10px] font-extrabold uppercase tracking-widest text-slate-400 mb-2">User Score</p>
-              <p className="text-3xl sm:text-4xl md:text-5xl font-black text-white tracking-tight">4.9 / 5</p>
-              <p className="text-xs font-bold text-slate-400 mt-2">Average customer rating</p>
-            </div>
-            <div className="rounded-3xl border border-white/10 bg-white/[0.02] p-6 text-center hover:bg-white/[0.04] transition">
-              <p className="text-[10px] font-extrabold uppercase tracking-widest text-slate-400 mb-2">Local Pros</p>
-              <p className="text-3xl sm:text-4xl md:text-5xl font-black text-white tracking-tight">150+</p>
-              <p className="text-xs font-bold text-slate-400 mt-2">Verified fixers in region</p>
-            </div>
-            <div className="rounded-3xl border border-white/10 bg-white/[0.02] p-6 text-center hover:bg-white/[0.04] transition">
-              <p className="text-[10px] font-extrabold uppercase tracking-widest text-slate-400 mb-2">Arrival Time</p>
-              <p className="text-3xl sm:text-4xl md:text-5xl font-black text-white tracking-tight">30 Mins</p>
-              <p className="text-xs font-bold text-slate-400 mt-2">Guaranteed dispatch window</p>
-            </div>
-          </div>
-        </section>
-
         {/* 10. GET STARTED & MOBILE ROLLOUT SECTION (Fixvo Unique) */}
         <section className="mt-24 sm:mt-32">
           <div className="relative overflow-hidden rounded-[2.5rem] border border-white/10 bg-gradient-to-br from-slate-900 via-slate-900 to-indigo-950/80 p-8 sm:p-12 shadow-2xl">

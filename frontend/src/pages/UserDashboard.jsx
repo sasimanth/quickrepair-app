@@ -1445,15 +1445,15 @@ const UserDashboard = () => {
                     </button>
                   </div>
 
-                  {/* 4. "Explore Services" Section Header + Toggle */}
+                  {/* 4. "Explore Fixvo Services" Grid (4 Columns, Fixvo Blue Theme) */}
                   <div className="pt-2">
                     <div className="flex justify-between items-center mb-4">
                       <h3 className="text-xl sm:text-2xl font-black text-slate-900 tracking-tight">
-                        Explore Services
+                        Explore Fixvo Services
                       </h3>
                       <button
                         onClick={() => setShowAllServices(prev => !prev)}
-                        className="px-3.5 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-800 font-extrabold text-xs rounded-full border-none cursor-pointer flex items-center gap-1 transition-all"
+                        className="px-3.5 py-1.5 bg-blue-50 hover:bg-blue-100 text-blue-700 font-extrabold text-xs rounded-full border-none cursor-pointer flex items-center gap-1 transition-all"
                       >
                         {showAllServices ? (
                           <>
@@ -1469,36 +1469,28 @@ const UserDashboard = () => {
                       </button>
                     </div>
 
-                    {/* Explore Services 4-Column Grid (Exact 4 Columns on Mobile) */}
+                    {/* All Fixvo Core Services in 4-Column Grid on Mobile */}
                     <div className="grid grid-cols-4 sm:grid-cols-4 md:grid-cols-6 lg:grid-cols-8 gap-3 sm:gap-4">
                       {[
-                        { id: 'phone', label: 'Phone', icon: Smartphone },
-                        { id: 'laptop', label: 'Laptop', icon: Laptop },
-                        { id: 'mac', label: 'Mac', icon: Laptop },
-                        { id: 'tablet', label: 'Tablet', icon: Tablet },
-                        { id: 'console', label: 'Console', icon: Gamepad2 },
-                        { id: 'watch', label: 'Watch', icon: Watch },
-                        { id: 'tv', label: 'TV', icon: Tv },
-                        { id: 'network', label: 'Network', icon: Wifi },
-                        { id: 'screen_repair', label: 'Screen Repair', icon: Smartphone },
-                        { id: 'battery_replacement', label: 'Battery Replacement', icon: BatteryCharging },
-                        { id: 'diagnostic', label: 'Diagnostic', icon: Activity },
-                        { id: 'water_damage', label: 'Water Damage', icon: Droplet },
-                        { id: 'camera_repair', label: 'Camera Repair', icon: Camera },
-                        { id: 'software_issue', label: 'Software Issue', icon: Code },
-                        { id: 'carpenter', label: 'Carpenter', icon: Wrench },
-                        { id: 'painting_finishing', label: 'Painting and Finishing', icon: Paintbrush },
-                        { id: 'cctv_repair', label: 'CCTV Repair', icon: Video },
-                        { id: 'aqua_water', label: 'Aqua Water Fixing', icon: Droplet },
-                        { id: 'air_purifier', label: 'Air Purifier', icon: Wind },
-                        { id: 'deep_cleaning', label: 'Deep Cleaning', icon: Sparkles },
-                        { id: 'appliance_repair', label: 'Appliance Repair', icon: Tv },
-                        { id: 'ac_repair', label: 'AC Repair', icon: Snowflake },
-                        { id: 'electrical', label: 'Electrical', icon: Zap },
-                        { id: 'plumbing', label: 'Plumbing', icon: Wrench },
+                        { id: 'ac_repair', label: 'AC Repair & Service', icon: Snowflake, color: 'text-blue-600 bg-blue-50 border-blue-200' },
+                        { id: 'appliance', label: 'Appliance Repair', icon: Tv, color: 'text-indigo-600 bg-indigo-50 border-indigo-200' },
+                        { id: 'plumbing', label: 'Plumbing & Sanitary', icon: Wrench, color: 'text-cyan-600 bg-cyan-50 border-cyan-200' },
+                        { id: 'electrical', label: 'Electrical & Wiring', icon: Zap, color: 'text-amber-600 bg-amber-50 border-amber-200' },
+                        { id: 'cleaning', label: 'Deep Home Cleaning', icon: Sparkles, color: 'text-emerald-600 bg-emerald-50 border-emerald-200' },
+                        { id: 'carpentry', label: 'Carpentry & Furniture', icon: Wrench, color: 'text-amber-700 bg-amber-50 border-amber-200' },
+                        { id: 'painting', label: 'Painting & Finishing', icon: Paintbrush, color: 'text-rose-600 bg-rose-50 border-rose-200' },
+                        { id: 'ro_water', label: 'RO Water Purifier', icon: Droplet, color: 'text-sky-600 bg-sky-50 border-sky-200' },
+                        { id: 'cctv', label: 'CCTV & Security', icon: Video, color: 'text-purple-600 bg-purple-50 border-purple-200' },
+                        { id: 'vehicle', label: 'Vehicle Breakdown', icon: Truck, color: 'text-orange-600 bg-orange-50 border-orange-200' },
+                        { id: 'inverter', label: 'Inverter & Battery', icon: BatteryCharging, color: 'text-yellow-600 bg-yellow-50 border-yellow-200' },
+                        { id: 'emergency', label: '24/7 Emergency Fix', icon: PhoneCall, color: 'text-red-600 bg-red-50 border-red-200' },
+                        { id: 'geyser', label: 'Geyser & Heater', icon: Zap, color: 'text-blue-600 bg-blue-50 border-blue-200' },
+                        { id: 'pest_control', label: 'Pest Control', icon: Shield, color: 'text-emerald-600 bg-emerald-50 border-emerald-200' },
+                        { id: 'house_wash', label: 'Exterior House Wash', icon: Droplet, color: 'text-cyan-600 bg-cyan-50 border-cyan-200' },
+                        { id: 'chimney', label: 'Kitchen Chimney Fix', icon: Wind, color: 'text-slate-700 bg-slate-100 border-slate-200' },
                       ]
                       .filter(s => !homeSearchQuery || s.label.toLowerCase().includes(homeSearchQuery.toLowerCase()))
-                      .slice(0, (showAllServices || homeSearchQuery) ? 24 : 12)
+                      .slice(0, (showAllServices || homeSearchQuery) ? 16 : 8)
                       .map((srv) => {
                         const SrvIcon = srv.icon;
                         return (
@@ -1509,10 +1501,10 @@ const UserDashboard = () => {
                               setShowForm(true);
                               setStep(1);
                             }}
-                            className="bg-white hover:bg-slate-50 border border-slate-100 hover:border-slate-200 rounded-3xl p-3 sm:p-4 flex flex-col items-center justify-center text-center gap-2 cursor-pointer shadow-2xs hover:shadow-md transition-all group border-none outline-none"
+                            className="bg-white hover:bg-blue-50/60 border border-slate-200/80 hover:border-blue-300 rounded-3xl p-3 sm:p-4 flex flex-col items-center justify-center text-center gap-2 cursor-pointer shadow-2xs hover:shadow-md transition-all group border-none outline-none"
                           >
-                            <div className="w-12 h-12 sm:w-14 sm:h-14 rounded-2xl bg-slate-100/70 flex items-center justify-center text-slate-900 group-hover:scale-105 transition-transform">
-                              <SrvIcon size={22} className="text-slate-900 stroke-[1.8]" />
+                            <div className={`w-12 h-12 sm:w-14 sm:h-14 rounded-2xl flex items-center justify-center border ${srv.color} group-hover:scale-105 transition-transform`}>
+                              <SrvIcon size={22} className="stroke-[2]" />
                             </div>
                             <span className="text-[11px] sm:text-xs font-black text-slate-900 group-hover:text-blue-600 leading-tight">
                               {srv.label}
