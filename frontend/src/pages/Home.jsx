@@ -3,6 +3,7 @@ import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { globalCategories, globalServices, getDbServices } from '../data/services';
 import SmartDiagnosis from '../components/SmartDiagnosis/SmartDiagnosis';
 import NearbyTechnicians from '../components/NearbyTechnicians';
+import OpenAppModal from '../components/OpenAppModal';
 import { motion, AnimatePresence } from 'framer-motion';
 import { 
   Zap, 
@@ -31,14 +32,20 @@ import {
   Cpu,
   Globe,
   Bell,
-  ArrowRight
+  ArrowRight,
+  Smartphone,
+  ArrowUpRight,
+  Wallet,
+  Building2,
+  Award
 } from 'lucide-react';
-import { FaInstagram, FaLinkedin, FaXTwitter, FaWhatsapp } from 'react-icons/fa6';
+import { FaInstagram, FaLinkedin, FaXTwitter, FaWhatsapp, FaApple, FaGooglePlay } from 'react-icons/fa6';
 import founderImg from '../assets/sasi_founder.jpeg';
 import fixvoLogo from '../assets/logos/fixvo-app-icon-dark.png';
 import { useAuth } from '../contexts/AuthContext';
 import AuthModal from '../components/AuthModal';
 import NotificationsBell from '../components/NotificationsBell';
+
 
 // Mapping details to enrich services cards
 const serviceDetails = {
@@ -566,33 +573,71 @@ const Home = () => {
 
       <div className="max-w-5xl mx-auto px-4 pb-24 relative z-10">
         
-        {/* 2. HERO & SMART SEARCH BAR SECTION */}
-        <section className="pt-24 sm:pt-28 md:pt-32 pb-16 text-center max-w-3xl mx-auto relative z-10">
+        {/* 2. HERO & SMART SEARCH BAR SECTION (Fixipy Benchmark) */}
+        <section className="pt-24 sm:pt-28 md:pt-32 pb-16 text-center max-w-4xl mx-auto relative z-10">
           <motion.div 
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.6 }}
             className="space-y-6"
           >
-            <div 
-              onClick={() => scrollToSection('emergency-section')}
-              className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-white/5 border border-white/10 backdrop-blur-sm shadow-sm select-none cursor-pointer hover:bg-white/10 transition-all"
-            >
-              <span className="flex h-2.5 w-2.5 rounded-full bg-emerald-500 animate-pulse"></span>
-              <span className="text-[10px] sm:text-xs font-bold text-emerald-400 uppercase tracking-widest">30-Minute Dispatch Guarantee</span>
-              <ChevronRight size={12} className="text-emerald-400" />
+            {/* Eyebrow Badge */}
+            <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-sky-500/10 border border-sky-500/20 backdrop-blur-sm text-xs font-black uppercase tracking-widest text-sky-400">
+              <Sparkles size={13} className="text-sky-400" />
+              <span>Premium Home Services in Madanapalle & Region</span>
             </div>
 
-            <h1 className="text-4xl sm:text-5xl md:text-6xl font-black text-white tracking-tight leading-[1.1]">
-              Premium Home Services,<br />
-              <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-400 via-indigo-400 to-cyan-400">
-                At Your Command.
+            {/* Headline */}
+            <h1 className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-black text-white tracking-tight leading-[1.05]">
+              Home care that feels <br />
+              <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-400 via-sky-300 to-cyan-400">
+                beautifully under control.
               </span>
             </h1>
 
-            <p className="text-slate-400 text-sm sm:text-base max-w-xl mx-auto leading-relaxed">
-              Explore hassle-free repairs, custom installations, and deep cleaning services. Background-verified experts, transparent quotes, and absolute safety.
+            {/* Subtitle */}
+            <p className="text-slate-400 text-sm sm:text-base md:text-lg max-w-2xl mx-auto leading-relaxed font-normal">
+              Verified professionals, clear pricing, and tracked visits. Fixvo makes home service booking feel calm, modern, and in control.
             </p>
+
+            {/* 4 Trust Pills (Fixipy Benchmark) */}
+            <div className="flex flex-wrap justify-center gap-2.5 pt-2">
+              <div className="flex items-center gap-2 rounded-full border border-white/10 bg-white/5 px-3.5 py-1.5 backdrop-blur-md">
+                <ShieldCheck size={14} className="text-sky-400" />
+                <span className="text-xs font-bold text-slate-200">Verified Pros</span>
+              </div>
+              <div className="flex items-center gap-2 rounded-full border border-white/10 bg-white/5 px-3.5 py-1.5 backdrop-blur-md">
+                <Clock size={14} className="text-sky-400" />
+                <span className="text-xs font-bold text-slate-200">30-min Response</span>
+              </div>
+              <div className="flex items-center gap-2 rounded-full border border-white/10 bg-white/5 px-3.5 py-1.5 backdrop-blur-md">
+                <Star size={14} className="text-amber-400 fill-current" />
+                <span className="text-xs font-bold text-slate-200">4.9 rating</span>
+              </div>
+              <div className="flex items-center gap-2 rounded-full border border-white/10 bg-white/5 px-3.5 py-1.5 backdrop-blur-md">
+                <CheckCircle2 size={14} className="text-emerald-400" />
+                <span className="text-xs font-bold text-slate-200">Money Back Guarantee</span>
+              </div>
+            </div>
+
+            {/* Action Buttons */}
+            <div className="flex flex-wrap items-center justify-center gap-3 pt-2">
+              <button
+                onClick={() => handleBookingClick('')}
+                className="group px-6 py-3 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white font-black text-xs sm:text-sm rounded-full shadow-lg shadow-blue-600/30 transition transform hover:-translate-y-0.5 flex items-center gap-2 cursor-pointer border-none"
+              >
+                <span>Book a Service</span>
+                <ArrowRight size={15} className="transition-transform group-hover:translate-x-1" />
+              </button>
+              
+              <button
+                onClick={() => setIsAppModalOpen(true)}
+                className="px-6 py-3 bg-white text-slate-950 hover:bg-slate-100 font-extrabold text-xs sm:text-sm rounded-full shadow-lg transition transform hover:-translate-y-0.5 flex items-center gap-2 cursor-pointer border-none"
+              >
+                <Smartphone size={15} className="text-sky-600" />
+                <span>Open App</span>
+              </button>
+            </div>
 
             {/* Premium Smart Search Container */}
             <div ref={heroSearchRef} className="relative max-w-2xl mx-auto pt-4">
@@ -735,6 +780,66 @@ const Home = () => {
                   </motion.div>
                 )}
               </AnimatePresence>
+            </div>
+
+            {/* Service Promise Cards & App Live Preview (Fixipy Benchmark) */}
+            <div className="grid gap-4 sm:grid-cols-2 pt-6 text-left">
+              <div className="rounded-2xl border border-white/10 bg-white/[0.03] p-5 backdrop-blur-md">
+                <div className="flex items-center gap-3">
+                  <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-emerald-500/20 text-emerald-400">
+                    <Sparkles size={20} />
+                  </span>
+                  <div>
+                    <p className="text-[10px] font-black uppercase tracking-[0.18em] text-slate-400">Service promise</p>
+                    <p className="text-sm font-extrabold text-white">Clean visits. Clear estimates. Fast support.</p>
+                  </div>
+                </div>
+              </div>
+
+              <div className="rounded-2xl border border-white/10 bg-white/[0.03] p-5 backdrop-blur-md">
+                <div className="flex items-center gap-3">
+                  <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-sky-500/20 text-sky-400">
+                    <MapPin size={20} />
+                  </span>
+                  <div>
+                    <p className="text-[10px] font-black uppercase tracking-[0.18em] text-slate-400">Currently serving</p>
+                    <p className="text-sm font-extrabold text-white">Madanapalle, Kadiri, Rayachoty, Angallu & region.</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Smartphone Live Preview Container */}
+            <div className="relative pt-8">
+              <div className="rounded-[2.5rem] border border-white/10 bg-slate-900/90 p-5 sm:p-7 shadow-[0_24px_70px_rgba(0,0,0,0.4)] backdrop-blur-xl relative overflow-hidden max-w-lg mx-auto">
+                <div className="flex items-center justify-between border-b border-white/10 pb-3 mb-4">
+                  <div className="flex items-center gap-2">
+                    <div className="w-3 h-3 rounded-full bg-rose-500/80"></div>
+                    <div className="w-3 h-3 rounded-full bg-amber-500/80"></div>
+                    <div className="w-3 h-3 rounded-full bg-emerald-500/80"></div>
+                  </div>
+                  <span className="text-[10px] font-mono font-extrabold uppercase tracking-widest text-slate-400 bg-white/5 px-2.5 py-1 rounded-full border border-white/10">
+                    app.fixvo.com
+                  </span>
+                </div>
+
+                <div className="rounded-2xl bg-[#0B0F19] p-4 border border-white/5 space-y-3">
+                  <div className="flex items-center justify-between text-left">
+                    <div className="flex items-center gap-2">
+                      <div className="w-7 h-7 rounded-full bg-blue-500/20 border border-blue-500/30 flex items-center justify-center text-blue-400">
+                        <img src={fixvoLogo} className="w-full h-full object-cover rounded-full" alt="Fixvo" />
+                      </div>
+                      <span className="font-extrabold text-sm text-white">Fixvo App Preview</span>
+                    </div>
+                    <span className="text-[9px] font-black text-emerald-400 bg-emerald-500/10 px-2 py-0.5 rounded border border-emerald-500/20">LIVE</span>
+                  </div>
+
+                  <div className="rounded-xl bg-gradient-to-r from-slate-900 to-indigo-950 p-3 border border-white/10 text-left">
+                    <p className="text-[10px] font-black uppercase text-indigo-400 tracking-wider">Instant Broadcast</p>
+                    <p className="text-xs font-bold text-white mt-0.5">Need a repair? Broadcast request to nearby fixers.</p>
+                  </div>
+                </div>
+              </div>
             </div>
           </motion.div>
         </section>
@@ -1210,8 +1315,124 @@ const Home = () => {
           </motion.div>
         </div>
 
-        {/* CTA section bottom banner */}
-        <div className="mt-24 sm:mt-32 pt-16 border-t border-white/5 text-center px-4 sm:px-0">
+        {/* 9. TRUST & VERIFICATION METRICS GRID (Fixipy Benchmark) */}
+        <section className="mt-24 sm:mt-32 border-t border-white/5 pt-20 px-4 sm:px-0">
+          <div className="mb-12 text-center max-w-2xl mx-auto">
+            <span className="inline-block rounded-full bg-sky-500/10 px-3.5 py-1 text-xs font-black uppercase tracking-widest text-sky-400 border border-sky-500/20 mb-3">
+              Trust & Verification
+            </span>
+            <h2 className="text-3xl sm:text-4xl md:text-5xl font-black text-white tracking-tight">
+              Results that speak for themselves.
+            </h2>
+            <p className="text-slate-400 text-sm sm:text-base mt-2 leading-relaxed">
+              Reliability should be visible before the technician arrives. These are the numbers we optimize for every day.
+            </p>
+          </div>
+
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4 sm:gap-6">
+            <div className="rounded-3xl border border-white/10 bg-white/[0.02] p-6 text-center hover:bg-white/[0.04] transition">
+              <p className="text-[10px] font-extrabold uppercase tracking-widest text-slate-400 mb-2">Metric 01</p>
+              <p className="text-3xl sm:text-4xl md:text-5xl font-black text-white tracking-tight">1,500+</p>
+              <p className="text-xs font-bold text-slate-400 mt-2">Bookings completed</p>
+            </div>
+            <div className="rounded-3xl border border-white/10 bg-white/[0.02] p-6 text-center hover:bg-white/[0.04] transition">
+              <p className="text-[10px] font-extrabold uppercase tracking-widest text-slate-400 mb-2">Metric 02</p>
+              <p className="text-3xl sm:text-4xl md:text-5xl font-black text-white tracking-tight">4.9 / 5</p>
+              <p className="text-xs font-bold text-slate-400 mt-2">Average rating</p>
+            </div>
+            <div className="rounded-3xl border border-white/10 bg-white/[0.02] p-6 text-center hover:bg-white/[0.04] transition">
+              <p className="text-[10px] font-extrabold uppercase tracking-widest text-slate-400 mb-2">Metric 03</p>
+              <p className="text-3xl sm:text-4xl md:text-5xl font-black text-white tracking-tight">120+</p>
+              <p className="text-xs font-bold text-slate-400 mt-2">Verified Pros in region</p>
+            </div>
+            <div className="rounded-3xl border border-white/10 bg-white/[0.02] p-6 text-center hover:bg-white/[0.04] transition">
+              <p className="text-[10px] font-extrabold uppercase tracking-widest text-slate-400 mb-2">Metric 04</p>
+              <p className="text-3xl sm:text-4xl md:text-5xl font-black text-white tracking-tight">30 min</p>
+              <p className="text-xs font-bold text-slate-400 mt-2">Average response time</p>
+            </div>
+          </div>
+        </section>
+
+        {/* 10. GET STARTED & MOBILE ROLLOUT SECTION (Fixipy Benchmark) */}
+        <section className="mt-24 sm:mt-32">
+          <div className="relative overflow-hidden rounded-[2.5rem] border border-white/10 bg-gradient-to-br from-slate-900 via-slate-900 to-indigo-950/80 p-8 sm:p-12 shadow-2xl">
+            <div className="grid gap-8 lg:grid-cols-2 items-center">
+              <div>
+                <span className="inline-block rounded-full bg-sky-500/10 px-3 py-1 text-xs font-black uppercase tracking-widest text-sky-400 border border-sky-500/20 mb-4">
+                  Get Started
+                </span>
+                <h2 className="text-3xl sm:text-4xl md:text-5xl font-black text-white tracking-tight leading-tight">
+                  A better home service habit starts now.
+                </h2>
+                <p className="mt-4 text-sm sm:text-base text-slate-300 leading-relaxed max-w-lg">
+                  Open the app, choose the job, confirm the quote, and track the visit. No scattered calls. No vague pricing.
+                </p>
+
+                <div className="flex flex-wrap gap-3 mt-8">
+                  <button
+                    onClick={() => setIsAppModalOpen(true)}
+                    className="px-6 py-3.5 bg-white text-slate-950 font-black text-xs sm:text-sm rounded-full shadow-lg hover:bg-slate-100 transition cursor-pointer border-none flex items-center gap-2"
+                  >
+                    <Smartphone size={16} className="text-sky-600" />
+                    <span>Open App</span>
+                    <ArrowRight size={14} />
+                  </button>
+                  <Link
+                    to="/technician-agreement"
+                    className="px-6 py-3.5 bg-slate-800 text-white font-black text-xs sm:text-sm rounded-full border border-slate-700 hover:bg-slate-700 transition cursor-pointer no-underline"
+                  >
+                    Become a Pro
+                  </Link>
+                </div>
+              </div>
+
+              <div className="space-y-4">
+                {/* Why teams choose Fixvo */}
+                <div className="rounded-2xl border border-white/10 bg-white/[0.03] p-5 backdrop-blur-md">
+                  <p className="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-3">Why teams choose Fixvo</p>
+                  <ul className="space-y-2 text-xs font-semibold text-slate-300">
+                    <li className="flex items-center gap-2">
+                      <span className="w-1.5 h-1.5 rounded-full bg-sky-400"></span>
+                      <span>Transparent pricing before confirmation</span>
+                    </li>
+                    <li className="flex items-center gap-2">
+                      <span className="w-1.5 h-1.5 rounded-full bg-sky-400"></span>
+                      <span>Money-back guarantee on service issues</span>
+                    </li>
+                    <li className="flex items-center gap-2">
+                      <span className="w-1.5 h-1.5 rounded-full bg-sky-400"></span>
+                      <span>Technicians routed by skill and job type</span>
+                    </li>
+                  </ul>
+                </div>
+
+                {/* Mobile App Download Rollout Cards */}
+                <div className="rounded-2xl border border-white/10 bg-white/[0.03] p-5 backdrop-blur-md">
+                  <p className="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-3">Mobile Rollout</p>
+                  <div className="grid grid-cols-2 gap-3">
+                    <div className="flex items-center gap-3 rounded-xl border border-white/10 bg-white/5 p-3 text-white">
+                      <FaApple size={22} className="text-slate-200" />
+                      <div>
+                        <p className="text-[9px] font-black uppercase text-slate-400">iOS Web App</p>
+                        <p className="text-xs font-bold text-white">App Store</p>
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-3 rounded-xl border border-white/10 bg-white/5 p-3 text-white">
+                      <FaGooglePlay size={20} className="text-emerald-400" />
+                      <div>
+                        <p className="text-[9px] font-black uppercase text-slate-400">Android APK</p>
+                        <p className="text-xs font-bold text-white">Play Store</p>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        {/* 11. FINAL CONVERSION CTA BLOCK */}
+        <div className="mt-24 sm:mt-32">
           <motion.div 
             initial={{ opacity: 0, scale: 0.95 }}
             whileInView={{ opacity: 1, scale: 1 }}
@@ -1227,7 +1448,7 @@ const Home = () => {
               Book now and get a <span className="text-white font-bold">100% Free Inspection</span> on your first booking.
             </p>
             <button
-              onClick={() => handleBookingClick()}
+              onClick={() => handleBookingClick('')}
               className="inline-flex relative z-10 px-8 sm:px-10 py-4 sm:py-5 bg-white text-blue-900 font-extrabold rounded-2xl shadow-xl hover:shadow-2xl hover:scale-105 transition-all duration-300 items-center justify-center gap-2 w-full sm:w-auto border-none cursor-pointer outline-none font-sans"
             >
               <span className="text-lg sm:text-xl font-bold">Book Now in 10 Seconds</span>
@@ -1263,6 +1484,9 @@ const Home = () => {
         </div>
       )}
 
+      {/* Open App Modal */}
+      <OpenAppModal isOpen={isAppModalOpen} onClose={() => setIsAppModalOpen(false)} />
+
       </div>
 
       <style>{`
@@ -1279,3 +1503,4 @@ const Home = () => {
 };
 
 export default Home;
+
