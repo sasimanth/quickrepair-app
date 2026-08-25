@@ -7,7 +7,7 @@ import SearchableServiceSelector from '../components/SearchableServiceSelector';
 import SearchableAreaSelector from '../components/SearchableAreaSelector';
 import { subscribeToPushNotifications } from '../services/pushNotification';
 import { requestFcmPermission } from '../services/firebase';
-import { Calendar, MapPin, Smartphone, AlertCircle, Clock, CheckCircle, PackageSearch, XCircle, Plus, LayoutDashboard, Wrench, Settings, Star, User, ChevronRight, MessageSquare, Camera, UploadCloud, Loader2, Shield, ShieldCheck, HelpCircle, Truck, Home, Search, Eye, Zap, Maximize2, Hash, Layers, Paintbrush, Tv, X, CreditCard, Sparkles, PhoneCall, Bell, Copy, Share2, Trash2, Edit, CheckSquare, RefreshCw, Menu } from 'lucide-react';
+import { Calendar, MapPin, Smartphone, AlertCircle, Clock, CheckCircle, PackageSearch, XCircle, Plus, LayoutDashboard, Wrench, Settings, Star, User, ChevronRight, MessageSquare, Camera, UploadCloud, Loader2, Shield, ShieldCheck, HelpCircle, Truck, Home, Search, Eye, Zap, Maximize2, Hash, Layers, Paintbrush, Tv, X, CreditCard, Sparkles, PhoneCall, Bell, Copy, Share2, Trash2, Edit, CheckSquare, RefreshCw, Menu, Laptop, Tablet, Gamepad2, Watch, Wifi, BatteryCharging, Activity, Droplet, Video, Wind, Snowflake, ChevronDown, ChevronUp, Code } from 'lucide-react';
 import ChatModal from '../components/ChatModal';
 import ReviewModal from '../components/ReviewModal';
 import PaymentModal from '../components/PaymentModal';
@@ -147,6 +147,11 @@ const UserDashboard = () => {
   const [showPremiumModal, setShowPremiumModal] = useState(initialShowPremium);
   const [services, setServices] = useState(globalServices);
   const [searchQuery, setSearchQuery] = useState('');
+  const [showAllServices, setShowAllServices] = useState(false);
+  const [homeSearchQuery, setHomeSearchQuery] = useState('');
+  const [selectedLocation, setSelectedLocation] = useState('Angallu');
+  const [selectedSubLocation, setSelectedSubLocation] = useState('Kurabalakota- Andhra Pradesh');
+  const [isLocationModalOpen, setIsLocationModalOpen] = useState(false);
   
   // Booking Form & Tech match states
   const [step, setStep] = useState(1);
@@ -1408,71 +1413,155 @@ const UserDashboard = () => {
             {/* Main Content Pane */}
             <div className="md:col-span-3 bg-white border border-slate-200 rounded-[2rem] p-5 sm:p-8 shadow-sm min-h-[500px]">
 
-              {/* OVERVIEW TAB */}
+              {/* OVERVIEW TAB (Reference Fixipy UI) */}
               {activeSubTab === 'overview' && (
                 <div className="space-y-6 animate-in fade-in duration-300">
-                  <div className="border-b border-slate-100 pb-4 flex justify-between items-center">
+                  
+                  {/* 1. Header Bar: Fixvo Brand + Location Selector Box */}
+                  <div className="flex items-center justify-between pb-1">
                     <div>
-                      <h2 className="text-xl sm:text-2xl font-black tracking-tight text-slate-900">Welcome back, {profile?.name?.split(' ')[0] || authUser?.name?.split(' ')[0] || 'Customer'}! 👋</h2>
-                      <p className="text-xs text-slate-500 mt-1 font-semibold">Track active repairs, manage wallet balance, and review special offers</p>
+                      <h1 className="text-3xl sm:text-4xl font-black text-slate-900 tracking-tighter">
+                        Fixvo<span className="text-blue-600">.</span>
+                      </h1>
+                    </div>
+
+                    <div 
+                      onClick={() => setIsLocationModalOpen(true)}
+                      className="bg-white border border-slate-200 hover:border-slate-300 rounded-2xl p-2 px-3 shadow-xs flex items-center justify-between gap-3 cursor-pointer transition-all max-w-[210px] sm:max-w-xs"
+                    >
+                      <MapPin size={20} className="text-slate-900 shrink-0 fill-slate-900/10" />
+                      <div className="min-w-0 flex-1 text-left">
+                        <div className="flex items-center gap-1">
+                          <h4 className="text-xs font-black text-slate-900 truncate">{selectedLocation}</h4>
+                          <ChevronDown size={12} className="text-slate-400 shrink-0" />
+                        </div>
+                        <p className="text-[10px] text-slate-400 font-semibold truncate leading-none mt-0.5">
+                          {selectedSubLocation}
+                        </p>
+                      </div>
                     </div>
                   </div>
 
-                  {/* Fixvo Plus Membership Teaser Banner */}
-                  {!profile?.isPremium && (
-                    <div className="bg-gradient-to-r from-amber-500 via-orange-500 to-yellow-500 text-white p-4 sm:p-5 rounded-3xl shadow-lg flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 relative overflow-hidden">
-                      <div className="flex items-center gap-3">
-                        <div className="p-3 bg-white/20 backdrop-blur-md rounded-2xl text-white">
-                          <Sparkles size={24} />
-                        </div>
-                        <div>
-                          <div className="flex items-center gap-2">
-                            <h3 className="font-black text-sm sm:text-base">Upgrade to FIXVO PLUS ⭐</h3>
-                            <span className="bg-black/20 text-white text-[9px] font-black uppercase px-2 py-0.5 rounded-full">VIP Status</span>
-                          </div>
-                          <p className="text-xs text-amber-100 font-medium mt-0.5">
-                            Get ₹0 Inspection Fees, 5% extra discount on every job, and priority dispatch!
-                          </p>
-                        </div>
-                      </div>
+                  {/* 2. Search Input Bar */}
+                  <div className="relative">
+                    <div className="flex items-center bg-white border border-slate-200/90 rounded-2xl p-3 px-4 shadow-xs focus-within:border-slate-400 focus-within:shadow-md transition-all">
+                      <Search size={18} className="text-slate-400 mr-3 shrink-0" />
+                      <input 
+                        type="text"
+                        placeholder="Search"
+                        value={homeSearchQuery}
+                        onChange={(e) => setHomeSearchQuery(e.target.value)}
+                        className="w-full bg-transparent border-0 text-slate-900 text-sm font-semibold outline-none focus:ring-0 placeholder:text-slate-400"
+                      />
+                      {homeSearchQuery && (
+                        <button 
+                          onClick={() => setHomeSearchQuery('')}
+                          className="p-1 text-slate-400 hover:text-slate-600 rounded-full border-none bg-transparent cursor-pointer"
+                        >
+                          <X size={14} />
+                        </button>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* 3. Hero "Need a repair?" Broadcast Request Banner Card */}
+                  <div className="bg-[#0F141C] text-white rounded-3xl p-6 sm:p-7 shadow-xl relative overflow-hidden flex items-center justify-between gap-4">
+                    <div className="space-y-1.5 z-10">
+                      <h2 className="text-2xl sm:text-3xl font-black text-white tracking-tight">
+                        Need a repair?
+                      </h2>
+                      <p className="text-xs sm:text-sm text-slate-300 font-medium leading-relaxed max-w-[220px] sm:max-w-xs">
+                        Broadcast your request to local fixers near you.
+                      </p>
+                    </div>
+
+                    <button
+                      onClick={() => {
+                        setShowForm(true);
+                        setStep(1);
+                      }}
+                      className="w-12 h-12 rounded-full bg-white/15 hover:bg-white/25 text-white flex items-center justify-center transition-all transform hover:scale-105 cursor-pointer border-none shadow-md shrink-0 z-10"
+                      title="Broadcast Request"
+                    >
+                      <ChevronRight size={24} className="text-white" />
+                    </button>
+                  </div>
+
+                  {/* 4. "Explore Services" Section Header + Toggle */}
+                  <div className="pt-2">
+                    <div className="flex justify-between items-center mb-4">
+                      <h3 className="text-xl sm:text-2xl font-black text-slate-900 tracking-tight">
+                        Explore Services
+                      </h3>
                       <button
-                        onClick={() => setShowPremiumModal(true)}
-                        className="px-4 py-2.5 bg-slate-900 hover:bg-black text-white font-extrabold rounded-xl text-xs uppercase tracking-wider shadow-md border-none cursor-pointer shrink-0"
+                        onClick={() => setShowAllServices(prev => !prev)}
+                        className="px-3.5 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-800 font-extrabold text-xs rounded-full border-none cursor-pointer flex items-center gap-1 transition-all"
                       >
-                        Explore Membership →
+                        {showAllServices ? (
+                          <>
+                            <span>Show Less</span>
+                            <ChevronUp size={14} />
+                          </>
+                        ) : (
+                          <>
+                            <span>Show More</span>
+                            <ChevronDown size={14} />
+                          </>
+                        )}
                       </button>
                     </div>
-                  )}
 
-                  {/* Quick Category Action Bar */}
-                  <div className="space-y-3">
-                    <div className="flex justify-between items-center ml-1">
-                      <h3 className="font-extrabold text-xs text-slate-400 uppercase tracking-wider">Quick Book Service Category</h3>
-                      <span className="text-[10px] text-emerald-600 font-extrabold uppercase tracking-wider bg-emerald-50 px-2 py-0.5 rounded-full border border-emerald-200">Instant Dispatch</span>
-                    </div>
-                    <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-7 gap-2.5">
+                    {/* Explore Services 4-Column Grid (Matches Image) */}
+                    <div className="grid grid-cols-4 sm:grid-cols-4 md:grid-cols-6 lg:grid-cols-8 gap-3 sm:gap-4">
                       {[
-                        { id: 'ac_repair', label: 'AC Repair', icon: '❄️' },
-                        { id: 'washing_machine', label: 'Appliance', icon: '🧺' },
-                        { id: 'plumbing_work', label: 'Plumbing', icon: '🚰' },
-                        { id: 'electric_wiring', label: 'Electrical', icon: '⚡' },
-                        { id: 'bathroom_clean', label: 'Cleaning', icon: '🧹' },
-                        { id: 'furniture_repair', label: 'Carpentry', icon: '🔨' },
-                        { id: 'painting', label: 'Painting', icon: '🎨' },
-                      ].map(cat => (
-                        <button
-                          key={cat.id}
-                          onClick={() => {
-                            setFormData(prev => ({ ...prev, serviceId: cat.id }));
-                            setShowForm(true);
-                            setStep(1);
-                          }}
-                          className="bg-white hover:bg-blue-50/70 border border-slate-200 hover:border-blue-300 p-3 rounded-2xl flex flex-col items-center justify-center gap-1.5 transition-all cursor-pointer shadow-2xs group"
-                        >
-                          <span className="text-2xl group-hover:scale-110 transition-transform">{cat.icon}</span>
-                          <span className="text-[11px] font-extrabold text-slate-800 group-hover:text-blue-600">{cat.label}</span>
-                        </button>
-                      ))}
+                        { id: 'phone', label: 'Phone', icon: Smartphone },
+                        { id: 'laptop', label: 'Laptop', icon: Laptop },
+                        { id: 'mac', label: 'Mac', icon: Laptop },
+                        { id: 'tablet', label: 'Tablet', icon: Tablet },
+                        { id: 'console', label: 'Console', icon: Gamepad2 },
+                        { id: 'watch', label: 'Watch', icon: Watch },
+                        { id: 'tv', label: 'TV', icon: Tv },
+                        { id: 'network', label: 'Network', icon: Wifi },
+                        { id: 'screen_repair', label: 'Screen Repair', icon: Smartphone },
+                        { id: 'battery_replacement', label: 'Battery Replacement', icon: BatteryCharging },
+                        { id: 'diagnostic', label: 'Diagnostic', icon: Activity },
+                        { id: 'water_damage', label: 'Water Damage', icon: Droplet },
+                        { id: 'camera_repair', label: 'Camera Repair', icon: Camera },
+                        { id: 'software_issue', label: 'Software Issue', icon: Code },
+                        { id: 'carpenter', label: 'Carpenter', icon: Wrench },
+                        { id: 'painting_finishing', label: 'Painting and Finishing', icon: Paintbrush },
+                        { id: 'cctv_repair', label: 'CCTV Repair', icon: Video },
+                        { id: 'aqua_water', label: 'Aqua Water Fixing', icon: Droplet },
+                        { id: 'air_purifier', label: 'Air Purifier', icon: Wind },
+                        { id: 'deep_cleaning', label: 'Deep Cleaning', icon: Sparkles },
+                        { id: 'appliance_repair', label: 'Appliance Repair', icon: Tv },
+                        { id: 'ac_repair', label: 'AC Repair', icon: Snowflake },
+                        { id: 'electrical', label: 'Electrical', icon: Zap },
+                        { id: 'plumbing', label: 'Plumbing', icon: Wrench },
+                      ]
+                      .filter(s => !homeSearchQuery || s.label.toLowerCase().includes(homeSearchQuery.toLowerCase()))
+                      .slice(0, (showAllServices || homeSearchQuery) ? 24 : 12)
+                      .map((srv) => {
+                        const SrvIcon = srv.icon;
+                        return (
+                          <button
+                            key={srv.id}
+                            onClick={() => {
+                              setFormData(prev => ({ ...prev, serviceId: srv.id, serviceName: srv.label }));
+                              setShowForm(true);
+                              setStep(1);
+                            }}
+                            className="bg-white hover:bg-slate-50 border border-slate-100 hover:border-slate-200 rounded-3xl p-3 sm:p-4 flex flex-col items-center justify-center text-center gap-2 cursor-pointer shadow-2xs hover:shadow-md transition-all group border-none outline-none"
+                          >
+                            <div className="w-12 h-12 sm:w-14 sm:h-14 rounded-2xl bg-slate-100/70 flex items-center justify-center text-slate-900 group-hover:scale-105 transition-transform">
+                              <SrvIcon size={22} className="text-slate-900 stroke-[1.8]" />
+                            </div>
+                            <span className="text-[11px] sm:text-xs font-black text-slate-900 group-hover:text-blue-600 leading-tight">
+                              {srv.label}
+                            </span>
+                          </button>
+                        );
+                      })}
                     </div>
                   </div>
 
@@ -2040,8 +2129,97 @@ const UserDashboard = () => {
         </div>
       )}
 
+      {/* Location Selector Modal */}
+      {isLocationModalOpen && (
+        <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-xs z-[100] flex items-center justify-center p-4">
+          <div className="bg-white border border-slate-200 rounded-3xl p-6 max-w-sm w-full shadow-2xl space-y-4 animate-in zoom-in-95 duration-200">
+            <div className="flex justify-between items-center pb-2 border-b border-slate-100">
+              <h3 className="font-extrabold text-base text-slate-900 flex items-center gap-2">
+                <MapPin size={18} className="text-blue-600" /> Select Service Location
+              </h3>
+              <button 
+                onClick={() => setIsLocationModalOpen(false)}
+                className="p-1 text-slate-400 hover:text-slate-600 rounded-full border-none bg-transparent cursor-pointer"
+              >
+                <X size={18} />
+              </button>
+            </div>
+
+            <div className="space-y-2">
+              {[
+                { name: 'Angallu', area: 'Kurabalakota- Andhra Pradesh' },
+                { name: 'Madanapalle Town', area: 'Annamayya District - AP' },
+                { name: 'Kadiri Hub', area: 'Sri Sathya Sai District - AP' },
+                { name: 'Rayachoty Region', area: 'Annamayya District - AP' },
+                { name: 'Galiveedu Area', area: 'Annamayya District - AP' },
+              ].map((loc) => (
+                <button
+                  key={loc.name}
+                  onClick={() => {
+                    setSelectedLocation(loc.name);
+                    setSelectedSubLocation(loc.area);
+                    setIsLocationModalOpen(false);
+                    showToast('Location Updated 📍', `Switched service region to ${loc.name}`, 'info', true);
+                  }}
+                  className={`w-full text-left p-3.5 rounded-2xl border transition-all cursor-pointer flex items-center justify-between ${
+                    selectedLocation === loc.name
+                      ? 'border-blue-600 bg-blue-50/60 font-black text-slate-900'
+                      : 'border-slate-200 bg-white hover:border-slate-300 font-bold text-slate-700'
+                  }`}
+                >
+                  <div>
+                    <p className="text-xs font-black text-slate-900">{loc.name}</p>
+                    <p className="text-[10px] text-slate-400 font-semibold">{loc.area}</p>
+                  </div>
+                  {selectedLocation === loc.name && <CheckCircle size={16} className="text-blue-600" />}
+                </button>
+              ))}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Floating Pill Bottom Navigation Bar for Mobile App Experience (Ref Fixipy UI) */}
+      <div className="md:hidden fixed bottom-4 left-1/2 -translate-x-1/2 z-[90] bg-[#0F141C] border border-slate-800 rounded-full p-1.5 px-2.5 shadow-2xl flex items-center justify-between gap-1 max-w-xs w-[88%]">
+        <button
+          onClick={() => switchTab('overview')}
+          className={`px-4 py-2.5 rounded-full font-black text-xs flex items-center gap-2 transition-all border-none cursor-pointer ${
+            activeSubTab === 'overview'
+              ? 'bg-white text-slate-950 shadow-md'
+              : 'text-slate-400 hover:text-white bg-transparent'
+          }`}
+        >
+          <Home size={16} />
+          {activeSubTab === 'overview' && <span>Home</span>}
+        </button>
+
+        <button
+          onClick={() => switchTab('bookings')}
+          className={`p-2.5 rounded-full transition-all border-none cursor-pointer ${
+            activeSubTab === 'bookings'
+              ? 'bg-white text-slate-950 shadow-md'
+              : 'text-slate-400 hover:text-white bg-transparent'
+          }`}
+          title="Search & Bookings"
+        >
+          <Search size={18} />
+        </button>
+
+        <button
+          onClick={() => switchTab('menu')}
+          className={`p-2.5 rounded-full transition-all border-none cursor-pointer ${
+            activeSubTab === 'menu'
+              ? 'bg-white text-slate-950 shadow-md'
+              : 'text-slate-400 hover:text-white bg-transparent'
+          }`}
+          title="Account Profile"
+        >
+          <User size={18} />
+        </button>
+      </div>
+
       {/* Toast Stack */}
-      <div className="fixed bottom-16 sm:bottom-5 right-5 z-[100] flex flex-col gap-3 w-full max-w-sm pointer-events-none px-4 sm:px-0">
+      <div className="fixed bottom-20 sm:bottom-5 right-5 z-[100] flex flex-col gap-3 w-full max-w-sm pointer-events-none px-4 sm:px-0">
         {toasts.map(toast => (
           <div
             key={toast.id}
