@@ -130,6 +130,7 @@ const Home = () => {
   const [highlightPricing, setHighlightPricing] = useState(false);
   const [activeCategory, setActiveCategory] = useState(globalCategories[0].id);
   const [services, setServices] = useState(globalServices);
+  const [isAppModalOpen, setIsAppModalOpen] = useState(false);
 
   // Custom Sticky Shell elements state
   const [selectedLocation, setSelectedLocation] = useState(() => {
