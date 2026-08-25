@@ -29,8 +29,9 @@ const Navbar = () => {
     return '/dashboard';
   };
 
-  // Hide Navbar completely on authentication pages
-  if (['/login', '/signup'].includes(location.pathname)) {
+  // Hide Navbar completely on authentication and dashboard pages
+  const isDashboardOrAuth = ['/login', '/signup', '/dashboard', '/user-dashboard', '/technician-dashboard', '/admin-dashboard'].some(path => location.pathname.startsWith(path));
+  if (isDashboardOrAuth) {
     return null;
   }
 

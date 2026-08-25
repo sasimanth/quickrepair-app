@@ -1371,52 +1371,42 @@ const UserDashboard = () => {
             {/* Main Content Pane */}
             <div className="md:col-span-3 bg-white border border-slate-200 rounded-[2rem] p-5 sm:p-8 shadow-sm min-h-[500px]">
 
-              {/* OVERVIEW TAB (Fixvo Theme & Core Services) */}
+              {/* OVERVIEW TAB (Reference Fixipy Professional UI) */}
               {activeSubTab === 'overview' && (
                 <div className="space-y-6 animate-in fade-in duration-300">
                   
-                  {/* 1. Header Bar: Welcome User + Location Selector */}
-                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-slate-100">
+                  {/* 1. Header Bar: Fixvo Brand + Location Selector Box */}
+                  <div className="flex items-center justify-between pb-1">
                     <div>
-                      <h2 className="text-xl sm:text-2xl font-black text-slate-900 tracking-tight">
-                        Welcome back, {profile?.name?.split(' ')[0] || authUser?.name?.split(' ')[0] || 'Customer'}! 👋
-                      </h2>
-                      <p className="text-xs text-slate-500 font-semibold mt-0.5">Instant doorstep repairs & certified technician dispatches</p>
+                      <h1 className="text-3xl sm:text-4xl font-black text-slate-900 tracking-tighter">
+                        Fixvo<span className="text-blue-600">.</span>
+                      </h1>
                     </div>
 
-                    <div className="flex items-center gap-2">
-                      <div 
-                        onClick={() => setIsLocationModalOpen(true)}
-                        className="bg-blue-50/70 border border-blue-200/80 hover:border-blue-300 rounded-2xl px-3 py-2 flex items-center justify-between gap-2.5 cursor-pointer transition-all"
-                      >
-                        <MapPin size={16} className="text-blue-600 shrink-0" />
-                        <div className="text-left">
-                          <div className="flex items-center gap-1">
-                            <h4 className="text-xs font-black text-slate-900">{selectedLocation}</h4>
-                            <ChevronDown size={12} className="text-slate-400" />
-                          </div>
-                          <p className="text-[10px] text-slate-400 font-semibold leading-none mt-0.5">
-                            {selectedSubLocation}
-                          </p>
+                    <div 
+                      onClick={() => setIsLocationModalOpen(true)}
+                      className="bg-white border border-slate-200 hover:border-slate-300 rounded-2xl p-2 px-3 shadow-xs flex items-center justify-between gap-3 cursor-pointer transition-all max-w-[210px] sm:max-w-xs"
+                    >
+                      <MapPin size={20} className="text-slate-900 shrink-0 fill-slate-900/10" />
+                      <div className="min-w-0 flex-1 text-left">
+                        <div className="flex items-center gap-1">
+                          <h4 className="text-xs font-black text-slate-900 truncate">{selectedLocation}</h4>
+                          <ChevronDown size={12} className="text-slate-400 shrink-0" />
                         </div>
+                        <p className="text-[10px] text-slate-400 font-semibold truncate leading-none mt-0.5">
+                          {selectedSubLocation}
+                        </p>
                       </div>
-
-                      <button
-                        onClick={() => setShowForm(true)}
-                        className="bg-blue-600 hover:bg-blue-700 text-white font-extrabold px-3.5 py-2 rounded-2xl text-xs uppercase tracking-wider flex items-center gap-1 shadow-md shadow-blue-600/20 border-none cursor-pointer"
-                      >
-                        <Plus size={14} /> Book Service
-                      </button>
                     </div>
                   </div>
 
                   {/* 2. Live Search Bar */}
                   <div className="relative">
-                    <div className="flex items-center bg-white border border-slate-200 rounded-2xl p-3 px-4 shadow-2xs focus-within:border-blue-500 focus-within:shadow-md transition-all">
+                    <div className="flex items-center bg-white border border-slate-200/90 rounded-2xl p-3 px-4 shadow-xs focus-within:border-slate-400 focus-within:shadow-md transition-all">
                       <Search size={18} className="text-slate-400 mr-3 shrink-0" />
                       <input 
                         type="text"
-                        placeholder="Search Repair, Installation, Cleaning or Electrical..."
+                        placeholder="Search"
                         value={homeSearchQuery}
                         onChange={(e) => setHomeSearchQuery(e.target.value)}
                         className="w-full bg-transparent border-0 text-slate-900 text-sm font-semibold outline-none focus:ring-0 placeholder:text-slate-400"
@@ -1432,18 +1422,14 @@ const UserDashboard = () => {
                     </div>
                   </div>
 
-                  {/* 3. Hero "Need a repair?" Broadcast Request Banner (Fixvo Blue Theme) */}
-                  <div className="bg-gradient-to-r from-blue-600 via-indigo-600 to-blue-700 text-white rounded-3xl p-6 sm:p-7 shadow-lg shadow-blue-600/20 relative overflow-hidden flex items-center justify-between gap-4">
+                  {/* 3. Hero "Need a repair?" Broadcast Request Banner Card */}
+                  <div className="bg-[#0F141C] text-white rounded-3xl p-6 sm:p-7 shadow-xl relative overflow-hidden flex items-center justify-between gap-4">
                     <div className="space-y-1.5 z-10">
-                      <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-white/20 backdrop-blur-md text-[10px] font-black uppercase tracking-wider text-white mb-1">
-                        <Zap size={12} className="text-amber-300 fill-amber-300" />
-                        <span>30-Min Dispatch Guarantee</span>
-                      </div>
                       <h2 className="text-2xl sm:text-3xl font-black text-white tracking-tight">
-                        Need an Urgent Repair?
+                        Need a repair?
                       </h2>
-                      <p className="text-xs sm:text-sm text-blue-100 font-medium leading-relaxed max-w-[240px] sm:max-w-xs">
-                        Broadcast your service request to background-verified local fixers near you.
+                      <p className="text-xs sm:text-sm text-slate-300 font-medium leading-relaxed max-w-[220px] sm:max-w-xs">
+                        Broadcast your request to local fixers near you.
                       </p>
                     </div>
 
@@ -1452,18 +1438,18 @@ const UserDashboard = () => {
                         setShowForm(true);
                         setStep(1);
                       }}
-                      className="w-12 h-12 rounded-full bg-white text-blue-600 hover:bg-blue-50 flex items-center justify-center transition-all transform hover:scale-105 cursor-pointer border-none shadow-lg shrink-0 z-10"
+                      className="w-12 h-12 rounded-full bg-white/15 hover:bg-white/25 text-white flex items-center justify-center transition-all transform hover:scale-105 cursor-pointer border-none shadow-md shrink-0 z-10"
                       title="Broadcast Request"
                     >
-                      <ChevronRight size={24} className="text-blue-600" />
+                      <ChevronRight size={24} className="text-white" />
                     </button>
                   </div>
 
-                  {/* 4. "Explore Fixvo Services" Grid */}
+                  {/* 4. "Explore Services" Section Header + Toggle */}
                   <div className="pt-2">
                     <div className="flex justify-between items-center mb-4">
                       <h3 className="text-xl sm:text-2xl font-black text-slate-900 tracking-tight">
-                        Explore Fixvo Services
+                        Explore Services
                       </h3>
                       <button
                         onClick={() => setShowAllServices(prev => !prev)}
@@ -1483,24 +1469,36 @@ const UserDashboard = () => {
                       </button>
                     </div>
 
-                    {/* Core Fixvo Services 3-Column / 6-Column Grid */}
-                    <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-3 sm:gap-4">
+                    {/* Explore Services 4-Column Grid (Exact 4 Columns on Mobile) */}
+                    <div className="grid grid-cols-4 sm:grid-cols-4 md:grid-cols-6 lg:grid-cols-8 gap-3 sm:gap-4">
                       {[
-                        { id: 'ac_repair', label: 'AC Repair & Service', icon: Snowflake, color: 'text-blue-600 bg-blue-50 border-blue-200' },
-                        { id: 'appliance', label: 'Washing Machine & Fridge', icon: Tv, color: 'text-indigo-600 bg-indigo-50 border-indigo-200' },
-                        { id: 'plumbing', label: 'Plumbing & Sanitary', icon: Wrench, color: 'text-cyan-600 bg-cyan-50 border-cyan-200' },
-                        { id: 'electrical', label: 'Electrical & Wiring', icon: Zap, color: 'text-amber-600 bg-amber-50 border-amber-200' },
-                        { id: 'cleaning', label: 'Deep Home Cleaning', icon: Sparkles, color: 'text-emerald-600 bg-emerald-50 border-emerald-200' },
-                        { id: 'carpentry', label: 'Carpentry & Furniture', icon: Wrench, color: 'text-amber-700 bg-amber-50 border-amber-200' },
-                        { id: 'painting', label: 'Painting & Waterproofing', icon: Paintbrush, color: 'text-rose-600 bg-rose-50 border-rose-200' },
-                        { id: 'ro_water', label: 'RO Water Filter', icon: Droplet, color: 'text-sky-600 bg-sky-50 border-sky-200' },
-                        { id: 'cctv', label: 'CCTV & Security Camera', icon: Video, color: 'text-purple-600 bg-purple-50 border-purple-200' },
-                        { id: 'vehicle', label: 'Vehicle Breakdown Support', icon: Truck, color: 'text-orange-600 bg-orange-50 border-orange-200' },
-                        { id: 'inverter', label: 'Solar & Inverter Battery', icon: BatteryCharging, color: 'text-yellow-600 bg-yellow-50 border-yellow-200' },
-                        { id: 'emergency', label: '24/7 Instant Emergency', icon: PhoneCall, color: 'text-red-600 bg-red-50 border-red-200' },
+                        { id: 'phone', label: 'Phone', icon: Smartphone },
+                        { id: 'laptop', label: 'Laptop', icon: Laptop },
+                        { id: 'mac', label: 'Mac', icon: Laptop },
+                        { id: 'tablet', label: 'Tablet', icon: Tablet },
+                        { id: 'console', label: 'Console', icon: Gamepad2 },
+                        { id: 'watch', label: 'Watch', icon: Watch },
+                        { id: 'tv', label: 'TV', icon: Tv },
+                        { id: 'network', label: 'Network', icon: Wifi },
+                        { id: 'screen_repair', label: 'Screen Repair', icon: Smartphone },
+                        { id: 'battery_replacement', label: 'Battery Replacement', icon: BatteryCharging },
+                        { id: 'diagnostic', label: 'Diagnostic', icon: Activity },
+                        { id: 'water_damage', label: 'Water Damage', icon: Droplet },
+                        { id: 'camera_repair', label: 'Camera Repair', icon: Camera },
+                        { id: 'software_issue', label: 'Software Issue', icon: Code },
+                        { id: 'carpenter', label: 'Carpenter', icon: Wrench },
+                        { id: 'painting_finishing', label: 'Painting and Finishing', icon: Paintbrush },
+                        { id: 'cctv_repair', label: 'CCTV Repair', icon: Video },
+                        { id: 'aqua_water', label: 'Aqua Water Fixing', icon: Droplet },
+                        { id: 'air_purifier', label: 'Air Purifier', icon: Wind },
+                        { id: 'deep_cleaning', label: 'Deep Cleaning', icon: Sparkles },
+                        { id: 'appliance_repair', label: 'Appliance Repair', icon: Tv },
+                        { id: 'ac_repair', label: 'AC Repair', icon: Snowflake },
+                        { id: 'electrical', label: 'Electrical', icon: Zap },
+                        { id: 'plumbing', label: 'Plumbing', icon: Wrench },
                       ]
                       .filter(s => !homeSearchQuery || s.label.toLowerCase().includes(homeSearchQuery.toLowerCase()))
-                      .slice(0, (showAllServices || homeSearchQuery) ? 12 : 6)
+                      .slice(0, (showAllServices || homeSearchQuery) ? 24 : 12)
                       .map((srv) => {
                         const SrvIcon = srv.icon;
                         return (
@@ -1511,12 +1509,12 @@ const UserDashboard = () => {
                               setShowForm(true);
                               setStep(1);
                             }}
-                            className="bg-white hover:bg-blue-50/50 border border-slate-200/80 hover:border-blue-300 rounded-3xl p-4 flex flex-col items-center justify-center text-center gap-2.5 cursor-pointer shadow-2xs hover:shadow-md transition-all group border-none outline-none"
+                            className="bg-white hover:bg-slate-50 border border-slate-100 hover:border-slate-200 rounded-3xl p-3 sm:p-4 flex flex-col items-center justify-center text-center gap-2 cursor-pointer shadow-2xs hover:shadow-md transition-all group border-none outline-none"
                           >
-                            <div className={`w-12 h-12 rounded-2xl flex items-center justify-center border ${srv.color} group-hover:scale-105 transition-transform`}>
-                              <SrvIcon size={22} className="stroke-[2]" />
+                            <div className="w-12 h-12 sm:w-14 sm:h-14 rounded-2xl bg-slate-100/70 flex items-center justify-center text-slate-900 group-hover:scale-105 transition-transform">
+                              <SrvIcon size={22} className="text-slate-900 stroke-[1.8]" />
                             </div>
-                            <span className="text-xs font-extrabold text-slate-900 group-hover:text-blue-600 leading-tight">
+                            <span className="text-[11px] sm:text-xs font-black text-slate-900 group-hover:text-blue-600 leading-tight">
                               {srv.label}
                             </span>
                           </button>
