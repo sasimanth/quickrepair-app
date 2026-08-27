@@ -138,8 +138,13 @@ const Home = () => {
   });
   const [isLocationDropdownOpen, setIsLocationDropdownOpen] = useState(false);
   const [isProfileMenuOpen, setIsProfileMenuOpen] = useState(false);
+  const [isSearchFocused, setIsSearchFocused] = useState(false);
   const [isBannerDismissed, setIsBannerDismissed] = useState(() => {
-    return sessionStorage.getItem('fixvo_app_banner_dismissed') === 'true';
+    try {
+      return sessionStorage.getItem('fixvo_app_banner_dismissed') === 'true';
+    } catch {
+      return false;
+    }
   });
   const [searchQuery, setSearchQuery] = useState('');
   const [isListening, setIsListening] = useState(false);
