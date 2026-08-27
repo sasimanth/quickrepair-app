@@ -1,10 +1,11 @@
 import { useState, useEffect, useMemo, useRef } from 'react';
-import { Link, useLocation } from 'react-router-dom';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
+import { useAuth } from '../contexts/AuthContext';
 import api from '../services/api';
 import { globalServices } from '../data/services';
 import { subscribeToPushNotifications } from '../services/pushNotification';
 import { requestFcmPermission } from '../services/firebase';
-import { Calendar, MapPin, Smartphone, AlertCircle, Clock, CheckCircle, PackageSearch, XCircle, Plus, LayoutDashboard, Wrench, Settings, Briefcase, Star, User, ChevronRight, MessageSquare, Camera, UploadCloud, Loader2, Shield, ShieldCheck, ShieldAlert, Sparkles, IndianRupee, Wallet, Coins, ArrowUpRight, ArrowDownLeft, FileText, Bell, CreditCard, Banknote, HelpCircle, Truck, Home, Search, Eye, Zap, Maximize2, Hash, Layers, Paintbrush, Tv, X, RefreshCw, PhoneCall, Menu } from 'lucide-react';
+import { Calendar, MapPin, Smartphone, AlertCircle, Clock, CheckCircle, PackageSearch, XCircle, Plus, LayoutDashboard, Wrench, Settings, Briefcase, Star, User, ChevronRight, MessageSquare, Camera, UploadCloud, Loader2, Shield, ShieldCheck, ShieldAlert, Sparkles, IndianRupee, Wallet, Coins, ArrowUpRight, ArrowDownLeft, FileText, Bell, CreditCard, Banknote, HelpCircle, Truck, Home, Search, Eye, Zap, Maximize2, Hash, Layers, Paintbrush, Tv, X, RefreshCw, PhoneCall, Menu, LogOut, ToggleLeft, ToggleRight } from 'lucide-react';
 import ChatModal from '../components/ChatModal';
 import SettingsModal from '../components/SettingsModal';
 import VerificationModal from '../components/VerificationModal';
@@ -21,10 +22,17 @@ const formatPhoneLink = (phone) => {
 };
 
 const TechnicianDashboard = () => {
+  const navigate = useNavigate();
+  const { logout } = useAuth();
   const [jobs, setJobs] = useState([]);
   const [reviews, setReviews] = useState([]);
   const [profile, setProfile] = useState(null);
   const profileRef = useRef(null);
+
+  const handleLogout = async () => {
+    if (logout) await logout();
+    navigate('/login');
+  };
   useEffect(() => {
     profileRef.current = profile;
   }, [profile]);
@@ -736,35 +744,26 @@ const TechnicianDashboard = () => {
   return (
     <div className="min-h-screen bg-slate-50 text-slate-900 font-sans pb-24 select-none">
       
-      {/* Sleek Urban Company Style Compact Native Top Header (Replaces big profile card) */}
+      {/* Sleek Header without Tech Name Bar */}
       <header className="sticky top-0 z-40 bg-white border-b border-slate-200 shadow-xs px-4 sm:px-8 py-3.5 flex items-center justify-between">
         <div className="flex items-center gap-3">
-          <div className="w-10 h-10 bg-blue-50 border border-blue-100 rounded-xl flex items-center justify-center text-xl shadow-inner shrink-0 relative">
-            {profile?.avatar || '🔧'}
-            {profile?.isVerified && (
-              <span className="absolute -bottom-1 -right-1 bg-emerald-500 text-white rounded-full p-0.5 shadow">
-                <ShieldCheck size={10} />
-              </span>
-            )}
-          </div>
-          <div>
-            <div className="flex items-center gap-2">
-              <h1 className="text-sm sm:text-base font-extrabold text-slate-900 leading-tight">
-                {profile?.name || 'Technician'}
-              </h1>
-              {profile?.isVerified ? (
-                <span className="bg-emerald-100 border border-emerald-200 text-emerald-800 text-[9px] font-extrabold px-2 py-0.5 rounded-full uppercase tracking-wider">Verified</span>
-              ) : (
-                <span className="bg-amber-100 border border-amber-200 text-amber-800 text-[9px] font-extrabold px-2 py-0.5 rounded-full uppercase tracking-wider">Pending</span>
-              )}
+          <Link to="/" className="flex items-center gap-2 group">
+            <div className="w-9 h-9 rounded-2xl bg-blue-600 flex items-center justify-center text-white font-extrabold shadow-md shadow-blue-600/30">
+              F
             </div>
-            <p className="text-[11px] text-slate-500 font-medium">★ {profile?.rating || '5.0'} Score • {profile?.completedJobsCount || '0'} Jobs</p>
-          </div>
+            <span className="font-black text-lg sm:text-xl tracking-tight text-slate-900">
+              Fix<span className="text-blue-600">vo</span>
+            </span>
+            <span className="bg-blue-50 border border-blue-200 text-blue-700 text-[10px] font-black px-2.5 py-0.5 rounded-full uppercase tracking-wider">
+              Technician Portal
+            </span>
+          </Link>
         </div>
 
-        {/* Header Action Switches */}
-        <div className="flex items-center gap-2">
-          {profile?.isProfileComplete && (() => {
+        {/* Header Action Switches & Logout */}
+        <div className="flex items-center gap-2.5">
+          {/* Active / Deactive Availability Switch */}
+          {(() => {
             const status = profile?.currentStatus || (profile?.isOnline ? 'online' : 'offline');
             const isOnline = status === 'online' || status === 'available';
             
@@ -772,12 +771,15 @@ const TechnicianDashboard = () => {
               <button
                 onClick={status === 'on_job' ? null : toggleOnlineStatus}
                 disabled={status === 'on_job'}
-                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-black uppercase tracking-wider border transition-all cursor-pointer shadow-xs ${
-                  isOnline ? 'bg-emerald-50 text-emerald-700 border-emerald-200' : 'bg-slate-100 text-slate-600 border-slate-200'
+                className={`flex items-center gap-2 px-3.5 py-2 rounded-full text-xs font-black uppercase tracking-wider border transition-all cursor-pointer shadow-xs ${
+                  isOnline 
+                    ? 'bg-emerald-500 text-white border-emerald-600 shadow-emerald-500/20' 
+                    : 'bg-slate-100 text-slate-600 border-slate-300'
                 }`}
+                title={isOnline ? "Status: Active (Receiving Repair Requests)" : "Status: Deactive (Offline)"}
               >
-                <span className={`w-2 h-2 rounded-full ${isOnline ? 'bg-emerald-500 animate-pulse' : 'bg-slate-400'}`}></span>
-                <span className="hidden sm:inline">{isOnline ? 'Online' : 'Offline'}</span>
+                <span className={`w-2.5 h-2.5 rounded-full ${isOnline ? 'bg-white animate-pulse' : 'bg-slate-400'}`}></span>
+                <span>{isOnline ? 'Active (Online)' : 'Deactive (Offline)'}</span>
               </button>
             );
           })()}
@@ -785,7 +787,7 @@ const TechnicianDashboard = () => {
           <button
             onClick={() => fetchJobs(true)}
             disabled={refreshing}
-            className="p-2 text-slate-600 hover:text-slate-900 bg-slate-100 hover:bg-slate-200 rounded-full border border-slate-200 transition cursor-pointer"
+            className="p-2.5 text-slate-600 hover:text-slate-900 bg-slate-100 hover:bg-slate-200 rounded-full border border-slate-200 transition cursor-pointer"
             title="Refresh Dashboard"
           >
             <RefreshCw size={16} className={refreshing ? 'animate-spin text-blue-600' : ''} />
@@ -793,10 +795,18 @@ const TechnicianDashboard = () => {
 
           <button
             onClick={() => setShowSettings(true)}
-            className="p-2 text-slate-600 hover:text-slate-900 bg-slate-100 hover:bg-slate-200 rounded-full border border-slate-200 transition cursor-pointer"
+            className="p-2.5 text-slate-600 hover:text-slate-900 bg-slate-100 hover:bg-slate-200 rounded-full border border-slate-200 transition cursor-pointer"
             title="Account Settings"
           >
             <Settings size={16} />
+          </button>
+
+          <button
+            onClick={handleLogout}
+            className="p-2.5 text-rose-600 hover:text-rose-700 bg-rose-50 hover:bg-rose-100 rounded-full border border-rose-200 transition cursor-pointer"
+            title="Sign Out"
+          >
+            <LogOut size={16} />
           </button>
         </div>
       </header>
@@ -1449,21 +1459,28 @@ const TechnicianDashboard = () => {
                     { id: 'earnings', title: 'Wallet & Bank Payouts', desc: 'Gross earnings, platform fees, instant bank withdrawal', icon: Wallet, color: 'text-emerald-600 bg-emerald-50 border-emerald-200' },
                     { id: 'reviews', title: 'Ratings & Performance Score', desc: '★ 4.9 customer rating score and review feedback', icon: Star, color: 'text-amber-600 bg-amber-50 border-amber-200' },
                     { id: 'notifications', title: 'Notification Center & Alerts', desc: 'Push alert settings, lock screen sound chimes, alert log', icon: Bell, color: 'text-purple-600 bg-purple-50 border-purple-200' },
-                    { id: 'support', title: 'Partner Support & Guidelines', desc: '24/7 technician hotline, commission rules, guidelines', icon: HelpCircle, color: 'text-rose-600 bg-rose-50 border-rose-200' },
-                    { id: 'settings', title: 'Account Settings & Identity', desc: 'Update skills, service areas, experience, and profile', icon: Settings, color: 'text-slate-700 bg-slate-100 border-slate-200', isModal: true }
+                    { id: 'support', title: 'Partner Support & Guidelines', desc: '24/7 technician hotline, commission rules, guidelines', icon: HelpCircle, color: 'text-blue-600 bg-blue-50 border-blue-200' },
+                    { id: 'settings', title: 'Account Settings & Identity', desc: 'Update skills, service areas, experience, and profile', icon: Settings, color: 'text-slate-700 bg-slate-100 border-slate-200', isModal: true },
+                    { id: 'logout', title: 'Sign Out / Logout', desc: 'Securely log out of your technician account', icon: LogOut, color: 'text-rose-600 bg-rose-50 border-rose-200', isLogout: true }
                   ].map((ch) => {
                     const IconComp = ch.icon;
                     return (
                       <div
                         key={ch.id}
                         onClick={() => {
-                          if (ch.isModal) {
+                          if (ch.isLogout) {
+                            handleLogout();
+                          } else if (ch.isModal) {
                             setShowSettings(true);
                           } else {
                             setActiveSubTab(ch.id);
                           }
                         }}
-                        className="bg-white border border-slate-200/90 hover:border-blue-300 hover:shadow-md p-4 sm:p-5 rounded-2xl flex items-center justify-between gap-4 cursor-pointer transition-all duration-200 group"
+                        className={`p-4 sm:p-5 rounded-2xl flex items-center justify-between gap-4 cursor-pointer transition-all duration-200 group border ${
+                          ch.isLogout 
+                            ? 'bg-rose-50/60 border-rose-200 hover:border-rose-300 hover:bg-rose-100/60' 
+                            : 'bg-white border-slate-200/90 hover:border-blue-300 hover:shadow-md'
+                        }`}
                       >
                         <div className="flex items-center gap-4">
                           <div className={`p-3 rounded-2xl border ${ch.color} shrink-0 group-hover:scale-105 transition-transform`}>

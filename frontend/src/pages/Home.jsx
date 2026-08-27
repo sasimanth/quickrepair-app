@@ -1354,6 +1354,41 @@ const Home = () => {
         </div>
       )}
 
+      {/* App Install Floating Popup Banner */}
+      <AnimatePresence>
+        {!isAppModalOpen && (
+          <motion.div
+            initial={{ opacity: 0, y: 50 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: 50 }}
+            className="fixed bottom-4 left-4 right-4 sm:left-auto sm:right-6 sm:max-w-md z-40 bg-gradient-to-r from-slate-900 via-[#101524] to-slate-900 border border-blue-500/30 p-4 rounded-3xl shadow-[0_15px_40px_rgba(0,0,0,0.5)] flex items-center justify-between gap-3 text-white backdrop-blur-xl"
+          >
+            <div className="flex items-center gap-3">
+              <div className="w-11 h-11 rounded-2xl bg-blue-600 p-1 shrink-0 overflow-hidden shadow-md shadow-blue-600/40 border border-blue-400/30">
+                <img src={fixvoLogo} alt="Fixvo Logo" className="w-full h-full object-cover scale-110" />
+              </div>
+              <div>
+                <span className="text-[9px] font-black uppercase tracking-widest text-blue-400 bg-blue-500/10 px-2 py-0.5 rounded border border-blue-500/20">
+                  Instant Mobile Access
+                </span>
+                <h4 className="font-extrabold text-xs text-white tracking-tight mt-0.5">Install Fixvo App</h4>
+                <p className="text-[10px] text-slate-400 font-medium">30-min doorstep repairs at your fingertips</p>
+              </div>
+            </div>
+
+            <div className="flex items-center gap-2 shrink-0">
+              <button
+                onClick={() => setIsAppModalOpen(true)}
+                className="px-4 py-2 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white font-extrabold rounded-2xl text-xs shadow-md shadow-blue-600/30 transition-all flex items-center gap-1 cursor-pointer border-none"
+              >
+                <Smartphone size={13} />
+                <span>Open App</span>
+              </button>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
       {/* Open App Modal */}
       <OpenAppModal isOpen={isAppModalOpen} onClose={() => setIsAppModalOpen(false)} />
 

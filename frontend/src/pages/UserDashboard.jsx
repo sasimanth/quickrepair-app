@@ -1643,6 +1643,7 @@ const UserDashboard = () => {
                     {[
                       { id: 'bookings', title: 'My Service Bookings', desc: 'Track active repair orders, scheduled visits, completed history', icon: Calendar, color: 'text-blue-600 bg-blue-50 border-blue-200' },
                       { id: 'booking-form', title: 'Book a New Service', desc: 'Instant repair booking for home appliances, electrical, plumbing', icon: Wrench, color: 'text-indigo-600 bg-indigo-50 border-indigo-200', isAction: true },
+                      { id: 'become-tech', title: 'Become a Technician (Earn With Us)', desc: 'Join Fixvo as a verified pro partner and earn daily payouts', icon: Briefcase, color: 'text-emerald-700 bg-emerald-50 border-emerald-200', isLink: '/technician-agreement' },
                       { id: 'wallet', title: 'Wallet & Fixvo Cash', desc: `Available Balance: ₹${(profile?.walletBalance || 0).toFixed(0)} • Cashback & transactions`, icon: CreditCard, color: 'text-emerald-600 bg-emerald-50 border-emerald-200' },
                       { id: 'rewards', title: 'Rewards & Promo Vouchers', desc: 'Active coupons, reward points, and special discounts', icon: Sparkles, color: 'text-amber-600 bg-amber-50 border-amber-200' },
                       { id: 'addresses', title: 'Saved Addresses', desc: `${addresses.length} saved addresses (Home, Work, Service locations)`, icon: MapPin, color: 'text-rose-600 bg-rose-50 border-rose-200' },
@@ -1659,6 +1660,8 @@ const UserDashboard = () => {
                             if (ch.isLogout) {
                               await logout();
                               navigate('/login');
+                            } else if (ch.isLink) {
+                              navigate(ch.isLink);
                             } else if (ch.isModal) {
                               setShowSettings(true);
                             } else if (ch.isAction) {
