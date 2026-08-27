@@ -138,7 +138,9 @@ const Home = () => {
   });
   const [isLocationDropdownOpen, setIsLocationDropdownOpen] = useState(false);
   const [isProfileMenuOpen, setIsProfileMenuOpen] = useState(false);
-  const [isSearchFocused, setIsSearchFocused] = useState(false);
+  const [isBannerDismissed, setIsBannerDismissed] = useState(() => {
+    return sessionStorage.getItem('fixvo_app_banner_dismissed') === 'true';
+  });
   const [searchQuery, setSearchQuery] = useState('');
   const [isListening, setIsListening] = useState(false);
   const [searchHistory, setSearchHistory] = useState(() => {
@@ -1356,7 +1358,7 @@ const Home = () => {
 
       {/* App Install Floating Popup Banner */}
       <AnimatePresence>
-        {!isAppModalOpen && (
+        {!isBannerDismissed && !isAppModalOpen && (
           <motion.div
             initial={{ opacity: 0, y: 50 }}
             animate={{ opacity: 1, y: 0 }}
@@ -1379,10 +1381,21 @@ const Home = () => {
             <div className="flex items-center gap-2 shrink-0">
               <button
                 onClick={() => setIsAppModalOpen(true)}
-                className="px-4 py-2 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white font-extrabold rounded-2xl text-xs shadow-md shadow-blue-600/30 transition-all flex items-center gap-1 cursor-pointer border-none"
+                className="px-3.5 py-1.5 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white font-extrabold rounded-2xl text-xs shadow-md shadow-blue-600/30 transition-all flex items-center gap-1 cursor-pointer border-none"
               >
                 <Smartphone size={13} />
                 <span>Open App</span>
+              </button>
+
+              <button
+                onClick={() => {
+                  setIsBannerDismissed(true);
+                  sessionStorage.setItem('fixvo_app_banner_dismissed', 'true');
+                }}
+                className="p-1.5 text-slate-400 hover:text-white hover:bg-white/10 rounded-full transition cursor-pointer border-none bg-transparent"
+                title="Dismiss banner"
+              >
+                <X size={14} />
               </button>
             </div>
           </motion.div>
