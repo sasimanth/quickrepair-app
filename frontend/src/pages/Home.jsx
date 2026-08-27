@@ -156,12 +156,22 @@ const Home = () => {
   const topSearchRef = useRef(null);
   const heroSearchRef = useRef(null);
 
+  const safeServices = Array.isArray(services) ? services : globalServices;
+
   // Initialize and simulate skeleton screen
   useEffect(() => {
-    getDbServices().then((dbServices) => {
-      setServices(dbServices);
-      setTimeout(() => setLoading(false), 800);
-    });
+    getDbServices()
+      .then((dbServices) => {
+        if (Array.isArray(dbServices) && dbServices.length > 0) {
+          setServices(dbServices);
+        }
+      })
+      .catch((err) => {
+        console.warn("Could not fetch DB services, falling back to static services:", err);
+      })
+      .finally(() => {
+        setTimeout(() => setLoading(false), 800);
+      });
   }, []);
 
   // Scroll logic for #pricing hash anchor
@@ -460,7 +470,7 @@ const Home = () => {
   };
 
   const getServicesByIds = (ids) => {
-    return ids.map(id => services.find(s => s.id === id)).filter(Boolean);
+    return ids.map(id => (safeServices || []).find(s => s && s.id === id)).filter(Boolean);
   };
 
   if (loading) {
