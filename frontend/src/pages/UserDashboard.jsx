@@ -23,6 +23,7 @@ import WalletView from '../components/WalletView';
 import ReferralView from '../components/ReferralView';
 import RewardsView from '../components/RewardsView';
 import HelpSupportView from '../components/HelpSupportView';
+import fixvoLogo from '../assets/logos/fixvo-app-icon-dark.png';
 
 const formatPhoneLink = (phone) => {
   if (!phone) return '';
