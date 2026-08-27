@@ -531,14 +531,24 @@ const AdminDashboard = () => {
         </div>
       </header>
 
-      {/* Main Container */}
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mt-6">
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+      {/* Main Full-Width Container */}
+      <div className="w-full min-h-screen animate-in fade-in duration-300">
+        <div className="flex flex-col md:flex-row w-full min-h-screen">
 
-          {/* Desktop Navigation Sidebar (White Aesthetic) */}
-          <div className="hidden md:block md:col-span-1 space-y-4">
-            <div className="bg-white border border-slate-200 rounded-3xl p-3 space-y-1 shadow-sm sticky top-20">
-              <span className="text-[10px] font-black text-slate-400 uppercase tracking-wider block px-3 py-1.5">Management Modules</span>
+          {/* Desktop Navigation Sidebar (Full Height) */}
+          <div className="hidden md:flex flex-col w-64 lg:w-72 shrink-0 bg-white border-r border-slate-200/80 min-h-screen sticky top-0 p-5 space-y-6 shadow-xs z-20">
+            <div className="pb-4 border-b border-slate-100 flex items-center gap-2">
+              <div className="p-2 bg-blue-600 text-white rounded-xl shadow-md shadow-blue-600/30">
+                <Shield size={18} />
+              </div>
+              <div>
+                <h3 className="font-black text-slate-900 text-sm tracking-tight">Fixvo Admin</h3>
+                <p className="text-[10px] text-slate-400 font-semibold">Governance & Ops</p>
+              </div>
+            </div>
+
+            <div className="space-y-1">
+              <span className="text-[10px] font-black text-slate-400 uppercase tracking-wider block px-2 mb-1">Management Modules</span>
               {navItems.map(item => {
                 const IconComp = item.icon;
                 const isSelected = activeTab === item.id;
@@ -558,7 +568,7 @@ const AdminDashboard = () => {
                     </div>
                     {item.count > 0 && (
                       <span className={`px-2 py-0.5 rounded-full text-[10px] font-black ${
-                        isSelected ? 'bg-white text-blue-600' : 'bg-slate-100 text-slate-600'
+                        isSelected ? 'bg-white/20 text-white' : 'bg-slate-100 text-slate-600'
                       }`}>
                         {item.count}
                       </span>
@@ -569,8 +579,8 @@ const AdminDashboard = () => {
             </div>
           </div>
 
-          {/* Main Workspace Pane */}
-          <div className="md:col-span-3 bg-white border border-slate-200 rounded-[2rem] p-5 sm:p-8 shadow-sm min-h-[600px]">
+          {/* Right Main Content Workspace (Full Width Expanded) */}
+          <div className="flex-1 min-w-0 p-4 sm:p-6 lg:p-10 bg-slate-50 min-h-screen space-y-6">
 
             {/* TAB 1: EXECUTIVE OVERVIEW */}
             {activeTab === 'overview' && (
