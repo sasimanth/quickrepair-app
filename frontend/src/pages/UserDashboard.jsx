@@ -7,7 +7,7 @@ import SearchableServiceSelector from '../components/SearchableServiceSelector';
 import SearchableAreaSelector from '../components/SearchableAreaSelector';
 import { subscribeToPushNotifications } from '../services/pushNotification';
 import { requestFcmPermission } from '../services/firebase';
-import { Calendar, MapPin, Smartphone, AlertCircle, Clock, CheckCircle, PackageSearch, XCircle, Plus, LayoutDashboard, Wrench, Settings, Star, User, ChevronRight, MessageSquare, Camera, UploadCloud, Loader2, Shield, ShieldCheck, HelpCircle, Truck, Home, Search, Eye, Zap, Maximize2, Hash, Layers, Paintbrush, Tv, X, CreditCard, Sparkles, PhoneCall, Bell, Copy, Share2, Trash2, Edit, CheckSquare, RefreshCw, Menu, Laptop, Tablet, Gamepad2, Watch, Wifi, BatteryCharging, Activity, Droplet, Video, Wind, Snowflake, ChevronDown, ChevronUp, Code, LogOut } from 'lucide-react';
+import { Calendar, MapPin, Smartphone, AlertCircle, Clock, CheckCircle, PackageSearch, XCircle, Plus, LayoutDashboard, Wrench, Settings, Star, User, ChevronRight, MessageSquare, Camera, UploadCloud, Loader2, Shield, ShieldCheck, HelpCircle, Truck, Home, Search, Eye, Zap, Maximize2, Hash, Layers, Paintbrush, Tv, X, CreditCard, Sparkles, PhoneCall, Bell, Copy, Share2, Trash2, Edit, CheckSquare, RefreshCw, Menu, Laptop, Tablet, Gamepad2, Watch, Wifi, BatteryCharging, Activity, Droplet, Video, Wind, Snowflake, ChevronDown, ChevronUp, Code, LogOut, Briefcase } from 'lucide-react';
 import ChatModal from '../components/ChatModal';
 import ReviewModal from '../components/ReviewModal';
 import PaymentModal from '../components/PaymentModal';
@@ -642,6 +642,7 @@ const UserDashboard = () => {
   };
 
   const safeBookingsList = Array.isArray(bookings) ? bookings : [];
+  const safeAddresses = Array.isArray(addresses) ? addresses : [];
   
   const filteredBookings = safeBookingsList.filter(b => {
     if (!b) return false;
@@ -1377,7 +1378,7 @@ const UserDashboard = () => {
                     </div>
                     <div className="bg-white border border-slate-200 p-4 rounded-2xl text-center shadow-xs">
                       <span className="text-[10px] font-extrabold text-slate-400 uppercase tracking-wider block">Saved Addresses</span>
-                      <span className="text-2xl font-black text-amber-600 mt-1 block">{addresses.length}</span>
+                      <span className="text-2xl font-black text-amber-600 mt-1 block">{safeAddresses.length}</span>
                     </div>
                   </div>
                 </div>
@@ -1644,9 +1645,9 @@ const UserDashboard = () => {
                       { id: 'bookings', title: 'My Service Bookings', desc: 'Track active repair orders, scheduled visits, completed history', icon: Calendar, color: 'text-blue-600 bg-blue-50 border-blue-200' },
                       { id: 'booking-form', title: 'Book a New Service', desc: 'Instant repair booking for home appliances, electrical, plumbing', icon: Wrench, color: 'text-indigo-600 bg-indigo-50 border-indigo-200', isAction: true },
                       { id: 'become-tech', title: 'Become a Technician (Earn With Us)', desc: 'Join Fixvo as a verified pro partner and earn daily payouts', icon: Briefcase, color: 'text-emerald-700 bg-emerald-50 border-emerald-200', isLink: '/technician-agreement' },
-                      { id: 'wallet', title: 'Wallet & Fixvo Cash', desc: `Available Balance: ₹${(profile?.walletBalance || 0).toFixed(0)} • Cashback & transactions`, icon: CreditCard, color: 'text-emerald-600 bg-emerald-50 border-emerald-200' },
+                      { id: 'wallet', title: 'Wallet & Fixvo Cash', desc: `Available Balance: ₹${Number(profile?.walletBalance || 0).toFixed(0)} • Cashback & transactions`, icon: CreditCard, color: 'text-emerald-600 bg-emerald-50 border-emerald-200' },
                       { id: 'rewards', title: 'Rewards & Promo Vouchers', desc: 'Active coupons, reward points, and special discounts', icon: Sparkles, color: 'text-amber-600 bg-amber-50 border-amber-200' },
-                      { id: 'addresses', title: 'Saved Addresses', desc: `${addresses.length} saved addresses (Home, Work, Service locations)`, icon: MapPin, color: 'text-rose-600 bg-rose-50 border-rose-200' },
+                      { id: 'addresses', title: 'Saved Addresses', desc: `${safeAddresses.length} saved addresses (Home, Work, Service locations)`, icon: MapPin, color: 'text-rose-600 bg-rose-50 border-rose-200' },
                       { id: 'referral', title: 'Refer & Earn Rewards', desc: 'Invite friends and earn ₹100 Fixvo cash per referral', icon: User, color: 'text-purple-600 bg-purple-50 border-purple-200' },
                       { id: 'support', title: 'Customer Help & Support', desc: '24/7 support hotline, FAQs, raise ticket', icon: HelpCircle, color: 'text-blue-600 bg-blue-50 border-blue-200' },
                       { id: 'settings', title: 'Account Settings & Profile', desc: 'Update name, phone, email, and personal preferences', icon: Settings, color: 'text-slate-700 bg-slate-100 border-slate-200', isModal: true },
