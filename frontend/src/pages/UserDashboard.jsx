@@ -794,7 +794,7 @@ const UserDashboard = () => {
         
         {/* Booking Form View */}
         {showForm ? (
-          <div className="bg-white border border-slate-200 rounded-3xl p-6 sm:p-10 shadow-xl relative overflow-hidden space-y-6">
+          <div className="bg-white border border-slate-200 rounded-3xl p-6 sm:p-10 max-w-4xl mx-auto shadow-xl relative overflow-hidden space-y-6">
             <div className={`absolute top-0 left-0 h-1.5 bg-blue-600 transition-all duration-500 ${step === 1 ? 'w-1/2' : 'w-full'}`}></div>
             
             {/* Form Top Header */}

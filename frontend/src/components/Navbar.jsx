@@ -37,20 +37,26 @@ const Navbar = () => {
 
   return (
     <>
-      <div className="sticky top-2 sm:top-4 inset-x-0 z-50 flex justify-center px-2 sm:px-4 pointer-events-none mb-4">
-        <nav className="relative pointer-events-auto bg-white/70 backdrop-blur-2xl border border-white/60 shadow-[0_8px_30px_rgb(0,0,0,0.08)] rounded-[2rem] w-full max-w-6xl transition-all duration-500">
-          <div className="px-3 sm:px-6">
-            <div className="flex justify-between items-center h-16 sm:h-20">
+      <div className="sticky top-2 sm:top-4 inset-x-0 z-50 flex justify-center px-3 sm:px-4 pointer-events-none mb-4">
+        <nav className="relative pointer-events-auto bg-white/80 backdrop-blur-2xl border border-white/80 shadow-[0_10px_35px_rgba(0,0,0,0.06)] rounded-[2.5rem] w-full max-w-4xl transition-all duration-500">
+          <div className="px-4 sm:px-6">
+            <div className="flex justify-between items-center h-16 sm:h-18">
               
               {/* Logo Section */}
-              <Link to="/" className="flex items-center gap-2 group">
-                <div className="w-8 h-8 sm:w-10 sm:h-10 group-hover:scale-105 group-hover:rotate-3 transition-all duration-300 shadow-lg shadow-blue-500/30 rounded-full overflow-hidden">
+              <Link to="/" className="flex items-center gap-2.5 group">
+                <div className="w-8 h-8 sm:w-9 sm:h-9 group-hover:scale-105 group-hover:rotate-3 transition-all duration-300 shadow-md shadow-blue-500/20 rounded-full overflow-hidden border border-blue-100">
                   <img src={fixvoLogo} alt="Fixvo Logo" className="w-full h-full object-cover scale-110" />
                 </div>
-                <span className="font-extrabold text-lg sm:text-2xl tracking-tight text-blue-500 bg-clip-text text-transparent bg-gradient-to-r from-blue-500 via-blue-600 to-indigo-600">
+                <span className="font-black text-lg sm:text-xl tracking-tight text-blue-600">
                   Fixvo
                 </span>
               </Link>
+
+              {/* Desktop Tagline Badge */}
+              <div className="hidden md:flex items-center gap-2 px-3 py-1 rounded-full bg-blue-50/80 border border-blue-100 text-blue-700 font-extrabold text-[11px] uppercase tracking-wider">
+                <span className="w-2 h-2 rounded-full bg-blue-600 animate-pulse"></span>
+                <span>30-Min Emergency Dispatch • Verified Pros</span>
+              </div>
 
 
               {/* Navigation Action Buttons */}
