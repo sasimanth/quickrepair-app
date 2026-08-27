@@ -1,21 +1,73 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
-import { X, Smartphone, QrCode, Download, ExternalLink, ShieldCheck, ArrowRight, CheckCircle2 } from 'lucide-react';
-import { FaApple, FaGooglePlay } from 'react-icons/fa6';
+import { X, Smartphone, ArrowRight, ShieldCheck, Loader2, Phone } from 'lucide-react';
+import { FaGoogle } from 'react-icons/fa6';
 import fixvoLogo from '../assets/logos/fixvo-app-icon-dark.png';
+import { useAuth } from '../contexts/AuthContext';
 
 const OpenAppModal = ({ isOpen, onClose }) => {
+  const navigate = useNavigate();
+  const { loginWithGoogle } = useAuth();
+  
+  const [phase, setPhase] = useState('loading'); // 'loading' | 'login'
+  const [mobileNumber, setMobileNumber] = useState('');
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
+  useEffect(() => {
+    if (isOpen) {
+      setPhase('loading');
+      setMobileNumber('');
+      setIsSubmitting(false);
+      const timer = setTimeout(() => {
+        setPhase('login');
+      }, 1200);
+      return () => clearTimeout(timer);
+    }
+  }, [isOpen]);
+
   if (!isOpen) return null;
 
-  const currentWebUrl = window.location.origin;
+  const handleSkip = () => {
+    onClose();
+    navigate('/dashboard');
+  };
 
-  const handleDeepLink = () => {
-    // Attempt deep link schema
-    window.location.href = 'fixvo://open';
+  const handleMobileSubmit = (e) => {
+    e.preventDefault();
+    if (!mobileNumber || mobileNumber.length < 10) {
+      alert("Please enter a valid 10-digit mobile number.");
+      return;
+    }
+    setIsSubmitting(true);
     setTimeout(() => {
-      // Fallback to web app dashboard
-      window.location.href = '/dashboard';
-    }, 1200);
+      // Store user mobile session fallback
+      const stored = localStorage.getItem('user');
+      if (!stored) {
+        localStorage.setItem('user', JSON.stringify({ phone: mobileNumber, name: `User (${mobileNumber.slice(-4)})` }));
+      }
+      setIsSubmitting(false);
+      onClose();
+      navigate('/dashboard');
+    }, 800);
+  };
+
+  const handleGoogleLogin = async () => {
+    try {
+      setIsSubmitting(true);
+      if (loginWithGoogle) {
+        await loginWithGoogle();
+      }
+      onClose();
+      navigate('/dashboard');
+    } catch (err) {
+      console.error("Google Auth Error:", err);
+      // Fallback redirect to dashboard
+      onClose();
+      navigate('/dashboard');
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   return (
@@ -27,128 +79,115 @@ const OpenAppModal = ({ isOpen, onClose }) => {
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
           onClick={onClose}
-          className="fixed inset-0 bg-slate-950/60 backdrop-blur-md"
+          className="fixed inset-0 bg-slate-950/75 backdrop-blur-md"
         />
 
         {/* Modal Window */}
         <motion.div
-          initial={{ opacity: 0, scale: 0.95, y: 20 }}
+          initial={{ opacity: 0, scale: 0.92, y: 20 }}
           animate={{ opacity: 1, scale: 1, y: 0 }}
-          exit={{ opacity: 0, scale: 0.95, y: 20 }}
-          transition={{ type: "spring", duration: 0.5, bounce: 0.2 }}
-          className="relative w-full max-w-lg overflow-hidden rounded-[2.5rem] border border-white/40 bg-white p-6 sm:p-8 shadow-[0_25px_70px_rgba(15,23,42,0.25)] z-10"
+          exit={{ opacity: 0, scale: 0.92, y: 20 }}
+          transition={{ type: "spring", duration: 0.4, bounce: 0.2 }}
+          className="relative w-full max-w-md overflow-hidden rounded-[2.5rem] border border-white/20 bg-slate-900 text-white p-6 sm:p-8 shadow-[0_25px_70px_rgba(0,0,0,0.5)] z-10"
         >
-          {/* Close button */}
-          <button
-            onClick={onClose}
-            className="absolute right-5 top-5 flex h-9 w-9 items-center justify-center rounded-full bg-slate-100 text-slate-500 transition-colors hover:bg-slate-200 hover:text-slate-900"
-          >
-            <X size={18} />
-          </button>
-
-          {/* Header */}
-          <div className="flex items-center gap-3 mb-6">
-            <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-indigo-600 text-white shadow-lg shadow-indigo-600/30 overflow-hidden">
-              <img src={fixvoLogo} alt="Fixvo Logo" className="h-full w-full object-cover scale-110" />
-            </div>
-            <div>
-              <span className="inline-block rounded-full bg-indigo-50 px-2.5 py-0.5 text-[10px] font-extrabold uppercase tracking-widest text-indigo-600 border border-indigo-100">
-                Fixvo Mobile Experience
-              </span>
-              <h3 className="text-xl font-extrabold tracking-tight text-slate-900">Open Fixvo App</h3>
-            </div>
-          </div>
-
-          <p className="text-sm text-slate-600 mb-6 leading-relaxed">
-            Get instant access to verified local fixers, live service tracking, and exclusive discounts right on your mobile device.
-          </p>
-
-          {/* Quick Actions */}
-          <div className="space-y-3 mb-6">
-            {/* Launch Installed App / Web App */}
-            <button
-              onClick={handleDeepLink}
-              className="group flex w-full items-center justify-between rounded-2xl border border-slate-900 bg-slate-950 p-4 text-white shadow-lg shadow-slate-950/20 transition-all hover:bg-slate-900 hover:-translate-y-0.5"
-            >
-              <div className="flex items-center gap-3">
-                <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-white/10 text-white">
-                  <Smartphone size={20} />
+          {/* Phase 1: Splash / Loading Screen */}
+          {phase === 'loading' ? (
+            <div className="py-12 flex flex-col items-center justify-center text-center space-y-6 animate-in fade-in duration-300">
+              <div className="relative">
+                <div className="absolute inset-0 rounded-3xl bg-blue-500/30 blur-2xl animate-pulse"></div>
+                <div className="relative w-20 h-20 rounded-3xl bg-gradient-to-tr from-blue-600 via-blue-500 to-indigo-600 p-0.5 shadow-2xl overflow-hidden flex items-center justify-center">
+                  <img src={fixvoLogo} alt="Fixvo Logo" className="w-full h-full object-cover scale-110" />
                 </div>
-                <div className="text-left">
-                  <p className="text-xs text-slate-400 font-semibold uppercase tracking-wider">Installed Users</p>
-                  <p className="text-sm font-bold text-white">Launch App Directly</p>
-                </div>
-              </div>
-              <ArrowRight size={18} className="transition-transform group-hover:translate-x-1" />
-            </button>
-
-            {/* Direct Web App Dashboard */}
-            <a
-              href="/dashboard"
-              className="group flex w-full items-center justify-between rounded-2xl border border-slate-200 bg-slate-50 p-4 text-slate-800 transition-all hover:bg-slate-100 hover:border-slate-300"
-            >
-              <div className="flex items-center gap-3">
-                <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-indigo-100 text-indigo-600">
-                  <ExternalLink size={20} />
-                </div>
-                <div className="text-left">
-                  <p className="text-xs text-slate-500 font-semibold uppercase tracking-wider">Browser Access</p>
-                  <p className="text-sm font-bold text-slate-900">Continue in Mobile Web</p>
-                </div>
-              </div>
-              <ArrowRight size={18} className="text-slate-400 transition-transform group-hover:translate-x-1 group-hover:text-slate-900" />
-            </a>
-          </div>
-
-          {/* Desktop QR Code Section */}
-          <div className="rounded-2xl border border-indigo-100 bg-gradient-to-br from-indigo-50/60 to-sky-50/60 p-4 mb-6">
-            <div className="flex items-center gap-4">
-              <div className="flex h-20 w-20 flex-shrink-0 items-center justify-center rounded-xl border border-indigo-200 bg-white p-2 shadow-sm">
-                <img
-                  src={`https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=${encodeURIComponent(currentWebUrl)}`}
-                  alt="Fixvo QR Code"
-                  className="h-full w-full object-contain"
-                />
               </div>
               <div>
-                <p className="text-xs font-extrabold uppercase tracking-wider text-indigo-700 mb-1 flex items-center gap-1.5">
-                  <QrCode size={14} /> Scan with Mobile Camera
-                </p>
-                <p className="text-xs text-slate-600 leading-relaxed">
-                  Scan this QR code with your phone camera to instantly open Fixvo on your mobile browser or app.
-                </p>
+                <h2 className="text-2xl font-black tracking-tight text-white">Fix<span className="text-blue-500">vo</span> App</h2>
+                <p className="text-xs font-bold text-slate-400 mt-1 uppercase tracking-widest">Fast. Trusted. Done.</p>
+              </div>
+              <div className="flex items-center gap-2 text-xs font-semibold text-blue-400">
+                <Loader2 size={18} className="animate-spin" />
+                <span>Launching Mobile Experience...</span>
               </div>
             </div>
-          </div>
+          ) : (
+            /* Phase 2: Login Form with Skip */
+            <div className="space-y-6 animate-in fade-in slide-in-from-bottom-2 duration-300">
+              {/* Header with Skip at Top Right */}
+              <div className="flex items-center justify-between border-b border-slate-800 pb-4">
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-2xl bg-blue-600/20 border border-blue-500/30 p-1 flex items-center justify-center overflow-hidden">
+                    <img src={fixvoLogo} alt="Fixvo Logo" className="w-full h-full object-cover" />
+                  </div>
+                  <div>
+                    <h3 className="text-lg font-black text-white tracking-tight">Welcome to Fixvo</h3>
+                    <p className="text-[11px] text-slate-400 font-medium">Log in or continue as guest</p>
+                  </div>
+                </div>
 
-          {/* Store Rollout Badges */}
-          <div className="border-t border-slate-100 pt-5">
-            <p className="text-[11px] font-bold uppercase tracking-widest text-slate-400 mb-3 text-center">
-              Mobile Store Downloads
-            </p>
-            <div className="grid grid-cols-2 gap-3">
-              <div className="flex items-center gap-3 rounded-xl border border-slate-200 bg-slate-50 px-3 py-2.5 text-slate-700">
-                <FaApple size={22} className="text-slate-900" />
-                <div>
-                  <p className="text-[9px] font-extrabold uppercase tracking-wider text-slate-400">iOS App</p>
-                  <p className="text-xs font-bold text-slate-900">App Store</p>
-                </div>
+                {/* SKIP OPTION AT TOP RIGHT CORNER */}
+                <button
+                  onClick={handleSkip}
+                  className="px-3.5 py-1.5 bg-blue-500/20 hover:bg-blue-500/30 border border-blue-500/40 text-blue-400 hover:text-white rounded-full text-xs font-extrabold transition-all flex items-center gap-1 cursor-pointer"
+                >
+                  <span>Skip</span>
+                  <ArrowRight size={14} />
+                </button>
               </div>
-              <div className="flex items-center gap-3 rounded-xl border border-slate-200 bg-slate-50 px-3 py-2.5 text-slate-700">
-                <FaGooglePlay size={20} className="text-emerald-600" />
-                <div>
-                  <p className="text-[9px] font-extrabold uppercase tracking-wider text-slate-400">Android App</p>
-                  <p className="text-xs font-bold text-slate-900">Play Store</p>
+
+              {/* Mobile Number Login Form */}
+              <form onSubmit={handleMobileSubmit} className="space-y-4">
+                <div className="space-y-1.5">
+                  <label className="text-xs font-bold text-slate-300 uppercase tracking-wider flex items-center gap-1.5">
+                    <Phone size={13} className="text-blue-400" /> Enter Mobile Number
+                  </label>
+                  <div className="flex items-center gap-2 rounded-2xl bg-slate-950 border border-slate-800 p-2 focus-within:border-blue-500 transition-all">
+                    <span className="px-2.5 py-1 text-xs font-extrabold text-slate-400 border-r border-slate-800">+91</span>
+                    <input
+                      type="tel"
+                      maxLength={10}
+                      required
+                      placeholder="Enter 10-digit mobile number"
+                      value={mobileNumber}
+                      onChange={(e) => setMobileNumber(e.target.value.replace(/\D/g, ''))}
+                      className="w-full bg-transparent text-sm font-bold text-white outline-none placeholder:text-slate-600"
+                    />
+                  </div>
                 </div>
+
+                <button
+                  type="submit"
+                  disabled={isSubmitting}
+                  className="w-full py-3.5 bg-blue-600 hover:bg-blue-500 text-white font-extrabold rounded-2xl text-xs uppercase tracking-wider shadow-lg shadow-blue-600/30 transition-all flex items-center justify-center gap-2 cursor-pointer border-none"
+                >
+                  {isSubmitting ? <Loader2 size={16} className="animate-spin" /> : 'Get OTP & Continue'}
+                </button>
+              </form>
+
+              {/* Social Login Divider */}
+              <div className="relative flex items-center justify-center">
+                <div className="w-full border-t border-slate-800"></div>
+                <span className="absolute bg-slate-900 px-3 text-[10px] font-extrabold uppercase tracking-widest text-slate-500">
+                  Or continue with
+                </span>
+              </div>
+
+              {/* Google Auth Button */}
+              <button
+                type="button"
+                onClick={handleGoogleLogin}
+                disabled={isSubmitting}
+                className="w-full py-3 bg-slate-950 hover:bg-slate-800 border border-slate-800 text-slate-200 font-extrabold rounded-2xl text-xs transition-all flex items-center justify-center gap-2.5 cursor-pointer"
+              >
+                <FaGoogle size={14} className="text-rose-500" />
+                <span>Continue with Google</span>
+              </button>
+
+              {/* Footer Notice */}
+              <div className="pt-2 text-center flex items-center justify-center gap-1.5 text-[11px] text-slate-500">
+                <ShieldCheck size={14} className="text-emerald-400" />
+                <span>100% Safe & Verified Fixvo Platform</span>
               </div>
             </div>
-          </div>
-
-          {/* Security guarantee footer */}
-          <div className="mt-5 text-center flex items-center justify-center gap-1.5 text-[11px] text-slate-400">
-            <ShieldCheck size={14} className="text-emerald-500" />
-            <span>100% Safe & Verified Fixvo Platform</span>
-          </div>
+          )}
         </motion.div>
       </div>
     </AnimatePresence>

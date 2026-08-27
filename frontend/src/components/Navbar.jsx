@@ -52,28 +52,9 @@ const Navbar = () => {
                 </span>
               </Link>
 
-              {/* Center Menu Links (Desktop) */}
-              <div className="hidden md:flex items-center gap-1 rounded-full bg-slate-100/70 p-1 border border-slate-200/50">
-                <Link to="/services" className="px-4 py-1.5 text-xs font-bold text-slate-600 hover:text-slate-900 transition-colors rounded-full hover:bg-white">
-                  Services
-                </Link>
-                <Link to="/about" className="px-4 py-1.5 text-xs font-bold text-slate-600 hover:text-slate-900 transition-colors rounded-full hover:bg-white">
-                  About Us
-                </Link>
-                <Link to="/contact" className="px-4 py-1.5 text-xs font-bold text-slate-600 hover:text-slate-900 transition-colors rounded-full hover:bg-white">
-                  Contact
-                </Link>
-              </div>
 
               {/* Navigation Action Buttons */}
               <div className="flex items-center gap-2 sm:gap-3 transition-all">
-                {/* Earn With Us link for technicians */}
-                <Link
-                  to="/technician-agreement"
-                  className="hidden sm:inline-flex items-center gap-1.5 px-3.5 py-2 text-xs font-bold text-slate-700 bg-slate-100 hover:bg-slate-200 border border-slate-200/80 rounded-full transition-all duration-300"
-                >
-                  <span>Earn With Us</span>
-                </Link>
 
                 {/* Open App Button */}
                 <button

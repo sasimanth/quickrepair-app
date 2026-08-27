@@ -828,272 +828,40 @@ const UserDashboard = () => {
             {/* STEP 1: Details */}
             {step === 1 && (
               <form onSubmit={handleInitialSubmit} className="space-y-6 animate-in slide-in-from-left-4 fade-in duration-300">
-                <div className="flex items-center gap-3 bg-amber-50 border border-amber-200 rounded-2xl p-4 text-amber-900">
-                  <span className="flex h-2.5 w-2.5 rounded-full bg-amber-500 animate-[ping_2s_infinite]"></span>
-                  <p className="text-xs sm:text-sm font-semibold">
-                    High Demand Notice: Only <span className="font-black text-amber-700">2 technicians</span> available near you right now.
-                  </p>
-                </div>
-
-                {/* Service Mode Selector Cards (Diagnostic Inspection vs Direct Repair) */}
+                
+                {/* 1. Select Service */}
                 <div className="space-y-2">
-                  <label className="text-xs font-bold text-slate-600 uppercase tracking-wider flex items-center gap-2 ml-1">
-                    <Zap size={14} className="text-blue-600"/> Booking Service Mode
+                  <label className="text-xs font-bold text-slate-700 uppercase tracking-wider flex items-center gap-2 ml-1">
+                    <Wrench size={15} className="text-blue-600"/> 1. Select Service
                   </label>
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                    <div
-                      onClick={() => setFormData(prev => ({ ...prev, serviceOption: 'inspection', unknownProblem: false }))}
-                      className={`p-4 rounded-2xl border-2 cursor-pointer transition-all flex items-start gap-3 ${
-                        formData.serviceOption === 'inspection'
-                          ? 'border-blue-600 bg-blue-50/60 shadow-xs'
-                          : 'border-slate-200 bg-white hover:border-slate-300'
-                      }`}
-                    >
-                      <div className={`p-2.5 rounded-xl border ${formData.serviceOption === 'inspection' ? 'bg-blue-600 text-white border-blue-600' : 'bg-slate-100 text-slate-600 border-slate-200'}`}>
-                        <Search size={18} />
-                      </div>
-                      <div>
-                        <div className="flex items-center gap-1.5">
-                          <h4 className="font-extrabold text-xs text-slate-900">Diagnostic Inspection Visit</h4>
-                          <span className="text-[9px] font-black uppercase px-2 py-0.5 rounded bg-blue-100 text-blue-800">
-                            {profile?.isPremium ? 'Free (Fixvo Plus)' : '₹99 Fee'}
-                          </span>
-                        </div>
-                        <p className="text-[11px] text-slate-500 font-medium mt-0.5">
-                          Technician visits to inspect, diagnose, and provide a fixed quote before work starts.
-                        </p>
-                      </div>
-                    </div>
-
-                    <div
-                      onClick={() => setFormData(prev => ({ ...prev, serviceOption: 'direct', unknownProblem: false }))}
-                      className={`p-4 rounded-2xl border-2 cursor-pointer transition-all flex items-start gap-3 ${
-                        formData.serviceOption === 'direct'
-                          ? 'border-blue-600 bg-blue-50/60 shadow-xs'
-                          : 'border-slate-200 bg-white hover:border-slate-300'
-                      }`}
-                    >
-                      <div className={`p-2.5 rounded-xl border ${formData.serviceOption === 'direct' ? 'bg-blue-600 text-white border-blue-600' : 'bg-slate-100 text-slate-600 border-slate-200'}`}>
-                        <Wrench size={18} />
-                      </div>
-                      <div>
-                        <div className="flex items-center gap-1.5">
-                          <h4 className="font-extrabold text-xs text-slate-900">Direct Service & Repair</h4>
-                          <span className="text-[9px] font-black uppercase px-2 py-0.5 rounded bg-emerald-100 text-emerald-800">Standard Rate</span>
-                        </div>
-                        <p className="text-[11px] text-slate-500 font-medium mt-0.5">
-                          Direct repair request when you already know the issue. Pay on completion.
-                        </p>
-                      </div>
-                    </div>
-                  </div>
+                  <SearchableServiceSelector
+                    value={formData.serviceId}
+                    onChange={(serviceId) => setFormData({ ...formData, serviceId })}
+                    theme="light"
+                    placeholder="Search and select a service (e.g. AC Repair, Plumbing)..."
+                  />
                 </div>
 
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                  <div className="space-y-2 md:col-span-1">
-                    <label className="text-xs font-bold text-slate-600 uppercase tracking-wider flex items-center gap-2 ml-1">
-                      <Settings size={14} className="text-blue-600"/> Select Service
-                    </label>
-                    <SearchableServiceSelector
-                      value={formData.serviceId}
-                      onChange={(serviceId) => setFormData({ ...formData, serviceId })}
-                      theme="light"
-                      placeholder="Search and select a service..."
-                    />
-                  </div>
-
-                  <div className="space-y-2 md:col-span-1">
-                    <label className="text-xs font-bold text-slate-600 uppercase tracking-wider flex items-center gap-2 ml-1">
-                      <Calendar size={14} className="text-blue-600"/> Service Date
-                    </label>
-                    <input
-                      type="date"
-                      required
-                      className="w-full px-4 py-3 bg-white border border-slate-200 focus:border-blue-600 focus:ring-2 focus:ring-blue-100 transition-all font-semibold text-slate-900 rounded-2xl outline-none text-xs"
-                      value={formData.date}
-                      onChange={(e) => setFormData({ ...formData, date: e.target.value })}
-                    />
-                  </div>
-
-                  <div className="space-y-2 md:col-span-1">
-                    <label className="text-xs font-bold text-slate-600 uppercase tracking-wider flex items-center gap-2 ml-1">
-                      <Clock size={14} className="text-blue-600"/> Time Slot
-                    </label>
-                    <select
-                      className="w-full px-4 py-3 bg-white border border-slate-200 focus:border-blue-600 focus:ring-2 focus:ring-blue-100 transition-all font-semibold text-slate-900 rounded-2xl outline-none text-xs"
-                      value={formData.timeSlot || 'ASAP'}
-                      onChange={(e) => setFormData({ ...formData, timeSlot: e.target.value })}
-                    >
-                      <option value="ASAP">⚡ Instant ASAP (30-45 Mins)</option>
-                      <option value="Morning (9 AM - 12 PM)">🌅 Morning (9 AM - 12 PM)</option>
-                      <option value="Afternoon (12 PM - 4 PM)">☀️ Afternoon (12 PM - 4 PM)</option>
-                      <option value="Evening (4 PM - 8 PM)">🌆 Evening (4 PM - 8 PM)</option>
-                    </select>
-                  </div>
+                {/* 2. Describe Issue */}
+                <div className="space-y-2">
+                  <label className="text-xs font-bold text-slate-700 uppercase tracking-wider flex items-center gap-2 ml-1">
+                    <AlertCircle size={15} className="text-blue-600"/> 2. Describe Issue
+                  </label>
+                  <textarea
+                    rows={3}
+                    required
+                    placeholder="Describe the issue or problem in detail (e.g., AC is not cooling, tap leaking)..."
+                    className="w-full p-4 bg-white border border-slate-200 focus:border-blue-600 font-semibold text-slate-900 rounded-2xl outline-none text-xs resize-none"
+                    value={formData.problemDescription}
+                    onChange={(e) => setFormData({ ...formData, problemDescription: e.target.value })}
+                  />
                 </div>
 
-                {/* Dynamic Category Specific Inputs */}
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6 bg-slate-50 p-6 rounded-2xl border border-slate-200">
-                  {categoryId === 'repair' && (
-                    <div className="space-y-2 col-span-full md:col-span-1">
-                      <label className="text-xs font-bold text-slate-700 uppercase tracking-wider flex items-center gap-2">
-                        <Smartphone size={14} className="text-blue-600"/> Device Type / Brand
-                      </label>
-                      <input
-                        type="text"
-                        placeholder="e.g. iPhone 13 Pro, HP Pavilion Laptop, Samsung Fridge"
-                        required
-                        className="w-full px-4 py-3 bg-white border border-slate-200 focus:border-blue-600 font-semibold text-slate-900 rounded-xl outline-none text-xs"
-                        value={formData.deviceType || ''}
-                        onChange={(e) => setFormData({ ...formData, deviceType: e.target.value })}
-                      />
-                    </div>
-                  )}
-
-                  {categoryId === 'cleaning' && (
-                    <>
-                      <div className="space-y-2">
-                        <label className="text-xs font-bold text-slate-700 uppercase tracking-wider flex items-center gap-2">
-                          <Home size={14} className="text-blue-600"/> House / Premise Type
-                        </label>
-                        <select
-                          required
-                          className="w-full px-4 py-3 bg-white border border-slate-200 focus:border-blue-600 font-semibold text-slate-900 rounded-xl outline-none text-xs"
-                          value={formData.houseType || ''}
-                          onChange={(e) => setFormData({ ...formData, houseType: e.target.value })}
-                        >
-                          <option value="">Select premise type</option>
-                          <option value="1 BHK">1 BHK Apartment</option>
-                          <option value="2 BHK">2 BHK Apartment</option>
-                          <option value="3 BHK">3 BHK Apartment</option>
-                          <option value="4 BHK">4 BHK+ Apartment</option>
-                          <option value="Villa">Independent House / Villa</option>
-                          <option value="Office">Commercial Office Space</option>
-                        </select>
-                      </div>
-
-                      <div className="space-y-2">
-                        <label className="text-xs font-bold text-slate-700 uppercase tracking-wider flex items-center gap-2">
-                          <Maximize2 size={14} className="text-blue-600"/> Area Size (Sq Ft)
-                        </label>
-                        <input
-                          type="text"
-                          placeholder="e.g. 1200 sq ft"
-                          required
-                          className="w-full px-4 py-3 bg-white border border-slate-200 focus:border-blue-600 font-semibold text-slate-900 rounded-xl outline-none text-xs"
-                          value={formData.areaSize || ''}
-                          onChange={(e) => setFormData({ ...formData, areaSize: e.target.value })}
-                        />
-                      </div>
-                    </>
-                  )}
-
-                  {(categoryId === 'painting' || serviceNameLower.includes('paint')) && (
-                    <>
-                      <div className="space-y-2">
-                        <label className="text-xs font-bold text-slate-700 uppercase tracking-wider flex items-center gap-2">
-                          <Home size={14} className="text-blue-600"/> Premise Area to Paint
-                        </label>
-                        <select
-                          required
-                          className="w-full px-4 py-3 bg-white border border-slate-200 focus:border-blue-600 font-semibold text-slate-900 rounded-xl outline-none text-xs"
-                          value={formData.houseType || ''}
-                          onChange={(e) => setFormData({ ...formData, houseType: e.target.value })}
-                        >
-                          <option value="">Select option</option>
-                          <option value="1 BHK">1 BHK Interior</option>
-                          <option value="2 BHK">2 BHK Interior</option>
-                          <option value="3 BHK">3 BHK Interior</option>
-                          <option value="Single Room">Single Room / Accent Wall</option>
-                          <option value="Exterior">Exterior Painting</option>
-                        </select>
-                      </div>
-
-                      <div className="space-y-2">
-                        <label className="text-xs font-bold text-slate-700 uppercase tracking-wider flex items-center gap-2">
-                          <Maximize2 size={14} className="text-blue-600"/> Wall Area Size (Sq Ft)
-                        </label>
-                        <input
-                          type="text"
-                          placeholder="e.g. 1500 sq ft"
-                          required
-                          className="w-full px-4 py-3 bg-white border border-slate-200 focus:border-blue-600 font-semibold text-slate-900 rounded-xl outline-none text-xs"
-                          value={formData.wallArea || ''}
-                          onChange={(e) => setFormData({ ...formData, wallArea: e.target.value })}
-                        />
-                      </div>
-                    </>
-                  )}
-
-                  {(categoryId === 'vehicle' || serviceNameLower.includes('bike') || serviceNameLower.includes('car')) && (
-                    <>
-                      <div className="space-y-2">
-                        <label className="text-xs font-bold text-slate-700 uppercase tracking-wider flex items-center gap-2">
-                          <Truck size={14} className="text-blue-600"/> Vehicle Brand & Model
-                        </label>
-                        <input
-                          type="text"
-                          placeholder="e.g. Honda City 2021, Royal Enfield Classic 350"
-                          required
-                          className="w-full px-4 py-3 bg-white border border-slate-200 focus:border-blue-600 font-semibold text-slate-900 rounded-xl outline-none text-xs"
-                          value={formData.vehicleModel || ''}
-                          onChange={(e) => setFormData({ ...formData, vehicleModel: e.target.value })}
-                        />
-                      </div>
-                      <div className="space-y-2">
-                        <label className="text-xs font-bold text-slate-700 uppercase tracking-wider flex items-center gap-2">
-                          <Wrench size={14} className="text-blue-600"/> Service Option
-                        </label>
-                        <select
-                          required
-                          className="w-full px-4 py-3 bg-white border border-slate-200 focus:border-blue-600 font-semibold text-slate-900 rounded-xl outline-none text-xs"
-                          value={formData.vehicleServiceType || ''}
-                          onChange={(e) => setFormData({ ...formData, vehicleServiceType: e.target.value })}
-                        >
-                          <option value="Doorstep Visit">Doorstep Mechanic Visit</option>
-                          <option value="Full Service">Full General Service & Water Wash</option>
-                          <option value="Emergency Breakdown">Roadside Breakdown Support</option>
-                        </select>
-                      </div>
-                    </>
-                  )}
-
-                  {(categoryId === 'appliance' || serviceNameLower.includes('ac') || serviceNameLower.includes('washing')) && (
-                    <div className="space-y-2 col-span-full md:col-span-1">
-                      <label className="text-xs font-bold text-slate-700 uppercase tracking-wider flex items-center gap-2">
-                        <Tv size={14} className="text-blue-600"/> Appliance Brand / Capacity
-                      </label>
-                      <input
-                        type="text"
-                        placeholder="e.g. Voltas 1.5 Ton Split AC, IFB 7kg Front Load"
-                        required
-                        className="w-full px-4 py-3 bg-white border border-slate-200 focus:border-blue-600 font-semibold text-slate-900 rounded-xl outline-none text-xs"
-                        value={formData.applianceBrand || ''}
-                        onChange={(e) => setFormData({ ...formData, applianceBrand: e.target.value })}
-                      />
-                    </div>
-                  )}
-
-                  <div className="space-y-2 col-span-full">
-                    <label className="text-xs font-bold text-slate-700 uppercase tracking-wider flex items-center gap-2">
-                      <AlertCircle size={14} className="text-blue-600"/> Describe Issue / Problem in Detail
-                    </label>
-                    <textarea
-                      rows={3}
-                      required
-                      placeholder="e.g. AC is not cooling properly, makes squeaking noise when turned on..."
-                      className="w-full p-4 bg-white border border-slate-200 focus:border-blue-600 font-semibold text-slate-900 rounded-xl outline-none text-xs resize-none"
-                      value={formData.problemDescription}
-                      onChange={(e) => setFormData({ ...formData, problemDescription: e.target.value })}
-                    />
-                  </div>
-                </div>
-
-                {/* Location & Address Section */}
-                <div className="space-y-4 pt-2">
-                  <h3 className="font-extrabold text-xs text-slate-900 uppercase tracking-wider flex items-center gap-2">
-                    <MapPin size={16} className="text-blue-600" /> Doorstep Service Address
-                  </h3>
+                {/* 3. Address */}
+                <div className="space-y-4 pt-2 border-t border-slate-100">
+                  <label className="text-xs font-bold text-slate-700 uppercase tracking-wider flex items-center gap-2 ml-1">
+                    <MapPin size={15} className="text-blue-600" /> 3. Address
+                  </label>
                   
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div className="space-y-1.5">
@@ -1106,63 +874,34 @@ const UserDashboard = () => {
                     </div>
 
                     <div className="space-y-1.5">
-                      <label className="text-[10px] font-bold text-slate-500 uppercase tracking-wider ml-1">Landmark / Nearby Spot</label>
+                      <label className="text-[10px] font-bold text-slate-500 uppercase tracking-wider ml-1">Full Street Address & Flat / Door No.</label>
                       <input
                         type="text"
-                        placeholder="e.g. Near RTC Bus Stand, Opp SBI Bank"
-                        className="w-full px-4 py-3 bg-white border border-slate-200 focus:border-blue-600 font-semibold text-slate-900 rounded-xl outline-none text-xs"
-                        value={formData.landmark || ''}
-                        onChange={(e) => setFormData({ ...formData, landmark: e.target.value })}
+                        required
+                        placeholder="e.g. Door No 4-12, Green Park Colony, Madanapalle"
+                        className="w-full px-4 py-3 bg-white border border-slate-200 focus:border-blue-600 font-semibold text-slate-900 rounded-2xl outline-none text-xs"
+                        value={formData.detailedAddress || ''}
+                        onChange={(e) => setFormData({ ...formData, detailedAddress: e.target.value })}
                       />
                     </div>
                   </div>
-
-                  <div className="space-y-1.5">
-                    <label className="text-[10px] font-bold text-slate-500 uppercase tracking-wider ml-1">Full Street Address & House/Flat No.</label>
-                    <input
-                      type="text"
-                      required
-                      placeholder="e.g. Door No 4-12, Green Park Colony, Madanapalle"
-                      className="w-full px-4 py-3 bg-white border border-slate-200 focus:border-blue-600 font-semibold text-slate-900 rounded-xl outline-none text-xs"
-                      value={formData.detailedAddress || ''}
-                      onChange={(e) => setFormData({ ...formData, detailedAddress: e.target.value })}
-                    />
-                  </div>
-
-                  <div className="flex flex-wrap items-center justify-between gap-3 pt-2">
-                    <button
-                      type="button"
-                      onClick={handleAutoDetectLocation}
-                      className="px-4 py-2 bg-blue-50 hover:bg-blue-100 text-blue-700 border border-blue-200 rounded-xl font-bold text-xs flex items-center gap-1.5 cursor-pointer transition-all"
-                    >
-                      <MapPin size={14} /> Detect GPS Location
-                    </button>
-
-                    <label className="flex items-center gap-2 cursor-pointer bg-slate-50 hover:bg-slate-100 border border-slate-200 px-4 py-2 rounded-xl transition-all">
-                      <UploadCloud size={14} className="text-blue-600" />
-                      <span className="text-xs font-bold text-slate-700">
-                        {uploadingImage ? 'Uploading Image...' : formData.imageUrl ? 'Photo Attached ✓' : 'Upload Inspection Photo (Optional)'}
-                      </span>
-                      <input type="file" accept="image/*" onChange={handleImageUpload} className="hidden" />
-                    </label>
-                  </div>
                 </div>
 
-                {/* Form Action CTAs */}
+                {/* 4. Match Tech Action CTA */}
                 <div className="flex justify-end gap-3 pt-4 border-t border-slate-100">
                   <button
                     type="button"
                     onClick={() => { setShowForm(false); setStep(1); setSelectedTech(null); }}
-                    className="px-5 py-3 border border-slate-200 text-slate-600 font-bold rounded-xl text-xs uppercase tracking-wider cursor-pointer hover:bg-slate-50"
+                    className="px-5 py-3 border border-slate-200 text-slate-600 font-bold rounded-2xl text-xs uppercase tracking-wider cursor-pointer hover:bg-slate-50 transition-all"
                   >
                     Cancel
                   </button>
                   <button
                     type="submit"
                     disabled={fetchingTechs || !formData.serviceId}
-                    className="px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white font-extrabold rounded-xl text-xs uppercase tracking-wider shadow-md shadow-blue-600/10 cursor-pointer border-none flex items-center gap-2"
+                    className="px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white font-extrabold rounded-2xl text-xs uppercase tracking-wider shadow-lg shadow-blue-600/20 cursor-pointer border-none flex items-center gap-2 transition-all"
                   >
-                    {fetchingTechs ? 'Searching Experts...' : 'Next: Choose Technician →'}
+                    {fetchingTechs ? 'Matching Tech...' : 'Match Tech →'}
                   </button>
                 </div>
               </form>
