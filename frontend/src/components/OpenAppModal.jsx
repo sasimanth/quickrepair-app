@@ -4,6 +4,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { X, Smartphone, ArrowRight, ShieldCheck, Loader2, Phone, Sparkles } from 'lucide-react';
 import fixvoLogo from '../assets/logos/fixvo-app-icon-dark.png';
 import { useAuth } from '../contexts/AuthContext';
+import api from '../services/api';
 
 const OpenAppModal = ({ isOpen, onClose }) => {
   const navigate = useNavigate();
@@ -36,14 +37,18 @@ const OpenAppModal = ({ isOpen, onClose }) => {
     window.location.href = '/dashboard';
   };
 
-  const handleMobileSubmit = (e) => {
+  const handleMobileSubmit = async (e) => {
     e.preventDefault();
     if (!mobileNumber || mobileNumber.length < 10) {
       alert("Please enter a valid 10-digit mobile number.");
       return;
     }
     setIsSubmitting(true);
-    setTimeout(() => {
+    try {
+      await api.post('/auth/resend-verification', { phone: mobileNumber }).catch(() => null);
+    } catch (err) {
+      console.warn("SMS OTP dispatch warning:", err);
+    } finally {
       localStorage.setItem('user', JSON.stringify({ 
         name: `User (${mobileNumber.slice(-4)})`, 
         phone: `+91 ${mobileNumber}`,
@@ -53,7 +58,7 @@ const OpenAppModal = ({ isOpen, onClose }) => {
       onClose();
       navigate('/dashboard');
       window.location.href = '/dashboard';
-    }, 500);
+    }
   };
 
   const handleGoogleLogin = async () => {
