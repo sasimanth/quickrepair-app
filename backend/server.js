@@ -52,6 +52,7 @@ app.use('/api/reviews', require('./routes/reviewRoutes'));
 app.use('/api/whatsapp', require('./routes/whatsappRoutes'));
 app.use('/api/book-service', require('./routes/quickBookingRoutes'));
 app.use('/api/payment', require('./routes/payment'));
+app.use('/api/ai', require('./routes/aiAssistantRoutes'));
 app.use('/api/contact', require('./routes/contactRoutes'));
 app.use('/api/legal', require('./routes/legalRoutes'));
 

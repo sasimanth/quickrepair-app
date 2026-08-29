@@ -7,12 +7,13 @@ import SearchableServiceSelector from '../components/SearchableServiceSelector';
 import SearchableAreaSelector from '../components/SearchableAreaSelector';
 import { subscribeToPushNotifications } from '../services/pushNotification';
 import { requestFcmPermission } from '../services/firebase';
-import { Calendar, MapPin, Smartphone, AlertCircle, Clock, CheckCircle, PackageSearch, XCircle, Plus, LayoutDashboard, Wrench, Settings, Star, User, ChevronRight, MessageSquare, Camera, UploadCloud, Loader2, Shield, ShieldCheck, HelpCircle, Truck, Home, Search, Eye, Zap, Maximize2, Hash, Layers, Paintbrush, Tv, X, CreditCard, Sparkles, PhoneCall, Bell, Copy, Share2, Trash2, Edit, CheckSquare, RefreshCw, Menu, Laptop, Tablet, Gamepad2, Watch, Wifi, BatteryCharging, Activity, Droplet, Video, Wind, Snowflake, ChevronDown, ChevronUp, Code, LogOut, Briefcase } from 'lucide-react';
+import { Calendar, MapPin, Smartphone, AlertCircle, Clock, CheckCircle, PackageSearch, XCircle, Plus, LayoutDashboard, Wrench, Settings, Star, User, ChevronRight, MessageSquare, Camera, UploadCloud, Loader2, Shield, ShieldCheck, HelpCircle, Truck, Home, Search, Eye, Zap, Maximize2, Hash, Layers, Paintbrush, Tv, X, CreditCard, Sparkles, PhoneCall, Bell, Copy, Share2, Trash2, Edit, CheckSquare, RefreshCw, Menu, Laptop, Tablet, Gamepad2, Watch, Wifi, BatteryCharging, Activity, Droplet, Video, Wind, Snowflake, ChevronDown, ChevronUp, Code, LogOut, Briefcase, Mic } from 'lucide-react';
 import ChatModal from '../components/ChatModal';
 import ReviewModal from '../components/ReviewModal';
 import PaymentModal from '../components/PaymentModal';
 import SettingsModal from '../components/SettingsModal';
 import PremiumModal from '../components/PremiumModal';
+import FixvoAiAssistantModal from '../components/FixvoAiAssistant/FixvoAiAssistantModal';
 import { socket } from '../services/socket';
 import { playNotificationSound } from '../services/soundEffects';
 import LoadingSkeleton from '../components/LoadingSkeleton';
@@ -144,9 +145,11 @@ const UserDashboard = () => {
   const queryParams = new URLSearchParams(location.search);
   const initialShowForm = queryParams.get('action') === 'book';
   const initialShowPremium = queryParams.get('action') === 'premium';
+  const initialShowAi = queryParams.get('action') === 'ai';
   const initialService = queryParams.get('service');
   const [showForm, setShowForm] = useState(initialShowForm);
   const [showPremiumModal, setShowPremiumModal] = useState(initialShowPremium);
+  const [showAiModal, setShowAiModal] = useState(initialShowAi);
   const [services, setServices] = useState(globalServices);
   const [searchQuery, setSearchQuery] = useState('');
   const [showAllServices, setShowAllServices] = useState(false);
@@ -522,6 +525,58 @@ const UserDashboard = () => {
         setIsBooking(false);
       }
     }, 1200);
+  };
+
+  // AI Assistant Handlers
+  const handleApplyDraftToForm = (draft) => {
+    if (!draft) return;
+    setFormData(prev => ({
+      ...prev,
+      serviceId: draft.serviceId || prev.serviceId,
+      problemDescription: draft.problemDescription || prev.problemDescription,
+      location: draft.area || draft.location || prev.location,
+      detailedAddress: draft.detailedAddress || prev.detailedAddress,
+      date: draft.date || prev.date
+    }));
+    setShowForm(true);
+    setStep(1);
+    showToast('AI Draft Applied ✨', 'Review or modify your booking details below.', 'info');
+  };
+
+  const handleConfirmBookingFromAi = async (draft) => {
+    if (!draft || !draft.serviceId) {
+      showToast('Incomplete Draft ⚠️', 'Please select a service before confirming.', 'warning');
+      return;
+    }
+    if (isBooking) return;
+
+    try {
+      setIsBooking(true);
+      const selectedServiceName = globalServices.find(s => s.id === draft.serviceId)?.name || draft.serviceName || 'Home Service';
+      const payload = {
+        ...formData,
+        serviceId: draft.serviceId,
+        service: selectedServiceName,
+        problemDescription: draft.problemDescription || 'Inspection / Repair',
+        location: draft.area || draft.location || formData.location,
+        detailedAddress: draft.detailedAddress || formData.detailedAddress || 'Home Address',
+        date: draft.date || formData.date,
+        timeSlot: draft.timeSlot || 'Morning (9 AM - 12 PM)',
+        promoCode: promoCode || null,
+        discountPercentage: discountAmount || 0
+      };
+      await api.post('/bookings', payload);
+      showToast('Booking Request Submitted 🚀', `Your booking for ${selectedServiceName} has been sent to our technicians.`, 'success');
+      setShowAiModal(false);
+      setShowForm(false);
+      fetchData(false);
+    } catch (error) {
+      console.error('AI Direct Booking error:', error);
+      const errMsg = error.response?.data?.message || 'Unable to place booking. Please try again.';
+      showToast('Booking Failed ❌', errMsg, 'error');
+    } finally {
+      setIsBooking(false);
+    }
   };
 
   // Saved Address Handlers
@@ -1173,27 +1228,57 @@ const UserDashboard = () => {
                     </div>
                   </div>
 
-                  {/* 3. Hero "Need a repair?" Broadcast Request Banner Card */}
-                  <div className="bg-[#0F141C] text-white rounded-3xl p-6 sm:p-7 shadow-xl relative overflow-hidden flex items-center justify-between gap-4">
-                    <div className="space-y-1.5 z-10">
-                      <h2 className="text-2xl sm:text-3xl font-black text-white tracking-tight">
-                        Need a repair?
-                      </h2>
-                      <p className="text-xs sm:text-sm text-slate-300 font-medium leading-relaxed max-w-[220px] sm:max-w-xs">
-                        Broadcast your request to local fixers near you.
-                      </p>
+                  {/* 3. Hero Fixvo AI Voice & Broadcast Request Cards */}
+                  <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+                    {/* Fixvo AI Assistant Banner */}
+                    <div className="bg-gradient-to-br from-blue-600 via-indigo-600 to-blue-700 text-white rounded-3xl p-6 shadow-xl relative overflow-hidden flex flex-col justify-between gap-4">
+                      <div className="absolute -right-8 -bottom-8 w-36 h-36 bg-white/10 rounded-full blur-xl pointer-events-none"></div>
+                      <div className="space-y-1.5 z-10">
+                        <div className="flex items-center gap-2">
+                          <span className="bg-amber-400 text-slate-950 text-[10px] font-black uppercase px-2.5 py-0.5 rounded-full shadow-xs">
+                            AI Voice Booking
+                          </span>
+                          <span className="text-[11px] text-blue-200 font-bold">Telugu & English</span>
+                        </div>
+                        <h2 className="text-xl sm:text-2xl font-black text-white tracking-tight pt-1">
+                          Fixvo AI Assistant
+                        </h2>
+                        <p className="text-xs text-blue-100 font-medium leading-relaxed">
+                          Speak or type your service problem to auto-match local experts instantly.
+                        </p>
+                      </div>
+
+                      <button
+                        onClick={() => setShowAiModal(true)}
+                        className="self-start px-4 py-2.5 bg-white text-blue-700 hover:bg-blue-50 font-black text-xs rounded-2xl shadow-lg transition-all transform hover:scale-105 cursor-pointer border-none flex items-center gap-2 z-10"
+                      >
+                        <Mic size={15} className="text-blue-600 animate-pulse" />
+                        <span>Speak with AI Assistant →</span>
+                      </button>
                     </div>
 
-                    <button
-                      onClick={() => {
-                        setShowForm(true);
-                        setStep(1);
-                      }}
-                      className="w-12 h-12 rounded-full bg-white/15 hover:bg-white/25 text-white flex items-center justify-center transition-all transform hover:scale-105 cursor-pointer border-none shadow-md shrink-0 z-10"
-                      title="Broadcast Request"
-                    >
-                      <ChevronRight size={24} className="text-white" />
-                    </button>
+                    {/* Broadcast Request Banner Card */}
+                    <div className="bg-[#0F141C] text-white rounded-3xl p-6 shadow-xl relative overflow-hidden flex items-center justify-between gap-4">
+                      <div className="space-y-1.5 z-10">
+                        <h2 className="text-xl sm:text-2xl font-black text-white tracking-tight">
+                          Need a repair?
+                        </h2>
+                        <p className="text-xs text-slate-300 font-medium leading-relaxed max-w-[200px] sm:max-w-xs">
+                          Broadcast your request to local fixers near you manually.
+                        </p>
+                      </div>
+
+                      <button
+                        onClick={() => {
+                          setShowForm(true);
+                          setStep(1);
+                        }}
+                        className="w-12 h-12 rounded-full bg-white/15 hover:bg-white/25 text-white flex items-center justify-center transition-all transform hover:scale-105 cursor-pointer border-none shadow-md shrink-0 z-10"
+                        title="Broadcast Request"
+                      >
+                        <ChevronRight size={24} className="text-white" />
+                      </button>
+                    </div>
                   </div>
 
                   {/* 4. "Explore Fixvo Services" Grid (4 Columns, Fixvo Blue Theme) */}
@@ -1912,6 +1997,26 @@ const UserDashboard = () => {
           </div>
         ))}
       </div>
+
+      {/* Floating AI Assistant Launcher FAB */}
+      <button
+        onClick={() => setShowAiModal(true)}
+        title="Open Fixvo AI Assistant"
+        className="fixed bottom-6 right-6 z-40 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white p-3.5 sm:px-5 sm:py-3.5 rounded-full shadow-2xl hover:shadow-blue-600/50 flex items-center gap-2.5 transition-all transform hover:scale-105 cursor-pointer border-2 border-white/30 group"
+      >
+        <Sparkles className="w-5 h-5 text-amber-300 animate-pulse group-hover:rotate-12 transition-transform" />
+        <span className="hidden sm:inline font-extrabold text-xs tracking-tight">Fixvo AI Assistant</span>
+      </button>
+
+      {/* Fixvo AI Assistant Modal */}
+      <FixvoAiAssistantModal
+        isOpen={showAiModal}
+        onClose={() => setShowAiModal(false)}
+        userProfile={profile}
+        savedAddresses={addresses}
+        onApplyDraftToForm={handleApplyDraftToForm}
+        onConfirmBooking={handleConfirmBookingFromAi}
+      />
     </div>
   );
 };
