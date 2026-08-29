@@ -599,53 +599,160 @@ const resendVerification = async (req, res) => {
   }
 };
 
-// @desc    Google OAuth Login / Sign up
+// @desc    Google OAuth Login / Sign up (Real Google Verification)
 // @route   POST /api/auth/google
 // @access  Public
 const googleAuth = async (req, res) => {
   try {
-    const { email, name, googleId, avatar } = req.body;
-    if (!email) {
-      return res.status(400).json({ message: 'Google authentication failed: Email address is required.' });
+    const { credential, idToken, accessToken } = req.body;
+    const tokenToVerify = credential || idToken;
+
+    let googleUser = null;
+
+    // 1. Verify via Google OAuth2 Client if ID Token / Credential provided
+    if (tokenToVerify) {
+      try {
+        const { OAuth2Client } = require('google-auth-library');
+        const googleClientId = process.env.GOOGLE_CLIENT_ID || process.env.VITE_GOOGLE_CLIENT_ID;
+        const client = new OAuth2Client(googleClientId);
+
+        const ticket = await client.verifyIdToken({
+          idToken: tokenToVerify,
+          audience: googleClientId ? [googleClientId] : undefined
+        });
+        const payload = ticket.getPayload();
+        if (payload && payload.email) {
+          googleUser = {
+            googleId: payload.sub,
+            email: payload.email.toLowerCase(),
+            name: payload.name || payload.given_name || payload.email.split('@')[0],
+            avatar: payload.picture || '👤',
+            emailVerified: payload.email_verified
+          };
+        }
+      } catch (clientErr) {
+        console.warn('google-auth-library verification fallback:', clientErr.message);
+        // Fallback: Verify directly via Google's tokeninfo API
+        try {
+          const response = await fetch(`https://oauth2.googleapis.com/tokeninfo?id_token=${tokenToVerify}`);
+          const data = await response.json();
+          if (data && data.email && !data.error) {
+            googleUser = {
+              googleId: data.sub,
+              email: data.email.toLowerCase(),
+              name: data.name || data.email.split('@')[0],
+              avatar: data.picture || '👤',
+              emailVerified: data.email_verified === 'true' || data.email_verified === true
+            };
+          }
+        } catch (apiErr) {
+          console.error('Google tokeninfo API error:', apiErr.message);
+        }
+      }
+    } else if (accessToken) {
+      // Verify via Google UserInfo API using Access Token
+      try {
+        const response = await fetch('https://www.googleapis.com/oauth2/v3/userinfo', {
+          headers: { Authorization: `Bearer ${accessToken}` }
+        });
+        const data = await response.json();
+        if (data && data.email && !data.error) {
+          googleUser = {
+            googleId: data.sub,
+            email: data.email.toLowerCase(),
+            name: data.name || data.given_name || data.email.split('@')[0],
+            avatar: data.picture || '👤',
+            emailVerified: data.email_verified
+          };
+        }
+      } catch (userinfoErr) {
+        console.error('Google userinfo API error:', userinfoErr.message);
+      }
     }
 
-    let user = await User.findOne({ email });
+    if (!googleUser || !googleUser.email) {
+      return res.status(401).json({ 
+        message: 'Google authentication verification failed. Invalid or expired token.' 
+      });
+    }
+
+    const { email, name, googleId, avatar } = googleUser;
+
+    // 2. Resolve or Link Fixvo Account (Zero Duplicate Accounts)
+    let user = await User.findOne({ 
+      $or: [
+        { googleId: googleId },
+        { email: email }
+      ]
+    });
+
     if (!user) {
-      // Create user registered via Google OAuth
-      const randomPass = Math.random().toString(36).slice(-10) + 'A1!';
+      // Create new customer account with default 'user' role
+      const crypto = require('crypto');
+      const randomPassword = crypto.randomBytes(24).toString('hex') + 'A1!';
       const salt = await bcrypt.genSalt(10);
-      const hashedPassword = await bcrypt.hash(randomPass, salt);
+      const hashedPassword = await bcrypt.hash(randomPassword, salt);
 
       user = await User.create({
-        name: name || email.split('@')[0],
-        email,
-        phone: '99999' + Math.floor(10000 + Math.random() * 90000).toString(),
+        name: name,
+        email: email,
+        googleId: googleId,
+        authProvider: 'google',
         password: hashedPassword,
-        role: 'user',
+        role: 'user', // Default role is strictly customer
         isEmailVerified: true,
         isPhoneVerified: false,
         avatar: avatar || '👤'
       });
+
+      // Create matching Customer Profile
+      const CustomerProfile = require('../models/CustomerProfile');
+      await CustomerProfile.create({
+        userId: user._id.toString(),
+        name: user.name,
+        email: user.email,
+        avatar: user.avatar || '👤',
+        address: ''
+      });
+
     } else {
+      // Link Google ID and verify email if not already set
+      let modified = false;
+      if (!user.googleId) {
+        user.googleId = googleId;
+        user.authProvider = 'google';
+        modified = true;
+      }
       if (!user.isEmailVerified) {
         user.isEmailVerified = true;
+        modified = true;
+      }
+      if (avatar && (!user.avatar || user.avatar === '👤')) {
+        user.avatar = avatar;
+        modified = true;
+      }
+      if (modified) {
         await user.save();
       }
     }
 
+    // 3. Issue genuine Fixvo JWT Session Token with existing DB role
     const token = generateToken(user._id, user.role, user.email);
+
     res.json({
       _id: user._id,
       name: user.name,
       email: user.email,
-      phone: user.phone,
-      role: user.role,
+      phone: user.phone || null,
+      role: user.role, // Derived strictly from verified DB record
       isEmailVerified: user.isEmailVerified,
       isPhoneVerified: user.isPhoneVerified,
+      avatar: user.avatar,
       token,
     });
   } catch (error) {
-    res.status(500).json({ message: error.message || 'Google login processing failed.' });
+    console.error('Google Auth Controller Exception:', error);
+    res.status(500).json({ message: error.message || 'Google sign-in processing failed.' });
   }
 };
 
