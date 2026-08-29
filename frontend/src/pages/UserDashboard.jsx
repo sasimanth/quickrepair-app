@@ -2016,6 +2016,8 @@ const UserDashboard = () => {
         savedAddresses={addresses}
         onApplyDraftToForm={handleApplyDraftToForm}
         onConfirmBooking={handleConfirmBookingFromAi}
+        onOpenChat={(bId) => setChatBookingId(bId)}
+        onOpenWallet={() => switchTab('wallet')}
       />
     </div>
   );
