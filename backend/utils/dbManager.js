@@ -123,24 +123,20 @@ const cleanTestData = async () => {
 
 // 3. Complete seed runner
 const seedAll = async () => {
-  await connect();
   console.log('\n🌱 Running Full Production Baseline Seeding...');
-  
-  // Seed Services
-  const seedServices = require('../seedServices');
-  // Seed Legal Documents
   const { execSync } = require('child_process');
-  console.log('Seeding Services Catalog & Categories...');
-  execSync('node seedServices.js', { cwd: require('path').resolve(__dirname, '..'), stdio: 'inherit' });
+  const backendDir = require('path').resolve(__dirname, '..');
 
-  console.log('Seeding Legal Documents & Terms...');
-  execSync('node seedLegal.js', { cwd: require('path').resolve(__dirname, '..'), stdio: 'inherit' });
+  console.log('1. Seeding Services Catalog & Categories...');
+  execSync('node seedServices.js', { cwd: backendDir, stdio: 'inherit' });
 
-  console.log('Checking Admin Account...');
-  execSync('node seedAdmin.js', { cwd: require('path').resolve(__dirname, '..'), stdio: 'inherit' });
+  console.log('\n2. Seeding Legal Documents & Terms...');
+  execSync('node seedLegal.js', { cwd: backendDir, stdio: 'inherit' });
 
-  console.log('✨ All baseline production seeds completed!\n');
-  await mongoose.disconnect();
+  console.log('\n3. Checking / Seeding Admin Account...');
+  execSync('node seedAdmin.js', { cwd: backendDir, stdio: 'inherit' });
+
+  console.log('\n✨ All baseline production seeds completed!\n');
 };
 
 // 4. Force Index Synchronization
