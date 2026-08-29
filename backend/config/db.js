@@ -27,6 +27,14 @@ const connectDB = async () => {
     });
 
     console.log(`✅ MongoDB Atlas Connected Successfully: ${conn.connection.host}`);
+
+    // Ensure indexes are synchronized safely
+    try {
+      const User = require('../models/User');
+      await User.syncIndexes();
+    } catch (syncErr) {
+      console.warn('⚠️ Index sync notice:', syncErr.message);
+    }
     
   } catch (error) {
     console.error(`❌ MongoDB Atlas Connection Error: ${error.message}`);

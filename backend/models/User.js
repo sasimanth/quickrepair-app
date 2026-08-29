@@ -11,13 +11,10 @@ const userSchema = new mongoose.Schema({
     unique: true
   },
   phone: {
-    type: String,
-    sparse: true
+    type: String
   },
   googleId: {
-    type: String,
-    unique: true,
-    sparse: true
+    type: String
   },
   authProvider: {
     type: String,
@@ -70,9 +67,7 @@ const userSchema = new mongoose.Schema({
     default: 'user'
   },
   referralCode: {
-    type: String,
-    unique: true,
-    sparse: true
+    type: String
   },
   walletBalance: {
     type: Number,
@@ -121,5 +116,30 @@ const userSchema = new mongoose.Schema({
     totalSaved: { type: Number, default: 0 }
   }
 }, { timestamps: true });
+
+// Ensure unique index only applies when phone is a non-empty string
+userSchema.index(
+  { phone: 1 },
+  {
+    unique: true,
+    partialFilterExpression: { phone: { $type: 'string', $gt: '' } }
+  }
+);
+
+userSchema.index(
+  { googleId: 1 },
+  {
+    unique: true,
+    partialFilterExpression: { googleId: { $type: 'string', $gt: '' } }
+  }
+);
+
+userSchema.index(
+  { referralCode: 1 },
+  {
+    unique: true,
+    partialFilterExpression: { referralCode: { $type: 'string', $gt: '' } }
+  }
+);
 
 module.exports = mongoose.model('User', userSchema);
