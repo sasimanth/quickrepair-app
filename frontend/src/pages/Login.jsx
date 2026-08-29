@@ -290,10 +290,10 @@ const Login = () => {
           type="button"
           onClick={() => {
             setError('');
-            const clientId = import.meta.env.VITE_GOOGLE_CLIENT_ID;
-            if (!clientId || clientId.includes('dummy')) {
-              setError('Google Client ID is missing. Please set VITE_GOOGLE_CLIENT_ID in your frontend/.env file.');
-              return;
+            const clientId = (import.meta.env.VITE_GOOGLE_CLIENT_ID || '').trim();
+            if (!clientId && !import.meta.env.PROD) {
+              // Only alert if completely missing
+              console.warn('VITE_GOOGLE_CLIENT_ID not loaded in env, using fallback');
             }
             googleLogin();
           }}

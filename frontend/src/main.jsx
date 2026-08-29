@@ -75,7 +75,7 @@ class ErrorBoundary extends Component {
 
 import { GoogleOAuthProvider } from '@react-oauth/google';
 
-const googleClientId = import.meta.env.VITE_GOOGLE_CLIENT_ID || '1058223635741-dummyclientid.apps.googleusercontent.com';
+const googleClientId = (import.meta.env.VITE_GOOGLE_CLIENT_ID || '').trim() || '232674695663-poi562drcj2t6s6usrh84vbbnrn7maib.apps.googleusercontent.com';
 
 createRoot(document.getElementById('root')).render(
   <StrictMode>
