@@ -205,6 +205,10 @@ const updateProfile = async (req, res) => {
       };
     }
 
+    const { name, phone } = req.body;
+    if (name) updateFields.name = name;
+    if (phone) updateFields.phone = phone;
+
     if (tech) {
       Object.assign(tech, updateFields);
       await tech.save();
@@ -212,11 +216,20 @@ const updateProfile = async (req, res) => {
       const user = await User.findById(req.user.id);
       tech = await Technician.create({
         userId: req.user.id,
-        name: user ? user.name : 'Unknown Tech',
+        name: name || (user ? user.name : 'Unknown Tech'),
         email: user ? user.email : '',
-        phone: user ? user.phone : '',
+        phone: phone || (user ? user.phone : ''),
         ...updateFields
       });
+    }
+
+    // Also update User record so auth login reflects updated details
+    const user = await User.findById(req.user.id);
+    if (user) {
+      if (name) user.name = name;
+      if (phone) user.phone = phone;
+      if (avatar) user.avatar = avatar;
+      await user.save();
     }
 
     res.json(tech);
@@ -234,42 +247,51 @@ const getNearbyTechnicians = async (req, res) => {
       isOnline: true
     };
 
-    if (search) {
-      const searchRegex = new RegExp(search.trim(), 'i');
+    const term = (search || area || '').trim();
+    if (term) {
+      const searchRegex = new RegExp(term, 'i');
       query.$or = [
         { name: searchRegex },
         { area: searchRegex },
+        { address: searchRegex },
         { skills: searchRegex },
         { services: searchRegex }
       ];
-    } else {
-      if (area) {
-        // Area match (case-insensitive)
-        query.area = { $regex: new RegExp(`^${area}$`, 'i') };
-      }
-      if (serviceId) {
-        query.services = serviceId;
-      }
+    }
+    if (serviceId) {
+      query.services = serviceId;
     }
 
     let techs = await Technician.find(query).limit(30);
     
     techs.sort((a, b) => {
-      return b.rating - a.rating;
+      return (b.rating || 0) - (a.rating || 0);
     });
 
-    const formattedTechs = techs.slice(0, 10).map((tech, i) => ({
-      id: tech.userId,
+    // Deduplicate by userId
+    const seen = new Set();
+    const uniqueTechs = [];
+    for (const tech of techs) {
+      const uid = tech.userId ? tech.userId.toString() : tech._id.toString();
+      if (!seen.has(uid)) {
+        seen.add(uid);
+        uniqueTechs.push(tech);
+      }
+    }
+
+    const formattedTechs = uniqueTechs.slice(0, 12).map((tech) => ({
+      id: tech.userId ? tech.userId.toString() : tech._id.toString(),
+      _id: tech.userId ? tech.userId.toString() : tech._id.toString(),
       name: tech.name,
-      rating: tech.rating.toFixed(1),
-      experience: tech.experience,
-      distance: tech.area || (area ? 'In your area' : 'Nearby'),
-      jobsCompleted: tech.jobsCompleted,
-      isVerified: tech.isVerified,
-      avatar: tech.avatar,
-      skills: tech.skills,
-      area: tech.area,
-      services: tech.services
+      rating: (tech.rating || 4.8).toFixed(1),
+      experience: tech.experience || '3+ Years',
+      distance: tech.area || (term ? 'In your area' : 'Nearby'),
+      jobsCompleted: tech.jobsCompleted || 0,
+      isVerified: tech.isVerified || false,
+      avatar: tech.avatar || '👨‍🔧',
+      skills: tech.skills || [],
+      area: tech.area || '',
+      services: tech.services || []
     }));
 
     res.json(formattedTechs);

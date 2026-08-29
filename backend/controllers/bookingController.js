@@ -691,6 +691,19 @@ const processPayment = async (req, res) => {
       // Credit technician's wallet upon completed payment
       await updateTechnicianWallet(updatedBooking);
 
+      // Reward customer 10% loyalty points
+      if (booking.userId) {
+        try {
+          const User = require('../models/User');
+          const customer = await User.findById(booking.userId);
+          if (customer) {
+            const pointsEarned = Math.round((booking.finalQuote || booking.amount || 0) * 0.10);
+            customer.rewardPoints = (customer.rewardPoints || 0) + pointsEarned;
+            await customer.save();
+          }
+        } catch (e) {}
+      }
+
       if (booking.providerEmail) {
         notifyUser({
           userId: booking.providerId,

@@ -73,6 +73,19 @@ const verifyPayment = async (req, res) => {
             await tech.save();
           }
         }
+
+        // Reward customer 10% loyalty points on completed payment
+        if (booking.userId) {
+          try {
+            const User = require('../models/User');
+            const customer = await User.findById(booking.userId);
+            if (customer) {
+              const pointsEarned = Math.round((booking.finalQuote || booking.amount || 0) * 0.10);
+              customer.rewardPoints = (customer.rewardPoints || 0) + pointsEarned;
+              await customer.save();
+            }
+          } catch (e) {}
+        }
       }
 
       return res.json({ success: true, message: 'Payment verified successfully.' });

@@ -1,19 +1,44 @@
-import React, { useState } from 'react';
-import { X, CreditCard, ShieldCheck, Loader2, Coins } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { X, CreditCard, ShieldCheck, Loader2, Coins, Sparkles, CheckSquare, Square } from 'lucide-react';
 import api from '../services/api';
 
 const PaymentModal = ({ booking, onClose, onSuccess }) => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
   const [selectedMethod, setSelectedMethod] = useState('online'); // 'online' or 'cash'
+  const [walletBalance, setWalletBalance] = useState(0);
+  const [useFixvoCash, setUseFixvoCash] = useState(false);
+
+  useEffect(() => {
+    const fetchWallet = async () => {
+      try {
+        const { data } = await api.get('/users/wallet-balance');
+        if (data && data.walletBalance) {
+          setWalletBalance(data.walletBalance);
+        }
+      } catch (e) {
+        // Fallback to localStorage user if available
+        try {
+          const u = JSON.parse(localStorage.getItem('user') || '{}');
+          if (u.walletBalance) setWalletBalance(u.walletBalance);
+        } catch (err) {}
+      }
+    };
+    fetchWallet();
+  }, []);
   
-  let amount = booking.finalQuote ? booking.finalQuote : (booking.serviceOption === 'inspection' 
+  let baseAmount = booking.finalQuote ? booking.finalQuote : (booking.serviceOption === 'inspection' 
     ? (booking.serviceId?.price || 0) + (booking.inspectionFee || 15) 
     : (booking.serviceId?.price || 0));
 
   if (booking.discountPercentage && booking.discountPercentage > 0) {
-    amount = amount - (amount * booking.discountPercentage / 100);
+    baseAmount = baseAmount - (baseAmount * booking.discountPercentage / 100);
   }
+
+  // Calculate fixvo cash discount
+  const maxCashDiscount = Math.min(walletBalance, Math.floor(baseAmount * 0.5)); // Max 50% discount using fixvo cash
+  const appliedCashDiscount = useFixvoCash ? maxCashDiscount : 0;
+  const amount = Math.max(1, Math.round(baseAmount - appliedCashDiscount));
 
   const handleRazorpayPayment = async () => {
     setLoading(true);
@@ -120,11 +145,45 @@ const PaymentModal = ({ booking, onClose, onSuccess }) => {
 
           {/* Amount Display */}
           <div className="text-center space-y-2">
-            <p className="text-slate-500 font-medium">Total Amount Due</p>
-            <p className="text-5xl font-extrabold text-slate-900">₹{amount}</p>
-            <p className="text-sm font-medium text-slate-400">for {booking.serviceId?.name || booking.serviceName || 'Device Repair'}</p>
+            <p className="text-slate-500 font-medium text-xs">Total Amount Due</p>
+            <div className="flex items-center justify-center gap-2">
+              {useFixvoCash && appliedCashDiscount > 0 && (
+                <span className="text-2xl font-bold text-slate-400 line-through">₹{baseAmount}</span>
+              )}
+              <p className="text-5xl font-extrabold text-slate-900">₹{amount}</p>
+            </div>
+            <p className="text-xs font-medium text-slate-400">for {booking.serviceId?.name || booking.serviceName || 'Device Repair'}</p>
             {booking.discountPercentage > 0 && (
-              <p className="text-emerald-600 font-bold text-sm mt-1">✓ {booking.discountPercentage}% Discount Applied</p>
+              <p className="text-emerald-600 font-bold text-xs mt-1">✓ {booking.discountPercentage}% Discount Applied</p>
+            )}
+
+            {/* Fixvo Cash Wallet Deduction Box */}
+            {walletBalance > 0 && (
+              <div 
+                onClick={() => setUseFixvoCash(!useFixvoCash)}
+                className={`mt-3 p-3.5 rounded-2xl border transition-all cursor-pointer flex items-center justify-between text-left ${
+                  useFixvoCash ? 'bg-amber-50/80 border-amber-300 text-amber-950 shadow-xs' : 'bg-slate-50 border-slate-200 text-slate-700 hover:border-slate-300'
+                }`}
+              >
+                <div className="flex items-center gap-3">
+                  <div className={`p-2 rounded-xl ${useFixvoCash ? 'bg-amber-500 text-white' : 'bg-slate-200 text-slate-600'}`}>
+                    <Sparkles size={16} />
+                  </div>
+                  <div>
+                    <div className="flex items-center gap-1.5">
+                      <p className="text-xs font-black">Use Fixvo Cash Balance</p>
+                      <span className="text-[10px] bg-amber-200/60 text-amber-900 px-2 py-0.5 rounded-md font-bold">Avail: ₹{walletBalance}</span>
+                    </div>
+                    <p className="text-[10px] text-slate-500 font-medium mt-0.5">
+                      {useFixvoCash ? `Applied ₹${appliedCashDiscount} instant discount` : `Save up to ₹${maxCashDiscount} on this bill`}
+                    </p>
+                  </div>
+                </div>
+
+                <div className="text-amber-600">
+                  {useFixvoCash ? <CheckSquare size={20} className="fill-amber-500 text-white" /> : <Square size={20} className="text-slate-400" />}
+                </div>
+              </div>
             )}
           </div>
 

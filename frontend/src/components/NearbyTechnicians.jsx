@@ -34,13 +34,24 @@ const NearbyTechnicians = () => {
     { id: 'tech_7', _id: 'tech_7', name: "Prasad Raju", rating: 4.8, jobsCompleted: 290, area: "Galiveedu", isVerified: true, isOnline: true, defaultServiceId: "mobile_repair", experience: "3 Years", skills: ["Mobile Repair", "Screen Fix", "Battery Replacement"], avatar: "https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?q=80&w=200&auto=format&fit=crop" },
   ];
 
+  // Deduplicate array helper
+  const deduplicate = (arr) => {
+    const seen = new Set();
+    return arr.filter(item => {
+      const key = item.id || item._id || item.userId || item.name;
+      if (seen.has(key)) return false;
+      seen.add(key);
+      return true;
+    });
+  };
+
   // Fetch technicians based on search query and selected service
   const fetchTechnicians = async () => {
     setLoading(true);
     try {
       const params = new URLSearchParams();
       if (searchQuery.trim()) {
-        params.append('area', searchQuery.trim());
+        params.append('search', searchQuery.trim());
       }
       if (selectedServiceId) {
         params.append('serviceId', selectedServiceId);
@@ -48,7 +59,7 @@ const NearbyTechnicians = () => {
       
       const res = await api.get(`/technicians/nearby?${params.toString()}`);
       if (res.data && res.data.length > 0) {
-        setTechnicians(res.data);
+        setTechnicians(deduplicate(res.data));
       } else {
         filterLocalTechnicians();
       }
@@ -60,15 +71,19 @@ const NearbyTechnicians = () => {
   };
 
   const filterLocalTechnicians = () => {
-    let list = localTechniciansPool;
+    let list = [...localTechniciansPool];
     if (searchQuery.trim()) {
       const q = searchQuery.toLowerCase().trim();
-      list = list.filter(t => t.area.toLowerCase().includes(q) || t.name.toLowerCase().includes(q) || (t.skills && t.skills.some(s => s.toLowerCase().includes(q))));
+      list = list.filter(t => 
+        (t.area && t.area.toLowerCase().includes(q)) || 
+        (t.name && t.name.toLowerCase().includes(q)) || 
+        (t.skills && t.skills.some(s => s.toLowerCase().includes(q)))
+      );
     }
     if (selectedServiceId) {
-      list = list.filter(t => t.defaultServiceId === selectedServiceId);
+      list = list.filter(t => t.defaultServiceId === selectedServiceId || (t.services && t.services.includes(selectedServiceId)));
     }
-    setTechnicians(list);
+    setTechnicians(deduplicate(list));
   };
 
   // Debounce search input to avoid hitting API continuously

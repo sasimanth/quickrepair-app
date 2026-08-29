@@ -95,6 +95,15 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
+  const updateUser = (updatedData) => {
+    setUser(prev => {
+      const merged = { ...prev, ...updatedData };
+      localStorage.setItem('user', JSON.stringify(merged));
+      setSession(s => (s ? { ...s, user: merged } : { token: localStorage.getItem('token'), user: merged }));
+      return merged;
+    });
+  };
+
   const logout = async () => {
     await authLogout();
     setUser(null);
@@ -103,7 +112,7 @@ export const AuthProvider = ({ children }) => {
   };
 
   return (
-    <AuthContext.Provider value={{ session, user, setUser, logout, loading, loginUser }}>
+    <AuthContext.Provider value={{ session, user, setUser, updateUser, logout, loading, loginUser }}>
       {children}
     </AuthContext.Provider>
   );

@@ -738,13 +738,13 @@ const TechnicianDashboard = () => {
     { id: 'reviews', label: 'Ratings & Reviews', icon: Star },
     { id: 'notifications', label: 'Notifications', icon: Bell },
     { id: 'support', label: 'Help & Support', icon: HelpCircle },
-    { id: 'menu', label: 'Menu / Chapters', icon: Menu },
+    { id: 'menu', label: profile?.name ? profile.name.split(' ')[0] : 'Account', icon: User },
   ];
 
   return (
     <div className="min-h-screen bg-slate-50 text-slate-900 font-sans pb-24 select-none">
       
-      {/* Sleek Header without Tech Name Bar */}
+      {/* Sleek Header with ONLY Active / Deactive Toggle Button */}
       <header className="sticky top-0 z-40 bg-white border-b border-slate-200 shadow-xs px-4 sm:px-8 py-3.5 flex items-center justify-between">
         <div className="flex items-center gap-3">
           <Link to="/" className="flex items-center gap-2 group">
@@ -760,9 +760,8 @@ const TechnicianDashboard = () => {
           </Link>
         </div>
 
-        {/* Header Action Switches & Logout */}
-        <div className="flex items-center gap-2.5">
-          {/* Active / Deactive Availability Switch */}
+        {/* Top Bar: ONLY Active / Deactive Switch */}
+        <div className="flex items-center">
           {(() => {
             const status = profile?.currentStatus || (profile?.isOnline ? 'online' : 'offline');
             const isOnline = status === 'online' || status === 'available';
@@ -771,7 +770,7 @@ const TechnicianDashboard = () => {
               <button
                 onClick={status === 'on_job' ? null : toggleOnlineStatus}
                 disabled={status === 'on_job'}
-                className={`flex items-center gap-2 px-3.5 py-2 rounded-full text-xs font-black uppercase tracking-wider border transition-all cursor-pointer shadow-xs ${
+                className={`flex items-center gap-2 px-4 py-2 rounded-full text-xs font-black uppercase tracking-wider border transition-all cursor-pointer shadow-xs ${
                   isOnline 
                     ? 'bg-emerald-500 text-white border-emerald-600 shadow-emerald-500/20' 
                     : 'bg-slate-100 text-slate-600 border-slate-300'
@@ -783,31 +782,6 @@ const TechnicianDashboard = () => {
               </button>
             );
           })()}
-
-          <button
-            onClick={() => fetchJobs(true)}
-            disabled={refreshing}
-            className="p-2.5 text-slate-600 hover:text-slate-900 bg-slate-100 hover:bg-slate-200 rounded-full border border-slate-200 transition cursor-pointer"
-            title="Refresh Dashboard"
-          >
-            <RefreshCw size={16} className={refreshing ? 'animate-spin text-blue-600' : ''} />
-          </button>
-
-          <button
-            onClick={() => setShowSettings(true)}
-            className="p-2.5 text-slate-600 hover:text-slate-900 bg-slate-100 hover:bg-slate-200 rounded-full border border-slate-200 transition cursor-pointer"
-            title="Account Settings"
-          >
-            <Settings size={16} />
-          </button>
-
-          <button
-            onClick={handleLogout}
-            className="p-2.5 text-rose-600 hover:text-rose-700 bg-rose-50 hover:bg-rose-100 rounded-full border border-rose-200 transition cursor-pointer"
-            title="Sign Out"
-          >
-            <LogOut size={16} />
-          </button>
         </div>
       </header>
 
@@ -1008,30 +982,35 @@ const TechnicianDashboard = () => {
                   <p className="text-xs text-slate-500 mt-1 font-semibold">Manage incoming job requests, active repairs, quote proposals, and completed history</p>
                 </div>
 
-                {/* Filter subtabs */}
-                <div className="flex border-b border-slate-100 gap-1 pt-1 overflow-x-auto scrollbar-none">
+                {/* Responsive Filter subtabs (All 5 visible without side scrolling) */}
+                <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-2 p-1.5 bg-slate-100/90 rounded-2xl border border-slate-200/70">
                   {[
                     { id: 'new', label: 'New Requests', count: jobs.filter(j => ['pending', 'assigned', 'queued'].includes(j.status)).length },
                     { id: 'active', label: 'Active Jobs', count: jobs.filter(j => ['accepted', 'on_the_way', 'arrived', 'inspection_started', 'quote_approved', 'in_progress'].includes(j.status)).length },
                     { id: 'quote_pending', label: 'Quote Proposals', count: jobs.filter(j => ['quote_pending', 'quote_clarification', 'quote_rejected'].includes(j.status)).length },
                     { id: 'completed', label: 'Completed History', count: jobs.filter(j => j.status === 'completed').length },
                     { id: 'cancelled', label: 'Cancelled Jobs', count: jobs.filter(j => ['cancelled', 'rejected'].includes(j.status)).length }
-                  ].map(tab => (
-                    <button
-                      key={tab.id}
-                      onClick={() => setJobTab(tab.id)}
-                      className={`px-4 py-2.5 text-xs font-bold uppercase tracking-wider transition-all border-b-2 whitespace-nowrap outline-none cursor-pointer border-none bg-transparent flex items-center gap-1.5 ${
-                        jobTab === tab.id
-                          ? 'border-blue-600 text-blue-600 font-extrabold'
-                          : 'border-transparent text-slate-500 hover:text-slate-900'
-                      }`}
-                    >
-                      <span>{tab.label}</span>
-                      <span className={`px-2 py-0.5 rounded-full text-[9px] font-black ${
-                        jobTab === tab.id ? 'bg-blue-50 text-blue-700 border border-blue-200' : 'bg-slate-100 text-slate-600'
-                      }`}>{tab.count}</span>
-                    </button>
-                  ))}
+                  ].map(tab => {
+                    const isSelected = jobTab === tab.id;
+                    return (
+                      <button
+                        key={tab.id}
+                        onClick={() => setJobTab(tab.id)}
+                        className={`px-3 py-2.5 rounded-xl text-xs font-extrabold transition-all cursor-pointer border-none outline-none flex items-center justify-between gap-1 shadow-xs ${
+                          isSelected
+                            ? 'bg-blue-600 text-white shadow-md shadow-blue-600/20'
+                            : 'bg-white hover:bg-slate-50 text-slate-700'
+                        }`}
+                      >
+                        <span className="truncate">{tab.label}</span>
+                        <span className={`px-2 py-0.5 rounded-full text-[10px] font-black shrink-0 ${
+                          isSelected ? 'bg-white/25 text-white' : 'bg-slate-100 text-slate-600'
+                        }`}>
+                          {tab.count}
+                        </span>
+                      </button>
+                    );
+                  })}
                 </div>
 
                 {filteredJobs.length === 0 ? (
@@ -1444,74 +1423,124 @@ const TechnicianDashboard = () => {
               </div>
             )}
 
-            {/* 7. MENU TAB (Urban Company Style Account Menu) */}
+            {/* 7. PROFILE & MENU TAB (Real App Header: Name & Mobile Number at top, Module Title below) */}
             {activeSubTab === 'menu' && (
               <div className="space-y-6 animate-in fade-in duration-300">
-                <div className="pb-4 border-b border-slate-100 flex justify-between items-center">
-                  <div>
-                    <h2 className="text-xl sm:text-2xl font-black tracking-tight text-slate-900 flex items-center gap-2">
-                      <Menu className="text-blue-600" /> Account Menu & Services
-                    </h2>
-                    <p className="text-xs text-slate-500 mt-1 font-semibold">Access all dashboard sections, tools, credentials, and settings</p>
-                  </div>
-                  <button
-                    onClick={() => setShowSettings(true)}
-                    className="px-3.5 py-1.5 bg-blue-50 text-blue-700 hover:bg-blue-100 border border-blue-200 font-bold text-xs rounded-xl flex items-center gap-1.5 cursor-pointer"
-                  >
-                    <Settings size={14} /> Profile
-                  </button>
-                </div>
-
-                {/* Menu List Cards */}
-                <div className="space-y-3">
-                  {[
-                    { id: 'jobs', title: 'Repair Requests & Orders', desc: 'Incoming jobs, active route, quote proposals, completed history', icon: Briefcase, color: 'text-blue-600 bg-blue-50 border-blue-200' },
-                    { id: 'earnings', title: 'Wallet & Bank Payouts', desc: 'Gross earnings, platform fees, instant bank withdrawal', icon: Wallet, color: 'text-emerald-600 bg-emerald-50 border-emerald-200' },
-                    { id: 'reviews', title: 'Ratings & Performance Score', desc: '★ 4.9 customer rating score and review feedback', icon: Star, color: 'text-amber-600 bg-amber-50 border-amber-200' },
-                    { id: 'notifications', title: 'Notification Center & Alerts', desc: 'Push alert settings, lock screen sound chimes, alert log', icon: Bell, color: 'text-purple-600 bg-purple-50 border-purple-200' },
-                    { id: 'support', title: 'Partner Support & Guidelines', desc: '24/7 technician hotline, commission rules, guidelines', icon: HelpCircle, color: 'text-blue-600 bg-blue-50 border-blue-200' },
-                    { id: 'settings', title: 'Account Settings & Identity', desc: 'Update skills, service areas, experience, and profile', icon: Settings, color: 'text-slate-700 bg-slate-100 border-slate-200', isModal: true },
-                    { id: 'logout', title: 'Sign Out / Logout', desc: 'Securely log out of your technician account', icon: LogOut, color: 'text-rose-600 bg-rose-50 border-rose-200', isLogout: true }
-                  ].map((ch) => {
-                    const IconComp = ch.icon;
-                    return (
-                      <div
-                        key={ch.id}
-                        onClick={() => {
-                          if (ch.isLogout) {
-                            handleLogout();
-                          } else if (ch.isModal) {
-                            setShowSettings(true);
-                          } else {
-                            setActiveSubTab(ch.id);
-                          }
-                        }}
-                        className={`p-4 sm:p-5 rounded-2xl flex items-center justify-between gap-4 cursor-pointer transition-all duration-200 group border ${
-                          ch.isLogout 
-                            ? 'bg-rose-50/60 border-rose-200 hover:border-rose-300 hover:bg-rose-100/60' 
-                            : 'bg-white border-slate-200/90 hover:border-blue-300 hover:shadow-md'
-                        }`}
-                      >
-                        <div className="flex items-center gap-4">
-                          <div className={`p-3 rounded-2xl border ${ch.color} shrink-0 group-hover:scale-105 transition-transform`}>
-                            <IconComp size={20} />
-                          </div>
-                          <div>
-                            <h3 className="font-extrabold text-slate-900 text-sm group-hover:text-blue-600 transition-colors">{ch.title}</h3>
-                            <p className="text-xs text-slate-500 font-medium mt-0.5">{ch.desc}</p>
-                          </div>
+                
+                {/* Top Real App Profile Card */}
+                <div className="bg-gradient-to-br from-slate-900 via-slate-800 to-blue-950 p-6 sm:p-8 rounded-[2.5rem] text-white shadow-xl relative overflow-hidden">
+                    <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-5">
+                      <div className="flex items-center gap-4">
+                        <div className="w-16 h-16 sm:w-20 sm:h-20 rounded-3xl bg-blue-600/30 border-2 border-blue-400/40 backdrop-blur-md flex items-center justify-center text-2xl sm:text-3xl shadow-inner shrink-0">
+                          {profile?.avatar || '👨‍🔧'}
                         </div>
-                        <ChevronRight size={18} className="text-slate-400 group-hover:text-blue-600 group-hover:translate-x-1 transition-all" />
+                        <div>
+                          <div className="flex items-center gap-2">
+                            <h2 className="text-xl sm:text-2xl font-black text-white tracking-tight">
+                              {profile?.name || 'Certified Technician'}
+                            </h2>
+                            <span className="text-[10px] bg-emerald-500 text-white font-black px-2.5 py-0.5 rounded-full uppercase tracking-wider">
+                              {profile?.isOnline ? 'Online' : 'Offline'}
+                            </span>
+                          </div>
+                          <p className="text-xs sm:text-sm font-bold text-blue-200 mt-1 flex items-center gap-1.5">
+                            <PhoneCall size={14} className="text-blue-400" />
+                            <span>{profile?.phone || 'Add phone number in settings'}</span>
+                          </p>
+                          <p className="text-xs text-slate-400 font-medium mt-0.5">
+                            {profile?.email || 'technician@fixvo.com'}
+                          </p>
+                        </div>
                       </div>
-                    );
-                  })}
-                </div>
-              </div>
-            )}
 
+                      <button
+                        onClick={() => setShowSettings(true)}
+                        className="px-5 py-2.5 bg-white/10 hover:bg-white/20 border border-white/20 text-white rounded-2xl text-xs font-extrabold cursor-pointer transition-all flex items-center gap-2 backdrop-blur-xs"
+                      >
+                        <Settings size={14} />
+                        <span>Edit Profile</span>
+                      </button>
+                    </div>
+
+                    <div className="flex flex-wrap gap-4 text-xs text-slate-300 font-bold border-t border-white/10 pt-4 mt-6">
+                      <div>
+                        <span className="text-[10px] text-slate-400 font-semibold block uppercase">Wallet Balance</span>
+                        <strong className="text-white text-base">₹{(profile?.walletBalance || 0).toFixed(0)}</strong>
+                      </div>
+                      <div className="border-l border-white/10 pl-4">
+                        <span className="text-[10px] text-slate-400 font-semibold block uppercase">Rating Score</span>
+                        <strong className="text-amber-400 text-base">★ {profile?.rating || '4.9'}</strong>
+                      </div>
+                      <div className="border-l border-white/10 pl-4">
+                        <span className="text-[10px] text-slate-400 font-semibold block uppercase">Completed Jobs</span>
+                        <strong className="text-emerald-400 text-base">{jobs.filter(j => j.status === 'completed').length} Jobs</strong>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Module Title */}
+                  <div className="pb-2 border-b border-slate-100 flex justify-between items-center">
+                    <div>
+                      <h3 className="text-lg font-black tracking-tight text-slate-900 flex items-center gap-2">
+                        <Menu className="text-blue-600" /> Technician Services & Settings
+                      </h3>
+                      <p className="text-xs text-slate-500 font-semibold">Access jobs, earnings, KYC verification, tools, and profile</p>
+                    </div>
+                  </div>
+
+                  {/* Menu List Cards */}
+                  <div className="space-y-3">
+                    {[
+                      { id: 'jobs', title: 'Repair Requests & Orders', desc: 'Incoming jobs, active route, quote proposals, completed history', icon: Briefcase, color: 'text-blue-600 bg-blue-50 border-blue-200' },
+                      { id: 'earnings', title: 'Wallet & Bank Payouts', desc: `Available Balance: ₹${(profile?.walletBalance || 0).toFixed(0)} • Instant bank withdrawal`, icon: Wallet, color: 'text-emerald-600 bg-emerald-50 border-emerald-200' },
+                      { id: 'reviews', title: 'Ratings & Performance Score', desc: `★ ${profile?.rating || '4.9'} customer rating score and review feedback`, icon: Star, color: 'text-amber-600 bg-amber-50 border-amber-200' },
+                      { id: 'kyc', title: 'KYC & Verification Documents', desc: `Status: ${profile?.isKycVerified ? 'Verified Pro Partner ✅' : 'Under Review / Pending ⏳'}`, icon: ShieldCheck, color: 'text-blue-600 bg-blue-50 border-blue-200', isKycModal: true },
+                      { id: 'notifications', title: 'Notification Center & Alerts', desc: 'Push alert settings, lock screen sound chimes, alert log', icon: Bell, color: 'text-purple-600 bg-purple-50 border-purple-200' },
+                      { id: 'support', title: 'Partner Support & Guidelines', desc: '24/7 technician hotline, commission rules, guidelines', icon: HelpCircle, color: 'text-blue-600 bg-blue-50 border-blue-200' },
+                      { id: 'settings', title: 'Account Settings & Identity', desc: 'Update skills, service areas, experience, and profile', icon: Settings, color: 'text-slate-700 bg-slate-100 border-slate-200', isModal: true },
+                      { id: 'logout', title: 'Sign Out / Logout', desc: 'Securely log out of your technician account', icon: LogOut, color: 'text-rose-600 bg-rose-50 border-rose-200', isLogout: true }
+                    ].map((ch) => {
+                      const IconComp = ch.icon;
+                      return (
+                        <div
+                          key={ch.id}
+                          onClick={() => {
+                            if (ch.isLogout) {
+                              handleLogout();
+                            } else if (ch.isKycModal) {
+                              setShowKyc(true);
+                            } else if (ch.isModal) {
+                              setShowSettings(true);
+                            } else {
+                              setActiveSubTab(ch.id);
+                            }
+                          }}
+                          className={`p-4 sm:p-5 rounded-2xl flex items-center justify-between gap-4 cursor-pointer transition-all duration-200 group border ${
+                            ch.isLogout 
+                              ? 'bg-rose-50/60 border-rose-200 hover:border-rose-300 hover:bg-rose-100/60' 
+                              : 'bg-white border-slate-200/90 hover:border-blue-300 hover:shadow-md'
+                          }`}
+                        >
+                          <div className="flex items-center gap-4">
+                            <div className={`p-3 rounded-2xl border ${ch.color} shrink-0 group-hover:scale-105 transition-transform`}>
+                              <IconComp size={20} />
+                            </div>
+                            <div>
+                              <h3 className="font-extrabold text-slate-900 text-sm group-hover:text-blue-600 transition-colors">{ch.title}</h3>
+                              <p className="text-xs text-slate-500 font-medium mt-0.5">{ch.desc}</p>
+                            </div>
+                          </div>
+                          <ChevronRight size={18} className="text-slate-400 group-hover:text-blue-600 group-hover:translate-x-1 transition-all" />
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+              )}
+
+            </div>
           </div>
         </div>
-      </div>
 
       {/* Sleek Mobile Bottom App Navigation Bar (Urban Company Mobile App Layout) */}
       <nav className="md:hidden fixed bottom-0 left-0 right-0 bg-white border-t border-slate-200 py-2 px-4 flex justify-around items-center z-50 shadow-lg">
@@ -1519,7 +1548,7 @@ const TechnicianDashboard = () => {
           { id: 'overview', label: 'Home', icon: Home },
           { id: 'jobs', label: 'Jobs', icon: Briefcase },
           { id: 'earnings', label: 'Earnings', icon: Wallet },
-          { id: 'menu', label: 'Menu', icon: Menu }
+          { id: 'menu', label: profile?.name ? profile.name.split(' ')[0] : 'Account', icon: User }
         ].map(nav => {
           const IconComp = nav.icon;
           const isActive = activeSubTab === nav.id;

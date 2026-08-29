@@ -126,6 +126,30 @@ const initialDocuments = [
       <p>If you encounter safety issues, fraud attempts, or violations of these guidelines, please report them immediately to <strong>support@fixvo.in</strong> or use the in-app help center. We take all reports seriously and investigate promptly.</p>
     `,
     version: 1
+  },
+  {
+    type: 'cancellation_policy',
+    title: 'Cancellation Policy',
+    content: `
+      <h2>1. Free Cancellation Window</h2>
+      <p>Customers may cancel any home service or repair booking free of charge up until the moment a technician accepts the job and initiates transit ("En Route"). You can cancel directly from your User Dashboard with a single tap.</p>
+      
+      <h2>2. Late Cancellation Dispatch Charges</h2>
+      <p>If a booking is cancelled after the technician is already en route or has arrived at your registered service address, a standard dispatch and travel fee of ₹99 will apply. This fee directly compensates the independent service professional for fuel costs, time, and travel allocation.</p>
+      
+      <h2>3. Rescheduling Bookings</h2>
+      <p>You can reschedule your booking time slot free of charge up to 2 hours prior to the scheduled start window. Rescheduling within 2 hours of technician dispatch may be treated as a late cancellation if the technician is already in transit.</p>
+      
+      <h2>4. Technician-Initiated Cancellations</h2>
+      <p>In rare instances where an assigned technician encounters an emergency, severe traffic delay, or safety concern and must cancel the job, Fixvo will immediately reassign your booking to another top-rated technician nearby. If no suitable technician is available or if you decline the reassignment, any pre-paid amounts will be refunded in full automatically.</p>
+      
+      <h2>5. Abusive Cancellation Patterns</h2>
+      <p>To prevent platform fraud and protect technician livelihoods, accounts exhibiting repetitive suspicious cancellations (e.g. 5+ consecutive en-route cancellations) may be subjected to temporary booking restrictions or upfront deposit requirements.</p>
+
+      <h2>6. Contact & Support</h2>
+      <p>For questions or assistance regarding cancellations, contact our customer operations team at <strong>fixvosupport@gmail.com</strong> or via phone at <strong>+91 95159 80170</strong>.</p>
+    `,
+    version: 1
   }
 ];
 

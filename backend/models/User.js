@@ -73,6 +73,10 @@ const userSchema = new mongoose.Schema({
     type: Number,
     default: 0
   },
+  rewardPoints: {
+    type: Number,
+    default: 0
+  },
   isPremium: {
     type: Boolean,
     default: false

@@ -1,10 +1,12 @@
 import React, { useState, useEffect } from 'react';
 import { X, Save, Camera, MapPin, User, Phone, CheckCircle, Shield, Briefcase, Loader2 } from 'lucide-react';
 import api from '../services/api';
+import { useAuth } from '../contexts/AuthContext';
 import SearchableServiceSelector from './SearchableServiceSelector';
 import SearchableAreaSelector from './SearchableAreaSelector';
 
 const SettingsModal = ({ role, currentProfile, onClose, onSuccess }) => {
+  const { updateUser } = useAuth();
   const [formData, setFormData] = useState({
     name: '',
     phone: '',
@@ -46,11 +48,21 @@ const SettingsModal = ({ role, currentProfile, onClose, onSuccess }) => {
         payload.skills = Array.isArray(formData.skills) ? formData.skills : [];
       }
       
-      await api.put(endpoint, payload);
+      const { data: updatedProfile } = await api.put(endpoint, payload);
+      
+      if (updateUser) {
+        updateUser({
+          name: formData.name,
+          phone: formData.phone,
+          avatar: formData.avatar,
+          address: formData.address
+        });
+      }
+
       setSuccessMsg('Profile updated successfully!');
       setTimeout(() => {
-        onSuccess(); // Close and refresh
-      }, 1200);
+        onSuccess(updatedProfile); // Close and refresh
+      }, 1000);
     } catch (error) {
       console.error(error);
       setErrorMsg(error.response?.data?.message || 'Failed to save profile settings');

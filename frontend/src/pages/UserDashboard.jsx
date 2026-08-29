@@ -24,6 +24,8 @@ import WalletView from '../components/WalletView';
 import ReferralView from '../components/ReferralView';
 import RewardsView from '../components/RewardsView';
 import HelpSupportView from '../components/HelpSupportView';
+import InvoiceModal from '../components/InvoiceModal';
+import WarrantyModal from '../components/WarrantyModal';
 import fixvoLogo from '../assets/logos/fixvo-app-icon-dark.png';
 
 const formatPhoneLink = (phone) => {
@@ -99,6 +101,8 @@ const UserDashboard = () => {
   const [filterTab, setFilterTab] = useState('all');
   const [expandedBookings, setExpandedBookings] = useState({});
   const toggleExpand = (id) => setExpandedBookings(prev => ({ ...prev, [id]: !prev[id] }));
+  const [invoiceBooking, setInvoiceBooking] = useState(null);
+  const [warrantyBooking, setWarrantyBooking] = useState(null);
 
   const [profileForm, setProfileForm] = useState({
     name: '',
@@ -730,7 +734,7 @@ const UserDashboard = () => {
     { id: 'referral', label: 'Refer & Earn', icon: User },
     { id: 'notifications', label: 'Notifications', icon: Bell },
     { id: 'support', label: 'Help & Support', icon: HelpCircle },
-    { id: 'menu', label: 'Menu & Account', icon: Menu },
+    { id: 'menu', label: profile?.name ? profile.name.split(' ')[0] : 'Account', icon: User },
   ];
 
   // Helper component to render quote approval card
@@ -1630,6 +1634,23 @@ const UserDashboard = () => {
 
                                 {b.status === 'completed' && (
                                   <div className="pt-1 space-y-2">
+                                    {/* Action row: Invoice & Warranty */}
+                                    <div className="grid grid-cols-2 gap-2">
+                                      <button
+                                        onClick={() => setInvoiceBooking(b)}
+                                        className="w-full bg-slate-900 hover:bg-black text-white font-extrabold py-2.5 rounded-xl text-xs uppercase tracking-wider cursor-pointer border-none shadow-xs flex items-center justify-center gap-1.5 transition-all"
+                                      >
+                                        <FileText size={14} className="text-blue-400" /> Invoice
+                                      </button>
+
+                                      <button
+                                        onClick={() => setWarrantyBooking(b)}
+                                        className="w-full bg-amber-50 hover:bg-amber-100 border border-amber-300 text-amber-900 font-extrabold py-2.5 rounded-xl text-xs uppercase tracking-wider cursor-pointer shadow-xs flex items-center justify-center gap-1.5 transition-all"
+                                      >
+                                        <ShieldCheck size={14} className="text-amber-600" /> Warranty
+                                      </button>
+                                    </div>
+
                                     {b.isReviewed ? (
                                       <div className="flex items-center justify-center gap-1.5 py-2.5 bg-amber-50 text-amber-800 border border-amber-200 rounded-xl text-xs font-extrabold">
                                         <Star size={14} className="fill-amber-400 text-amber-500" /> Reviewed ⭐
@@ -1710,7 +1731,17 @@ const UserDashboard = () => {
 
               {/* REWARDS TAB */}
               {activeSubTab === 'rewards' && (
-                <RewardsView />
+                <RewardsView 
+                  profile={profile} 
+                  onPointsConverted={(resData) => {
+                    setProfile(prev => ({
+                      ...prev,
+                      walletBalance: resData.walletBalance,
+                      rewardPoints: resData.rewardPoints
+                    }));
+                    fetchData(false);
+                  }}
+                />
               )}
 
               {/* REFERRAL TAB */}
@@ -1723,15 +1754,70 @@ const UserDashboard = () => {
                 <HelpSupportView />
               )}
 
-              {/* MENU TAB (Clean Urban Company Style Account Menu without Chapter numbers) */}
+              {/* PROFILE & MENU TAB (Real App Header: Name & Mobile Number at top, Module Title below) */}
               {activeSubTab === 'menu' && (
                 <div className="space-y-6 animate-in fade-in duration-300">
-                  <div className="pb-4 border-b border-slate-100 flex justify-between items-center">
+                  
+                  {/* Top Real App Profile Card */}
+                  <div className="bg-gradient-to-br from-slate-900 via-slate-800 to-indigo-950 p-6 sm:p-8 rounded-[2.5rem] text-white shadow-xl relative overflow-hidden">
+                    <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-5">
+                      <div className="flex items-center gap-4">
+                        <div className="w-16 h-16 sm:w-20 sm:h-20 rounded-3xl bg-blue-600/30 border-2 border-blue-400/40 backdrop-blur-md flex items-center justify-center text-2xl sm:text-3xl shadow-inner shrink-0">
+                          {profile?.avatar || '👤'}
+                        </div>
+                        <div>
+                          <div className="flex items-center gap-2">
+                            <h2 className="text-xl sm:text-2xl font-black text-white tracking-tight">
+                              {profile?.name || user?.name || 'Customer Account'}
+                            </h2>
+                            {profile?.isPremium && (
+                              <span className="text-[10px] bg-amber-400 text-slate-950 font-black px-2.5 py-0.5 rounded-full uppercase tracking-wider">
+                                VIP PLUS
+                              </span>
+                            )}
+                          </div>
+                          <p className="text-xs sm:text-sm font-bold text-blue-200 mt-1 flex items-center gap-1.5">
+                            <PhoneCall size={14} className="text-blue-400" />
+                            <span>{profile?.phone || user?.phone || 'Add phone number in settings'}</span>
+                          </p>
+                          <p className="text-xs text-slate-400 font-medium mt-0.5">
+                            {profile?.email || user?.email || 'customer@fixvo.com'}
+                          </p>
+                        </div>
+                      </div>
+
+                      <button
+                        onClick={() => setShowSettings(true)}
+                        className="px-5 py-2.5 bg-white/10 hover:bg-white/20 border border-white/20 text-white rounded-2xl text-xs font-extrabold cursor-pointer transition-all flex items-center gap-2 backdrop-blur-xs"
+                      >
+                        <Settings size={14} />
+                        <span>Edit Profile</span>
+                      </button>
+                    </div>
+
+                    <div className="flex flex-wrap gap-4 text-xs text-slate-300 font-bold border-t border-white/10 pt-4 mt-6">
+                      <div>
+                        <span className="text-[10px] text-slate-400 font-semibold block uppercase">Wallet Fixvo Cash</span>
+                        <strong className="text-white text-base">₹{(profile?.walletBalance || 0).toFixed(0)}</strong>
+                      </div>
+                      <div className="border-l border-white/10 pl-4">
+                        <span className="text-[10px] text-slate-400 font-semibold block uppercase">Loyalty Points</span>
+                        <strong className="text-amber-400 text-base">{profile?.rewardPoints || 0} Pts</strong>
+                      </div>
+                      <div className="border-l border-white/10 pl-4">
+                        <span className="text-[10px] text-slate-400 font-semibold block uppercase">Saved Places</span>
+                        <strong className="text-blue-300 text-base">{safeAddresses.length} Addresses</strong>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Module Title */}
+                  <div className="pb-2 border-b border-slate-100 flex justify-between items-center">
                     <div>
-                      <h2 className="text-xl sm:text-2xl font-black tracking-tight text-slate-900 flex items-center gap-2">
-                        <Menu className="text-blue-600" /> Account Menu & Services
-                      </h2>
-                      <p className="text-xs text-slate-500 mt-1 font-semibold">Access all service bookings, wallet, rewards, addresses, and account settings</p>
+                      <h3 className="text-lg font-black tracking-tight text-slate-900 flex items-center gap-2">
+                        <Menu className="text-blue-600" /> Account & Services
+                      </h3>
+                      <p className="text-xs text-slate-500 font-semibold">Manage bookings, addresses, wallet, loyalty perks and support</p>
                     </div>
                   </div>
 
@@ -1742,7 +1828,7 @@ const UserDashboard = () => {
                       { id: 'booking-form', title: 'Book a New Service', desc: 'Instant repair booking for home appliances, electrical, plumbing', icon: Wrench, color: 'text-indigo-600 bg-indigo-50 border-indigo-200', isAction: true },
                       { id: 'become-tech', title: 'Become a Technician (Earn With Us)', desc: 'Join Fixvo as a verified pro partner and earn daily payouts', icon: Briefcase, color: 'text-emerald-700 bg-emerald-50 border-emerald-200', isLink: '/technician-agreement' },
                       { id: 'wallet', title: 'Wallet & Fixvo Cash', desc: `Available Balance: ₹${Number(profile?.walletBalance || 0).toFixed(0)} • Cashback & transactions`, icon: CreditCard, color: 'text-emerald-600 bg-emerald-50 border-emerald-200' },
-                      { id: 'rewards', title: 'Rewards & Promo Vouchers', desc: 'Active coupons, reward points, and special discounts', icon: Sparkles, color: 'text-amber-600 bg-amber-50 border-amber-200' },
+                      { id: 'rewards', title: 'Rewards & Promo Vouchers', desc: `Active coupons, ${profile?.rewardPoints || 0} loyalty points, and special discounts`, icon: Sparkles, color: 'text-amber-600 bg-amber-50 border-amber-200' },
                       { id: 'addresses', title: 'Saved Addresses', desc: `${safeAddresses.length} saved addresses (Home, Work, Service locations)`, icon: MapPin, color: 'text-rose-600 bg-rose-50 border-rose-200' },
                       { id: 'referral', title: 'Refer & Earn Rewards', desc: 'Invite friends and earn ₹100 Fixvo cash per referral', icon: User, color: 'text-purple-600 bg-purple-50 border-purple-200' },
                       { id: 'support', title: 'Customer Help & Support', desc: '24/7 support hotline, FAQs, raise ticket', icon: HelpCircle, color: 'text-blue-600 bg-blue-50 border-blue-200' },
@@ -1800,7 +1886,7 @@ const UserDashboard = () => {
           { id: 'bookings', label: 'Bookings', icon: Calendar },
           { id: 'book', label: 'Book', icon: Plus, isAction: true },
           { id: 'wallet', label: 'Wallet', icon: CreditCard },
-          { id: 'menu', label: 'Menu', icon: Menu }
+          { id: 'menu', label: profile?.name ? profile.name.split(' ')[0] : 'Account', icon: User }
         ].map(nav => {
           const IconComp = nav.icon;
           const isActive = activeSubTab === nav.id;
@@ -1886,6 +1972,25 @@ const UserDashboard = () => {
             setReviewBooking(null);
             fetchData(false);
             showToast("Review Submitted ⭐", "Thank you for your rating!", "success");
+          }}
+        />
+      )}
+
+      {invoiceBooking && (
+        <InvoiceModal
+          booking={invoiceBooking}
+          onClose={() => setInvoiceBooking(null)}
+        />
+      )}
+
+      {warrantyBooking && (
+        <WarrantyModal
+          booking={warrantyBooking}
+          onClose={() => setWarrantyBooking(null)}
+          onSuccess={() => {
+            setWarrantyBooking(null);
+            fetchData(false);
+            showToast("Warranty Claim Submitted 🛡️", "Free warranty rework scheduled with top technician priority.", "success");
           }}
         />
       )}

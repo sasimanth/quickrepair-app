@@ -84,12 +84,12 @@ const Footer = () => {
               {/* Direct Contact Cards */}
               <div className="grid gap-2.5 max-w-md">
                 <a
-                  href="mailto:support@fixvo.com"
+                  href="mailto:fixvosupport@gmail.com"
                   className="group flex items-center justify-between rounded-xl border border-slate-800 bg-slate-900/90 px-4 py-3 text-slate-300 transition-all hover:border-slate-700 hover:text-white"
                 >
                   <span className="flex items-center gap-3">
                     <Mail size={16} className="text-sky-400" />
-                    <span className="text-xs font-bold">support@fixvo.com</span>
+                    <span className="text-xs font-bold">fixvosupport@gmail.com</span>
                   </span>
                   <ArrowUpRight size={14} className="text-slate-500 group-hover:text-white" />
                 </a>
