@@ -6,6 +6,10 @@
   "scripts": {
     "start": "node server.js",
     "dev": "nodemon server.js",
+    "db:explore": "node utils/dbManager.js explore",
+    "db:clean": "node utils/dbManager.js clean",
+    "db:seed": "node utils/dbManager.js seed",
+    "db:sync": "node utils/dbManager.js sync",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "keywords": [],

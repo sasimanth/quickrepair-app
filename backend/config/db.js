@@ -20,18 +20,32 @@ const connectDB = async () => {
       console.warn("⚠️ WARNING: No live Atlas URI found in .env! Connecting to local database instead.");
     }
 
-    // Atlas connections require strict stability checks for AWS/GCP drops
+    // Atlas connections require strict stability checks and pooling for AWS/GCP drops
     const conn = await mongoose.connect(uri || 'mongodb://127.0.0.1:27017/fixvo', {
-      serverSelectionTimeoutMS: 10000, // Keep trying to send operations for 10 seconds
-      socketTimeoutMS: 45000,          // Close sockets after 45 seconds of inactivity
+      maxPoolSize: 20,                 // Up to 20 concurrent socket connections
+      minPoolSize: 5,                  // Maintain 5 hot sockets for low latency
+      serverSelectionTimeoutMS: 10000, // Keep trying to discover nodes for 10s
+      socketTimeoutMS: 45000,          // Close inactive sockets after 45s
+      heartbeatFrequencyMS: 10000,     // Node heartbeat health checks
     });
 
     console.log(`✅ MongoDB Atlas Connected Successfully: ${conn.connection.host}`);
 
-    // Ensure indexes are synchronized safely
+    // Ensure essential indexes are synchronized safely across models
     try {
-      const User = require('../models/User');
-      await User.syncIndexes();
+      const models = [
+        require('../models/User'),
+        require('../models/Technician'),
+        require('../models/Booking'),
+        require('../models/CustomerProfile'),
+        require('../models/Review'),
+        require('../models/Notification'),
+        require('../models/Message'),
+        require('../models/DeviceSession'),
+        require('../models/PushSubscription'),
+        require('../models/LegalDocument')
+      ];
+      await Promise.all(models.map(m => m.syncIndexes ? m.syncIndexes().catch(() => {}) : Promise.resolve()));
     } catch (syncErr) {
       console.warn('⚠️ Index sync notice:', syncErr.message);
     }
