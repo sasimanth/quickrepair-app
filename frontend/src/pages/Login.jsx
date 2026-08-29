@@ -290,6 +290,11 @@ const Login = () => {
           type="button"
           onClick={() => {
             setError('');
+            const clientId = import.meta.env.VITE_GOOGLE_CLIENT_ID;
+            if (!clientId || clientId.includes('dummy')) {
+              setError('Google Client ID is missing. Please set VITE_GOOGLE_CLIENT_ID in your frontend/.env file.');
+              return;
+            }
             googleLogin();
           }}
           disabled={loading || googleLoading}
