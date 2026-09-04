@@ -7,7 +7,7 @@ import SearchableServiceSelector from '../components/SearchableServiceSelector';
 import SearchableAreaSelector from '../components/SearchableAreaSelector';
 import { subscribeToPushNotifications } from '../services/pushNotification';
 import { requestFcmPermission } from '../services/firebase';
-import { Calendar, MapPin, Smartphone, AlertCircle, Clock, CheckCircle, PackageSearch, XCircle, Plus, LayoutDashboard, Wrench, Settings, Star, User, ChevronRight, MessageSquare, Camera, UploadCloud, Loader2, Shield, ShieldCheck, HelpCircle, Truck, Home, Search, Eye, Zap, Maximize2, Hash, Layers, Paintbrush, Tv, X, CreditCard, Sparkles, PhoneCall, Bell, Copy, Share2, Trash2, Edit, CheckSquare, RefreshCw, Menu, Laptop, Tablet, Gamepad2, Watch, Wifi, BatteryCharging, Activity, Droplet, Video, Wind, Snowflake, ChevronDown, ChevronUp, Code, LogOut, Briefcase, Mic, FileText } from 'lucide-react';
+import { Calendar, MapPin, Smartphone, AlertCircle, Clock, CheckCircle, PackageSearch, XCircle, Plus, LayoutDashboard, Wrench, Settings, Star, User, ChevronRight, MessageSquare, Camera, UploadCloud, Loader2, Shield, ShieldCheck, HelpCircle, Truck, Home, Search, Eye, Zap, Maximize2, Hash, Layers, Paintbrush, Tv, X, CreditCard, Sparkles, PhoneCall, Bell, Copy, Share2, Trash2, Edit, CheckSquare, RefreshCw, Menu, Laptop, Tablet, Gamepad2, Watch, Wifi, BatteryCharging, Activity, Droplet, Video, Wind, Snowflake, ChevronDown, ChevronUp, Code, LogOut, Briefcase, Mic, FileText, ClipboardList, Headphones, Gift, Compass } from 'lucide-react';
 import ChatModal from '../components/ChatModal';
 import ReviewModal from '../components/ReviewModal';
 import PaymentModal from '../components/PaymentModal';
@@ -734,7 +734,7 @@ const UserDashboard = () => {
     { id: 'referral', label: 'Refer & Earn', icon: User },
     { id: 'notifications', label: 'Notifications', icon: Bell },
     { id: 'support', label: 'Help & Support', icon: HelpCircle },
-    { id: 'menu', label: profile?.name ? profile.name.split(' ')[0] : 'Account', icon: User },
+    { id: 'menu', label: 'Account', icon: User },
   ];
 
   // Helper component to render quote approval card
@@ -1754,125 +1754,219 @@ const UserDashboard = () => {
                 <HelpSupportView />
               )}
 
-              {/* PROFILE & MENU TAB (Real App Header: Name & Mobile Number at top, Module Title below) */}
-              {activeSubTab === 'menu' && (
-                <div className="space-y-6 animate-in fade-in duration-300">
-                  
-                  {/* Top Real App Profile Card */}
-                  <div className="bg-gradient-to-br from-slate-900 via-slate-800 to-indigo-950 p-6 sm:p-8 rounded-[2.5rem] text-white shadow-xl relative overflow-hidden">
-                    <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-5">
-                      <div className="flex items-center gap-4">
-                        <div className="w-16 h-16 sm:w-20 sm:h-20 rounded-3xl bg-blue-600/30 border-2 border-blue-400/40 backdrop-blur-md flex items-center justify-center text-2xl sm:text-3xl shadow-inner shrink-0">
-                          {profile?.avatar || '👤'}
-                        </div>
-                        <div>
-                          <div className="flex items-center gap-2">
-                            <h2 className="text-xl sm:text-2xl font-black text-white tracking-tight">
-                              {profile?.name || authUser?.name || 'Customer Account'}
-                            </h2>
-                            {profile?.isPremium && (
-                              <span className="text-[10px] bg-amber-400 text-slate-950 font-black px-2.5 py-0.5 rounded-full uppercase tracking-wider">
-                                VIP PLUS
-                              </span>
-                            )}
+              {/* ACCOUNT MODULE (Urban Company reference layout with Fixvo features) */}
+              {activeSubTab === 'menu' && (() => {
+                const isProfileComplete = Boolean(
+                  profile?.name && 
+                  (profile?.phone || authUser?.phone) && 
+                  (profile?.address || profile?.location || safeAddresses.length > 0)
+                );
+
+                const displayPhone = profile?.phone || authUser?.phone || '+91 95159 80170';
+                const displayName = profile?.name || authUser?.name || 'Verified Customer';
+
+                return (
+                  <div className="max-w-xl mx-auto space-y-5 animate-in fade-in duration-300 pb-16 text-left">
+                    
+                    {/* Top Header Card */}
+                    <div className="bg-white rounded-3xl p-5 sm:p-6 border border-slate-200/80 shadow-xs">
+                      <div className="flex items-center justify-between">
+                        {isProfileComplete ? (
+                          <div className="inline-flex items-center gap-1.5 px-3 py-1 bg-emerald-50 text-emerald-700 border border-emerald-200/80 rounded-full text-xs font-bold">
+                            <span className="w-2 h-2 rounded-full bg-emerald-500"></span>
+                            <span>Verified Customer</span>
                           </div>
-                          <p className="text-xs sm:text-sm font-bold text-blue-200 mt-1 flex items-center gap-1.5">
-                            <PhoneCall size={14} className="text-blue-400" />
-                            <span>{profile?.phone || authUser?.phone || 'Add phone number in settings'}</span>
-                          </p>
-                          <p className="text-xs text-slate-400 font-medium mt-0.5">
-                            {profile?.email || authUser?.email || 'customer@fixvo.com'}
-                          </p>
-                        </div>
-                      </div>
+                        ) : (
+                          <div className="inline-flex items-center gap-1.5 px-3 py-1 bg-rose-50 text-rose-600 border border-rose-200/80 rounded-full text-xs font-bold">
+                            <span className="w-2 h-2 rounded-full bg-rose-500 animate-pulse"></span>
+                            <span>Incomplete profile</span>
+                          </div>
+                        )}
 
-                      <button
-                        onClick={() => setShowSettings(true)}
-                        className="px-5 py-2.5 bg-white/10 hover:bg-white/20 border border-white/20 text-white rounded-2xl text-xs font-extrabold cursor-pointer transition-all flex items-center gap-2 backdrop-blur-xs"
-                      >
-                        <Settings size={14} />
-                        <span>Edit Profile</span>
-                      </button>
-                    </div>
-
-                    <div className="flex flex-wrap gap-4 text-xs text-slate-300 font-bold border-t border-white/10 pt-4 mt-6">
-                      <div>
-                        <span className="text-[10px] text-slate-400 font-semibold block uppercase">Wallet Fixvo Cash</span>
-                        <strong className="text-white text-base">₹{(profile?.walletBalance || 0).toFixed(0)}</strong>
-                      </div>
-                      <div className="border-l border-white/10 pl-4">
-                        <span className="text-[10px] text-slate-400 font-semibold block uppercase">Loyalty Points</span>
-                        <strong className="text-amber-400 text-base">{profile?.rewardPoints || 0} Pts</strong>
-                      </div>
-                      <div className="border-l border-white/10 pl-4">
-                        <span className="text-[10px] text-slate-400 font-semibold block uppercase">Saved Places</span>
-                        <strong className="text-blue-300 text-base">{safeAddresses.length} Addresses</strong>
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* Module Title */}
-                  <div className="pb-2 border-b border-slate-100 flex justify-between items-center">
-                    <div>
-                      <h3 className="text-lg font-black tracking-tight text-slate-900 flex items-center gap-2">
-                        <Menu className="text-blue-600" /> Account & Services
-                      </h3>
-                      <p className="text-xs text-slate-500 font-semibold">Manage bookings, addresses, wallet, loyalty perks and support</p>
-                    </div>
-                  </div>
-
-                  {/* Menu List Cards */}
-                  <div className="space-y-3">
-                    {[
-                      { id: 'bookings', title: 'My Service Bookings', desc: 'Track active repair orders, scheduled visits, completed history', icon: Calendar, color: 'text-blue-600 bg-blue-50 border-blue-200' },
-                      { id: 'booking-form', title: 'Book a New Service', desc: 'Instant repair booking for home appliances, electrical, plumbing', icon: Wrench, color: 'text-indigo-600 bg-indigo-50 border-indigo-200', isAction: true },
-                      { id: 'become-tech', title: 'Become a Technician (Earn With Us)', desc: 'Join Fixvo as a verified pro partner and earn daily payouts', icon: Briefcase, color: 'text-emerald-700 bg-emerald-50 border-emerald-200', isLink: '/technician-agreement' },
-                      { id: 'wallet', title: 'Wallet & Fixvo Cash', desc: `Available Balance: ₹${Number(profile?.walletBalance || 0).toFixed(0)} • Cashback & transactions`, icon: CreditCard, color: 'text-emerald-600 bg-emerald-50 border-emerald-200' },
-                      { id: 'rewards', title: 'Rewards & Promo Vouchers', desc: `Active coupons, ${profile?.rewardPoints || 0} loyalty points, and special discounts`, icon: Sparkles, color: 'text-amber-600 bg-amber-50 border-amber-200' },
-                      { id: 'addresses', title: 'Saved Addresses', desc: `${safeAddresses.length} saved addresses (Home, Work, Service locations)`, icon: MapPin, color: 'text-rose-600 bg-rose-50 border-rose-200' },
-                      { id: 'referral', title: 'Refer & Earn Rewards', desc: 'Invite friends and earn ₹100 Fixvo cash per referral', icon: User, color: 'text-purple-600 bg-purple-50 border-purple-200' },
-                      { id: 'support', title: 'Customer Help & Support', desc: '24/7 support hotline, FAQs, raise ticket', icon: HelpCircle, color: 'text-blue-600 bg-blue-50 border-blue-200' },
-                      { id: 'settings', title: 'Account Settings & Profile', desc: 'Update name, phone, email, and personal preferences', icon: Settings, color: 'text-slate-700 bg-slate-100 border-slate-200', isModal: true },
-                      { id: 'logout', title: 'Sign Out / Logout', desc: 'Securely log out of your Fixvo customer account', icon: LogOut, color: 'text-rose-600 bg-rose-50 border-rose-200', isLogout: true }
-                    ].map((ch) => {
-                      const IconComp = ch.icon;
-                      return (
-                        <div
-                          key={ch.id}
-                          onClick={async () => {
-                            if (ch.isLogout) {
-                              await logout();
-                              navigate('/login');
-                            } else if (ch.isLink) {
-                              navigate(ch.isLink);
-                            } else if (ch.isModal) {
-                              setShowSettings(true);
-                            } else if (ch.isAction) {
-                              setShowForm(true);
-                            } else {
-                              switchTab(ch.id);
-                            }
-                          }}
-                          className={`border p-4 sm:p-5 rounded-2xl flex items-center justify-between gap-4 cursor-pointer transition-all duration-200 group ${
-                            ch.isLogout ? 'bg-rose-50/50 border-rose-200 hover:border-rose-300 hover:bg-rose-100/60' : 'bg-white border-slate-200/90 hover:border-blue-300 hover:shadow-md'
-                          }`}
+                        <button
+                          onClick={() => setShowSettings(true)}
+                          className="px-4 py-1.5 border border-slate-900 hover:bg-slate-900 hover:text-white text-slate-900 text-xs font-extrabold rounded-xl transition-all cursor-pointer shadow-2xs"
                         >
-                          <div className="flex items-center gap-4">
-                            <div className={`p-3 rounded-2xl border ${ch.color} shrink-0 group-hover:scale-105 transition-transform`}>
-                              <IconComp size={20} />
+                          {isProfileComplete ? 'Edit' : 'Complete'}
+                        </button>
+                      </div>
+
+                      <div className="mt-4">
+                        <h2 className="text-2xl sm:text-3xl font-black tracking-tight text-slate-900">
+                          {displayName}
+                        </h2>
+                        <p className="text-xs sm:text-sm font-semibold text-slate-500 mt-1 flex items-center gap-2">
+                          <span>{displayPhone}</span>
+                          {profile?.isPremium && (
+                            <span className="bg-amber-100 text-amber-900 text-[10px] font-black px-2 py-0.5 rounded-full uppercase tracking-wider">
+                              VIP PLUS
+                            </span>
+                          )}
+                        </p>
+                      </div>
+
+                      {/* 3 Quick Action Cards */}
+                      <div className="grid grid-cols-3 gap-2.5 sm:gap-3 mt-6">
+                        <button
+                          onClick={() => switchTab('bookings')}
+                          className="bg-white hover:bg-slate-50 rounded-2xl border border-slate-200/90 p-3 sm:p-4 flex flex-col justify-between items-start gap-3 transition-all cursor-pointer text-left shadow-2xs group min-h-[96px]"
+                        >
+                          <div className="w-8 h-8 rounded-xl bg-slate-100 flex items-center justify-center text-slate-800 group-hover:bg-blue-50 group-hover:text-blue-600 transition-colors">
+                            <ClipboardList size={18} />
+                          </div>
+                          <div>
+                            <span className="text-xs sm:text-sm font-bold text-slate-900 block leading-tight">My bookings</span>
+                          </div>
+                        </button>
+
+                        <button
+                          onClick={() => setShowPremiumModal(true)}
+                          className="bg-white hover:bg-slate-50 rounded-2xl border border-slate-200/90 p-3 sm:p-4 flex flex-col justify-between items-start gap-3 transition-all cursor-pointer text-left shadow-2xs group min-h-[96px]"
+                        >
+                          <div className="w-8 h-8 rounded-xl bg-slate-100 flex items-center justify-center text-slate-800 group-hover:bg-indigo-50 group-hover:text-indigo-600 transition-colors">
+                            <Smartphone size={18} />
+                          </div>
+                          <div>
+                            <span className="text-xs sm:text-sm font-bold text-slate-900 block leading-tight">Native devices</span>
+                          </div>
+                        </button>
+
+                        <button
+                          onClick={() => switchTab('support')}
+                          className="bg-white hover:bg-slate-50 rounded-2xl border border-slate-200/90 p-3 sm:p-4 flex flex-col justify-between items-start gap-3 transition-all cursor-pointer text-left shadow-2xs group min-h-[96px]"
+                        >
+                          <div className="w-8 h-8 rounded-xl bg-slate-100 flex items-center justify-center text-slate-800 group-hover:bg-emerald-50 group-hover:text-emerald-600 transition-colors">
+                            <Headphones size={18} />
+                          </div>
+                          <div>
+                            <span className="text-xs sm:text-sm font-bold text-slate-900 block leading-tight">Help & support</span>
+                          </div>
+                        </button>
+                      </div>
+                    </div>
+
+                    {/* Menu Items List */}
+                    <div className="bg-white rounded-3xl p-1.5 sm:p-2 border border-slate-200/80 shadow-xs divide-y divide-slate-100">
+                      {[
+                        { 
+                          id: 'plans', 
+                          title: 'My Plans', 
+                          icon: FileText, 
+                          action: () => setShowPremiumModal(true),
+                          badge: profile?.isPremium ? 'Active' : null 
+                        },
+                        { 
+                          id: 'wallet', 
+                          title: 'Wallet', 
+                          icon: CreditCard, 
+                          action: () => switchTab('wallet'),
+                          extraText: `₹${(profile?.walletBalance || 0).toFixed(0)}` 
+                        },
+                        { 
+                          id: 'membership', 
+                          title: 'Passes & membership', 
+                          icon: Compass, 
+                          action: () => setShowPremiumModal(true) 
+                        },
+                        { 
+                          id: 'rating', 
+                          title: 'My rating', 
+                          icon: Star, 
+                          action: () => switchTab('bookings') 
+                        },
+                        { 
+                          id: 'addresses', 
+                          title: 'Manage addresses', 
+                          icon: MapPin, 
+                          action: () => switchTab('addresses'),
+                          extraText: `${safeAddresses.length} saved` 
+                        },
+                        { 
+                          id: 'payments', 
+                          title: 'Manage payment methods', 
+                          icon: CreditCard, 
+                          action: () => switchTab('wallet') 
+                        },
+                        { 
+                          id: 'settings', 
+                          title: 'Settings', 
+                          icon: Settings, 
+                          action: () => setShowSettings(true) 
+                        },
+                        { 
+                          id: 'about', 
+                          title: 'About Fixvo', 
+                          icon: ShieldCheck, 
+                          action: () => navigate('/terms-and-conditions') 
+                        },
+                      ].map((item) => {
+                        const ItemIcon = item.icon;
+                        return (
+                          <div
+                            key={item.id}
+                            onClick={item.action}
+                            className="py-3.5 px-3 flex items-center justify-between cursor-pointer hover:bg-slate-50/90 rounded-2xl transition-all group"
+                          >
+                            <div className="flex items-center gap-3.5">
+                              <ItemIcon size={19} className="text-slate-800 group-hover:text-blue-600 transition-colors shrink-0 stroke-[1.8]" />
+                              <span className="text-xs sm:text-sm font-bold text-slate-800 group-hover:text-slate-950">
+                                {item.title}
+                              </span>
                             </div>
-                            <div>
-                              <h3 className="font-extrabold text-slate-900 text-sm group-hover:text-blue-600 transition-colors">{ch.title}</h3>
-                              <p className="text-xs text-slate-500 font-medium mt-0.5">{ch.desc}</p>
+                            <div className="flex items-center gap-2">
+                              {item.badge && (
+                                <span className="text-[10px] bg-emerald-100 text-emerald-800 font-black px-2 py-0.5 rounded-full">
+                                  {item.badge}
+                                </span>
+                              )}
+                              {item.extraText && (
+                                <span className="text-xs font-bold text-slate-400">
+                                  {item.extraText}
+                                </span>
+                              )}
+                              <ChevronRight size={17} className="text-slate-400 group-hover:text-slate-900 group-hover:translate-x-0.5 transition-all" />
                             </div>
                           </div>
-                          <ChevronRight size={18} className="text-slate-400 group-hover:text-blue-600 group-hover:translate-x-1 transition-all" />
+                        );
+                      })}
+                    </div>
+
+                    {/* Refer & Earn Promo Card (matching image 4) */}
+                    <div 
+                      onClick={() => switchTab('referral')}
+                      className="bg-gradient-to-r from-purple-50 via-purple-50 to-indigo-50 border border-purple-100/90 rounded-3xl p-4 sm:p-5 flex items-center justify-between cursor-pointer hover:shadow-md transition-all group"
+                    >
+                      <div>
+                        <h4 className="text-sm sm:text-base font-black text-slate-900">Refer & earn ₹50</h4>
+                        <p className="text-xs text-purple-700 font-medium mt-0.5">Invite friends & family to Fixvo</p>
+                      </div>
+                      <div className="w-10 h-10 sm:w-11 sm:h-11 rounded-2xl bg-purple-200/60 text-purple-700 flex items-center justify-center shadow-xs group-hover:scale-110 transition-transform shrink-0">
+                        <Gift size={22} />
+                      </div>
+                    </div>
+
+                    {/* Logout Option */}
+                    <div className="bg-white rounded-3xl p-1.5 border border-slate-200/80 shadow-xs">
+                      <div
+                        onClick={async () => {
+                          await logout();
+                          navigate('/login');
+                        }}
+                        className="py-3 px-3 flex items-center justify-between cursor-pointer hover:bg-rose-50/80 rounded-2xl transition-all group"
+                      >
+                        <div className="flex items-center gap-3.5">
+                          <LogOut size={19} className="text-rose-500 shrink-0 stroke-[1.8]" />
+                          <span className="text-xs sm:text-sm font-bold text-rose-600">
+                            Log out
+                          </span>
                         </div>
-                      );
-                    })}
+                        <ChevronRight size={17} className="text-rose-400 group-hover:translate-x-0.5 transition-all" />
+                      </div>
+                    </div>
+
                   </div>
-                </div>
-              )}
+                );
+              })()}
 
             </div>
           </div>
@@ -1886,7 +1980,7 @@ const UserDashboard = () => {
           { id: 'bookings', label: 'Bookings', icon: Calendar },
           { id: 'book', label: 'Book', icon: Plus, isAction: true },
           { id: 'wallet', label: 'Wallet', icon: CreditCard },
-          { id: 'menu', label: profile?.name ? profile.name.split(' ')[0] : 'Account', icon: User }
+          { id: 'menu', label: 'Account', icon: User }
         ].map(nav => {
           const IconComp = nav.icon;
           const isActive = activeSubTab === nav.id;
@@ -2102,16 +2196,6 @@ const UserDashboard = () => {
           </div>
         ))}
       </div>
-
-      {/* Floating AI Assistant Launcher FAB */}
-      <button
-        onClick={() => setShowAiModal(true)}
-        title="Open Fixvo AI Assistant"
-        className="fixed bottom-6 right-6 z-40 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white p-3.5 sm:px-5 sm:py-3.5 rounded-full shadow-2xl hover:shadow-blue-600/50 flex items-center gap-2.5 transition-all transform hover:scale-105 cursor-pointer border-2 border-white/30 group"
-      >
-        <Sparkles className="w-5 h-5 text-amber-300 animate-pulse group-hover:rotate-12 transition-transform" />
-        <span className="hidden sm:inline font-extrabold text-xs tracking-tight">Fixvo AI Assistant</span>
-      </button>
 
       {/* Fixvo AI Assistant Modal */}
       <FixvoAiAssistantModal
