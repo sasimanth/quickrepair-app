@@ -1461,11 +1461,17 @@ const TechnicianDashboard = () => {
                       </h2>
                       <p className="text-xs sm:text-sm font-semibold text-slate-500 mt-1 flex items-center gap-2">
                         <span>{displayPhone}</span>
-                        <span className={`text-[10px] font-black px-2 py-0.5 rounded-full uppercase tracking-wider ${
-                          profile?.isOnline ? 'bg-emerald-100 text-emerald-800' : 'bg-slate-100 text-slate-600'
-                        }`}>
+                        <button 
+                          onClick={toggleOnlineStatus}
+                          title="Click to toggle Online/Offline"
+                          className={`text-[10px] font-black px-2.5 py-0.5 rounded-full uppercase tracking-wider cursor-pointer border transition-all ${
+                            profile?.isOnline 
+                              ? 'bg-emerald-100 hover:bg-emerald-200 text-emerald-800 border-emerald-300' 
+                              : 'bg-slate-100 hover:bg-slate-200 text-slate-600 border-slate-300'
+                          }`}
+                        >
                           {profile?.isOnline ? '● Online' : '○ Offline'}
-                        </span>
+                        </button>
                       </p>
                     </div>
 
@@ -1520,6 +1526,13 @@ const TechnicianDashboard = () => {
                         extraText: `₹${(profile?.walletBalance || 0).toFixed(0)}` 
                       },
                       { 
+                        id: 'withdraw', 
+                        title: 'Withdraw Money to Bank', 
+                        icon: Coins, 
+                        action: () => setShowWithdrawModal(true),
+                        badge: 'Payout' 
+                      },
+                      { 
                         id: 'reviews', 
                         title: 'Ratings & Performance', 
                         icon: Star, 
@@ -1528,14 +1541,14 @@ const TechnicianDashboard = () => {
                       },
                       { 
                         id: 'notifications', 
-                        title: 'Notification Center', 
+                        title: 'Notification Center & Alerts', 
                         icon: Bell, 
                         action: () => setActiveSubTab('notifications'),
                         badge: notifications.length > 0 ? `${notifications.length} New` : null 
                       },
                       { 
                         id: 'kyc', 
-                        title: 'KYC & Verification', 
+                        title: 'KYC & Verification Documents', 
                         icon: ShieldCheck, 
                         action: () => setShowKyc(true),
                         badge: isKycComplete ? 'Verified' : 'Pending' 
@@ -1547,16 +1560,28 @@ const TechnicianDashboard = () => {
                         action: () => setShowSettings(true) 
                       },
                       { 
+                        id: 'support', 
+                        title: 'Partner Helpline & Support', 
+                        icon: HelpCircle, 
+                        action: () => setActiveSubTab('support') 
+                      },
+                      { 
                         id: 'settings', 
-                        title: 'Settings & Identity', 
+                        title: 'Settings & Profile Identity', 
                         icon: Settings, 
                         action: () => setShowSettings(true) 
                       },
                       { 
                         id: 'terms', 
-                        title: 'Partner Terms & Guidelines', 
+                        title: 'Partner Terms & 90% Commission', 
                         icon: FileText, 
                         action: () => navigate('/technician-agreement') 
+                      },
+                      { 
+                        id: 'about', 
+                        title: 'About Fixvo Partner Network', 
+                        icon: ShieldCheck, 
+                        action: () => navigate('/terms-and-conditions') 
                       },
                     ].map((item) => {
                       const ItemIcon = item.icon;

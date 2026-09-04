@@ -43,32 +43,47 @@ const PaymentModal = ({ booking, onClose, onSuccess }) => {
   const handleRazorpayPayment = async () => {
     setLoading(true);
     setError(null);
+    const targetBookingId = booking._id || booking.id;
     try {
+      // 0. Ensure Razorpay SDK is loaded
+      if (!window.Razorpay) {
+        await new Promise((resolve, reject) => {
+          const script = document.createElement('script');
+          script.src = 'https://checkout.razorpay.com/v1/checkout.js';
+          script.async = true;
+          script.onload = resolve;
+          script.onerror = () => reject(new Error('Failed to load Razorpay SDK'));
+          document.body.appendChild(script);
+        });
+      }
+
       // 1. Create order on backend
       const { data: order } = await api.post('/payment/create-order', {
         amount,
-        bookingId: booking._id
+        bookingId: targetBookingId
       });
       
+      const rzpKey = order.key || order.keyId || import.meta.env.VITE_RAZORPAY_KEY_ID || 'rzp_test_SdKZzH37k0xhIv';
+
       // 2. Configure Razorpay options
       const options = {
-        key: import.meta.env.VITE_RAZORPAY_KEY_ID || 'YOUR_KEY_ID', // Razorpay Test Key
+        key: rzpKey,
         amount: order.amount,
         currency: "INR",
         name: "Fixvo",
-        description: "Service Payment",
-        order_id: order.id,
+        description: `Service Payment - ${booking.serviceName || 'Home Repair'}`,
+        order_id: order.id || order.orderId,
         handler: async function (response) {
           try {
             // 3. Verify Payment
             const verifyRes = await api.post('/payment/verify', {
               ...response,
-              bookingId: booking._id
+              bookingId: targetBookingId
             });
             if (verifyRes.data.success) {
               onSuccess();
             } else {
-              setError("Payment verification failed.");
+              setError(verifyRes.data.message || "Payment verification failed.");
             }
           } catch(err) {
              console.error(err);
@@ -77,7 +92,7 @@ const PaymentModal = ({ booking, onClose, onSuccess }) => {
         },
         prefill: {
           name: booking.name || "Customer Name",
-          email: booking.userEmail || "customer@fixvo.com",
+          email: booking.userEmail || booking.email || "customer@fixvo.com",
           contact: booking.phone || ""
         },
         theme: {
@@ -87,12 +102,13 @@ const PaymentModal = ({ booking, onClose, onSuccess }) => {
 
       const rzp = new window.Razorpay(options);
       rzp.on('payment.failed', function (response){
-         setError(response.error.description);
+         console.warn("Razorpay checkout failed:", response.error);
+         setError(response.error?.description || "Payment failed or was cancelled. You can retry or choose 'Pay in Cash'.");
       });
       rzp.open();
     } catch (err) {
-      console.error(err);
-      setError("Failed to initialize payment gateway.");
+      console.error("Payment initialization error:", err);
+      setError("Failed to initialize payment gateway. Please verify your connection or choose 'Pay in Cash'.");
     }
     setLoading(false);
   };
@@ -100,8 +116,9 @@ const PaymentModal = ({ booking, onClose, onSuccess }) => {
   const handleCashPayment = async () => {
     setLoading(true);
     setError(null);
+    const targetBookingId = booking._id || booking.id;
     try {
-      await api.put(`/bookings/${booking._id}/pay`, { paymentMethod: 'cash', amount });
+      await api.put(`/bookings/${targetBookingId}/pay`, { paymentMethod: 'cash', amount });
       onSuccess();
     } catch (err) {
       console.error(err);

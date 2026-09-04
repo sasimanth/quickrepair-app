@@ -39,7 +39,12 @@ router.post("/create-order", async (req, res) => {
       }
     }
 
-    res.json(order);
+    const keyId = process.env.RAZORPAY_KEY_ID || "rzp_test_SdKZzH37k0xhIv";
+    res.json({
+      ...(typeof order.toObject === 'function' ? order.toObject() : order),
+      key: keyId,
+      keyId: keyId
+    });
   } catch (err) {
     console.log(err); // 👈 Adding this so you can see the exact Razorpay error in your terminal!
     res.status(400).json({ error: "Error creating order", details: err });
@@ -67,7 +72,7 @@ router.post("/verify", async (req, res) => {
 
   const body = razorpay_order_id + "|" + razorpay_payment_id;
   const expectedSignature = crypto
-    .createHmac("sha256", process.env.RAZORPAY_KEY_SECRET || "rzp_secret_change_me")
+    .createHmac("sha256", process.env.RAZORPAY_KEY_SECRET || "QxxpseKMRQaSOa7qQoyeyr69")
     .update(body.toString())
     .digest("hex");
 

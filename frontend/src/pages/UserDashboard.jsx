@@ -1849,28 +1849,43 @@ const UserDashboard = () => {
                     <div className="bg-white rounded-3xl p-1.5 sm:p-2 border border-slate-200/80 shadow-xs divide-y divide-slate-100">
                       {[
                         { 
+                          id: 'book-service', 
+                          title: 'Book a New Service', 
+                          icon: Wrench, 
+                          action: () => setShowForm(true),
+                          badge: 'Book'
+                        },
+                        { 
                           id: 'plans', 
-                          title: 'My Plans', 
+                          title: 'My Plans & Fixvo Protect', 
                           icon: FileText, 
                           action: () => setShowPremiumModal(true),
                           badge: profile?.isPremium ? 'Active' : null 
                         },
                         { 
                           id: 'wallet', 
-                          title: 'Wallet', 
+                          title: 'Wallet & Fixvo Cash', 
                           icon: CreditCard, 
                           action: () => switchTab('wallet'),
                           extraText: `₹${(profile?.walletBalance || 0).toFixed(0)}` 
                         },
                         { 
+                          id: 'rewards', 
+                          title: 'Rewards & Promo Vouchers', 
+                          icon: Sparkles, 
+                          action: () => switchTab('rewards'),
+                          badge: profile?.rewardPoints ? `${profile.rewardPoints} Pts` : null
+                        },
+                        { 
                           id: 'membership', 
                           title: 'Passes & membership', 
                           icon: Compass, 
-                          action: () => setShowPremiumModal(true) 
+                          action: () => setShowPremiumModal(true),
+                          badge: profile?.isPremium ? 'VIP PLUS' : 'Explore'
                         },
                         { 
                           id: 'rating', 
-                          title: 'My rating', 
+                          title: 'My rating & reviews', 
                           icon: Star, 
                           action: () => switchTab('bookings') 
                         },
@@ -1888,8 +1903,21 @@ const UserDashboard = () => {
                           action: () => switchTab('wallet') 
                         },
                         { 
+                          id: 'become-tech', 
+                          title: 'Become a Technician (Earn With Us)', 
+                          icon: Briefcase, 
+                          action: () => navigate('/technician-agreement'),
+                          badge: 'Join'
+                        },
+                        { 
+                          id: 'support', 
+                          title: 'Customer Help & Support', 
+                          icon: HelpCircle, 
+                          action: () => switchTab('support') 
+                        },
+                        { 
                           id: 'settings', 
-                          title: 'Settings', 
+                          title: 'Settings & Profile', 
                           icon: Settings, 
                           action: () => setShowSettings(true) 
                         },
@@ -1915,7 +1943,7 @@ const UserDashboard = () => {
                             </div>
                             <div className="flex items-center gap-2">
                               {item.badge && (
-                                <span className="text-[10px] bg-emerald-100 text-emerald-800 font-black px-2 py-0.5 rounded-full">
+                                <span className="text-[10px] bg-blue-50 text-blue-700 border border-blue-200/80 font-black px-2 py-0.5 rounded-full">
                                   {item.badge}
                                 </span>
                               )}
