@@ -1285,12 +1285,156 @@ const UserDashboard = () => {
                     </div>
                   </div>
 
-                  {/* 4. "Explore Fixvo Services" Grid (4 Columns, Fixvo Blue Theme) */}
-                  <div className="pt-2">
-                    <div className="flex justify-between items-center mb-4">
-                      <h3 className="text-xl sm:text-2xl font-black text-slate-900 tracking-tight">
-                        Explore Fixvo Services
-                      </h3>
+                  {/* 4. "New and noteworthy" Showcase (Urban Company Benchmark with High-Res Photography) */}
+                  <div className="pt-4 text-left">
+                    <div className="flex justify-between items-center mb-3.5">
+                      <div>
+                        <h3 className="text-xl sm:text-2xl font-black text-slate-900 tracking-tight">
+                          New and noteworthy
+                        </h3>
+                        <p className="text-xs text-slate-500 font-medium">Most loved doorstep repairs & smart home services</p>
+                      </div>
+                    </div>
+
+                    {/* Horizontal Scroll on Mobile, 5-col Grid on Desktop */}
+                    <div className="flex sm:grid sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3.5 sm:gap-4 overflow-x-auto pb-2 -mx-4 px-4 sm:mx-0 sm:px-0 no-scrollbar">
+                      {[
+                        {
+                          id: 'ac_repair',
+                          title: 'AC Repair & Jet Service',
+                          tag: 'Bestseller',
+                          tagColor: 'bg-blue-600 text-white',
+                          price: 'Starts ₹299',
+                          rating: '4.9',
+                          img: 'https://images.unsplash.com/photo-1621905251189-08b45d6a269e?q=80&w=600&auto=format&fit=crop'
+                        },
+                        {
+                          id: 'home_clean',
+                          title: 'Full Home Deep Cleaning',
+                          tag: 'Top Rated',
+                          tagColor: 'bg-emerald-600 text-white',
+                          price: 'Starts ₹999',
+                          rating: '4.9',
+                          img: 'https://images.unsplash.com/photo-1581578731548-c64695cc6952?q=80&w=600&auto=format&fit=crop'
+                        },
+                        {
+                          id: 'painting',
+                          title: 'Full Home Painting',
+                          tag: 'Popular',
+                          tagColor: 'bg-amber-600 text-white',
+                          price: 'Starts ₹1,499',
+                          rating: '4.8',
+                          img: 'https://images.unsplash.com/photo-1589939705384-5185137a7f0f?q=80&w=600&auto=format&fit=crop'
+                        },
+                        {
+                          id: 'ro_install',
+                          title: 'Native Water Purifier',
+                          tag: 'New',
+                          tagColor: 'bg-[#E6007A] text-white',
+                          price: 'Starts ₹299',
+                          rating: '4.9',
+                          img: 'https://images.unsplash.com/photo-1548839140-29a749e1cf4e?q=80&w=600&auto=format&fit=crop'
+                        },
+                        {
+                          id: 'lock_install',
+                          title: 'Native Smart Locks',
+                          tag: 'New',
+                          tagColor: 'bg-[#E6007A] text-white',
+                          price: 'Starts ₹399',
+                          rating: '4.8',
+                          img: 'https://images.unsplash.com/photo-1558002038-1055907df827?q=80&w=600&auto=format&fit=crop'
+                        },
+                        {
+                          id: 'living_clean',
+                          title: 'Living & Bedroom Cleaning',
+                          tag: null,
+                          price: 'Starts ₹499',
+                          rating: '4.8',
+                          img: 'https://images.unsplash.com/photo-1555041469-a586c61ea9bc?q=80&w=600&auto=format&fit=crop'
+                        },
+                        {
+                          id: 'chimney',
+                          title: 'Stove & Kitchen Chimney',
+                          tag: null,
+                          price: 'Starts ₹199',
+                          rating: '4.7',
+                          img: 'https://images.unsplash.com/photo-1556911220-e15b29be8c8f?q=80&w=600&auto=format&fit=crop'
+                        },
+                        {
+                          id: 'laptop_repair',
+                          title: 'Laptop & Computer Repair',
+                          tag: null,
+                          price: 'Starts ₹349',
+                          rating: '4.8',
+                          img: 'https://images.unsplash.com/photo-1597872200969-2b65d56bd16b?q=80&w=600&auto=format&fit=crop'
+                        },
+                        {
+                          id: 'washing_machine',
+                          title: 'Washing Machine Repair',
+                          tag: 'Popular',
+                          tagColor: 'bg-indigo-600 text-white',
+                          price: 'Starts ₹199',
+                          rating: '4.8',
+                          img: 'https://images.unsplash.com/photo-1626806787461-102c1bfaaea1?q=80&w=600&auto=format&fit=crop'
+                        },
+                        {
+                          id: 'electrical',
+                          title: 'Electrician & Switchboards',
+                          tag: '25 mins',
+                          tagColor: 'bg-emerald-500 text-white',
+                          price: 'Starts ₹149',
+                          rating: '4.9',
+                          img: 'https://images.unsplash.com/photo-1621905251918-48416bd8575a?q=80&w=600&auto=format&fit=crop'
+                        }
+                      ].map((item) => (
+                        <div
+                          key={item.id}
+                          onClick={() => {
+                            setFormData(prev => ({ ...prev, serviceId: item.id, serviceName: item.title }));
+                            setShowForm(true);
+                            setStep(1);
+                          }}
+                          className="min-w-[155px] sm:min-w-0 flex flex-col group cursor-pointer shrink-0 text-left"
+                        >
+                          <div className="relative aspect-square w-full rounded-2xl sm:rounded-3xl overflow-hidden bg-slate-100 border border-slate-200/90 shadow-2xs group-hover:shadow-lg transition-all duration-300">
+                            <img 
+                              src={item.img} 
+                              alt={item.title} 
+                              className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" 
+                              loading="lazy"
+                            />
+                            {item.tag && (
+                              <span className={`absolute top-2.5 left-2.5 text-[9px] sm:text-[10px] font-black px-2 py-0.5 rounded-md tracking-wider uppercase shadow-md ${item.tagColor}`}>
+                                {item.tag}
+                              </span>
+                            )}
+                            <div className="absolute inset-0 bg-gradient-to-t from-black/40 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity flex items-end p-2.5">
+                              <span className="text-[10px] font-bold text-white bg-blue-600/90 backdrop-blur-xs px-2 py-0.5 rounded-md">
+                                Book Now →
+                              </span>
+                            </div>
+                          </div>
+                          <h4 className="text-xs sm:text-sm font-extrabold text-slate-900 mt-2 line-clamp-1 group-hover:text-blue-600 transition-colors">
+                            {item.title}
+                          </h4>
+                          <div className="flex items-center justify-between text-[11px] font-bold text-slate-500 mt-0.5">
+                            <span className="text-blue-600 font-extrabold">{item.price}</span>
+                            <span className="flex items-center gap-0.5 text-amber-500">★ {item.rating}</span>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* 5. "Home services at your doorstep" (Interactive Categories + Real Technician Visual Banner) */}
+                  <div className="pt-4 text-left">
+                    <div className="flex justify-between items-center mb-3.5">
+                      <div>
+                        <h3 className="text-xl sm:text-2xl font-black text-slate-900 tracking-tight">
+                          Home services at your doorstep
+                        </h3>
+                        <p className="text-xs text-slate-500 font-medium">Certified background-verified technicians in 30 minutes</p>
+                      </div>
                       <button
                         onClick={() => setShowAllServices(prev => !prev)}
                         className="px-3.5 py-1.5 bg-blue-50 hover:bg-blue-100 text-blue-700 font-extrabold text-xs rounded-full border-none cursor-pointer flex items-center gap-1 transition-all"
@@ -1302,38 +1446,109 @@ const UserDashboard = () => {
                           </>
                         ) : (
                           <>
-                            <span>Show More</span>
+                            <span>Show All</span>
                             <ChevronDown size={14} />
                           </>
                         )}
                       </button>
                     </div>
 
-                    {/* All Fixvo Core Services in 4-Column Grid on Mobile */}
-                    <div className="grid grid-cols-4 sm:grid-cols-4 md:grid-cols-6 lg:grid-cols-8 gap-3 sm:gap-4">
-                      {[
-                        { id: 'ac_repair', label: 'AC Repair & Service', icon: Snowflake, color: 'text-blue-600 bg-blue-50 border-blue-200' },
-                        { id: 'appliance', label: 'Appliance Repair', icon: Tv, color: 'text-indigo-600 bg-indigo-50 border-indigo-200' },
-                        { id: 'plumbing', label: 'Plumbing & Sanitary', icon: Wrench, color: 'text-cyan-600 bg-cyan-50 border-cyan-200' },
-                        { id: 'electrical', label: 'Electrical & Wiring', icon: Zap, color: 'text-amber-600 bg-amber-50 border-amber-200' },
-                        { id: 'cleaning', label: 'Deep Home Cleaning', icon: Sparkles, color: 'text-emerald-600 bg-emerald-50 border-emerald-200' },
-                        { id: 'carpentry', label: 'Carpentry & Furniture', icon: Wrench, color: 'text-amber-700 bg-amber-50 border-amber-200' },
-                        { id: 'painting', label: 'Painting & Finishing', icon: Paintbrush, color: 'text-rose-600 bg-rose-50 border-rose-200' },
-                        { id: 'ro_water', label: 'RO Water Purifier', icon: Droplet, color: 'text-sky-600 bg-sky-50 border-sky-200' },
-                        { id: 'cctv', label: 'CCTV & Security', icon: Video, color: 'text-purple-600 bg-purple-50 border-purple-200' },
-                        { id: 'vehicle', label: 'Vehicle Breakdown', icon: Truck, color: 'text-orange-600 bg-orange-50 border-orange-200' },
-                        { id: 'inverter', label: 'Inverter & Battery', icon: BatteryCharging, color: 'text-yellow-600 bg-yellow-50 border-yellow-200' },
-                        { id: 'emergency', label: '24/7 Emergency Fix', icon: PhoneCall, color: 'text-red-600 bg-red-50 border-red-200' },
-                        { id: 'geyser', label: 'Geyser & Heater', icon: Zap, color: 'text-blue-600 bg-blue-50 border-blue-200' },
-                        { id: 'pest_control', label: 'Pest Control', icon: Shield, color: 'text-emerald-600 bg-emerald-50 border-emerald-200' },
-                        { id: 'house_wash', label: 'Exterior House Wash', icon: Droplet, color: 'text-cyan-600 bg-cyan-50 border-cyan-200' },
-                        { id: 'chimney', label: 'Kitchen Chimney Fix', icon: Wind, color: 'text-slate-700 bg-slate-100 border-slate-200' },
-                      ]
-                      .filter(s => !homeSearchQuery || s.label.toLowerCase().includes(homeSearchQuery.toLowerCase()))
-                      .slice(0, (showAllServices || homeSearchQuery) ? 16 : 8)
-                      .map((srv) => {
-                        const SrvIcon = srv.icon;
-                        return (
+                    <div className="grid grid-cols-1 lg:grid-cols-12 gap-5 items-start">
+                      
+                      {/* Left: Rich Service Category Cards with ETA Badges */}
+                      <div className="lg:col-span-8 grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
+                        {[
+                          { 
+                            id: 'ac_repair', 
+                            label: 'AC & Appliance Repair', 
+                            eta: '25 mins',
+                            img: 'https://images.unsplash.com/photo-1621905251189-08b45d6a269e?q=80&w=400&auto=format&fit=crop',
+                            color: 'text-blue-600 bg-blue-50' 
+                          },
+                          { 
+                            id: 'electrical', 
+                            label: 'Electrician & Wiring', 
+                            eta: '25 mins',
+                            img: 'https://images.unsplash.com/photo-1621905251918-48416bd8575a?q=80&w=400&auto=format&fit=crop',
+                            color: 'text-amber-600 bg-amber-50' 
+                          },
+                          { 
+                            id: 'plumbing', 
+                            label: 'Plumber & Sanitary', 
+                            eta: '30 mins',
+                            img: 'https://images.unsplash.com/photo-1585704032915-c3400ca199e7?q=80&w=400&auto=format&fit=crop',
+                            color: 'text-cyan-600 bg-cyan-50' 
+                          },
+                          { 
+                            id: 'cleaning', 
+                            label: 'Cleaning & Pest Control', 
+                            eta: '44 mins',
+                            img: 'https://images.unsplash.com/photo-1581578731548-c64695cc6952?q=80&w=400&auto=format&fit=crop',
+                            color: 'text-emerald-600 bg-emerald-50' 
+                          },
+                          { 
+                            id: 'painting', 
+                            label: 'Painting & Waterproofing', 
+                            eta: 'Same Day',
+                            img: 'https://images.unsplash.com/photo-1589939705384-5185137a7f0f?q=80&w=400&auto=format&fit=crop',
+                            color: 'text-rose-600 bg-rose-50' 
+                          },
+                          { 
+                            id: 'ro_water', 
+                            label: 'Native Water Purifier', 
+                            eta: 'New',
+                            isNew: true,
+                            img: 'https://images.unsplash.com/photo-1548839140-29a749e1cf4e?q=80&w=400&auto=format&fit=crop',
+                            color: 'text-sky-600 bg-sky-50' 
+                          },
+                          { 
+                            id: 'lock_install', 
+                            label: 'Native Smart Locks', 
+                            eta: 'New',
+                            isNew: true,
+                            img: 'https://images.unsplash.com/photo-1558002038-1055907df827?q=80&w=400&auto=format&fit=crop',
+                            color: 'text-indigo-600 bg-indigo-50' 
+                          },
+                          { 
+                            id: 'chimney', 
+                            label: 'Kitchen Chimney & Stove', 
+                            eta: '30 mins',
+                            img: 'https://images.unsplash.com/photo-1556911220-e15b29be8c8f?q=80&w=400&auto=format&fit=crop',
+                            color: 'text-orange-600 bg-orange-50' 
+                          },
+                          { 
+                            id: 'washing_machine', 
+                            label: 'Washing Machine Repair', 
+                            eta: '30 mins',
+                            img: 'https://images.unsplash.com/photo-1626806787461-102c1bfaaea1?q=80&w=400&auto=format&fit=crop',
+                            color: 'text-purple-600 bg-purple-50' 
+                          },
+                          { 
+                            id: 'laptop_repair', 
+                            label: 'Laptop & Tech Repair', 
+                            eta: '30 mins',
+                            img: 'https://images.unsplash.com/photo-1597872200969-2b65d56bd16b?q=80&w=400&auto=format&fit=crop',
+                            color: 'text-slate-600 bg-slate-100' 
+                          },
+                          { 
+                            id: 'carpentry', 
+                            label: 'Carpentry & Furniture', 
+                            eta: '45 mins',
+                            img: 'https://images.unsplash.com/photo-1538688525198-9b88f6f53126?q=80&w=400&auto=format&fit=crop',
+                            color: 'text-amber-700 bg-amber-50' 
+                          },
+                          { 
+                            id: 'emergency', 
+                            label: '24/7 Emergency Repairs', 
+                            eta: 'Instant',
+                            isInstant: true,
+                            img: 'https://images.unsplash.com/photo-1504328345606-18bbc8c9d7d1?q=80&w=400&auto=format&fit=crop',
+                            color: 'text-red-600 bg-red-50' 
+                          },
+                        ]
+                        .filter(s => !homeSearchQuery || s.label.toLowerCase().includes(homeSearchQuery.toLowerCase()))
+                        .slice(0, (showAllServices || homeSearchQuery) ? 12 : 8)
+                        .map((srv) => (
                           <button
                             key={srv.id}
                             onClick={() => {
@@ -1341,17 +1556,85 @@ const UserDashboard = () => {
                               setShowForm(true);
                               setStep(1);
                             }}
-                            className="bg-white hover:bg-blue-50/60 border border-slate-200/80 hover:border-blue-300 rounded-3xl p-3 sm:p-4 flex flex-col items-center justify-center text-center gap-2 cursor-pointer shadow-2xs hover:shadow-md transition-all group border-none outline-none"
+                            className="bg-white hover:bg-slate-50/80 border border-slate-200/90 hover:border-blue-300 rounded-2xl p-3 flex flex-col items-start justify-between text-left cursor-pointer shadow-2xs hover:shadow-md transition-all group border-none outline-none relative overflow-hidden min-h-[110px]"
                           >
-                            <div className={`w-12 h-12 sm:w-14 sm:h-14 rounded-2xl flex items-center justify-center border ${srv.color} group-hover:scale-105 transition-transform`}>
-                              <SrvIcon size={22} className="stroke-[2]" />
+                            <div className="flex items-start justify-between w-full">
+                              <div className="w-10 h-10 rounded-xl overflow-hidden bg-slate-100 border border-slate-200 shrink-0">
+                                <img src={srv.img} alt={srv.label} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-300" />
+                              </div>
+                              <span className={`text-[9px] font-black px-1.5 py-0.5 rounded-md ${
+                                srv.isNew 
+                                  ? 'bg-[#E6007A] text-white' 
+                                  : srv.isInstant 
+                                  ? 'bg-rose-50 text-rose-700 border border-rose-200' 
+                                  : 'bg-emerald-50 text-emerald-700 border border-emerald-200'
+                              }`}>
+                                {srv.eta}
+                              </span>
                             </div>
-                            <span className="text-[11px] sm:text-xs font-black text-slate-900 group-hover:text-blue-600 leading-tight">
+                            <span className="text-xs font-black text-slate-900 group-hover:text-blue-600 leading-tight mt-3 line-clamp-2">
                               {srv.label}
                             </span>
                           </button>
-                        );
-                      })}
+                        ))}
+                      </div>
+
+                      {/* Right: Visual Trust Showcase Collage (Screenshot 2 Benchmark) */}
+                      <div className="lg:col-span-4 bg-gradient-to-br from-slate-900 to-indigo-950 text-white rounded-3xl p-5 shadow-xl relative overflow-hidden flex flex-col justify-between h-full min-h-[260px]">
+                        <div className="grid grid-cols-2 gap-2.5">
+                          <div className="rounded-2xl overflow-hidden aspect-[4/3] relative">
+                            <img 
+                              src="https://images.unsplash.com/photo-1621905251189-08b45d6a269e?q=80&w=400&auto=format&fit=crop" 
+                              alt="AC Jet Service" 
+                              className="w-full h-full object-cover" 
+                            />
+                            <span className="absolute bottom-1.5 left-1.5 bg-black/60 backdrop-blur-xs text-[9px] font-bold px-1.5 py-0.5 rounded text-white">
+                              AC Servicing
+                            </span>
+                          </div>
+                          <div className="rounded-2xl overflow-hidden aspect-[4/3] relative">
+                            <img 
+                              src="https://images.unsplash.com/photo-1581578731548-c64695cc6952?q=80&w=400&auto=format&fit=crop" 
+                              alt="Deep Cleaning" 
+                              className="w-full h-full object-cover" 
+                            />
+                            <span className="absolute bottom-1.5 left-1.5 bg-black/60 backdrop-blur-xs text-[9px] font-bold px-1.5 py-0.5 rounded text-white">
+                              Deep Clean
+                            </span>
+                          </div>
+                          <div className="rounded-2xl overflow-hidden aspect-[4/3] relative">
+                            <img 
+                              src="https://images.unsplash.com/photo-1621905251918-48416bd8575a?q=80&w=400&auto=format&fit=crop" 
+                              alt="Electrician" 
+                              className="w-full h-full object-cover" 
+                            />
+                            <span className="absolute bottom-1.5 left-1.5 bg-black/60 backdrop-blur-xs text-[9px] font-bold px-1.5 py-0.5 rounded text-white">
+                              Electrical Fix
+                            </span>
+                          </div>
+                          <div className="rounded-2xl overflow-hidden aspect-[4/3] relative">
+                            <img 
+                              src="https://images.unsplash.com/photo-1589939705384-5185137a7f0f?q=80&w=400&auto=format&fit=crop" 
+                              alt="Wall Painting" 
+                              className="w-full h-full object-cover" 
+                            />
+                            <span className="absolute bottom-1.5 left-1.5 bg-black/60 backdrop-blur-xs text-[9px] font-bold px-1.5 py-0.5 rounded text-white">
+                              Painting
+                            </span>
+                          </div>
+                        </div>
+
+                        <div className="mt-4 pt-3 border-t border-white/10 space-y-1">
+                          <div className="flex items-center gap-1.5 text-xs font-extrabold text-amber-300">
+                            <ShieldCheck size={16} className="text-emerald-400" />
+                            <span>100% Background Verified Pros</span>
+                          </div>
+                          <p className="text-[11px] text-slate-300">
+                            Equipped with high-precision tools & backed by Fixvo's 30-day rework warranty.
+                          </p>
+                        </div>
+                      </div>
+
                     </div>
                   </div>
 
