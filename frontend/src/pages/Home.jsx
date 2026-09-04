@@ -37,7 +37,8 @@ import {
   ArrowUpRight,
   Wallet,
   Building2,
-  Award
+  Award,
+  Wrench
 } from 'lucide-react';
 import { FaInstagram, FaLinkedin, FaXTwitter, FaWhatsapp, FaApple, FaGooglePlay } from 'react-icons/fa6';
 import founderImg from '../assets/sasi_founder.jpeg';
@@ -496,10 +497,10 @@ const Home = () => {
 
 
 
-      <div className="max-w-5xl mx-auto px-4 pb-24 relative z-10">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pb-24 relative z-10">
         
-        {/* 2. HERO & SMART SEARCH BAR SECTION (Fixipy Benchmark) */}
-        <section className="pt-24 sm:pt-28 md:pt-32 pb-16 text-center max-w-4xl mx-auto relative z-10">
+        {/* 2. HERO & SMART SEARCH BAR SECTION */}
+        <section className="pt-24 sm:pt-28 md:pt-32 pb-14 text-center max-w-4xl mx-auto relative z-10">
           <motion.div 
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
@@ -509,7 +510,7 @@ const Home = () => {
             {/* Eyebrow Badge */}
             <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-blue-500/10 border border-blue-500/20 backdrop-blur-sm text-xs font-black uppercase tracking-widest text-blue-400">
               <Zap size={13} className="text-amber-400 fill-current" />
-              <span>⚡ 30-Minute Dispatch Guarantee • Madanapalle & Region</span>
+              <span>⚡ 30-Minute Dispatch Guarantee • Madanapalle, Kadiri, Rayachoty & Region</span>
             </div>
 
             {/* Headline */}
@@ -522,10 +523,177 @@ const Home = () => {
 
             {/* Subtitle */}
             <p className="text-slate-400 text-sm sm:text-base md:text-lg max-w-2xl mx-auto leading-relaxed font-normal">
-              Book background-checked local technicians for AC, appliance, plumbing, and deep home cleaning with fixed upfront quotes and zero hidden fees.
+              Book background-checked local technicians for AC jet service, appliance diagnostics, electrical wiring, plumbing, and deep home cleaning with fixed upfront quotes.
             </p>
 
-            {/* 4 Trust Pills (Fixvo Unique) */}
+            {/* Interactive Smart Search Bar */}
+            <div ref={heroSearchRef} className="max-w-2xl mx-auto relative text-left pt-2">
+              <div className="relative flex items-center bg-slate-900/90 hover:bg-slate-900 border border-white/15 hover:border-blue-500/50 rounded-2xl shadow-[0_12px_40px_rgba(0,0,0,0.5)] backdrop-blur-xl transition-all p-1.5 focus-within:border-blue-400 focus-within:ring-2 focus-within:ring-blue-500/20">
+                <div className="pl-3.5 pr-2 text-blue-400">
+                  <Search size={20} />
+                </div>
+                <input
+                  type="text"
+                  value={searchQuery}
+                  onChange={(e) => {
+                    setSearchQuery(e.target.value);
+                    setIsSearchFocused(true);
+                  }}
+                  onFocus={() => setIsSearchFocused(true)}
+                  placeholder="Search 'AC Repair', 'Washing Machine', 'Plumber'..."
+                  className="w-full bg-transparent text-white placeholder-slate-400 text-sm sm:text-base font-semibold focus:outline-none py-2.5"
+                />
+                
+                {searchQuery && (
+                  <button
+                    onClick={() => setSearchQuery('')}
+                    className="p-1.5 text-slate-400 hover:text-white transition cursor-pointer"
+                  >
+                    <X size={16} />
+                  </button>
+                )}
+
+                <button
+                  type="button"
+                  onClick={handleVoiceSearch}
+                  className={`p-2.5 rounded-xl mr-1 transition cursor-pointer flex items-center justify-center ${
+                    isListening ? 'bg-rose-500/20 text-rose-400 animate-pulse' : 'text-slate-400 hover:text-white hover:bg-white/10'
+                  }`}
+                  title="Voice Search"
+                >
+                  <Mic size={18} />
+                </button>
+
+                <button
+                  onClick={() => {
+                    if (searchQuery.trim()) {
+                      const matched = services.find(s => s.name.toLowerCase().includes(searchQuery.toLowerCase()));
+                      handleBookingClick(matched ? matched.id : 'ac_repair');
+                    } else {
+                      scrollToSection('trending-services');
+                    }
+                  }}
+                  className="px-5 py-2.5 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white font-extrabold text-xs sm:text-sm rounded-xl transition shadow-md shrink-0 cursor-pointer border-none"
+                >
+                  Find Pro
+                </button>
+              </div>
+
+              {/* Autocomplete Search Dropdown */}
+              <AnimatePresence>
+                {isSearchFocused && (
+                  <motion.div
+                    initial={{ opacity: 0, y: -6 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, y: -6 }}
+                    className="absolute top-full left-0 right-0 mt-2 bg-[#0E1526] border border-white/15 rounded-2xl shadow-2xl p-4 z-50 overflow-hidden backdrop-blur-2xl"
+                  >
+                    {/* Search History */}
+                    {!searchQuery && searchHistory.length > 0 && (
+                      <div className="mb-4">
+                        <div className="flex justify-between items-center text-[11px] font-black text-slate-400 uppercase tracking-wider mb-2">
+                          <span className="flex items-center gap-1.5"><History size={12} /> Recent Searches</span>
+                          <button onClick={clearHistory} className="text-blue-400 hover:underline cursor-pointer">Clear</button>
+                        </div>
+                        <div className="flex flex-wrap gap-2">
+                          {searchHistory.map((item, idx) => (
+                            <div
+                              key={idx}
+                              onClick={() => handleSearchSelect(item, 'history')}
+                              className="flex items-center gap-1.5 bg-white/5 hover:bg-white/10 px-3 py-1.5 rounded-lg text-xs text-slate-200 cursor-pointer transition border border-white/5"
+                            >
+                              <span>{item}</span>
+                              <button
+                                onClick={(e) => removeHistoryItem(e, item)}
+                                className="text-slate-500 hover:text-rose-400 p-0.5"
+                              >
+                                <X size={12} />
+                              </button>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Suggestions */}
+                    {hasSuggestions ? (
+                      <div className="space-y-3 max-h-72 overflow-y-auto">
+                        {suggestions.services.length > 0 && (
+                          <div>
+                            <p className="text-[10px] font-black uppercase tracking-wider text-slate-400 mb-1.5">Matching Services</p>
+                            <div className="space-y-1">
+                              {suggestions.services.slice(0, 5).map(s => (
+                                <button
+                                  key={s.id}
+                                  onClick={() => handleSearchSelect(s.name, 'service', s.id)}
+                                  className="w-full flex items-center justify-between p-2 rounded-xl hover:bg-white/5 text-left transition cursor-pointer group"
+                                >
+                                  <div className="flex items-center gap-2.5">
+                                    <div className="w-8 h-8 rounded-lg bg-blue-500/10 border border-blue-500/20 flex items-center justify-center text-blue-400">
+                                      <Wrench size={14} />
+                                    </div>
+                                    <div>
+                                      <span className="text-xs font-bold text-white group-hover:text-blue-400">{s.name}</span>
+                                      <p className="text-[10px] text-slate-400">{s.subtitle || "Expert repair"}</p>
+                                    </div>
+                                  </div>
+                                  <span className="text-xs font-black text-cyan-400">{s.price || "₹199"}</span>
+                                </button>
+                              ))}
+                            </div>
+                          </div>
+                        )}
+
+                        {suggestions.categories.length > 0 && (
+                          <div className="pt-2 border-t border-white/5">
+                            <p className="text-[10px] font-black uppercase tracking-wider text-slate-400 mb-1.5">Categories</p>
+                            <div className="flex flex-wrap gap-2">
+                              {suggestions.categories.map(c => (
+                                <button
+                                  key={c.id}
+                                  onClick={() => handleSearchSelect(c.name, 'category', c.id)}
+                                  className="text-xs px-3 py-1 rounded-lg bg-white/5 hover:bg-blue-600/20 text-slate-300 hover:text-blue-300 transition cursor-pointer border border-white/10"
+                                >
+                                  {c.name}
+                                </button>
+                              ))}
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                    ) : (
+                      searchQuery && (
+                        <div className="text-center py-4 text-xs text-slate-400">
+                          No direct matches for "{searchQuery}". Press Enter to browse all services.
+                        </div>
+                      )
+                    )}
+                  </motion.div>
+                )}
+              </AnimatePresence>
+
+              {/* Quick Discovery Tags */}
+              <div className="flex flex-wrap justify-center items-center gap-2 pt-3">
+                <span className="text-[11px] font-extrabold uppercase tracking-wider text-slate-400">Popular:</span>
+                {[
+                  { label: "⚡ Split AC Jet Wash", id: "ac_repair" },
+                  { label: "Washing Machine", id: "washing_machine" },
+                  { label: "RO Purifier", id: "ro_install" },
+                  { label: "Inverter Wiring", id: "electric_wiring" },
+                  { label: "Plumber Leak", id: "plumbing_work" }
+                ].map(tag => (
+                  <button
+                    key={tag.id}
+                    onClick={() => handleBookingClick(tag.id)}
+                    className="text-xs font-semibold px-2.5 py-1 rounded-lg bg-white/5 hover:bg-blue-500/20 border border-white/10 hover:border-blue-500/40 text-slate-300 hover:text-white transition cursor-pointer"
+                  >
+                    {tag.label}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {/* 4 Trust Guarantee Badges */}
             <div className="flex flex-wrap justify-center gap-2.5 pt-2">
               <div className="flex items-center gap-2 rounded-full border border-white/10 bg-white/5 px-3.5 py-1.5 backdrop-blur-md">
                 <ShieldCheck size={14} className="text-blue-400" />
@@ -537,119 +705,437 @@ const Home = () => {
               </div>
               <div className="flex items-center gap-2 rounded-full border border-white/10 bg-white/5 px-3.5 py-1.5 backdrop-blur-md">
                 <Star size={14} className="text-amber-400 fill-current" />
-                <span className="text-xs font-bold text-slate-200">4.9/5 Rating</span>
+                <span className="text-xs font-bold text-slate-200">4.9/5 Rating (12k+ Jobs)</span>
               </div>
               <div className="flex items-center gap-2 rounded-full border border-white/10 bg-white/5 px-3.5 py-1.5 backdrop-blur-md">
                 <CheckCircle2 size={14} className="text-emerald-400" />
-                <span className="text-xs font-bold text-slate-200">Upfront Digital Quotes</span>
+                <span className="text-xs font-bold text-slate-200">30-Day Fixvo Warranty</span>
               </div>
             </div>
 
-            {/* Service Promise Cards & App Live Preview (Fixvo Unique) */}
-            <div className="grid gap-4 sm:grid-cols-2 pt-6 text-left">
-              <div className="rounded-2xl border border-white/10 bg-white/[0.03] p-5 backdrop-blur-md">
-                <div className="flex items-center gap-3">
-                  <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-emerald-500/20 text-emerald-400">
-                    <ShieldCheck size={20} />
-                  </span>
+            {/* HERO VISUAL & LIVE DISPATCH SHOWCASE */}
+            <div className="pt-6">
+              <div className="grid grid-cols-1 lg:grid-cols-12 gap-5 text-left">
+                
+                {/* Left Visual: Live Verified Pro Spotlight */}
+                <div className="lg:col-span-5 bg-gradient-to-br from-slate-900/90 via-[#0E1528] to-indigo-950/80 border border-white/10 rounded-3xl p-6 shadow-2xl backdrop-blur-xl flex flex-col justify-between relative overflow-hidden">
+                  <div className="absolute top-0 right-0 w-36 h-36 bg-blue-500/10 rounded-full blur-2xl pointer-events-none"></div>
+
                   <div>
-                    <p className="text-[10px] font-black uppercase tracking-[0.18em] text-slate-400">Fixvo Guarantee</p>
-                    <p className="text-sm font-extrabold text-white">Upfront digital estimates. Police-verified fixers.</p>
-                  </div>
-                </div>
-              </div>
-
-              <div className="rounded-2xl border border-white/10 bg-white/[0.03] p-5 backdrop-blur-md">
-                <div className="flex items-center gap-3">
-                  <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-sky-500/20 text-sky-400">
-                    <MapPin size={20} />
-                  </span>
-                  <div>
-                    <p className="text-[10px] font-black uppercase tracking-[0.18em] text-slate-400">Active Coverage</p>
-                    <p className="text-sm font-extrabold text-white">Madanapalle, Kadiri, Rayachoty, Galiveedu & region.</p>
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            {/* Smartphone Live Preview Container */}
-            <div className="relative pt-8">
-              <div className="rounded-[2.5rem] border border-white/10 bg-slate-900/90 p-5 sm:p-7 shadow-[0_24px_70px_rgba(0,0,0,0.4)] backdrop-blur-xl relative overflow-hidden max-w-lg mx-auto">
-                <div className="flex items-center justify-between border-b border-white/10 pb-3 mb-4">
-                  <div className="flex items-center gap-2">
-                    <div className="w-3 h-3 rounded-full bg-rose-500/80"></div>
-                    <div className="w-3 h-3 rounded-full bg-amber-500/80"></div>
-                    <div className="w-3 h-3 rounded-full bg-emerald-500/80"></div>
-                  </div>
-                  <span className="text-[10px] font-mono font-extrabold uppercase tracking-widest text-slate-400 bg-white/5 px-2.5 py-1 rounded-full border border-white/10">
-                    app.fixvo.com
-                  </span>
-                </div>
-
-                <div className="rounded-2xl bg-[#0B0F19] p-4 border border-white/5 space-y-3">
-                  <div className="flex items-center justify-between text-left">
-                    <div className="flex items-center gap-2">
-                      <div className="w-7 h-7 rounded-full bg-blue-500/20 border border-blue-500/30 flex items-center justify-center text-blue-400">
-                        <img src={fixvoLogo} className="w-full h-full object-cover rounded-full" alt="Fixvo" />
+                    <div className="flex items-center justify-between pb-4 border-b border-white/10">
+                      <div className="flex items-center gap-2">
+                        <span className="w-2.5 h-2.5 rounded-full bg-emerald-400 animate-pulse"></span>
+                        <span className="text-xs font-black uppercase tracking-wider text-emerald-400">Live Dispatch Ready</span>
                       </div>
-                      <span className="font-extrabold text-sm text-white">Fixvo App Preview</span>
+                      <span className="text-[10px] font-mono font-bold text-slate-400 bg-white/5 px-2.5 py-1 rounded-full border border-white/10">
+                        ⚡ 18-25 Mins ETA
+                      </span>
                     </div>
-                    <span className="text-[9px] font-black text-emerald-400 bg-emerald-500/10 px-2 py-0.5 rounded border border-emerald-500/20">LIVE</span>
+
+                    <div className="flex items-center gap-4 mt-5">
+                      <div className="relative">
+                        <img 
+                          src="https://images.unsplash.com/photo-1560250097-0b93528c311a?q=80&w=200&auto=format&fit=crop" 
+                          alt="Senior Technician" 
+                          className="w-16 h-16 rounded-2xl object-cover border-2 border-blue-500/40 shadow-lg"
+                        />
+                        <span className="absolute -bottom-1 -right-1 bg-emerald-500 text-white p-0.5 rounded-full ring-2 ring-[#0E1528]">
+                          <Check size={12} className="stroke-[3]" />
+                        </span>
+                      </div>
+                      <div>
+                        <div className="flex items-center gap-1.5">
+                          <h4 className="font-extrabold text-base text-white">Amit Verma</h4>
+                          <span className="text-[10px] font-black text-blue-400 bg-blue-500/10 px-1.5 py-0.5 rounded border border-blue-500/20">VERIFIED</span>
+                        </div>
+                        <p className="text-xs font-semibold text-slate-300 mt-0.5">Senior HVAC & Appliance Lead</p>
+                        <div className="flex items-center gap-2 mt-1 text-xs text-slate-400">
+                          <span className="flex items-center text-amber-400 font-bold">
+                            <Star size={12} className="fill-current mr-0.5" /> 4.95
+                          </span>
+                          <span>•</span>
+                          <span>512+ Jobs Done</span>
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="mt-5 bg-black/30 rounded-2xl p-3.5 border border-white/5 space-y-2">
+                      <div className="flex items-center justify-between text-xs">
+                        <span className="text-slate-400 font-medium">Standard Diagnostic Visit:</span>
+                        <span className="font-black text-cyan-400">₹99 Upfront</span>
+                      </div>
+                      <div className="flex items-center justify-between text-xs">
+                        <span className="text-slate-400 font-medium">Equipped With:</span>
+                        <span className="font-bold text-slate-200">Jet Pump & Digital Multimeter</span>
+                      </div>
+                      <div className="flex items-center justify-between text-xs">
+                        <span className="text-slate-400 font-medium">Service Guarantee:</span>
+                        <span className="font-bold text-emerald-400">30-Day Free Rework</span>
+                      </div>
+                    </div>
                   </div>
 
-                  <div className="rounded-xl bg-gradient-to-r from-slate-900 to-indigo-950 p-3 border border-white/10 text-left">
-                    <p className="text-[10px] font-black uppercase text-indigo-400 tracking-wider">Instant Broadcast</p>
-                    <p className="text-xs font-bold text-white mt-0.5">Need a repair? Broadcast request to nearby fixers.</p>
-                  </div>
+                  <button
+                    onClick={() => handleBookingClick('ac_repair')}
+                    className="mt-6 w-full py-3 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white font-extrabold text-xs sm:text-sm rounded-xl transition duration-200 cursor-pointer shadow-lg active:scale-95 border-none flex items-center justify-center gap-2"
+                  >
+                    <span>Book Instant Technician</span>
+                    <ArrowRight size={16} />
+                  </button>
                 </div>
+
+                {/* Right Visual: 3-Photo Real-Work Action Grid */}
+                <div className="lg:col-span-7 grid grid-cols-1 sm:grid-cols-3 gap-3.5">
+                  
+                  {/* Photo 1: AC Jet Clean */}
+                  <div 
+                    onClick={() => handleBookingClick('ac_repair')}
+                    className="group relative rounded-3xl overflow-hidden border border-white/10 hover:border-blue-400/50 transition-all duration-300 cursor-pointer shadow-lg aspect-[4/5] sm:aspect-auto"
+                  >
+                    <img 
+                      src="https://images.unsplash.com/photo-1621905251189-08b45d6a269e?q=80&w=500&auto=format&fit=crop" 
+                      alt="AC Foam Jet Wash" 
+                      className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" 
+                    />
+                    <div className="absolute inset-0 bg-gradient-to-t from-slate-950 via-slate-950/40 to-transparent"></div>
+                    <div className="absolute top-3 left-3 bg-blue-600/90 backdrop-blur-md text-white text-[10px] font-black px-2.5 py-1 rounded-full uppercase tracking-wider">
+                      Zero-Spill Jet
+                    </div>
+                    <div className="absolute bottom-3.5 left-3.5 right-3.5">
+                      <h5 className="text-xs sm:text-sm font-black text-white leading-tight">AC Jet Foam Service</h5>
+                      <p className="text-[11px] text-slate-300 mt-0.5">Coil & blower deep wash</p>
+                      <span className="inline-block mt-2 text-[10px] font-extrabold text-cyan-400 bg-slate-900/80 px-2 py-0.5 rounded border border-white/10">
+                        Starts ₹499
+                      </span>
+                    </div>
+                  </div>
+
+                  {/* Photo 2: Electrical Diagnostics */}
+                  <div 
+                    onClick={() => handleBookingClick('electric_wiring')}
+                    className="group relative rounded-3xl overflow-hidden border border-white/10 hover:border-blue-400/50 transition-all duration-300 cursor-pointer shadow-lg aspect-[4/5] sm:aspect-auto"
+                  >
+                    <img 
+                      src="https://images.unsplash.com/photo-1621905251918-48416bd8575a?q=80&w=500&auto=format&fit=crop" 
+                      alt="Electrical Diagnostics" 
+                      className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" 
+                    />
+                    <div className="absolute inset-0 bg-gradient-to-t from-slate-950 via-slate-950/40 to-transparent"></div>
+                    <div className="absolute top-3 left-3 bg-amber-600/90 backdrop-blur-md text-white text-[10px] font-black px-2.5 py-1 rounded-full uppercase tracking-wider">
+                      Certified Electricians
+                    </div>
+                    <div className="absolute bottom-3.5 left-3.5 right-3.5">
+                      <h5 className="text-xs sm:text-sm font-black text-white leading-tight">Switchboard & Wiring</h5>
+                      <p className="text-[11px] text-slate-300 mt-0.5">MCB & circuit diagnostics</p>
+                      <span className="inline-block mt-2 text-[10px] font-extrabold text-amber-300 bg-slate-900/80 px-2 py-0.5 rounded border border-white/10">
+                        Starts ₹149
+                      </span>
+                    </div>
+                  </div>
+
+                  {/* Photo 3: Appliance & RO Purifier */}
+                  <div 
+                    onClick={() => handleBookingClick('ro_install')}
+                    className="group relative rounded-3xl overflow-hidden border border-white/10 hover:border-blue-400/50 transition-all duration-300 cursor-pointer shadow-lg aspect-[4/5] sm:aspect-auto"
+                  >
+                    <img 
+                      src="https://images.unsplash.com/photo-1584622650111-993a426fbf0a?q=80&w=500&auto=format&fit=crop" 
+                      alt="Appliance Repair" 
+                      className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" 
+                    />
+                    <div className="absolute inset-0 bg-gradient-to-t from-slate-950 via-slate-950/40 to-transparent"></div>
+                    <div className="absolute top-3 left-3 bg-emerald-600/90 backdrop-blur-md text-white text-[10px] font-black px-2.5 py-1 rounded-full uppercase tracking-wider">
+                      Genuine Spares
+                    </div>
+                    <div className="absolute bottom-3.5 left-3.5 right-3.5">
+                      <h5 className="text-xs sm:text-sm font-black text-white leading-tight">RO Water Purifier</h5>
+                      <p className="text-[11px] text-slate-300 mt-0.5">Filter swap & TDS tune</p>
+                      <span className="inline-block mt-2 text-[10px] font-extrabold text-emerald-400 bg-slate-900/80 px-2 py-0.5 rounded border border-white/10">
+                        Starts ₹399
+                      </span>
+                    </div>
+                  </div>
+
+                </div>
+
               </div>
             </div>
+
           </motion.div>
         </section>
 
-        {/* 3. CATEGORY GRID */}
-        <section className="mt-8 mb-16 px-4 md:px-0">
-          <div className="mb-8 text-center">
-            <h2 className="text-2xl sm:text-4xl font-extrabold text-white">Explore Categories</h2>
-            <p className="text-slate-400 text-sm mt-2 max-w-xl mx-auto">Select a category to quickly discover available home maintenance solutions.</p>
+        {/* 3. TRENDING SERVICES & CERTIFIED CARE (PHOTOGRAPHIC SHOWCASE) */}
+        <section id="trending-services" className="mt-6 mb-20 px-4 sm:px-0">
+          <div className="flex flex-col sm:flex-row justify-between items-start sm:items-end gap-4 mb-8">
+            <div>
+              <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-blue-500/10 border border-blue-500/20 text-blue-400 text-xs font-black uppercase tracking-wider mb-2">
+                <Sparkles size={12} />
+                <span>Fixvo Doorstep Catalog</span>
+              </div>
+              <h2 className="text-2xl sm:text-4xl font-black text-white tracking-tight">
+                Trending Fixes & Certified Services
+              </h2>
+              <p className="text-slate-400 text-sm mt-1 max-w-xl">
+                Curated high-demand repairs delivered to your doorstep with guaranteed upfront quotes.
+              </p>
+            </div>
+            
+            <button
+              onClick={() => scrollToSection('services')}
+              className="text-xs font-extrabold text-blue-400 hover:text-blue-300 flex items-center gap-1.5 cursor-pointer bg-white/5 hover:bg-white/10 px-4 py-2 rounded-xl border border-white/10 transition"
+            >
+              <span>Explore All 30+ Services</span>
+              <ChevronRight size={14} />
+            </button>
           </div>
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4 sm:gap-6">
-            {globalCategories.map((cat) => {
-              const visual = categoryVisuals[cat.id] || categoryVisuals.other;
-              const CatIcon = cat.icon || Sparkles;
-              const sectionTargetId = cat.id === 'repair' ? 'repair-services' 
-                : cat.id === 'installation' ? 'installation-services' 
-                : cat.id === 'cleaning' ? 'cleaning-services' 
-                : 'other-services';
-              return (
-                <motion.button
-                  key={cat.id}
-                  onClick={() => {
-                    setActiveCategory(cat.id);
-                    scrollToSection(sectionTargetId);
-                  }}
-                  whileHover={{ scale: 1.03, y: -4 }}
-                  whileTap={{ scale: 0.98 }}
-                  className="relative h-32 sm:h-40 rounded-[2rem] overflow-hidden group border border-white/5 hover:border-blue-500/30 transition-all duration-300 text-left shadow-lg cursor-pointer w-full bg-transparent"
-                >
-                  <img 
-                    src={visual.img} 
-                    alt={cat.name} 
-                    className="absolute inset-0 w-full h-full object-cover group-hover:scale-110 transition-transform duration-700 opacity-60"
-                  />
-                  <div className={`absolute inset-0 bg-gradient-to-br ${visual.gradient} opacity-80 group-hover:opacity-85 transition-opacity`}></div>
-                  <div className="absolute inset-0 p-4 sm:p-5 flex flex-col justify-between z-10">
-                    <div className="w-10 h-10 rounded-xl bg-white/10 backdrop-blur-md flex items-center justify-center text-white border border-white/10 shadow-sm">
-                      <CatIcon size={20} />
-                    </div>
-                    <div>
-                      <h4 className="font-extrabold text-sm sm:text-base text-white tracking-tight">{cat.name}</h4>
-                      <p className="text-[10px] text-slate-200 mt-0.5 line-clamp-1">{cat.desc}</p>
-                    </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
+            {[
+              {
+                id: 'ac_repair',
+                title: 'AC Jet Foam Wash & Repair',
+                subtitle: 'Zero-spill deep pressure clean for coils, filter & drain tray',
+                price: '₹499',
+                rating: '4.9',
+                jobs: '1,840',
+                badge: '⚡ 30-Min Dispatch',
+                badgeClass: 'bg-cyan-500 text-slate-950 font-black',
+                img: 'https://images.unsplash.com/photo-1621905251189-08b45d6a269e?q=80&w=600&auto=format&fit=crop'
+              },
+              {
+                id: 'washing_machine',
+                title: 'Washing Machine Care',
+                subtitle: 'Fix spin vibration, motor noise, water drain & drum errors',
+                price: '₹299',
+                rating: '4.8',
+                jobs: '920',
+                badge: 'Most Booked',
+                badgeClass: 'bg-amber-400 text-slate-950 font-black',
+                img: 'https://images.unsplash.com/photo-1626806787461-102c1bfaaea1?q=80&w=600&auto=format&fit=crop'
+              },
+              {
+                id: 'ro_install',
+                title: 'RO Water Purifier Service',
+                subtitle: 'Complete sediment, carbon & RO membrane replacement with TDS tuning',
+                price: '₹399',
+                rating: '4.9',
+                jobs: '1,150',
+                badge: 'Fixvo Certified',
+                badgeClass: 'bg-emerald-400 text-slate-950 font-black',
+                img: 'https://images.unsplash.com/photo-1584622650111-993a426fbf0a?q=80&w=600&auto=format&fit=crop'
+              },
+              {
+                id: 'refrigerator',
+                title: 'Refrigerator Gas & Cooling',
+                subtitle: 'Compressor diagnostics, coil defrost & eco refrigerant top-up',
+                price: '₹349',
+                rating: '4.8',
+                jobs: '750',
+                badge: '30-Day Warranty',
+                badgeClass: 'bg-indigo-500 text-white font-black',
+                img: 'https://images.unsplash.com/photo-1571175443880-49e1d25b2bc5?q=80&w=600&auto=format&fit=crop'
+              },
+              {
+                id: 'electric_wiring',
+                title: 'Switchboard & MCB Wiring',
+                subtitle: 'Licensed electrician for breaker trips, inverter wiring & lighting',
+                price: '₹149',
+                rating: '4.9',
+                jobs: '2,400',
+                badge: '⚡ Emergency 24/7',
+                badgeClass: 'bg-rose-500 text-white font-black',
+                img: 'https://images.unsplash.com/photo-1621905251918-48416bd8575a?q=80&w=600&auto=format&fit=crop'
+              },
+              {
+                id: 'plumbing_work',
+                title: 'Plumbing Leaks & Pipe Fixes',
+                subtitle: 'Fast leak detection, tap cartridge swap & sanitary fixture fitting',
+                price: '₹199',
+                rating: '4.8',
+                jobs: '830',
+                badge: 'Fast Response',
+                badgeClass: 'bg-blue-500 text-white font-black',
+                img: 'https://images.unsplash.com/photo-1504328345606-18bbc8c9d7d1?q=80&w=600&auto=format&fit=crop'
+              },
+              {
+                id: 'tv_repair',
+                title: 'Smart TV Wall Mounting',
+                subtitle: 'Heavy-duty bracket mount, wire concealment & audio calibration',
+                price: '₹299',
+                rating: '4.9',
+                jobs: '610',
+                badge: 'Precision Fit',
+                badgeClass: 'bg-violet-500 text-white font-black',
+                img: 'https://images.unsplash.com/photo-1593784991095-a205069470b6?q=80&w=600&auto=format&fit=crop'
+              },
+              {
+                id: 'home_clean',
+                title: 'Full Home Deep Scrubbing',
+                subtitle: 'Eco-friendly mechanized scrub, kitchen degrease & bathroom care',
+                price: '₹999',
+                rating: '4.9',
+                jobs: '1,420',
+                badge: 'Top Rated',
+                badgeClass: 'bg-teal-400 text-slate-950 font-black',
+                img: 'https://images.unsplash.com/photo-1581578731548-c64695cc6952?q=80&w=600&auto=format&fit=crop'
+              }
+            ].map((srv) => (
+              <div
+                key={srv.id}
+                className="group bg-white/[0.02] hover:bg-white/[0.05] border border-white/10 hover:border-blue-500/40 rounded-3xl overflow-hidden flex flex-col justify-between transition-all duration-300 shadow-xl hover:-translate-y-1.5"
+              >
+                <div>
+                  <div className="relative h-48 overflow-hidden">
+                    <img 
+                      src={srv.img} 
+                      alt={srv.title} 
+                      className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
+                      loading="lazy"
+                    />
+                    <div className="absolute inset-0 bg-gradient-to-t from-[#0B0F19] via-transparent to-transparent"></div>
+                    
+                    <span className={`absolute top-3 left-3 text-[10px] uppercase tracking-wider px-2.5 py-1 rounded-full shadow-md ${srv.badgeClass}`}>
+                      {srv.badge}
+                    </span>
+
+                    <span className="absolute bottom-3 right-3 bg-slate-900/90 backdrop-blur-md px-2.5 py-1 rounded-lg text-xs font-black text-cyan-400 border border-white/10">
+                      Starts {srv.price}
+                    </span>
                   </div>
-                </motion.button>
-              );
-            })}
+
+                  <div className="p-5">
+                    <div className="flex items-center gap-2 mb-1.5 text-xs text-slate-400">
+                      <span className="flex items-center text-amber-400 font-bold">
+                        <Star size={12} className="fill-current mr-0.5" /> {srv.rating}
+                      </span>
+                      <span>•</span>
+                      <span>{srv.jobs} bookings</span>
+                    </div>
+
+                    <h3 className="font-extrabold text-base text-white group-hover:text-blue-400 transition leading-snug">
+                      {srv.title}
+                    </h3>
+                    <p className="text-xs text-slate-400 mt-1.5 line-clamp-2 leading-relaxed">
+                      {srv.subtitle}
+                    </p>
+                  </div>
+                </div>
+
+                <div className="p-5 pt-0">
+                  <button
+                    onClick={() => handleBookingClick(srv.id)}
+                    className="w-full py-2.5 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white font-extrabold text-xs uppercase tracking-wider rounded-xl transition duration-200 cursor-pointer shadow-md active:scale-95 border-none"
+                  >
+                    Quick Book
+                  </button>
+                </div>
+              </div>
+            ))}
+          </div>
+        </section>
+
+        {/* 4. DOORSTEP SERVICE CATEGORIES & REAL-WORK MOSAIC */}
+        <section className="mb-20 px-4 sm:px-0">
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-center bg-gradient-to-br from-white/[0.02] to-transparent border border-white/10 rounded-[2.5rem] p-6 sm:p-10 shadow-xl backdrop-blur-md">
+            
+            {/* Left: 8 Quick-Access Categories */}
+            <div className="lg:col-span-7">
+              <div className="mb-6">
+                <span className="text-xs font-black text-blue-400 uppercase tracking-wider">Fast Dispatch</span>
+                <h3 className="text-2xl sm:text-3xl font-black text-white mt-1">Home Services at Your Doorstep</h3>
+                <p className="text-xs sm:text-sm text-slate-400 mt-1">Select any service for instant diagnostic booking and live tracking.</p>
+              </div>
+
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                {[
+                  { id: 'ac_repair', label: 'AC Service & Repair', eta: '25 mins', img: 'https://images.unsplash.com/photo-1621905251189-08b45d6a269e?q=80&w=200&auto=format&fit=crop' },
+                  { id: 'washing_machine', label: 'Washing Machine', eta: '30 mins', img: 'https://images.unsplash.com/photo-1626806787461-102c1bfaaea1?q=80&w=200&auto=format&fit=crop' },
+                  { id: 'refrigerator', label: 'Refrigerator', eta: '35 mins', img: 'https://images.unsplash.com/photo-1571175443880-49e1d25b2bc5?q=80&w=200&auto=format&fit=crop' },
+                  { id: 'ro_install', label: 'Water Purifier RO', eta: '30 mins', img: 'https://images.unsplash.com/photo-1584622650111-993a426fbf0a?q=80&w=200&auto=format&fit=crop' },
+                  { id: 'electric_wiring', label: 'Electrician & MCB', eta: '⚡ Instant', img: 'https://images.unsplash.com/photo-1621905251918-48416bd8575a?q=80&w=200&auto=format&fit=crop' },
+                  { id: 'plumbing_work', label: 'Plumber & Leaks', eta: '20 mins', img: 'https://images.unsplash.com/photo-1504328345606-18bbc8c9d7d1?q=80&w=200&auto=format&fit=crop' },
+                  { id: 'home_clean', label: 'Deep Cleaning', eta: 'Scheduled', img: 'https://images.unsplash.com/photo-1581578731548-c64695cc6952?q=80&w=200&auto=format&fit=crop' },
+                  { id: 'painting', label: 'Wall Painting', eta: 'Scheduled', img: 'https://images.unsplash.com/photo-1589939705384-5185137a7f0f?q=80&w=200&auto=format&fit=crop' }
+                ].map((item) => (
+                  <button
+                    key={item.id}
+                    onClick={() => handleBookingClick(item.id)}
+                    className="p-3 rounded-2xl bg-white/5 hover:bg-blue-600/15 border border-white/10 hover:border-blue-500/40 text-left transition flex flex-col justify-between min-h-[105px] group cursor-pointer"
+                  >
+                    <div className="flex justify-between items-start w-full">
+                      <div className="w-10 h-10 rounded-xl overflow-hidden bg-slate-800 border border-white/10 shrink-0">
+                        <img src={item.img} alt={item.label} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-300" />
+                      </div>
+                      <span className={`text-[9px] font-black px-1.5 py-0.5 rounded-md ${
+                        item.eta.includes('Instant') ? 'bg-rose-500/20 text-rose-300 border border-rose-500/30' : 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/30'
+                      }`}>
+                        {item.eta}
+                      </span>
+                    </div>
+                    <span className="text-xs font-bold text-white group-hover:text-blue-400 mt-2 line-clamp-2 leading-tight">
+                      {item.label}
+                    </span>
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {/* Right: Visual Trust Mosaic Collage */}
+            <div className="lg:col-span-5 bg-gradient-to-br from-slate-900 to-indigo-950/80 border border-white/10 rounded-3xl p-5 shadow-2xl flex flex-col justify-between">
+              <div className="grid grid-cols-2 gap-2.5">
+                <div className="rounded-2xl overflow-hidden aspect-[4/3] relative border border-white/10">
+                  <img 
+                    src="https://images.unsplash.com/photo-1621905251189-08b45d6a269e?q=80&w=400&auto=format&fit=crop" 
+                    alt="AC Jet Service" 
+                    className="w-full h-full object-cover" 
+                  />
+                  <span className="absolute bottom-1.5 left-1.5 bg-black/70 backdrop-blur-xs text-[9px] font-bold px-1.5 py-0.5 rounded text-white">
+                    AC Jet Wash
+                  </span>
+                </div>
+                <div className="rounded-2xl overflow-hidden aspect-[4/3] relative border border-white/10">
+                  <img 
+                    src="https://images.unsplash.com/photo-1581578731548-c64695cc6952?q=80&w=400&auto=format&fit=crop" 
+                    alt="Deep Cleaning" 
+                    className="w-full h-full object-cover" 
+                  />
+                  <span className="absolute bottom-1.5 left-1.5 bg-black/70 backdrop-blur-xs text-[9px] font-bold px-1.5 py-0.5 rounded text-white">
+                    Deep Sanitized
+                  </span>
+                </div>
+                <div className="rounded-2xl overflow-hidden aspect-[4/3] relative border border-white/10">
+                  <img 
+                    src="https://images.unsplash.com/photo-1621905251918-48416bd8575a?q=80&w=400&auto=format&fit=crop" 
+                    alt="Electrician" 
+                    className="w-full h-full object-cover" 
+                  />
+                  <span className="absolute bottom-1.5 left-1.5 bg-black/70 backdrop-blur-xs text-[9px] font-bold px-1.5 py-0.5 rounded text-white">
+                    Safety Testing
+                  </span>
+                </div>
+                <div className="rounded-2xl overflow-hidden aspect-[4/3] relative border border-white/10">
+                  <img 
+                    src="https://images.unsplash.com/photo-1589939705384-5185137a7f0f?q=80&w=400&auto=format&fit=crop" 
+                    alt="Wall Painting" 
+                    className="w-full h-full object-cover" 
+                  />
+                  <span className="absolute bottom-1.5 left-1.5 bg-black/70 backdrop-blur-xs text-[9px] font-bold px-1.5 py-0.5 rounded text-white">
+                    Wall Finishing
+                  </span>
+                </div>
+              </div>
+
+              <div className="mt-4 pt-3 border-t border-white/10 space-y-1">
+                <div className="flex items-center gap-1.5 text-xs font-black text-amber-300">
+                  <ShieldCheck size={16} className="text-emerald-400" />
+                  <span>100% Background-Checked Technicians</span>
+                </div>
+                <p className="text-[11px] text-slate-400">
+                  Equipped with high-precision diagnostic tools & backed by Fixvo's 30-day rework warranty.
+                </p>
+              </div>
+            </div>
+
           </div>
         </section>
 
