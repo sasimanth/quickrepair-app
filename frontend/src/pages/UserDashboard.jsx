@@ -7,7 +7,7 @@ import SearchableServiceSelector from '../components/SearchableServiceSelector';
 import SearchableAreaSelector from '../components/SearchableAreaSelector';
 import { subscribeToPushNotifications } from '../services/pushNotification';
 import { requestFcmPermission } from '../services/firebase';
-import { Calendar, MapPin, Smartphone, AlertCircle, Clock, CheckCircle, PackageSearch, XCircle, Plus, LayoutDashboard, Wrench, Settings, Star, User, ChevronRight, MessageSquare, Camera, UploadCloud, Loader2, Shield, ShieldCheck, HelpCircle, Truck, Home, Search, Eye, Zap, Maximize2, Hash, Layers, Paintbrush, Tv, X, CreditCard, Sparkles, PhoneCall, Bell, Copy, Share2, Trash2, Edit, CheckSquare, RefreshCw, Menu, Laptop, Tablet, Gamepad2, Watch, Wifi, BatteryCharging, Activity, Droplet, Video, Wind, Snowflake, ChevronDown, ChevronUp, Code, LogOut, Briefcase, Mic } from 'lucide-react';
+import { Calendar, MapPin, Smartphone, AlertCircle, Clock, CheckCircle, PackageSearch, XCircle, Plus, LayoutDashboard, Wrench, Settings, Star, User, ChevronRight, MessageSquare, Camera, UploadCloud, Loader2, Shield, ShieldCheck, HelpCircle, Truck, Home, Search, Eye, Zap, Maximize2, Hash, Layers, Paintbrush, Tv, X, CreditCard, Sparkles, PhoneCall, Bell, Copy, Share2, Trash2, Edit, CheckSquare, RefreshCw, Menu, Laptop, Tablet, Gamepad2, Watch, Wifi, BatteryCharging, Activity, Droplet, Video, Wind, Snowflake, ChevronDown, ChevronUp, Code, LogOut, Briefcase, Mic, FileText } from 'lucide-react';
 import ChatModal from '../components/ChatModal';
 import ReviewModal from '../components/ReviewModal';
 import PaymentModal from '../components/PaymentModal';
@@ -1768,7 +1768,7 @@ const UserDashboard = () => {
                         <div>
                           <div className="flex items-center gap-2">
                             <h2 className="text-xl sm:text-2xl font-black text-white tracking-tight">
-                              {profile?.name || user?.name || 'Customer Account'}
+                              {profile?.name || authUser?.name || 'Customer Account'}
                             </h2>
                             {profile?.isPremium && (
                               <span className="text-[10px] bg-amber-400 text-slate-950 font-black px-2.5 py-0.5 rounded-full uppercase tracking-wider">
@@ -1778,10 +1778,10 @@ const UserDashboard = () => {
                           </div>
                           <p className="text-xs sm:text-sm font-bold text-blue-200 mt-1 flex items-center gap-1.5">
                             <PhoneCall size={14} className="text-blue-400" />
-                            <span>{profile?.phone || user?.phone || 'Add phone number in settings'}</span>
+                            <span>{profile?.phone || authUser?.phone || 'Add phone number in settings'}</span>
                           </p>
                           <p className="text-xs text-slate-400 font-medium mt-0.5">
-                            {profile?.email || user?.email || 'customer@fixvo.com'}
+                            {profile?.email || authUser?.email || 'customer@fixvo.com'}
                           </p>
                         </div>
                       </div>
