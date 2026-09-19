@@ -77,19 +77,19 @@ const serviceDetails = {
 // Custom category presentation visuals
 const categoryVisuals = {
   repair: {
-    img: "https://images.unsplash.com/photo-1621905251189-08b45d6a269e?q=80&w=400&auto=format&fit=crop",
+    img: "https://images.unsplash.com/photo-1621905251189-08b45d6a269e?q=80&w=600&auto=format&fit=crop",
     gradient: "from-blue-600/90 to-indigo-700/90",
   },
   installation: {
-    img: "https://images.unsplash.com/photo-1581539250439-c96689b516dd?q=80&w=400&auto=format&fit=crop",
+    img: "https://images.unsplash.com/photo-1631545856760-4966d5d59f13?q=80&w=600&auto=format&fit=crop",
     gradient: "from-indigo-600/90 to-purple-700/90",
   },
   cleaning: {
-    img: "https://images.unsplash.com/photo-1527515637462-cff94eecc1ac?q=80&w=400&auto=format&fit=crop",
+    img: "https://images.unsplash.com/photo-1581578731548-c64695cc6952?q=80&w=600&auto=format&fit=crop",
     gradient: "from-cyan-600/90 to-blue-700/90",
   },
   other: {
-    img: "https://images.unsplash.com/photo-1504328345606-18bbc8c9d7d1?q=80&w=400&auto=format&fit=crop",
+    img: "https://images.unsplash.com/photo-1589939705384-5185137a7f0f?q=80&w=600&auto=format&fit=crop",
     gradient: "from-slate-700/90 to-slate-900/90",
   },
 };
@@ -417,6 +417,10 @@ const Home = () => {
                     src={service.img} 
                     alt={service.name} 
                     loading="lazy"
+                    onError={(e) => {
+                      e.target.onerror = null;
+                      e.target.src = "https://images.unsplash.com/photo-1621905251189-08b45d6a269e?q=80&w=600&auto=format&fit=crop";
+                    }}
                     className="w-full h-full object-cover transition-transform duration-700 group-hover/card:scale-110" 
                   />
                   <div className="absolute inset-0 bg-gradient-to-t from-slate-950 via-transparent to-transparent opacity-80"></div>
