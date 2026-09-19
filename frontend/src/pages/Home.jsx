@@ -1,8 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { globalCategories, globalServices, getDbServices } from '../data/services';
-import SmartDiagnosis from '../components/SmartDiagnosis/SmartDiagnosis';
-import NearbyTechnicians from '../components/NearbyTechnicians';
 import OpenAppModal from '../components/OpenAppModal';
 import { motion, AnimatePresence } from 'framer-motion';
 import { 
@@ -179,7 +177,7 @@ const Home = () => {
       });
   }, []);
 
-  // Scroll logic for #pricing hash anchor
+  // Scroll logic for #pricing and #services hash anchor
   useEffect(() => {
     if (location.hash === '#pricing') {
       setHighlightPricing(true);
@@ -187,6 +185,14 @@ const Home = () => {
         setHighlightPricing(false);
       }, 3500);
       return () => clearTimeout(timer);
+    } else if (location.hash === '#services' || location.hash?.includes('-services')) {
+      const targetId = location.hash.substring(1);
+      const el = document.getElementById(targetId);
+      if (el) {
+        setTimeout(() => {
+          el.scrollIntoView({ behavior: 'smooth' });
+        }, 150);
+      }
     }
   }, [location.hash]);
 
@@ -395,14 +401,6 @@ const Home = () => {
           className="flex overflow-x-auto gap-4 sm:gap-6 pb-6 snap-x snap-mandatory scroll-smooth hide-scrollbar px-4 md:px-0"
         >
           {items.map((service, idx) => {
-            const details = serviceDetails[service.id] || {};
-            const rating = details.rating || 4.8;
-            const jobs = details.jobs || 150;
-            const price = details.price || "₹99";
-            const subtitleText = details.subtitle || "Expert service on demand";
-            const popular = details.popular || false;
-            const Icon = service.icon || Sparkles;
-
             return (
               <motion.div
                 key={service.id}
@@ -410,67 +408,175 @@ const Home = () => {
                 whileInView={{ opacity: 1, scale: 1 }}
                 viewport={{ once: true }}
                 transition={{ duration: 0.4, delay: Math.min(idx * 0.05, 0.3) }}
-                whileHover={{ y: -8, transition: { duration: 0.2 } }}
-                className="group/card shrink-0 snap-start bg-white/[0.02] hover:bg-white/[0.05] border border-white/5 hover:border-blue-500/40 rounded-[2rem] overflow-hidden flex flex-col justify-between w-[290px] h-[370px] transition-all duration-300 shadow-[0_8px_32px_0_rgba(0,0,0,0.3)] relative"
+                whileHover={{ y: -6, scale: 1.02 }}
+                onClick={() => handleBookingClick(service.id)}
+                className="group/card shrink-0 snap-start bg-slate-900/90 border border-white/10 hover:border-blue-500/50 rounded-2xl overflow-hidden flex flex-col justify-between w-[200px] sm:w-[220px] cursor-pointer transition-all duration-300 shadow-lg hover:shadow-blue-500/20 relative"
               >
-                {popular && (
-                  <div className="absolute top-3 left-3 bg-gradient-to-r from-blue-600 to-indigo-600 text-white text-[9px] font-black uppercase tracking-widest px-2.5 py-1 rounded-full z-20 shadow-md">
-                    Popular
-                  </div>
-                )}
-                
-                <div className="relative h-[150px] overflow-hidden shrink-0">
+                <div className="relative h-[155px] sm:h-[175px] w-full overflow-hidden">
                   <img 
                     src={service.img} 
                     alt={service.name} 
                     loading="lazy"
                     className="w-full h-full object-cover transition-transform duration-700 group-hover/card:scale-110" 
                   />
-                  <div className="absolute inset-0 bg-gradient-to-t from-[#0B0F19] via-transparent to-transparent"></div>
-                  <div className="absolute bottom-3 right-3 bg-slate-900/90 backdrop-blur-md px-2.5 py-1 rounded-lg text-xs font-black text-cyan-400 border border-white/5">
-                    Starting {price}
-                  </div>
+                  <div className="absolute inset-0 bg-gradient-to-t from-slate-950 via-transparent to-transparent opacity-80"></div>
                 </div>
 
-                <div className="p-5 flex-grow flex flex-col justify-between">
-                  <div>
-                    <div className="flex items-center gap-2 mb-2">
-                      <div className="w-8 h-8 rounded-lg bg-blue-500/10 border border-blue-500/20 flex items-center justify-center text-blue-400">
-                        <Icon size={16} />
-                      </div>
-                      <h4 className="font-extrabold text-sm text-white group-hover/card:text-blue-400 transition truncate max-w-[180px]">{service.name}</h4>
-                    </div>
-                    <p className="text-xs text-slate-400 line-clamp-2 leading-relaxed mb-3">
-                      {subtitleText}
-                    </p>
-                  </div>
-
-                  <div>
-                    <div className="flex items-center gap-1.5 text-xs text-slate-400 mb-4 font-semibold">
-                      <span className="flex items-center text-amber-400">
-                        <Star size={12} className="fill-current mr-0.5" />
-                        {rating}
-                      </span>
-                      <span>•</span>
-                      <span>{jobs} completed jobs</span>
-                    </div>
-
-                    <button
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        handleBookingClick(service.id);
-                      }}
-                      className="w-full py-3 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white text-xs font-black uppercase tracking-wider rounded-xl transition duration-200 cursor-pointer shadow-lg active:scale-95 border-none"
-                    >
-                      Quick Book
-                    </button>
-                  </div>
+                <div className="p-3.5 sm:p-4 bg-slate-900/95 flex items-center justify-center border-t border-white/5">
+                  <h4 className="font-extrabold text-xs sm:text-sm text-white group-hover/card:text-blue-400 transition truncate text-center w-full">
+                    {service.name}
+                  </h4>
                 </div>
               </motion.div>
             );
           })}
         </div>
       </div>
+    );
+  };
+
+  // Animated Video Showcase of Services Sub-Component
+  const AnimatedVideoServicesShowcase = () => {
+    const videoServices = [
+      {
+        id: 'ac_repair',
+        name: 'AC Repair & Servicing',
+        badge: 'HVAC Certified',
+        desc: 'Filter cleaning, gas refill, and rapid cooling diagnostic loop.',
+        videoUrl: 'https://assets.mixkit.co/videos/preview/mixkit-hands-of-a-man-repairing-an-appliance-41523-large.mp4',
+        poster: 'https://images.unsplash.com/photo-1621905251189-08b45d6a269e?q=80&w=600&auto=format&fit=crop',
+        icon: Zap
+      },
+      {
+        id: 'home_clean',
+        name: 'Deep Home Cleaning',
+        badge: 'Sanitized Guarantee',
+        desc: 'Hygienic deep scrubbing, steam sanitization & tile shining.',
+        videoUrl: 'https://assets.mixkit.co/videos/preview/mixkit-cleaning-a-surface-with-a-sponge-41519-large.mp4',
+        poster: 'https://images.unsplash.com/photo-1527515637462-cff94eecc1ac?q=80&w=600&auto=format&fit=crop',
+        icon: Sparkles
+      },
+      {
+        id: 'plumbing_work',
+        name: 'Plumbing & Pipe Fixing',
+        badge: 'Leakproofing',
+        desc: 'Drainage unblocking, pipe replacement & sanitary fitting.',
+        videoUrl: 'https://assets.mixkit.co/videos/preview/mixkit-water-flowing-from-a-faucet-41525-large.mp4',
+        poster: 'https://images.unsplash.com/photo-1504328345606-18bbc8c9d7d1?q=80&w=600&auto=format&fit=crop',
+        icon: Droplets
+      },
+      {
+        id: 'electric_wiring',
+        name: 'Electrical & Appliance Fix',
+        badge: 'Safety Inspected',
+        desc: 'Short circuit fix, heavy rewiring & fuse panel maintenance.',
+        videoUrl: 'https://assets.mixkit.co/videos/preview/mixkit-electrician-working-on-a-fuse-box-41521-large.mp4',
+        poster: 'https://images.unsplash.com/photo-1581539250439-c96689b516dd?q=80&w=600&auto=format&fit=crop',
+        icon: Wind
+      }
+    ];
+
+    const [activeVideoIdx, setActiveVideoIdx] = useState(0);
+
+    return (
+      <section className="mt-16 md:mt-24 px-4 sm:px-0">
+        <div className="text-center mb-10">
+          <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-blue-500/10 border border-blue-500/20 backdrop-blur-sm text-xs font-black uppercase tracking-widest text-blue-400 mb-3">
+            <Sparkles size={14} className="text-amber-400 animate-spin" />
+            <span>Services in Action • Live Animated Video Showcase</span>
+          </div>
+          <h2 className="text-3xl sm:text-4xl md:text-5xl font-extrabold text-white tracking-tight">
+            See How Our Fixers Work.
+          </h2>
+          <p className="text-slate-400 text-sm sm:text-base mt-2 max-w-xl mx-auto">
+            Watch live animated video demonstrations of our certified doorstep repair and maintenance procedures.
+          </p>
+        </div>
+
+        {/* Video Player & Selection Grid */}
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 bg-gradient-to-br from-slate-900/90 via-[#0D1322] to-slate-950 border border-blue-500/20 rounded-[2.5rem] p-6 sm:p-8 shadow-2xl relative overflow-hidden backdrop-blur-xl">
+          {/* Main Video Screen */}
+          <div className="lg:col-span-7 relative rounded-2xl sm:rounded-3xl overflow-hidden border border-white/10 shadow-2xl bg-black min-h-[260px] sm:min-h-[340px] flex items-center justify-center group">
+            <video
+              key={videoServices[activeVideoIdx].videoUrl}
+              autoPlay
+              loop
+              muted
+              playsInline
+              poster={videoServices[activeVideoIdx].poster}
+              className="w-full h-full object-cover rounded-2xl sm:rounded-3xl transition-transform duration-700 group-hover:scale-105"
+            >
+              <source src={videoServices[activeVideoIdx].videoUrl} type="video/mp4" />
+              Your browser does not support video play.
+            </video>
+
+            <div className="absolute inset-0 bg-gradient-to-t from-slate-950 via-slate-950/20 to-transparent"></div>
+
+            {/* Video overlay badges */}
+            <div className="absolute top-4 left-4 flex items-center gap-2">
+              <span className="flex items-center gap-1.5 px-3 py-1 rounded-full bg-rose-600/90 text-white font-extrabold text-[10px] uppercase tracking-widest shadow-lg border border-white/20">
+                <span className="w-2 h-2 rounded-full bg-white animate-ping"></span>
+                <span>Live Action</span>
+              </span>
+              <span className="px-3 py-1 rounded-full bg-slate-900/80 backdrop-blur-md text-cyan-400 font-extrabold text-[10px] uppercase tracking-widest border border-cyan-500/30">
+                {videoServices[activeVideoIdx].badge}
+              </span>
+            </div>
+
+            {/* Bottom info on main video */}
+            <div className="absolute bottom-4 left-4 right-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-slate-900/80 backdrop-blur-md border border-white/10 p-4 rounded-xl">
+              <div>
+                <h4 className="font-extrabold text-base text-white">{videoServices[activeVideoIdx].name}</h4>
+                <p className="text-xs text-slate-300 font-normal mt-0.5">{videoServices[activeVideoIdx].desc}</p>
+              </div>
+              <button
+                onClick={() => handleBookingClick(videoServices[activeVideoIdx].id)}
+                className="px-5 py-2.5 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white font-black text-xs uppercase tracking-wider rounded-xl transition cursor-pointer shrink-0 border-none shadow-md"
+              >
+                Book This Service
+              </button>
+            </div>
+          </div>
+
+          {/* Interactive Playlist Side Cards */}
+          <div className="lg:col-span-5 flex flex-col justify-between space-y-3">
+            <p className="text-xs font-black uppercase tracking-wider text-slate-400 px-1">Select Service Video</p>
+            {videoServices.map((v, i) => {
+              const VIcon = v.icon;
+              const isActive = i === activeVideoIdx;
+              return (
+                <button
+                  key={v.id}
+                  onClick={() => setActiveVideoIdx(i)}
+                  className={`w-full text-left p-4 rounded-2xl border transition-all duration-300 flex items-center justify-between cursor-pointer ${
+                    isActive
+                      ? 'bg-blue-600/20 border-blue-500 text-white shadow-lg shadow-blue-500/10'
+                      : 'bg-white/[0.02] border-white/5 hover:bg-white/[0.05] text-slate-300'
+                  }`}
+                >
+                  <div className="flex items-center gap-3">
+                    <div className={`w-10 h-10 rounded-xl flex items-center justify-center shrink-0 ${
+                      isActive ? 'bg-blue-500 text-white' : 'bg-white/5 text-blue-400'
+                    }`}>
+                      <VIcon size={18} />
+                    </div>
+                    <div>
+                      <h5 className="font-extrabold text-xs sm:text-sm text-white">{v.name}</h5>
+                      <p className="text-[10px] text-slate-400 font-semibold line-clamp-1">{v.badge}</p>
+                    </div>
+                  </div>
+
+                  <span className={`text-[10px] font-black uppercase tracking-wider px-2.5 py-1 rounded-full border ${
+                    isActive ? 'bg-blue-500 text-white border-blue-400' : 'bg-white/5 text-slate-400 border-white/10'
+                  }`}>
+                    {isActive ? 'Playing ▶' : 'Watch'}
+                  </span>
+                </button>
+              );
+            })}
+          </div>
+        </div>
+      </section>
     );
   };
 
@@ -652,6 +758,9 @@ const Home = () => {
             })}
           </div>
         </section>
+
+        {/* Animated Video Services Showcase */}
+        <AnimatedVideoServicesShowcase />
 
         {/* 4. HORIZONTAL SERVICE CAROUSELS SECTION */}
         <section id="services" className="space-y-12">
@@ -864,156 +973,108 @@ const Home = () => {
           </div>
         </section>
 
-        {/* Available Technicians Nearby Discovery Section */}
-        <NearbyTechnicians />
-
-        {/* AI Diagnosis Section */}
-        <div className="mt-24 sm:mt-32 relative z-10 px-4 sm:px-0">
-          <div className="text-center mb-10 sm:mb-12">
-            <h2 className="text-3xl sm:text-4xl md:text-5xl font-extrabold text-white mb-4">AI Smart Diagnosis</h2>
-            <p className="text-base sm:text-lg text-slate-400 max-w-2xl mx-auto">Not sure what the exact problem is? Answer a few quick questions to identify the issue and get an estimated cost instantly.</p>
-          </div>
-          <SmartDiagnosis onOpenAuth={(redirectUrl) => {
-            setPostAuthAction(() => () => navigate(redirectUrl));
-            setShowAuthModal(true);
-          }} />
-        </div>
-
-        {/* 8. CUSTOMER SUCCESS & SERVICE STATISTICS SECTION */}
-        <section className="mt-24 sm:mt-32 border-t border-white/5 pt-24 sm:pt-32 px-4 sm:px-0">
-          <div className="text-center mb-12 sm:mb-16">
-            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-blue-500/10 border border-blue-500/20 text-blue-400 text-xs font-black uppercase tracking-wider mb-3">
-              <Star size={12} className="fill-current text-amber-400" /> Trusted by 10,000+ Households
-            </div>
-            <h2 className="text-3xl sm:text-4xl md:text-5xl font-extrabold text-white mb-4">Customer Success Stories</h2>
-            <p className="text-slate-400 text-sm max-w-lg mx-auto">Read how Fixvo delivers transparent, 30-minute doorstep service to homeowners.</p>
-          </div>
-
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4 max-w-4xl mx-auto mb-12">
-            {[
-              { stat: "12,400+", label: "Completed Repairs", icon: CheckCircle2, color: "text-emerald-400" },
-              { stat: "4.9 / 5.0", label: "Average Customer Rating", icon: Star, color: "text-amber-400" },
-              { stat: "30 Mins", label: "Guaranteed Dispatch", icon: Clock, color: "text-cyan-400" },
-              { stat: "100%", label: "Verified Technicians", icon: ShieldCheck, color: "text-indigo-400" }
-            ].map((item, idx) => (
-              <div key={idx} className="bg-[#101524]/60 border border-white/10 rounded-2xl p-5 text-center">
-                <div className={`w-8 h-8 rounded-full bg-white/5 mx-auto mb-2 flex items-center justify-center ${item.color}`}>
-                  <item.icon size={18} />
-                </div>
-                <h4 className="text-xl sm:text-2xl font-black text-white">{item.stat}</h4>
-                <p className="text-[11px] text-slate-400 font-semibold mt-0.5">{item.label}</p>
-              </div>
-            ))}
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 max-w-4xl mx-auto">
-            {[
-              {
-                quote: "Fixvo technician Rahul arrived in 25 minutes on a Sunday night when our main AC failed. Quick diagnosis, genuine parts, and transparent quote. Lifesaver!",
-                author: "Priya Sharma",
-                area: "Madanapalle Town",
-                rating: 5,
-                service: "AC Deep Repair"
-              },
-              {
-                quote: "Got our RO water filter installed and tested in under an hour. The digital quote required my one-tap approval before work started. Very trustworthy!",
-                author: "K. Mohan Rao",
-                area: "Kadiri Area",
-                rating: 5,
-                service: "RO Filter Setup"
-              }
-            ].map((story, i) => (
-              <motion.div
-                key={i}
-                whileHover={{ y: -4 }}
-                className="bg-gradient-to-b from-[#101524]/90 to-[#0B0F19] border border-white/10 rounded-[2rem] p-6 shadow-xl relative flex flex-col justify-between"
-              >
-                <div>
-                  <div className="flex justify-between items-center mb-3">
-                    <div className="flex text-amber-400 text-xs">
-                      {[...Array(story.rating)].map((_, r) => (
-                        <Star key={r} size={14} className="fill-current mr-0.5" />
-                      ))}
-                    </div>
-                    <span className="text-[10px] font-black text-cyan-400 bg-cyan-500/10 px-2 py-0.5 rounded border border-cyan-500/20">{story.service}</span>
-                  </div>
-                  <p className="text-xs sm:text-sm text-slate-300 leading-relaxed font-medium italic">"{story.quote}"</p>
-                </div>
-                <div className="mt-4 pt-3 border-t border-white/5 flex items-center justify-between">
-                  <div>
-                    <h5 className="font-extrabold text-xs text-white">{story.author}</h5>
-                    <p className="text-[10px] text-slate-400 flex items-center gap-1"><MapPin size={10} className="text-blue-400" /> {story.area}</p>
-                  </div>
-                  <span className="text-[9px] font-black text-emerald-400 bg-emerald-500/10 px-2 py-0.5 rounded border border-emerald-500/20">Verified Customer</span>
-                </div>
-              </motion.div>
-            ))}
-          </div>
-        </section>
-
-        {/* Urgent Repair dispatch Call block */}
-        <div className="mt-24 sm:mt-32 relative z-10 bg-gradient-to-br from-white/5 to-white/[0.02] backdrop-blur-xl rounded-[2rem] p-8 sm:p-12 border border-white/10 text-center mx-4 sm:mx-0">
-          <div className="w-16 h-16 bg-emerald-500/20 rounded-full flex items-center justify-center text-emerald-400 mx-auto mb-6">
-            <Zap size={32} />
-          </div>
-          <h2 className="text-3xl sm:text-4xl md:text-5xl font-extrabold text-white mb-4">Urgent Repair Needed?</h2>
-          <p className="text-base sm:text-lg text-slate-400 mb-8 max-w-2xl mx-auto">Skip the booking form and call us directly for an instant technician dispatch. We prioritize emergencies.</p>
-          <a href="tel:+919515980170" className="inline-flex items-center gap-3 px-8 sm:px-10 py-4 sm:py-5 bg-gradient-to-r from-emerald-500 to-emerald-600 text-white font-extrabold text-lg sm:text-xl rounded-2xl shadow-xl shadow-emerald-500/30 hover:scale-105 transition-transform no-underline">
-            <PhoneCall size={22} /> 
-            <span className="hidden sm:inline">Call Now:</span> +91 95159 80170
-          </a>
-        </div>
-
         {/* Fixvo Plus Member section */}
         <div id="pricing" className="mt-24 sm:mt-32 border-t border-white/5 pt-24 sm:pt-32 px-4 sm:px-0">
           <div className="text-center mb-12 sm:mb-16">
-            <h2 className="text-3xl sm:text-4xl md:text-5xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-amber-200 via-amber-400 to-yellow-500 mb-4 inline-flex items-center gap-3"><Sparkles className="text-amber-400 w-8 h-8 md:w-10 md:h-10"/> Fixvo Plus</h2>
-            <p className="text-base sm:text-lg text-slate-400 max-w-2xl mx-auto">Upgrade to our premium membership for an unparalleled home service experience.</p>
+            <h2 className="text-3xl sm:text-4xl md:text-5xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-amber-200 via-amber-400 to-yellow-500 mb-4 inline-flex items-center gap-3">
+              <Sparkles className="text-amber-400 w-8 h-8 md:w-10 md:h-10"/> Fixvo Plus Tiers
+            </h2>
+            <p className="text-base sm:text-lg text-slate-400 max-w-2xl mx-auto">
+              Upgrade to our premier membership tiers for priority dispatch, zero inspection fees, and exclusive repair discounts.
+            </p>
           </div>
           
-          <div className={`max-w-4xl mx-auto bg-gradient-to-br from-[#1A2235] to-[#0B0F19] border-2 rounded-[2rem] sm:rounded-[2.5rem] p-6 sm:p-10 md:p-14 relative overflow-hidden group transition-all duration-1000 ${
-            highlightPricing 
-              ? 'border-amber-400 scale-[1.03] shadow-[0_0_60px_rgba(245,158,11,0.4)] ring-4 ring-amber-500/20' 
-              : 'border-amber-500/30 shadow-[0_0_50px_rgba(245,158,11,0.1)]'
+          <div className={`max-w-5xl mx-auto transition-all duration-1000 ${
+            highlightPricing ? 'scale-[1.02]' : ''
           }`}>
-            <div className="absolute top-[-20%] right-[-10%] w-[50%] h-[50%] bg-amber-500/10 rounded-full blur-[80px] pointer-events-none group-hover:bg-amber-500/20 transition-all duration-700"></div>
-            
-            <div className="flex flex-col md:flex-row justify-between items-center gap-10 md:gap-12">
-               <div className="flex-1 space-y-6 sm:space-y-8 relative z-10 w-full text-left">
-                 <div className="flex items-start gap-4">
-                   <div className="mt-1 w-10 h-10 rounded-full bg-amber-500/20 flex items-center justify-center text-amber-400 shrink-0 border border-amber-500/30"><Clock size={18}/></div>
-                   <div>
-                     <h4 className="text-lg sm:text-xl font-bold text-white mb-1">Priority Technician Dispatch</h4>
-                     <p className="text-sm sm:text-base text-slate-400">Skip the queue. Your bookings are instantly routed to the highest-rated technicians nearby.</p>
-                   </div>
-                 </div>
-                 <div className="flex items-start gap-4">
-                   <div className="mt-1 w-10 h-10 rounded-full bg-amber-500/20 flex items-center justify-center text-amber-400 shrink-0 border border-amber-500/30"><Banknote size={18}/></div>
-                   <div>
-                     <h4 className="text-lg sm:text-xl font-bold text-white mb-1">Zero Inspection Fees</h4>
-                     <p className="text-sm sm:text-base text-slate-400">Never pay the standard ₹99 inspection fee. Diagnosis is completely free for members.</p>
-                   </div>
-                 </div>
-                 <div className="flex items-start gap-4">
-                   <div className="mt-1 w-10 h-10 rounded-full bg-amber-500/20 flex items-center justify-center text-amber-400 shrink-0 border border-amber-500/30"><CheckCircle2 size={18}/></div>
-                   <div>
-                     <h4 className="text-lg sm:text-xl font-bold text-white mb-1">Exclusive 5% Discount</h4>
-                     <p className="text-sm sm:text-base text-slate-400">Automatically save 5% on all repair quotes, parts, and maintenance services.</p>
-                   </div>
-                 </div>
-               </div>
-               
-               <div className="w-full md:w-[320px] shrink-0 bg-[#0B0F19]/80 backdrop-blur-xl border border-white/10 rounded-3xl p-6 sm:p-8 text-center relative z-10 shadow-2xl">
-                 <div className="inline-flex items-center justify-center px-4 py-1.5 bg-amber-500/20 text-amber-400 border border-amber-500/30 rounded-full text-[10px] sm:text-xs font-bold uppercase tracking-widest mb-6">Premium Tier</div>
-                 <h3 className="text-4xl sm:text-5xl font-black text-white mb-2 tracking-tight">₹999<span className="text-sm sm:text-lg text-slate-500 font-medium tracking-normal">/yr</span></h3>
-                 <p className="text-xs sm:text-sm text-slate-400 mb-8 font-medium">Billed annually. Cancel anytime.</p>
-                 <button 
-                   onClick={() => handleBookingClick()}
-                   className="w-full bg-gradient-to-r from-amber-500 to-yellow-600 hover:from-amber-400 hover:to-yellow-500 text-[#0B0F19] font-black py-4 rounded-xl shadow-[0_0_20px_rgba(245,158,11,0.3)] hover:shadow-[0_0_30px_rgba(245,158,11,0.5)] transition-all duration-300 transform hover:-translate-y-1 text-sm sm:text-base cursor-pointer border-none"
-                 >
-                   Get Fixvo Plus
-                 </button>
-               </div>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+              
+              {/* Monthly Premier Tier Card */}
+              <div className="bg-gradient-to-br from-[#1A2235] to-[#0B0F19] border-2 border-slate-700 hover:border-sky-500/50 rounded-[2.5rem] p-6 sm:p-8 relative overflow-hidden flex flex-col justify-between shadow-2xl transition-all duration-300 group">
+                <div className="absolute top-[-20%] right-[-10%] w-[50%] h-[50%] bg-blue-500/10 rounded-full blur-[80px] pointer-events-none"></div>
+
+                <div>
+                  <div className="flex justify-between items-center mb-4">
+                    <span className="inline-flex items-center justify-center px-3.5 py-1 bg-sky-500/10 text-sky-400 border border-sky-500/20 rounded-full text-[11px] font-extrabold uppercase tracking-wider">
+                      Monthly Premier Tier
+                    </span>
+                    <span className="text-[10px] text-slate-400 font-bold bg-white/5 px-2.5 py-1 rounded-full border border-white/10">Flexible Access</span>
+                  </div>
+
+                  <h3 className="text-4xl sm:text-5xl font-black text-white mb-1 tracking-tight">
+                    ₹99<span className="text-base sm:text-lg text-slate-400 font-medium tracking-normal">/mo</span>
+                  </h3>
+                  <p className="text-xs text-slate-400 mb-6 font-medium">Billed monthly. Cancel anytime.</p>
+
+                  <ul className="space-y-4 text-xs sm:text-sm text-slate-300 border-t border-white/10 pt-6">
+                    <li className="flex items-start gap-3">
+                      <Clock size={16} className="text-sky-400 shrink-0 mt-0.5" />
+                      <span><strong>Priority Dispatch:</strong> Fast-track queue for nearby fixes</span>
+                    </li>
+                    <li className="flex items-start gap-3">
+                      <Banknote size={16} className="text-sky-400 shrink-0 mt-0.5" />
+                      <span><strong>Zero Inspection Fee:</strong> Free diagnosis visit every month</span>
+                    </li>
+                    <li className="flex items-start gap-3">
+                      <CheckCircle2 size={16} className="text-sky-400 shrink-0 mt-0.5" />
+                      <span><strong>5% Repair Discount:</strong> Instant savings on final quotes</span>
+                    </li>
+                  </ul>
+                </div>
+
+                <div className="mt-8 pt-4">
+                  <button 
+                    onClick={() => handleBookingClick()}
+                    className="w-full bg-gradient-to-r from-sky-500 to-blue-600 hover:from-sky-400 hover:to-blue-500 text-white font-black py-3.5 rounded-xl shadow-lg transition-all duration-300 text-sm cursor-pointer border-none"
+                  >
+                    Get Monthly Premier (₹99/mo)
+                  </button>
+                </div>
+              </div>
+
+              {/* Annual Premier Tier Card */}
+              <div className="bg-gradient-to-br from-[#241C35] via-[#1A2235] to-[#0B0F19] border-2 border-amber-500/40 hover:border-amber-400 rounded-[2.5rem] p-6 sm:p-8 relative overflow-hidden flex flex-col justify-between shadow-[0_0_50px_rgba(245,158,11,0.15)] transition-all duration-300 group">
+                <div className="absolute top-[-20%] right-[-10%] w-[50%] h-[50%] bg-amber-500/15 rounded-full blur-[80px] pointer-events-none group-hover:bg-amber-500/25 transition-all duration-700"></div>
+
+                <div>
+                  <div className="flex justify-between items-center mb-4">
+                    <span className="inline-flex items-center justify-center px-3.5 py-1 bg-amber-500/20 text-amber-300 border border-amber-500/30 rounded-full text-[11px] font-extrabold uppercase tracking-wider">
+                      Annual Premier Tier
+                    </span>
+                    <span className="text-[10px] text-amber-300 font-extrabold bg-amber-500/20 px-2.5 py-1 rounded-full border border-amber-500/30">Save 35% • Best Value</span>
+                  </div>
+
+                  <h3 className="text-4xl sm:text-5xl font-black text-white mb-1 tracking-tight">
+                    ₹999<span className="text-base sm:text-lg text-slate-400 font-medium tracking-normal">/yr</span>
+                  </h3>
+                  <p className="text-xs text-amber-400/90 mb-6 font-medium">Billed annually (effectively ₹83/mo). Cancel anytime.</p>
+
+                  <ul className="space-y-4 text-xs sm:text-sm text-slate-200 border-t border-white/10 pt-6">
+                    <li className="flex items-start gap-3">
+                      <Clock size={16} className="text-amber-400 shrink-0 mt-0.5" />
+                      <span><strong>Top VIP Priority:</strong> Instant dispatch matching with 4.9★ fixers</span>
+                    </li>
+                    <li className="flex items-start gap-3">
+                      <Banknote size={16} className="text-amber-400 shrink-0 mt-0.5" />
+                      <span><strong>Unlimited Zero Inspection Fees:</strong> Standard ₹99 fee waived all year</span>
+                    </li>
+                    <li className="flex items-start gap-3">
+                      <CheckCircle2 size={16} className="text-amber-400 shrink-0 mt-0.5" />
+                      <span><strong>5% Flat Discount + Free Checkup:</strong> Maximum household savings</span>
+                    </li>
+                  </ul>
+                </div>
+
+                <div className="mt-8 pt-4">
+                  <button 
+                    onClick={() => handleBookingClick()}
+                    className="w-full bg-gradient-to-r from-amber-500 to-yellow-600 hover:from-amber-400 hover:to-yellow-500 text-[#0B0F19] font-black py-3.5 rounded-xl shadow-[0_0_25px_rgba(245,158,11,0.3)] hover:shadow-[0_0_35px_rgba(245,158,11,0.5)] transition-all duration-300 transform hover:-translate-y-0.5 text-sm cursor-pointer border-none"
+                  >
+                    Get Annual Premier (₹999/yr)
+                  </button>
+                </div>
+              </div>
+
             </div>
           </div>
         </div>

@@ -158,7 +158,21 @@ const Footer = () => {
                 <h4 className="text-white font-extrabold mb-4 border-b border-slate-800 pb-2 uppercase tracking-wider text-[11px]">Explore</h4>
                 <ul className="space-y-2.5 text-xs">
                   <li><Link to="/" className={getLinkClass('/')}>Home</Link></li>
-                  <li><Link to="/services" className={getLinkClass('/services')}>Services</Link></li>
+                  <li>
+                    <Link 
+                      to="/#services" 
+                      onClick={(e) => {
+                        if (location.pathname === '/') {
+                          e.preventDefault();
+                          const el = document.getElementById('services');
+                          if (el) el.scrollIntoView({ behavior: 'smooth' });
+                        }
+                      }}
+                      className={getLinkClass('/#services')}
+                    >
+                      Services
+                    </Link>
+                  </li>
                   <li><Link to="/book" className={getLinkClass('/book')}>Book Repair</Link></li>
                   <li><Link to="/about" className={getLinkClass('/about')}>About Us</Link></li>
                   <li><Link to="/pricing" className={getLinkClass('/pricing')}>Pricing</Link></li>
@@ -202,14 +216,6 @@ const Footer = () => {
             <p className="text-xs text-slate-500">© 2026 Fixvo. All rights reserved.</p>
             <div className="flex items-center gap-4 text-xs text-slate-500">
               <span>Fast & Verified Home Services</span>
-              <button
-                onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
-                className="p-2 bg-slate-800 hover:bg-slate-700 text-white rounded-lg transition-all flex items-center gap-1.5 text-xs font-bold cursor-pointer border border-slate-700"
-                title="Back to top"
-              >
-                <FaArrowUp size={12} />
-                <span>Top</span>
-              </button>
             </div>
           </div>
         </div>
