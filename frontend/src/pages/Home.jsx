@@ -371,25 +371,25 @@ const Home = () => {
     if (!items || items.length === 0) return null;
 
     return (
-      <div className="relative group/carousel py-8 border-b border-white/5 last:border-0">
-        <div className="flex justify-between items-end mb-6 px-4 md:px-0">
+      <div className="relative group/carousel py-2 sm:py-3 border-b border-white/5 last:border-0">
+        <div className="flex justify-between items-end mb-3 sm:mb-4 px-4 md:px-0">
           <div>
             <h3 className="text-xl sm:text-2xl font-black text-white tracking-tight flex items-center gap-2">
               {title}
             </h3>
-            {subtitle && <p className="text-xs sm:text-sm text-slate-400 font-semibold mt-1">{subtitle}</p>}
+            {subtitle && <p className="text-xs sm:text-sm text-slate-400 font-semibold mt-0.5">{subtitle}</p>}
           </div>
           
           <div className="hidden sm:flex gap-2 opacity-0 group-hover/carousel:opacity-100 transition-opacity duration-300">
             <button 
               onClick={() => scroll('left')}
-              className="w-10 h-10 rounded-full bg-white/5 border border-white/10 hover:bg-white/10 text-slate-400 hover:text-white flex items-center justify-center transition active:scale-95 cursor-pointer"
+              className="w-9 h-9 rounded-full bg-white/5 border border-white/10 hover:bg-white/10 text-slate-400 hover:text-white flex items-center justify-center transition active:scale-95 cursor-pointer"
             >
               <ChevronRight className="rotate-180 w-5 h-5" />
             </button>
             <button 
               onClick={() => scroll('right')}
-              className="w-10 h-10 rounded-full bg-white/5 border border-white/10 hover:bg-white/10 text-slate-400 hover:text-white flex items-center justify-center transition active:scale-95 cursor-pointer"
+              className="w-9 h-9 rounded-full bg-white/5 border border-white/10 hover:bg-white/10 text-slate-400 hover:text-white flex items-center justify-center transition active:scale-95 cursor-pointer"
             >
               <ChevronRight className="w-5 h-5" />
             </button>
@@ -398,7 +398,7 @@ const Home = () => {
 
         <div 
           ref={scrollRef}
-          className="flex overflow-x-auto gap-4 sm:gap-6 pb-6 snap-x snap-mandatory scroll-smooth hide-scrollbar px-4 md:px-0"
+          className="flex overflow-x-auto gap-3 sm:gap-5 pb-4 snap-x snap-mandatory scroll-smooth hide-scrollbar px-4 md:px-0"
         >
           {items.map((service, idx) => {
             return (
@@ -410,9 +410,9 @@ const Home = () => {
                 transition={{ duration: 0.4, delay: Math.min(idx * 0.05, 0.3) }}
                 whileHover={{ y: -6, scale: 1.02 }}
                 onClick={() => handleBookingClick(service.id)}
-                className="group/card shrink-0 snap-start bg-slate-900/90 border border-white/10 hover:border-blue-500/50 rounded-2xl overflow-hidden flex flex-col justify-between w-[200px] sm:w-[220px] cursor-pointer transition-all duration-300 shadow-lg hover:shadow-blue-500/20 relative"
+                className="group/card shrink-0 snap-start bg-slate-900/90 border border-white/10 hover:border-blue-500/50 rounded-2xl overflow-hidden flex flex-col justify-between w-[220px] sm:w-[250px] cursor-pointer transition-all duration-300 shadow-lg hover:shadow-blue-500/20 relative"
               >
-                <div className="relative h-[155px] sm:h-[175px] w-full overflow-hidden">
+                <div className="relative h-[185px] sm:h-[210px] w-full overflow-hidden">
                   <img 
                     src={service.img} 
                     alt={service.name} 
@@ -422,8 +422,8 @@ const Home = () => {
                   <div className="absolute inset-0 bg-gradient-to-t from-slate-950 via-transparent to-transparent opacity-80"></div>
                 </div>
 
-                <div className="p-3.5 sm:p-4 bg-slate-900/95 flex items-center justify-center border-t border-white/5">
-                  <h4 className="font-extrabold text-xs sm:text-sm text-white group-hover/card:text-blue-400 transition truncate text-center w-full">
+                <div className="p-3 sm:p-4 bg-slate-900/95 flex items-center justify-center border-t border-white/5 min-h-[52px]">
+                  <h4 className="font-extrabold text-xs sm:text-sm text-white group-hover/card:text-blue-400 transition text-center line-clamp-2 leading-snug w-full">
                     {service.name}
                   </h4>
                 </div>
@@ -435,146 +435,123 @@ const Home = () => {
     );
   };
 
-  // Animated Video Showcase of Services Sub-Component
+  // Urban Company Style Auto-Playing Video Showcase Sub-Component
   const AnimatedVideoServicesShowcase = () => {
     const videoServices = [
       {
+        id: 'fixvo_demo',
+        name: 'Fixvo Doorstep Inspection',
+        badge: 'Police Verified Fixers',
+        desc: 'Certified technician doorstep checkup with upfront estimates.',
+        videoUrl: '/videos/fixvo_service_demo.mp4',
+        poster: 'https://images.unsplash.com/photo-1621905251189-08b45d6a269e?q=80&w=600&auto=format&fit=crop',
+        icon: Zap
+      },
+      {
         id: 'ac_repair',
-        name: 'AC Repair & Servicing',
-        badge: 'HVAC Certified',
-        desc: 'Filter cleaning, gas refill, and rapid cooling diagnostic loop.',
+        name: 'AC Jet Cleaning & Repair',
+        badge: '30-Min Dispatch',
+        desc: 'Deep filter pressure washing & gas charging leak fix.',
         videoUrl: 'https://assets.mixkit.co/videos/preview/mixkit-hands-of-a-man-repairing-an-appliance-41523-large.mp4',
         poster: 'https://images.unsplash.com/photo-1621905251189-08b45d6a269e?q=80&w=600&auto=format&fit=crop',
         icon: Zap
       },
       {
         id: 'home_clean',
-        name: 'Deep Home Cleaning',
-        badge: 'Sanitized Guarantee',
-        desc: 'Hygienic deep scrubbing, steam sanitization & tile shining.',
+        name: 'Deep Home Sanitization',
+        badge: 'Hygienic Scrubbing',
+        desc: 'Steam cleaning, bathroom disinfection & kitchen degreasing.',
         videoUrl: 'https://assets.mixkit.co/videos/preview/mixkit-cleaning-a-surface-with-a-sponge-41519-large.mp4',
         poster: 'https://images.unsplash.com/photo-1527515637462-cff94eecc1ac?q=80&w=600&auto=format&fit=crop',
         icon: Sparkles
       },
       {
         id: 'plumbing_work',
-        name: 'Plumbing & Pipe Fixing',
-        badge: 'Leakproofing',
-        desc: 'Drainage unblocking, pipe replacement & sanitary fitting.',
+        name: 'Plumbing & Emergency Leak Fix',
+        badge: '24×7 Available',
+        desc: 'Drainage unblocking & pipe repair with standard warranty.',
         videoUrl: 'https://assets.mixkit.co/videos/preview/mixkit-water-flowing-from-a-faucet-41525-large.mp4',
         poster: 'https://images.unsplash.com/photo-1504328345606-18bbc8c9d7d1?q=80&w=600&auto=format&fit=crop',
         icon: Droplets
-      },
-      {
-        id: 'electric_wiring',
-        name: 'Electrical & Appliance Fix',
-        badge: 'Safety Inspected',
-        desc: 'Short circuit fix, heavy rewiring & fuse panel maintenance.',
-        videoUrl: 'https://assets.mixkit.co/videos/preview/mixkit-electrician-working-on-a-fuse-box-41521-large.mp4',
-        poster: 'https://images.unsplash.com/photo-1581539250439-c96689b516dd?q=80&w=600&auto=format&fit=crop',
-        icon: Wind
       }
     ];
 
-    const [activeVideoIdx, setActiveVideoIdx] = useState(0);
-
     return (
-      <section className="mt-16 md:mt-24 px-4 sm:px-0">
-        <div className="text-center mb-10">
-          <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-blue-500/10 border border-blue-500/20 backdrop-blur-sm text-xs font-black uppercase tracking-widest text-blue-400 mb-3">
-            <Sparkles size={14} className="text-amber-400 animate-spin" />
-            <span>Services in Action • Live Animated Video Showcase</span>
+      <section className="mt-10 sm:mt-14 px-4 sm:px-0">
+        <div className="flex flex-col md:flex-row md:items-end justify-between mb-6">
+          <div>
+            <div className="inline-flex items-center gap-2 px-3.5 py-1 rounded-full bg-blue-500/10 border border-blue-500/20 text-blue-400 text-xs font-black uppercase tracking-wider mb-2">
+              <span className="w-2 h-2 rounded-full bg-rose-500 animate-ping"></span>
+              <span>Urban Company Style Video Reels</span>
+            </div>
+            <h2 className="text-2xl sm:text-4xl font-extrabold text-white tracking-tight">
+              Services in Action • Auto-Playing Previews
+            </h2>
+            <p className="text-slate-400 text-xs sm:text-sm mt-1">
+              Watch continuous live service video demonstrations without needing to click.
+            </p>
           </div>
-          <h2 className="text-3xl sm:text-4xl md:text-5xl font-extrabold text-white tracking-tight">
-            See How Our Fixers Work.
-          </h2>
-          <p className="text-slate-400 text-sm sm:text-base mt-2 max-w-xl mx-auto">
-            Watch live animated video demonstrations of our certified doorstep repair and maintenance procedures.
-          </p>
         </div>
 
-        {/* Video Player & Selection Grid */}
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 bg-gradient-to-br from-slate-900/90 via-[#0D1322] to-slate-950 border border-blue-500/20 rounded-[2.5rem] p-6 sm:p-8 shadow-2xl relative overflow-hidden backdrop-blur-xl">
-          {/* Main Video Screen */}
-          <div className="lg:col-span-7 relative rounded-2xl sm:rounded-3xl overflow-hidden border border-white/10 shadow-2xl bg-black min-h-[260px] sm:min-h-[340px] flex items-center justify-center group">
-            <video
-              key={videoServices[activeVideoIdx].videoUrl}
-              autoPlay
-              loop
-              muted
-              playsInline
-              poster={videoServices[activeVideoIdx].poster}
-              className="w-full h-full object-cover rounded-2xl sm:rounded-3xl transition-transform duration-700 group-hover:scale-105"
-            >
-              <source src={videoServices[activeVideoIdx].videoUrl} type="video/mp4" />
-              Your browser does not support video play.
-            </video>
-
-            <div className="absolute inset-0 bg-gradient-to-t from-slate-950 via-slate-950/20 to-transparent"></div>
-
-            {/* Video overlay badges */}
-            <div className="absolute top-4 left-4 flex items-center gap-2">
-              <span className="flex items-center gap-1.5 px-3 py-1 rounded-full bg-rose-600/90 text-white font-extrabold text-[10px] uppercase tracking-widest shadow-lg border border-white/20">
-                <span className="w-2 h-2 rounded-full bg-white animate-ping"></span>
-                <span>Live Action</span>
-              </span>
-              <span className="px-3 py-1 rounded-full bg-slate-900/80 backdrop-blur-md text-cyan-400 font-extrabold text-[10px] uppercase tracking-widest border border-cyan-500/30">
-                {videoServices[activeVideoIdx].badge}
-              </span>
-            </div>
-
-            {/* Bottom info on main video */}
-            <div className="absolute bottom-4 left-4 right-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-slate-900/80 backdrop-blur-md border border-white/10 p-4 rounded-xl">
-              <div>
-                <h4 className="font-extrabold text-base text-white">{videoServices[activeVideoIdx].name}</h4>
-                <p className="text-xs text-slate-300 font-normal mt-0.5">{videoServices[activeVideoIdx].desc}</p>
-              </div>
-              <button
-                onClick={() => handleBookingClick(videoServices[activeVideoIdx].id)}
-                className="px-5 py-2.5 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white font-black text-xs uppercase tracking-wider rounded-xl transition cursor-pointer shrink-0 border-none shadow-md"
+        {/* Continuous Auto-Playing Video Grid */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
+          {videoServices.map((v) => {
+            const VIcon = v.icon;
+            return (
+              <motion.div
+                key={v.id}
+                whileHover={{ y: -6 }}
+                onClick={() => handleBookingClick(v.id === 'fixvo_demo' ? 'ac_repair' : v.id)}
+                className="group relative rounded-[2rem] overflow-hidden border border-white/10 hover:border-blue-500/50 bg-slate-950 shadow-xl cursor-pointer transition-all duration-300 aspect-[3/4] flex flex-col justify-between p-5"
               >
-                Book This Service
-              </button>
-            </div>
-          </div>
-
-          {/* Interactive Playlist Side Cards */}
-          <div className="lg:col-span-5 flex flex-col justify-between space-y-3">
-            <p className="text-xs font-black uppercase tracking-wider text-slate-400 px-1">Select Service Video</p>
-            {videoServices.map((v, i) => {
-              const VIcon = v.icon;
-              const isActive = i === activeVideoIdx;
-              return (
-                <button
-                  key={v.id}
-                  onClick={() => setActiveVideoIdx(i)}
-                  className={`w-full text-left p-4 rounded-2xl border transition-all duration-300 flex items-center justify-between cursor-pointer ${
-                    isActive
-                      ? 'bg-blue-600/20 border-blue-500 text-white shadow-lg shadow-blue-500/10'
-                      : 'bg-white/[0.02] border-white/5 hover:bg-white/[0.05] text-slate-300'
-                  }`}
+                {/* Auto-Playing Looping Video Background */}
+                <video
+                  autoPlay
+                  loop
+                  muted
+                  playsInline
+                  poster={v.poster}
+                  className="absolute inset-0 w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
                 >
-                  <div className="flex items-center gap-3">
-                    <div className={`w-10 h-10 rounded-xl flex items-center justify-center shrink-0 ${
-                      isActive ? 'bg-blue-500 text-white' : 'bg-white/5 text-blue-400'
-                    }`}>
-                      <VIcon size={18} />
-                    </div>
-                    <div>
-                      <h5 className="font-extrabold text-xs sm:text-sm text-white">{v.name}</h5>
-                      <p className="text-[10px] text-slate-400 font-semibold line-clamp-1">{v.badge}</p>
-                    </div>
-                  </div>
+                  <source src={v.videoUrl} type="video/mp4" />
+                </video>
 
-                  <span className={`text-[10px] font-black uppercase tracking-wider px-2.5 py-1 rounded-full border ${
-                    isActive ? 'bg-blue-500 text-white border-blue-400' : 'bg-white/5 text-slate-400 border-white/10'
-                  }`}>
-                    {isActive ? 'Playing ▶' : 'Watch'}
+                <div className="absolute inset-0 bg-gradient-to-t from-slate-950 via-slate-950/40 to-slate-950/20 group-hover:opacity-90 transition-opacity"></div>
+
+                {/* Top Video Status Pill */}
+                <div className="relative z-10 flex items-center justify-between">
+                  <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-slate-950/80 backdrop-blur-md text-white font-extrabold text-[10px] uppercase tracking-wider border border-white/15">
+                    <span className="w-1.5 h-1.5 rounded-full bg-rose-500 animate-ping"></span>
+                    <span>Live Loop</span>
                   </span>
-                </button>
-              );
-            })}
-          </div>
+
+                  <span className="px-2.5 py-1 rounded-full bg-blue-500/20 backdrop-blur-md text-blue-300 font-extrabold text-[9px] uppercase tracking-wider border border-blue-500/30">
+                    {v.badge}
+                  </span>
+                </div>
+
+                {/* Bottom Video Card Info */}
+                <div className="relative z-10 space-y-2">
+                  <div className="w-9 h-9 rounded-xl bg-blue-600/90 text-white flex items-center justify-center shadow-md">
+                    <VIcon size={18} />
+                  </div>
+                  <div>
+                    <h4 className="font-extrabold text-base text-white group-hover:text-blue-400 transition leading-snug">
+                      {v.name}
+                    </h4>
+                    <p className="text-xs text-slate-300 mt-1 line-clamp-2 leading-relaxed">
+                      {v.desc}
+                    </p>
+                  </div>
+                  <div className="pt-2">
+                    <span className="inline-flex items-center gap-1 text-xs font-black uppercase text-blue-400 group-hover:translate-x-1 transition-transform">
+                      Book Service →
+                    </span>
+                  </div>
+                </div>
+              </motion.div>
+            );
+          })}
         </div>
       </section>
     );
@@ -763,7 +740,7 @@ const Home = () => {
         <AnimatedVideoServicesShowcase />
 
         {/* 4. HORIZONTAL SERVICE CAROUSELS SECTION */}
-        <section id="services" className="space-y-12">
+        <section id="services" className="space-y-4 sm:space-y-6 mt-6 sm:mt-10">
           
           {/* Dynamic Carousel: Popular Near You */}
           <div id="most-booked-services">
