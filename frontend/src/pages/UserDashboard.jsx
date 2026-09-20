@@ -13,6 +13,10 @@ import ReviewModal from '../components/ReviewModal';
 import PaymentModal from '../components/PaymentModal';
 import SettingsModal from '../components/SettingsModal';
 import PremiumModal from '../components/PremiumModal';
+import NativeDevicesModal from '../components/NativeDevicesModal';
+import PaymentMethodsModal from '../components/PaymentMethodsModal';
+import AboutFixvoModal from '../components/AboutFixvoModal';
+import VerificationModal from '../components/VerificationModal';
 import FixvoAiAssistantModal from '../components/FixvoAiAssistant/FixvoAiAssistantModal';
 import { socket } from '../services/socket';
 import { playNotificationSound } from '../services/soundEffects';
@@ -179,6 +183,10 @@ const UserDashboard = () => {
   const [viewReasonBooking, setViewReasonBooking] = useState(null);
   const [uploadingImage, setUploadingImage] = useState(false);
   const [showSettings, setShowSettings] = useState(false);
+  const [showDevicesModal, setShowDevicesModal] = useState(false);
+  const [showPaymentMethodsModal, setShowPaymentMethodsModal] = useState(false);
+  const [showAboutModal, setShowAboutModal] = useState(false);
+  const [showVerificationModal, setShowVerificationModal] = useState(false);
   const [liveLocations, setLiveLocations] = useState({});
   const techSectionRef = useRef(null);
 
@@ -487,7 +495,15 @@ const UserDashboard = () => {
     } catch (error) {
       console.error("Booking submission error:", error);
       const errMsg = error.response?.data?.message || 'Unable to process booking. Please try again.';
-      showToast('Booking Failed ❌', errMsg, 'error');
+      if (errMsg.toLowerCase().includes('verified') || errMsg.toLowerCase().includes('otp') || error.response?.data?.requiresVerification) {
+        setShowVerificationModal(true);
+        showToast('Verification Required 🔒', 'Account not verified. Email and Mobile OTP verification required.', 'warning', false, {
+          label: 'Verify OTP Now',
+          onClick: () => setShowVerificationModal(true)
+        });
+      } else {
+        showToast('Booking Failed ❌', errMsg, 'error');
+      }
     } finally {
       setIsBooking(false);
     }
@@ -1091,7 +1107,7 @@ const UserDashboard = () => {
                       <div className="flex gap-2">
                         <input
                           type="text"
-                          placeholder="Enter Promo Code (e.g. FIXVO10)"
+                          placeholder="Enter Promo Code (e.g. FIXVO100)"
                           value={promoCode}
                           onChange={(e) => setPromoCode(e.target.value.toUpperCase())}
                           className="flex-1 px-4 py-2.5 bg-white border border-slate-200 rounded-xl focus:border-blue-600 outline-none uppercase font-bold text-slate-900 text-xs"
@@ -1100,12 +1116,19 @@ const UserDashboard = () => {
                           type="button"
                           onClick={(e) => {
                             e.preventDefault();
-                            if (promoCode === 'FIXVO10' || promoCode === 'WELCOME100') {
+                            const code = promoCode.trim().toUpperCase();
+                            if (code === 'FIXVO10') {
                               setDiscountAmount(10);
-                              alert('Promo code applied! 10% discount added to final quote.');
+                              showToast('Promo Code Applied 🎉', 'FIXVO10 applied: 10% discount added!', 'success');
+                            } else if (code === 'WELCOME100' || code === 'FIXVO100') {
+                              setDiscountAmount(100);
+                              showToast('Promo Code Applied 🎉', 'Flat ₹100 discount added to quote!', 'success');
+                            } else if (code === 'PLUSNEW') {
+                              setDiscountAmount(99);
+                              showToast('Plus Special Applied 👑', '₹99 inspection fee waived!', 'success');
                             } else {
                               setDiscountAmount(0);
-                              alert('Invalid promo code');
+                              showToast('Invalid Promo Code ⚠️', 'Code is invalid. Try FIXVO100 or FIXVO10', 'error');
                             }
                           }}
                           className="px-5 py-2.5 bg-slate-900 hover:bg-black text-white font-bold rounded-xl text-xs cursor-pointer border-none"
@@ -1113,7 +1136,12 @@ const UserDashboard = () => {
                           Apply
                         </button>
                       </div>
-                      {discountAmount > 0 && <p className="text-emerald-700 text-xs font-bold mt-2">✓ 10% Discount Applied to Final Bill</p>}
+                      {discountAmount > 0 && (
+                        <div className="mt-2 text-xs font-bold text-emerald-700 bg-emerald-50 border border-emerald-200 p-2.5 rounded-xl flex items-center justify-between">
+                          <span>✓ Promo Code ({promoCode}) Applied!</span>
+                          <span className="font-extrabold">{discountAmount > 15 ? `-₹${discountAmount}` : `-${discountAmount}%`} Off</span>
+                        </div>
+                      )}
                     </div>
 
                     {/* Final Action CTAs */}
@@ -1820,7 +1848,7 @@ const UserDashboard = () => {
                         </button>
 
                         <button
-                          onClick={() => setShowPremiumModal(true)}
+                          onClick={() => setShowDevicesModal(true)}
                           className="bg-white hover:bg-slate-50 rounded-2xl border border-slate-200/90 p-3 sm:p-4 flex flex-col justify-between items-start gap-3 transition-all cursor-pointer text-left shadow-2xs group min-h-[96px]"
                         >
                           <div className="w-8 h-8 rounded-xl bg-slate-100 flex items-center justify-center text-slate-800 group-hover:bg-indigo-50 group-hover:text-indigo-600 transition-colors">
@@ -1856,11 +1884,11 @@ const UserDashboard = () => {
                           badge: 'Book'
                         },
                         { 
-                          id: 'plans', 
-                          title: 'My Plans & Fixvo Protect', 
-                          icon: FileText, 
+                          id: 'subscriptions', 
+                          title: 'Subscriptions & Fixvo Protect', 
+                          icon: ShieldCheck, 
                           action: () => setShowPremiumModal(true),
-                          badge: profile?.isPremium ? 'Active' : null 
+                          badge: profile?.isPremium ? 'VIP Active' : 'Explore' 
                         },
                         { 
                           id: 'wallet', 
@@ -1877,19 +1905,6 @@ const UserDashboard = () => {
                           badge: profile?.rewardPoints ? `${profile.rewardPoints} Pts` : null
                         },
                         { 
-                          id: 'membership', 
-                          title: 'Passes & membership', 
-                          icon: Compass, 
-                          action: () => setShowPremiumModal(true),
-                          badge: profile?.isPremium ? 'VIP PLUS' : 'Explore'
-                        },
-                        { 
-                          id: 'rating', 
-                          title: 'My rating & reviews', 
-                          icon: Star, 
-                          action: () => switchTab('bookings') 
-                        },
-                        { 
                           id: 'addresses', 
                           title: 'Manage addresses', 
                           icon: MapPin, 
@@ -1900,7 +1915,14 @@ const UserDashboard = () => {
                           id: 'payments', 
                           title: 'Manage payment methods', 
                           icon: CreditCard, 
-                          action: () => switchTab('wallet') 
+                          action: () => setShowPaymentMethodsModal(true) 
+                        },
+                        { 
+                          id: 'verification', 
+                          title: 'Account & Mobile Verification', 
+                          icon: Shield, 
+                          action: () => setShowVerificationModal(true),
+                          badge: (profile?.isEmailVerified && profile?.isPhoneVerified) ? 'Verified' : 'Verify OTP'
                         },
                         { 
                           id: 'become-tech', 
@@ -1925,7 +1947,7 @@ const UserDashboard = () => {
                           id: 'about', 
                           title: 'About Fixvo', 
                           icon: ShieldCheck, 
-                          action: () => navigate('/terms-and-conditions') 
+                          action: () => setShowAboutModal(true) 
                         },
                       ].map((item) => {
                         const ItemIcon = item.icon;
@@ -1943,7 +1965,9 @@ const UserDashboard = () => {
                             </div>
                             <div className="flex items-center gap-2">
                               {item.badge && (
-                                <span className="text-[10px] bg-blue-50 text-blue-700 border border-blue-200/80 font-black px-2 py-0.5 rounded-full">
+                                <span className={`text-[10px] font-black px-2 py-0.5 rounded-full ${
+                                  item.badge === 'Verified' ? 'bg-emerald-50 text-emerald-700 border border-emerald-200' : 'bg-blue-50 text-blue-700 border border-blue-200'
+                                }`}>
                                   {item.badge}
                                 </span>
                               )}
@@ -1959,13 +1983,13 @@ const UserDashboard = () => {
                       })}
                     </div>
 
-                    {/* Refer & Earn Promo Card (matching image 4) */}
+                    {/* Refer & Earn Promo Card */}
                     <div 
                       onClick={() => switchTab('referral')}
                       className="bg-gradient-to-r from-purple-50 via-purple-50 to-indigo-50 border border-purple-100/90 rounded-3xl p-4 sm:p-5 flex items-center justify-between cursor-pointer hover:shadow-md transition-all group"
                     >
                       <div>
-                        <h4 className="text-sm sm:text-base font-black text-slate-900">Refer & earn ₹50</h4>
+                        <h4 className="text-sm sm:text-base font-black text-slate-900">Refer & earn ₹100 Fixvo Cash</h4>
                         <p className="text-xs text-purple-700 font-medium mt-0.5">Invite friends & family to Fixvo</p>
                       </div>
                       <div className="w-10 h-10 sm:w-11 sm:h-11 rounded-2xl bg-purple-200/60 text-purple-700 flex items-center justify-center shadow-xs group-hover:scale-110 transition-transform shrink-0">
@@ -1990,6 +2014,12 @@ const UserDashboard = () => {
                         </div>
                         <ChevronRight size={17} className="text-rose-400 group-hover:translate-x-0.5 transition-all" />
                       </div>
+                    </div>
+
+                    {/* App Version Footer */}
+                    <div className="text-center py-4 space-y-1">
+                      <p className="text-xs font-black text-slate-400 uppercase tracking-widest">FIXVO App v2.4.0 (Build 2026.09)</p>
+                      <p className="text-[10px] text-slate-400 font-semibold">256-Bit Encrypted • Verified Doorstep Support</p>
                     </div>
 
                   </div>
@@ -2117,6 +2147,42 @@ const UserDashboard = () => {
         />
       )}
 
+      {showDevicesModal && (
+        <NativeDevicesModal
+          onClose={() => setShowDevicesModal(false)}
+          onRequestService={(device) => {
+            setShowForm(true);
+            setStep(1);
+            setFormData(prev => ({ ...prev, deviceType: device.type, problemDescription: `Service required for ${device.name} (${device.brand})` }));
+            showToast("Service Selected 🔧", `Pre-filled service request for ${device.name}`, "info");
+          }}
+        />
+      )}
+
+      {showPaymentMethodsModal && (
+        <PaymentMethodsModal
+          onClose={() => setShowPaymentMethodsModal(false)}
+          showToast={showToast}
+        />
+      )}
+
+      {showAboutModal && (
+        <AboutFixvoModal
+          onClose={() => setShowAboutModal(false)}
+        />
+      )}
+
+      {showVerificationModal && (
+        <VerificationModal
+          onClose={() => setShowVerificationModal(false)}
+          onSuccess={() => {
+            setShowVerificationModal(false);
+            fetchData(false);
+            showToast("Account Verified ✅", "Your email & phone number verification is complete.", "success");
+          }}
+        />
+      )}
+
       {cancelBookingId && (
         <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-xs z-50 flex items-center justify-center p-4">
           <div className="bg-white border border-slate-200 rounded-3xl p-6 max-w-md w-full shadow-2xl space-y-4 animate-in zoom-in-95 duration-200">
@@ -2206,21 +2272,35 @@ const UserDashboard = () => {
         {toasts.map(toast => (
           <div
             key={toast.id}
-            className="pointer-events-auto bg-slate-900 text-white rounded-2xl shadow-2xl border border-slate-800 p-4 flex gap-3 animate-in slide-in-from-bottom-5 fade-in duration-300 relative overflow-hidden"
+            className="pointer-events-auto bg-slate-900 text-white rounded-2xl shadow-2xl border border-slate-800 p-4 flex flex-col gap-2 animate-in slide-in-from-bottom-5 fade-in duration-300 relative overflow-hidden"
           >
-            <div className="p-1.5 bg-slate-800 rounded-lg text-blue-400 self-start">
-              <Sparkles size={18} />
+            <div className="flex gap-3 items-start">
+              <div className="p-1.5 bg-slate-800 rounded-lg text-blue-400 shrink-0 mt-0.5">
+                <Sparkles size={18} />
+              </div>
+              <div className="flex-1 min-w-0">
+                <h4 className="text-sm font-extrabold text-slate-100 leading-tight">{toast.title}</h4>
+                <p className="text-xs text-slate-400 font-medium mt-1 leading-relaxed">{toast.message}</p>
+              </div>
+              <button
+                onClick={() => setToasts(prev => prev.filter(t => t.id !== toast.id))}
+                className="text-slate-400 hover:text-slate-200 self-start font-bold text-xs p-1 cursor-pointer border-none bg-transparent"
+              >
+                ✕
+              </button>
             </div>
-            <div className="flex-1 min-w-0">
-              <h4 className="text-sm font-extrabold text-slate-100 leading-tight">{toast.title}</h4>
-              <p className="text-xs text-slate-400 font-medium mt-1 leading-relaxed">{toast.message}</p>
-            </div>
-            <button
-              onClick={() => setToasts(prev => prev.filter(t => t.id !== toast.id))}
-              className="text-slate-400 hover:text-slate-200 self-start font-bold text-xs p-1 cursor-pointer border-none bg-transparent"
-            >
-              ✕
-            </button>
+
+            {toast.action && (
+              <button
+                onClick={() => {
+                  setToasts(prev => prev.filter(t => t.id !== toast.id));
+                  if (toast.action.onClick) toast.action.onClick();
+                }}
+                className="w-full py-2 mt-1 bg-blue-600 hover:bg-blue-700 text-white font-black rounded-xl text-xs uppercase tracking-wider cursor-pointer border-none shadow-xs"
+              >
+                {toast.action.label || 'Action'}
+              </button>
+            )}
           </div>
         ))}
       </div>

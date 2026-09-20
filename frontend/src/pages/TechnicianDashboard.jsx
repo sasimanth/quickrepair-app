@@ -10,6 +10,9 @@ import ChatModal from '../components/ChatModal';
 import SettingsModal from '../components/SettingsModal';
 import VerificationModal from '../components/VerificationModal';
 import KycModal from '../components/KycModal';
+import PartnerTermsModal from '../components/PartnerTermsModal';
+import AboutFixvoModal from '../components/AboutFixvoModal';
+import TechReferralModal from '../components/TechReferralModal';
 import { socket } from '../services/socket';
 import { motion } from 'framer-motion';
 import { playNotificationSound, startDispatchRingtone, stopDispatchRingtone } from '../services/soundEffects';
@@ -117,6 +120,9 @@ const TechnicianDashboard = () => {
   const [showSettings, setShowSettings] = useState(false);
   const [showVerification, setShowVerification] = useState(false);
   const [showKyc, setShowKyc] = useState(false);
+  const [showTermsModal, setShowTermsModal] = useState(false);
+  const [showAboutModal, setShowAboutModal] = useState(false);
+  const [showTechReferralModal, setShowTechReferralModal] = useState(false);
   const [chatBookingId, setChatBookingId] = useState(null);
   const [quoteModalJob, setQuoteModalJob] = useState(null);
   const [activeAlertJob, setActiveAlertJob] = useState(null);
@@ -744,23 +750,23 @@ const TechnicianDashboard = () => {
   return (
     <div className="min-h-screen bg-slate-50 text-slate-900 font-sans pb-24 select-none">
       
-      {/* Sleek Header with ONLY Active / Deactive Toggle Button */}
-      <header className="sticky top-0 z-40 bg-white border-b border-slate-200 shadow-xs px-4 sm:px-8 py-3.5 flex items-center justify-between">
-        <div className="flex items-center gap-3">
-          <Link to="/" className="flex items-center gap-2 group">
-            <div className="w-9 h-9 rounded-2xl bg-blue-600 flex items-center justify-center text-white font-extrabold shadow-md shadow-blue-600/30">
+      {/* Premium Sleek Header Bar */}
+      <header className="sticky top-0 z-40 bg-white/95 backdrop-blur-md border-b border-slate-200/80 shadow-xs px-4 sm:px-8 py-3 flex items-center justify-between">
+        <div className="flex items-center gap-2.5">
+          <Link to="/" className="flex items-center gap-2 group no-underline">
+            <div className="w-9 h-9 rounded-2xl bg-blue-600 flex items-center justify-center text-white font-black shadow-md shadow-blue-600/30">
               F
             </div>
             <span className="font-black text-lg sm:text-xl tracking-tight text-slate-900">
               Fix<span className="text-blue-600">vo</span>
             </span>
-            <span className="bg-blue-50 border border-blue-200 text-blue-700 text-[10px] font-black px-2.5 py-0.5 rounded-full uppercase tracking-wider">
-              Technician Portal
-            </span>
           </Link>
+          <span className="bg-slate-100 border border-slate-200 text-slate-700 text-[10px] font-black px-2.5 py-1 rounded-full uppercase tracking-wider hidden sm:inline-block">
+            Technician Portal
+          </span>
         </div>
 
-        {/* Top Bar: ONLY Active / Deactive Switch */}
+        {/* Top Bar: Active / Offline Status Pill */}
         <div className="flex items-center">
           {(() => {
             const status = profile?.currentStatus || (profile?.isOnline ? 'online' : 'offline');
@@ -770,12 +776,12 @@ const TechnicianDashboard = () => {
               <button
                 onClick={status === 'on_job' ? null : toggleOnlineStatus}
                 disabled={status === 'on_job'}
-                className={`flex items-center gap-2 px-4 py-2 rounded-full text-xs font-black uppercase tracking-wider border transition-all cursor-pointer shadow-xs ${
+                className={`flex items-center gap-2 px-3.5 py-1.5 sm:px-4 sm:py-2 rounded-full text-xs font-black uppercase tracking-wider border transition-all cursor-pointer shadow-2xs ${
                   isOnline 
-                    ? 'bg-emerald-500 text-white border-emerald-600 shadow-emerald-500/20' 
-                    : 'bg-slate-100 text-slate-600 border-slate-300'
+                    ? 'bg-emerald-600 text-white border-emerald-500 shadow-emerald-600/20' 
+                    : 'bg-slate-100 text-slate-600 border-slate-300 hover:bg-slate-200'
                 }`}
-                title={isOnline ? "Status: Active (Receiving Repair Requests)" : "Status: Deactive (Offline)"}
+                title={isOnline ? "Status: Active (Online & Receiving Repair Requests)" : "Status: Deactive (Offline)"}
               >
                 <span className={`w-2.5 h-2.5 rounded-full ${isOnline ? 'bg-white animate-pulse' : 'bg-slate-400'}`}></span>
                 <span>{isOnline ? 'Active (Online)' : 'Deactive (Offline)'}</span>
@@ -1575,13 +1581,13 @@ const TechnicianDashboard = () => {
                         id: 'terms', 
                         title: 'Partner Terms & 90% Commission', 
                         icon: FileText, 
-                        action: () => navigate('/technician-agreement') 
+                        action: () => setShowTermsModal(true) 
                       },
                       { 
                         id: 'about', 
                         title: 'About Fixvo Partner Network', 
                         icon: ShieldCheck, 
-                        action: () => navigate('/terms-and-conditions') 
+                        action: () => setShowAboutModal(true) 
                       },
                     ].map((item) => {
                       const ItemIcon = item.icon;
@@ -1619,12 +1625,7 @@ const TechnicianDashboard = () => {
 
                   {/* Refer a Technician Promo Card */}
                   <div 
-                    onClick={() => {
-                      if (navigator.clipboard) {
-                        navigator.clipboard.writeText(window.location.origin + '/technician-agreement');
-                        alert('Referral link copied! Share with fellow technicians to earn referral bonuses.');
-                      }
-                    }}
+                    onClick={() => setShowTechReferralModal(true)}
                     className="bg-gradient-to-r from-purple-50 via-purple-50 to-indigo-50 border border-purple-100/90 rounded-3xl p-4 sm:p-5 flex items-center justify-between cursor-pointer hover:shadow-md transition-all group"
                   >
                     <div>
@@ -1650,6 +1651,12 @@ const TechnicianDashboard = () => {
                       </div>
                       <ChevronRight size={17} className="text-rose-400 group-hover:translate-x-0.5 transition-all" />
                     </div>
+                  </div>
+
+                  {/* App Version Footer */}
+                  <div className="text-center py-4 space-y-1">
+                    <p className="text-xs font-black text-slate-400 uppercase tracking-widest">FIXVO Technician Portal v2.4.0 (Build 2026.09)</p>
+                    <p className="text-[10px] text-slate-400 font-semibold">Verified Pro Network • Encrypted Daily Payouts</p>
                   </div>
 
                 </div>
@@ -1717,6 +1724,41 @@ const TechnicianDashboard = () => {
             setShowVerification(false);
             fetchJobs();
           }}
+        />
+      )}
+
+      {/* KYC Modal */}
+      {showKyc && (
+        <KycModal
+          onClose={() => setShowKyc(false)}
+          onSuccess={() => {
+            setShowKyc(false);
+            fetchJobs();
+            showToast("KYC Details Submitted ✅", "Bank & ID verification documents uploaded successfully.", "success");
+          }}
+        />
+      )}
+
+      {/* Partner Terms Modal */}
+      {showTermsModal && (
+        <PartnerTermsModal
+          onClose={() => setShowTermsModal(false)}
+        />
+      )}
+
+      {/* About Fixvo Partner Modal */}
+      {showAboutModal && (
+        <AboutFixvoModal
+          onClose={() => setShowAboutModal(false)}
+        />
+      )}
+
+      {/* Tech Referral Modal */}
+      {showTechReferralModal && (
+        <TechReferralModal
+          onClose={() => setShowTechReferralModal(false)}
+          profile={profile}
+          showToast={showToast}
         />
       )}
 

@@ -49,32 +49,34 @@ const PremiumModal = ({ onClose, onSuccess }) => {
   };
 
   return (
-    <div className="fixed inset-0 bg-[#0B0F19]/80 backdrop-blur-md flex items-center justify-center p-4 z-[999] animate-in fade-in duration-300">
-      <div className="bg-[#111827] border border-amber-500/30 rounded-3xl w-full max-w-lg overflow-hidden shadow-[0_0_50px_rgba(245,158,11,0.15)] relative animate-in fade-in zoom-in duration-300 text-white">
+    <div className="fixed inset-0 bg-[#0B0F19]/80 backdrop-blur-md flex items-center justify-center p-3 sm:p-4 z-[999] animate-in fade-in duration-300">
+      <div className="bg-[#111827] border border-amber-500/30 rounded-3xl w-full max-w-lg max-h-[90vh] overflow-y-auto flex flex-col shadow-[0_0_50px_rgba(245,158,11,0.15)] relative animate-in fade-in zoom-in duration-300 text-white font-sans">
         
         {step !== 'success' && (
           <button 
             onClick={onClose} 
-            className="absolute top-4 right-4 text-slate-400 hover:text-white bg-white/5 hover:bg-white/10 rounded-full p-2 transition-all z-10 cursor-pointer border-none"
+            className="sticky top-3 right-3 self-end mr-3 mt-3 text-slate-300 hover:text-white bg-[#0B0F19]/90 hover:bg-black rounded-full p-2.5 transition-all z-50 cursor-pointer border border-amber-500/40 shadow-lg"
+            title="Close Subscription Page"
+            aria-label="Close"
           >
-            <X size={16} />
+            <X size={18} />
           </button>
         )}
 
         {step === 'info' && (
           <>
             {/* Header */}
-            <div className="bg-gradient-to-b from-amber-500/20 to-transparent p-8 text-center relative overflow-hidden border-b border-white/5">
+            <div className="bg-gradient-to-b from-amber-500/20 to-transparent p-6 sm:p-8 text-center relative overflow-hidden border-b border-white/5 -mt-12 pt-14">
               <div className="absolute top-[-25%] right-[-10%] w-[50%] h-[50%] bg-amber-500/10 rounded-full blur-[50px] pointer-events-none"></div>
-              <div className="w-16 h-16 bg-gradient-to-r from-amber-400 to-yellow-500 rounded-2xl flex items-center justify-center mx-auto mb-4 shadow-lg shadow-amber-500/20">
-                <Sparkles size={32} className="text-[#0B0F19] animate-pulse" />
+              <div className="w-14 h-14 sm:w-16 sm:h-16 bg-gradient-to-r from-amber-400 to-yellow-500 rounded-2xl flex items-center justify-center mx-auto mb-3 shadow-lg shadow-amber-500/20">
+                <Sparkles size={30} className="text-[#0B0F19] animate-pulse" />
               </div>
-              <h2 className="text-3xl font-extrabold text-white mb-1.5 tracking-tight">Fixvo Plus</h2>
-              <p className="text-amber-400/90 text-xs font-bold uppercase tracking-widest">VIP Service Membership</p>
+              <h2 className="text-2xl sm:text-3xl font-extrabold text-white mb-1 tracking-tight">Fixvo Plus</h2>
+              <p className="text-amber-400/90 text-[11px] sm:text-xs font-bold uppercase tracking-widest">VIP Service Membership</p>
             </div>
 
             {/* Content */}
-            <div className="p-6 sm:p-8 space-y-6">
+            <div className="p-5 sm:p-8 space-y-5 flex-1">
               {/* Plan Toggle */}
               <div className="flex justify-center">
                 <div className="bg-slate-900 border border-white/5 p-1 rounded-full flex items-center gap-1">
@@ -95,7 +97,7 @@ const PremiumModal = ({ onClose, onSuccess }) => {
               </div>
 
               {/* Benefits */}
-              <div className="space-y-3">
+              <div className="space-y-2.5">
                 {[
                   { title: "Priority Dispatch", desc: "Skip the booking queue; instant technician routing." },
                   { title: "Zero Inspection Fees", desc: "Never pay the ₹99 diagnostic charge on bookings." },
@@ -105,34 +107,43 @@ const PremiumModal = ({ onClose, onSuccess }) => {
                   <div key={i} className="flex items-start gap-3 bg-white/5 p-3 rounded-2xl border border-white/5 hover:border-white/10 transition-colors">
                     <CheckCircle2 size={18} className="text-amber-400 shrink-0 mt-0.5" />
                     <div>
-                      <h4 className="text-sm font-bold text-white leading-tight">{b.title}</h4>
-                      <p className="text-slate-400 text-xs mt-0.5 font-medium">{b.desc}</p>
+                      <h4 className="text-xs sm:text-sm font-bold text-white leading-tight">{b.title}</h4>
+                      <p className="text-slate-400 text-[11px] sm:text-xs mt-0.5 font-medium">{b.desc}</p>
                     </div>
                   </div>
                 ))}
               </div>
 
               {/* Price Callout */}
-              <div className="bg-slate-900/60 border border-white/5 rounded-2xl p-4 flex justify-between items-center">
+              <div className="bg-slate-900/80 border border-white/10 rounded-2xl p-4 flex justify-between items-center">
                 <div>
-                  <p className="font-extrabold text-sm text-slate-200">{isYearly ? 'Yearly Membership' : 'Monthly Membership'}</p>
-                  <p className="text-[10px] text-slate-500 mt-0.5">Cancel anytime with 1 click.</p>
+                  <p className="font-extrabold text-xs sm:text-sm text-slate-200">{isYearly ? 'Yearly Membership' : 'Monthly Membership'}</p>
+                  <p className="text-[10px] text-slate-400 mt-0.5">Cancel anytime with 1 click.</p>
                 </div>
                 <div className="text-right">
-                  <p className="text-2xl font-black text-white">₹{price}</p>
+                  <p className="text-xl sm:text-2xl font-black text-white">₹{price}</p>
                   <p className="text-[10px] text-slate-400 font-bold">GST Included</p>
                 </div>
               </div>
 
-              <button 
-                onClick={handleGoToPayment}
-                className="w-full bg-gradient-to-r from-amber-400 to-yellow-500 hover:from-amber-300 hover:to-yellow-400 text-[#0B0F19] font-black py-4 rounded-2xl shadow-lg shadow-amber-500/10 hover:shadow-amber-500/20 hover:scale-[1.01] transition-all duration-300 flex justify-center items-center gap-2 text-sm sm:text-base outline-none cursor-pointer border-none"
-              >
-                <span>Proceed to Payment (₹{price})</span>
-                <ArrowRight size={18} />
-              </button>
+              <div className="space-y-2 pt-1">
+                <button 
+                  onClick={handleGoToPayment}
+                  className="w-full bg-gradient-to-r from-amber-400 to-yellow-500 hover:from-amber-300 hover:to-yellow-400 text-[#0B0F19] font-black py-3.5 sm:py-4 rounded-2xl shadow-lg shadow-amber-500/10 hover:shadow-amber-500/20 hover:scale-[1.01] transition-all duration-300 flex justify-center items-center gap-2 text-xs sm:text-sm outline-none cursor-pointer border-none"
+                >
+                  <span>Proceed to Payment (₹{price})</span>
+                  <ArrowRight size={18} />
+                </button>
 
-              <p className="text-center text-[10px] text-slate-500 flex items-center justify-center gap-1.5 font-bold uppercase tracking-wider">
+                <button
+                  onClick={onClose}
+                  className="w-full bg-white/5 hover:bg-white/10 text-slate-400 hover:text-slate-200 font-bold py-2.5 rounded-xl text-xs transition-colors cursor-pointer border-none"
+                >
+                  Maybe Later (Close)
+                </button>
+              </div>
+
+              <p className="text-center text-[10px] text-slate-500 flex items-center justify-center gap-1.5 font-bold uppercase tracking-wider pt-1">
                 <ShieldCheck size={14} className="text-emerald-400" /> Secure 256-Bit Encrypted Payment
               </p>
             </div>
@@ -140,7 +151,7 @@ const PremiumModal = ({ onClose, onSuccess }) => {
         )}
 
         {step === 'payment_gateway' && (
-          <div className="p-6 sm:p-8 space-y-6">
+          <div className="p-5 sm:p-8 space-y-5 -mt-10 pt-12">
             {/* Razorpay Header */}
             <div className="flex items-center justify-between border-b border-white/10 pb-4">
               <div className="flex items-center gap-2">
@@ -244,14 +255,14 @@ const PremiumModal = ({ onClose, onSuccess }) => {
         )}
 
         {step === 'success' && (
-          <div className="p-10 text-center space-y-6 flex flex-col items-center justify-center animate-in zoom-in duration-500">
+          <div className="p-8 sm:p-10 text-center space-y-6 flex flex-col items-center justify-center animate-in zoom-in duration-500">
             <div className="w-20 h-20 bg-emerald-500/10 border-2 border-emerald-500 rounded-full flex items-center justify-center text-emerald-400 shadow-[0_0_30px_rgba(16,185,129,0.2)] animate-bounce">
               <Check size={40} className="stroke-[3]" />
             </div>
             
             <div>
-              <h3 className="text-3xl font-extrabold text-white tracking-tight">Welcome to Fixvo Plus! 👑</h3>
-              <p className="text-slate-300 text-sm mt-2 leading-relaxed font-medium">
+              <h3 className="text-2xl sm:text-3xl font-extrabold text-white tracking-tight">Welcome to Fixvo Plus! 👑</h3>
+              <p className="text-slate-300 text-xs sm:text-sm mt-2 leading-relaxed font-medium">
                 Your VIP membership is now fully active.<br />Enjoy zero inspection fees & priority technician dispatch!
               </p>
             </div>

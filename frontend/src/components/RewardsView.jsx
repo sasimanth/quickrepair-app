@@ -110,37 +110,61 @@ const RewardsView = ({ profile, onPointsConverted }) => {
 
       {/* Coupons stack */}
       <div className="space-y-4 pt-4">
-        <h3 className="font-extrabold text-xs text-slate-500 uppercase tracking-wider">Active Promo Codes & Coupons</h3>
+        <h3 className="font-extrabold text-xs text-slate-500 uppercase tracking-wider">Active Promo Codes & Vouchers</h3>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           
           {/* Coupon 1 */}
-          <div className="bg-slate-50 border border-dashed border-slate-300 rounded-2xl p-5 relative overflow-hidden flex gap-4">
-            <div className="p-3 bg-blue-100 text-blue-700 border border-blue-200 rounded-xl h-11 w-11 flex items-center justify-center shrink-0">
-              <Percent size={20} />
-            </div>
-            <div>
-              <div className="flex items-center gap-2">
-                <span className="font-extrabold text-xs bg-white border border-slate-200 px-2 py-0.5 rounded text-blue-700 uppercase tracking-wider font-mono select-all shadow-xs">FIXVO10</span>
-                <span className="text-[9px] bg-blue-100 text-blue-800 px-2 py-0.5 rounded font-black uppercase tracking-wider">Active</span>
+          <div className="bg-slate-50 border border-dashed border-slate-300 rounded-2xl p-5 relative overflow-hidden flex flex-col justify-between space-y-3">
+            <div className="flex gap-4">
+              <div className="p-3 bg-blue-100 text-blue-700 border border-blue-200 rounded-xl h-11 w-11 flex items-center justify-center shrink-0">
+                <Percent size={20} />
               </div>
-              <h4 className="font-bold text-slate-900 text-xs sm:text-sm mt-2">10% Discount on First Booking</h4>
-              <p className="text-[11px] text-slate-500 font-medium mt-1">Valid for new customer accounts on first service or repair.</p>
+              <div>
+                <div className="flex items-center gap-2">
+                  <span className="font-extrabold text-xs bg-white border border-slate-200 px-2 py-0.5 rounded text-blue-700 uppercase tracking-wider font-mono select-all shadow-xs">FIXVO10</span>
+                  <span className="text-[9px] bg-blue-100 text-blue-800 px-2 py-0.5 rounded font-black uppercase tracking-wider">Active</span>
+                </div>
+                <h4 className="font-bold text-slate-900 text-xs sm:text-sm mt-2">10% Discount on First Booking</h4>
+                <p className="text-[11px] text-slate-500 font-medium mt-1">Valid for new customer accounts on service booking.</p>
+              </div>
             </div>
+            <button
+              onClick={() => {
+                navigator.clipboard.writeText('FIXVO10');
+                setSuccessMsg('Promo code "FIXVO10" copied! Enter during service booking.');
+                setTimeout(() => setSuccessMsg(''), 4000);
+              }}
+              className="w-full py-2 bg-white hover:bg-blue-50 text-blue-700 border border-blue-200 rounded-xl font-extrabold text-xs cursor-pointer transition-colors shadow-2xs"
+            >
+              Copy Code (FIXVO10)
+            </button>
           </div>
 
           {/* Coupon 2 */}
-          <div className="bg-slate-50 border border-dashed border-slate-300 rounded-2xl p-5 relative overflow-hidden flex gap-4">
-            <div className="p-3 bg-amber-100 text-amber-700 border border-amber-200 rounded-xl h-11 w-11 flex items-center justify-center shrink-0">
-              <Gift size={20} />
-            </div>
-            <div>
-              <div className="flex items-center gap-2">
-                <span className="font-extrabold text-xs bg-white border border-slate-200 px-2 py-0.5 rounded text-amber-700 uppercase tracking-wider font-mono select-all shadow-xs">PLUSNEW</span>
-                <span className="text-[9px] bg-amber-100 text-amber-800 px-2 py-0.5 rounded font-black uppercase tracking-wider">Plus Special</span>
+          <div className="bg-slate-50 border border-dashed border-slate-300 rounded-2xl p-5 relative overflow-hidden flex flex-col justify-between space-y-3">
+            <div className="flex gap-4">
+              <div className="p-3 bg-amber-100 text-amber-700 border border-amber-200 rounded-xl h-11 w-11 flex items-center justify-center shrink-0">
+                <Gift size={20} />
               </div>
-              <h4 className="font-bold text-slate-900 text-xs sm:text-sm mt-2">Save ₹99 on Inspection Visits</h4>
-              <p className="text-[11px] text-slate-500 font-medium mt-1">Applied automatically for Plus members on diagnostic visits.</p>
+              <div>
+                <div className="flex items-center gap-2">
+                  <span className="font-extrabold text-xs bg-white border border-slate-200 px-2 py-0.5 rounded text-amber-700 uppercase tracking-wider font-mono select-all shadow-xs font-mono">FIXVO100</span>
+                  <span className="text-[9px] bg-amber-100 text-amber-800 px-2 py-0.5 rounded font-black uppercase tracking-wider">Flat ₹100 Off</span>
+                </div>
+                <h4 className="font-bold text-slate-900 text-xs sm:text-sm mt-2">Flat ₹100 Off Repair Services</h4>
+                <p className="text-[11px] text-slate-500 font-medium mt-1">Applies flat ₹100 discount to final service quote.</p>
+              </div>
             </div>
+            <button
+              onClick={() => {
+                navigator.clipboard.writeText('FIXVO100');
+                setSuccessMsg('Promo code "FIXVO100" copied! Enter during service booking.');
+                setTimeout(() => setSuccessMsg(''), 4000);
+              }}
+              className="w-full py-2 bg-white hover:bg-amber-50 text-amber-800 border border-amber-200 rounded-xl font-extrabold text-xs cursor-pointer transition-colors shadow-2xs"
+            >
+              Copy Code (FIXVO100)
+            </button>
           </div>
 
         </div>

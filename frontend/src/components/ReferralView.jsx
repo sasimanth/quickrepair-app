@@ -26,7 +26,7 @@ const ReferralView = ({ profile, showToast }) => {
     setTimeout(() => setCopiedLink(false), 2000);
   };
 
-  const inviteText = encodeURIComponent(`Hey! Sign up on Fixvo using my code *${refCode}* and get ₹50 welcome cashback instantly on your first service visit. Register here: ${referralLink}`);
+  const inviteText = encodeURIComponent(`Hey! Sign up on Fixvo using my code *${refCode}* and get ₹100 welcome cashback instantly on your first service visit. Register here: ${referralLink}`);
   const whatsappUrl = `https://api.whatsapp.com/send?text=${inviteText}`;
 
   return (
@@ -35,7 +35,7 @@ const ReferralView = ({ profile, showToast }) => {
         <h2 className="text-xl sm:text-2xl font-black tracking-tight text-slate-900 flex items-center gap-2">
           <User className="text-blue-600" /> Refer & Earn Rewards
         </h2>
-        <p className="text-xs text-slate-500 mt-1 font-medium">Invite friends to Fixvo and earn reward cash</p>
+        <p className="text-xs text-slate-500 mt-1 font-medium">Invite friends to Fixvo and earn ₹100 Fixvo Cash for every successful referral</p>
       </div>
 
       <div className="bg-gradient-to-br from-blue-50 to-indigo-50/50 p-6 sm:p-8 rounded-3xl border border-blue-100 text-center space-y-6 shadow-sm">
@@ -45,9 +45,9 @@ const ReferralView = ({ profile, showToast }) => {
         </div>
         
         <div className="space-y-1.5 max-w-md mx-auto">
-          <h3 className="text-xl font-black text-slate-900">Earn ₹100 for every referral!</h3>
+          <h3 className="text-xl font-black text-slate-900">Earn ₹100 Fixvo Cash for every referral!</h3>
           <p className="text-xs text-slate-600 font-medium leading-relaxed">
-            You earn ₹100 in wallet cash after your friend completes their first service booking, and they get ₹50 welcome cashback!
+            You earn ₹100 in wallet cash after your friend completes their first service booking, and they get ₹100 welcome cashback to use on repair bills!
           </p>
         </div>
 
