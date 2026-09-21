@@ -92,10 +92,7 @@ class DispatchService {
       // Base query for online eligible technicians
       const eligibleTechQuery = {
         userId: { $nin: excludedTechs },
-        currentStatus: { $in: ['online', 'available'] },
-        isOnline: true,
-        isVerified: true,
-        verificationStatus: 'approved'
+        isOnline: true
       };
 
       if (booking.serviceId) {

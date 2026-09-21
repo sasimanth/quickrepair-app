@@ -373,6 +373,9 @@ const createBooking = async (req, res) => {
       // Start dispatch loop with manual assignment
       DispatchService.startDispatch(createdBooking._id);
     } else {
+      if (global.io) {
+        global.io.emit('new_job_request', createdBooking.toObject());
+      }
       // Run smart auto-assignment asynchronously
       DispatchService.startDispatch(createdBooking._id);
     }
@@ -458,8 +461,16 @@ const getBookings = async (req, res) => {
       bookings = await Booking.find({})
         .populate('serviceId', 'name price');
     } else if (req.user.role === 'technician') {
-      bookings = await Booking.find({ providerId: req.user.id })
-        .populate('serviceId', 'name price');
+      bookings = await Booking.find({
+        $or: [
+          { providerId: req.user.id },
+          { providerId: null, status: 'pending' },
+          { providerId: { $exists: false }, status: 'pending' },
+          { status: 'assigned' }
+        ]
+      })
+      .populate('serviceId', 'name price')
+      .sort('-createdAt');
     } else {
       // Regular User - Strictly filter by logged-in user ID to prevent cross-user access
       bookings = await Booking.find({ userId: req.user.id })
