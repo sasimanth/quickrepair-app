@@ -528,13 +528,7 @@ const UserDashboard = () => {
     } catch (error) {
       console.error("Booking submission error:", error);
       const errMsg = error.response?.data?.message || 'Unable to process booking. Please try again.';
-      if (errMsg.toLowerCase().includes('verified') || errMsg.toLowerCase().includes('otp') || error.response?.data?.requiresVerification) {
-        setShowVerificationModal(true);
-        showToast('Verification Required 🔒', 'Account not verified. Email and Mobile OTP verification required.', 'warning', false, {
-          label: 'Verify OTP Now',
-          onClick: () => setShowVerificationModal(true)
-        });
-      } else if (errMsg.toLowerCase().includes('no token') || errMsg.toLowerCase().includes('not authorized')) {
+      if (errMsg.toLowerCase().includes('no token') || errMsg.toLowerCase().includes('not authorized')) {
         showToast('Sign In Required 🔑', 'Your session expired. Please sign in to complete booking.', 'warning');
         navigate('/login');
       } else {
@@ -2220,16 +2214,7 @@ const UserDashboard = () => {
         />
       )}
 
-      {showVerificationModal && (
-        <VerificationModal
-          onClose={() => setShowVerificationModal(false)}
-          onSuccess={() => {
-            setShowVerificationModal(false);
-            fetchData(false);
-            showToast("Account Verified ✅", "Your email & phone number verification is complete.", "success");
-          }}
-        />
-      )}
+
 
       {cancelBookingId && (
         <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-xs z-50 flex items-center justify-center p-4">

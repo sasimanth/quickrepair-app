@@ -62,14 +62,14 @@ const Navbar = () => {
               {/* Navigation Action Buttons */}
               <div className="flex items-center gap-2 sm:gap-3 transition-all">
 
-                {/* Open App Button (Hidden on small mobile screens to prevent header crowding) */}
+                {/* Open App Button (Visible near Sign In on all devices) */}
                 <button
                   onClick={() => setIsAppModalOpen(true)}
-                  className="hidden sm:inline-flex group items-center gap-1.5 px-4 py-2 sm:px-5 sm:py-2.5 text-xs sm:text-sm font-extrabold rounded-full bg-slate-950 text-white shadow-md shadow-slate-950/20 hover:-translate-y-0.5 hover:shadow-xl transition-all duration-300"
+                  className="inline-flex group items-center gap-1 sm:gap-1.5 px-3 py-1.5 sm:px-4 sm:py-2 text-[11px] sm:text-xs font-extrabold rounded-full bg-slate-950 text-white shadow-md shadow-slate-950/20 hover:-translate-y-0.5 hover:shadow-xl transition-all duration-300 shrink-0"
                 >
-                  <Smartphone size={15} className="text-sky-400" />
+                  <Smartphone size={13} className="text-sky-400 shrink-0" />
                   <span>Open App</span>
-                  <ArrowUpRight size={14} className="transition-transform group-hover:translate-x-0.5 group-hover:-translate-y-0.5" />
+                  <ArrowUpRight size={12} className="hidden sm:inline transition-transform group-hover:translate-x-0.5 group-hover:-translate-y-0.5" />
                 </button>
 
                 {user ? (
