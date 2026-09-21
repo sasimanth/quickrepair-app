@@ -62,10 +62,10 @@ const Navbar = () => {
               {/* Navigation Action Buttons */}
               <div className="flex items-center gap-2 sm:gap-3 transition-all">
 
-                {/* Open App Button */}
+                {/* Open App Button (Hidden on small mobile screens to prevent header crowding) */}
                 <button
                   onClick={() => setIsAppModalOpen(true)}
-                  className="group inline-flex items-center gap-1.5 px-4 py-2 sm:px-5 sm:py-2.5 text-xs sm:text-sm font-extrabold rounded-full bg-slate-950 text-white shadow-md shadow-slate-950/20 hover:-translate-y-0.5 hover:shadow-xl transition-all duration-300"
+                  className="hidden sm:inline-flex group items-center gap-1.5 px-4 py-2 sm:px-5 sm:py-2.5 text-xs sm:text-sm font-extrabold rounded-full bg-slate-950 text-white shadow-md shadow-slate-950/20 hover:-translate-y-0.5 hover:shadow-xl transition-all duration-300"
                 >
                   <Smartphone size={15} className="text-sky-400" />
                   <span>Open App</span>

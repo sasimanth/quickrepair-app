@@ -28,10 +28,20 @@ const OpenAppModal = ({ isOpen, onClose }) => {
 
   if (!isOpen) return null;
 
-  const handleSkip = () => {
+  const handleSkip = async () => {
     onClose();
-    if (!localStorage.getItem('user')) {
-      localStorage.setItem('user', JSON.stringify({ name: 'Guest User', phone: '+91 98765 43210', role: 'user' }));
+    if (!localStorage.getItem('token')) {
+      try {
+        const { data } = await api.post('/auth/phone-login', { phone: '9876543210', name: 'Guest User' });
+        if (data.token) {
+          localStorage.setItem('token', data.token);
+          localStorage.setItem('user', JSON.stringify(data));
+        }
+      } catch (err) {
+        if (!localStorage.getItem('user')) {
+          localStorage.setItem('user', JSON.stringify({ name: 'Guest User', phone: '+91 98765 43210', role: 'user' }));
+        }
+      }
     }
     navigate('/dashboard');
     window.location.href = '/dashboard';
@@ -45,15 +55,19 @@ const OpenAppModal = ({ isOpen, onClose }) => {
     }
     setIsSubmitting(true);
     try {
-      await api.post('/auth/resend-verification', { phone: mobileNumber }).catch(() => null);
+      const { data } = await api.post('/auth/phone-login', { phone: mobileNumber, name: `Customer (${mobileNumber.slice(-4)})` });
+      if (data.token) {
+        localStorage.setItem('token', data.token);
+        localStorage.setItem('user', JSON.stringify(data));
+      }
     } catch (err) {
-      console.warn("SMS OTP dispatch warning:", err);
-    } finally {
+      console.warn("Phone login API fallback:", err);
       localStorage.setItem('user', JSON.stringify({ 
         name: `User (${mobileNumber.slice(-4)})`, 
         phone: `+91 ${mobileNumber}`,
         role: 'user'
       }));
+    } finally {
       setIsSubmitting(false);
       onClose();
       navigate('/dashboard');
@@ -67,21 +81,11 @@ const OpenAppModal = ({ isOpen, onClose }) => {
       if (loginWithGoogle) {
         await loginWithGoogle();
       }
-      localStorage.setItem('user', JSON.stringify({ 
-        name: 'Fixvo Customer', 
-        email: 'user@fixvo.in',
-        role: 'user'
-      }));
       onClose();
       navigate('/dashboard');
       window.location.href = '/dashboard';
     } catch (err) {
       console.error("Google Auth Error:", err);
-      localStorage.setItem('user', JSON.stringify({ 
-        name: 'Fixvo Customer', 
-        email: 'user@fixvo.in',
-        role: 'user'
-      }));
       onClose();
       navigate('/dashboard');
       window.location.href = '/dashboard';

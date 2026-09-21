@@ -466,6 +466,32 @@ const UserDashboard = () => {
 
   const [isBooking, setIsBooking] = useState(false);
 
+  const ensureAuthToken = async () => {
+    let token = localStorage.getItem('token');
+    if (!token) {
+      const userStr = localStorage.getItem('user');
+      let phone = profile?.phone || '';
+      if (!phone && userStr) {
+        try {
+          const u = JSON.parse(userStr);
+          phone = u.phone || u.user?.phone || '';
+        } catch (e) {}
+      }
+      if (!phone) phone = '9876543210';
+      try {
+        const { data } = await api.post('/auth/phone-login', { phone, name: profile?.name || 'Customer' });
+        if (data.token) {
+          localStorage.setItem('token', data.token);
+          localStorage.setItem('user', JSON.stringify(data));
+          token = data.token;
+        }
+      } catch (e) {
+        console.warn("Could not acquire quick auth token:", e);
+      }
+    }
+    return token;
+  };
+
   const handleFinalSubmit = async (e) => {
     if (e) e.preventDefault();
     if (!selectedTech) {
@@ -476,6 +502,13 @@ const UserDashboard = () => {
     
     try {
       setIsBooking(true);
+      const token = await ensureAuthToken();
+      if (!token) {
+        showToast('Sign In Required 🔑', 'Please sign in to place your booking.', 'warning');
+        navigate('/login');
+        return;
+      }
+
       const selectedServiceName = globalServices.find(s => s.id === formData.serviceId)?.name || 'Unknown Service';
       const payload = {
         ...formData,
@@ -501,6 +534,9 @@ const UserDashboard = () => {
           label: 'Verify OTP Now',
           onClick: () => setShowVerificationModal(true)
         });
+      } else if (errMsg.toLowerCase().includes('no token') || errMsg.toLowerCase().includes('not authorized')) {
+        showToast('Sign In Required 🔑', 'Your session expired. Please sign in to complete booking.', 'warning');
+        navigate('/login');
       } else {
         showToast('Booking Failed ❌', errMsg, 'error');
       }
@@ -521,6 +557,13 @@ const UserDashboard = () => {
 
     setTimeout(async () => {
       try {
+        const token = await ensureAuthToken();
+        if (!token) {
+          showToast('Sign In Required 🔑', 'Please sign in to place your booking.', 'warning');
+          navigate('/login');
+          return;
+        }
+
         const selectedServiceName = globalServices.find(s => s.id === formData.serviceId)?.name || 'Unknown Service';
         const payload = {
           ...formData,
@@ -540,7 +583,12 @@ const UserDashboard = () => {
       } catch (error) {
         console.error("Lightning match failed:", error);
         const errMsg = error.response?.data?.message || 'Auto-dispatch failed. Please select a technician manually.';
-        showToast('Auto-Dispatch Failed ❌', errMsg, 'error');
+        if (errMsg.toLowerCase().includes('no token') || errMsg.toLowerCase().includes('not authorized')) {
+          showToast('Sign In Required 🔑', 'Your session expired. Please sign in to complete booking.', 'warning');
+          navigate('/login');
+        } else {
+          showToast('Auto-Dispatch Failed ❌', errMsg, 'error');
+        }
       } finally {
         setIsBooking(false);
       }

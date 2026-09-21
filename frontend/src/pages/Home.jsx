@@ -647,39 +647,6 @@ const Home = () => {
                 </div>
               </div>
             </div>
-
-            {/* Smartphone Live Preview Container */}
-            <div className="relative pt-8">
-              <div className="rounded-[2.5rem] border border-white/10 bg-slate-900/90 p-5 sm:p-7 shadow-[0_24px_70px_rgba(0,0,0,0.4)] backdrop-blur-xl relative overflow-hidden max-w-lg mx-auto">
-                <div className="flex items-center justify-between border-b border-white/10 pb-3 mb-4">
-                  <div className="flex items-center gap-2">
-                    <div className="w-3 h-3 rounded-full bg-rose-500/80"></div>
-                    <div className="w-3 h-3 rounded-full bg-amber-500/80"></div>
-                    <div className="w-3 h-3 rounded-full bg-emerald-500/80"></div>
-                  </div>
-                  <span className="text-[10px] font-mono font-extrabold uppercase tracking-widest text-slate-400 bg-white/5 px-2.5 py-1 rounded-full border border-white/10">
-                    app.fixvo.com
-                  </span>
-                </div>
-
-                <div className="rounded-2xl bg-[#0B0F19] p-4 border border-white/5 space-y-3">
-                  <div className="flex items-center justify-between text-left">
-                    <div className="flex items-center gap-2">
-                      <div className="w-7 h-7 rounded-full bg-blue-500/20 border border-blue-500/30 flex items-center justify-center text-blue-400">
-                        <img src={fixvoLogo} className="w-full h-full object-cover rounded-full" alt="Fixvo" />
-                      </div>
-                      <span className="font-extrabold text-sm text-white">Fixvo App Preview</span>
-                    </div>
-                    <span className="text-[9px] font-black text-emerald-400 bg-emerald-500/10 px-2 py-0.5 rounded border border-emerald-500/20">LIVE</span>
-                  </div>
-
-                  <div className="rounded-xl bg-gradient-to-r from-slate-900 to-indigo-950 p-3 border border-white/10 text-left">
-                    <p className="text-[10px] font-black uppercase text-indigo-400 tracking-wider">Instant Broadcast</p>
-                    <p className="text-xs font-bold text-white mt-0.5">Need a repair? Broadcast request to nearby fixers.</p>
-                  </div>
-                </div>
-              </div>
-            </div>
           </motion.div>
         </section>
 
@@ -1239,52 +1206,6 @@ const Home = () => {
           </div>
         </div>
       )}
-
-      {/* App Install Floating Popup Banner */}
-      <AnimatePresence>
-        {!isBannerDismissed && !isAppModalOpen && (
-          <motion.div
-            initial={{ opacity: 0, y: 50 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: 50 }}
-            className="fixed bottom-4 left-4 right-4 sm:left-auto sm:right-6 sm:max-w-md z-40 bg-gradient-to-r from-slate-900 via-[#101524] to-slate-900 border border-blue-500/30 p-4 rounded-3xl shadow-[0_15px_40px_rgba(0,0,0,0.5)] flex items-center justify-between gap-3 text-white backdrop-blur-xl"
-          >
-            <div className="flex items-center gap-3">
-              <div className="w-11 h-11 rounded-2xl bg-blue-600 p-1 shrink-0 overflow-hidden shadow-md shadow-blue-600/40 border border-blue-400/30">
-                <img src={fixvoLogo} alt="Fixvo Logo" className="w-full h-full object-cover scale-110" />
-              </div>
-              <div>
-                <span className="text-[9px] font-black uppercase tracking-widest text-blue-400 bg-blue-500/10 px-2 py-0.5 rounded border border-blue-500/20">
-                  Instant Mobile Access
-                </span>
-                <h4 className="font-extrabold text-xs text-white tracking-tight mt-0.5">Install Fixvo App</h4>
-                <p className="text-[10px] text-slate-400 font-medium">30-min doorstep repairs at your fingertips</p>
-              </div>
-            </div>
-
-            <div className="flex items-center gap-2 shrink-0">
-              <button
-                onClick={() => setIsAppModalOpen(true)}
-                className="px-3.5 py-1.5 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white font-extrabold rounded-2xl text-xs shadow-md shadow-blue-600/30 transition-all flex items-center gap-1 cursor-pointer border-none"
-              >
-                <Smartphone size={13} />
-                <span>Open App</span>
-              </button>
-
-              <button
-                onClick={() => {
-                  setIsBannerDismissed(true);
-                  sessionStorage.setItem('fixvo_app_banner_dismissed', 'true');
-                }}
-                className="p-1.5 text-slate-400 hover:text-white hover:bg-white/10 rounded-full transition cursor-pointer border-none bg-transparent"
-                title="Dismiss banner"
-              >
-                <X size={14} />
-              </button>
-            </div>
-          </motion.div>
-        )}
-      </AnimatePresence>
 
       {/* Open App Modal */}
       <OpenAppModal isOpen={isAppModalOpen} onClose={() => setIsAppModalOpen(false)} />

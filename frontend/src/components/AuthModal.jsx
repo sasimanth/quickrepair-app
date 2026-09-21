@@ -75,9 +75,8 @@ const AuthModal = ({ onClose, onSuccess }) => {
       } else {
         throw new Error('Authentication succeeded but no token was returned.');
       }
-    } catch (err) {
-      if (err.status === 403) {
-        setError('Your email is not verified. Please verify your email.');
+      if (err.response?.data?.requiresVerification || (err.response?.status === 403 && err.response?.data?.message?.toLowerCase().includes('verified'))) {
+        setError(err.response?.data?.message || 'Your email is not verified. Please verify your email.');
       } else {
         setError(err.response?.data?.message || err.message || 'Authentication failed');
       }

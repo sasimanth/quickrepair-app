@@ -172,8 +172,8 @@ const Login = () => {
         return next;
       });
 
-      if (err.status === 403) {
-         setError('Your email is not verified. Please complete sign up verification.');
+      if (err.response?.data?.requiresVerification || (err.response?.status === 403 && err.response?.data?.message?.toLowerCase().includes('verified'))) {
+         setError(err.response?.data?.message || 'Your email is not verified. Please complete sign up verification.');
       } else {
          setError(err.response?.data?.message || 'Invalid credentials. Please check your email & password.');
       }
