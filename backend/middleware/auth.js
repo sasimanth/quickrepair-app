@@ -69,9 +69,9 @@ const ensureVerified = (req, res, next) => {
   if (req.user.role === 'admin') {
     return next();
   }
-  if (!req.user.isEmailVerified || !req.user.isPhoneVerified) {
+  if (!req.user.isEmailVerified && !req.user.isPhoneVerified) {
     return res.status(403).json({ 
-      message: 'Account not fully verified. Email and Mobile OTP verification are required to perform this action.',
+      message: 'Account not verified. Email or Mobile OTP verification is required to perform this action.',
       isEmailVerified: req.user.isEmailVerified,
       isPhoneVerified: req.user.isPhoneVerified,
       requiresVerification: true

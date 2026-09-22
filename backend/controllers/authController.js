@@ -701,7 +701,7 @@ const googleAuth = async (req, res) => {
         password: hashedPassword,
         role: 'user', // Default role is strictly customer
         isEmailVerified: true,
-        isPhoneVerified: false,
+        isPhoneVerified: true,
         avatar: avatar || '👤'
       });
 
@@ -725,6 +725,10 @@ const googleAuth = async (req, res) => {
       }
       if (!user.isEmailVerified) {
         user.isEmailVerified = true;
+        modified = true;
+      }
+      if (!user.isPhoneVerified) {
+        user.isPhoneVerified = true;
         modified = true;
       }
       if (avatar && (!user.avatar || user.avatar === '👤')) {

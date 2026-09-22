@@ -206,11 +206,11 @@ const createBooking = async (req, res) => {
       parsedDate = new Date();
     }
 
-    // DUPLICATE SUBMISSION CHECK (Within last 2 minutes)
-    const twoMinutesAgo = new Date(Date.now() - 2 * 60 * 1000);
+    // DUPLICATE SUBMISSION CHECK (Within last 30 seconds)
+    const thirtySecondsAgo = new Date(Date.now() - 30 * 1000);
     const duplicateQuery = {
-      serviceId: serviceId || null,
-      createdAt: { $gte: twoMinutesAgo }
+      serviceName: service || deviceType || 'Unknown Service',
+      createdAt: { $gte: thirtySecondsAgo }
     };
     if (bookingUserId) {
       duplicateQuery.$or = [
@@ -223,7 +223,7 @@ const createBooking = async (req, res) => {
     const duplicate = await Booking.findOne(duplicateQuery);
 
     if (duplicate) {
-      return res.status(409).json({ message: 'Duplicate booking detected. Please wait 2 minutes before resubmitting.' });
+      return res.status(409).json({ message: 'Duplicate booking detected. Please wait 30 seconds before resubmitting.' });
     }
 
     // RISK SCORING & CANCELLATION ABUSE CHECK
@@ -472,8 +472,17 @@ const getBookings = async (req, res) => {
       .populate('serviceId', 'name price')
       .sort('-createdAt');
     } else {
-      // Regular User - Strictly filter by logged-in user ID to prevent cross-user access
-      bookings = await Booking.find({ userId: req.user.id })
+      // Regular User - Filter by logged-in user ID, user email, or phone
+      const userPhone = normalizePhone(req.user.phone);
+      const userQueries = [
+        { userId: req.user.id },
+        { userId: req.user._id ? req.user._id.toString() : null },
+        { userEmail: req.user.email }
+      ];
+      if (userPhone && userPhone !== '0000000000') {
+        userQueries.push({ phone: userPhone });
+      }
+      bookings = await Booking.find({ $or: userQueries })
         .populate('serviceId', 'name price')
         .sort('-createdAt');
     }

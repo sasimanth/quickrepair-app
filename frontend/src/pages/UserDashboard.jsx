@@ -501,10 +501,6 @@ const UserDashboard = () => {
 
   const handleFinalSubmit = async (e) => {
     if (e) e.preventDefault();
-    if (!selectedTech) {
-      alert("Please select a technician first.");
-      return;
-    }
     if (isBooking) return;
     
     setIsBooking(true);
@@ -515,93 +511,70 @@ const UserDashboard = () => {
       const payload = {
         ...formData,
         service: selectedServiceName,
-        providerId: selectedTech.id,
+        providerId: selectedTech ? (selectedTech.id || selectedTech._id) : null,
         promoCode: promoCode,
         discountPercentage: discountAmount
       };
-      await api.post('/bookings', payload);
+      const res = await api.post('/bookings', payload);
+      const newBooking = res.data?.booking || res.data;
       
-      showToast('Booking Request Submitted 🚀', 'Your booking request has been sent to the technician.', 'success');
+      showToast('Booking Request Submitted 🚀', 'Your booking request has been sent successfully.', 'success');
       localStorage.removeItem('pendingBooking');
       setShowForm(false);
       setStep(1);
       setSelectedTech(null);
+      if (newBooking && newBooking._id) {
+        setBookings(prev => [newBooking, ...(Array.isArray(prev) ? prev : [])]);
+      }
       fetchData(false);
     } catch (error) {
-      console.warn("Booking submission API fallback:", error);
-      // Fallback: Create optimistic local booking so user is never logged out or blocked
-      const localBooking = {
-        _id: 'booking_' + Date.now(),
-        serviceName: selectedServiceName,
-        serviceId: { name: selectedServiceName },
-        providerId: selectedTech,
-        status: 'pending',
-        createdAt: new Date().toISOString(),
-        date: formData.date || new Date().toISOString().split('T')[0],
-        location: formData.location || 'Madanapalle Main Town',
-        amount: 199
-      };
-      setBookings(prev => [localBooking, ...(Array.isArray(prev) ? prev : [])]);
-      showToast('Booking Request Submitted 🚀', 'Your booking request was recorded.', 'success');
-      setShowForm(false);
-      setStep(1);
-      setSelectedTech(null);
+      console.error("Booking submission error:", error);
+      const errMsg = error.response?.data?.message || error.message || 'Failed to submit booking. Please try again.';
+      showToast('Booking Failed ❌', errMsg, 'error');
     } finally {
       setIsBooking(false);
     }
   };
 
   const handleLightningMatch = async () => {
-    if (technicians.length === 0 || isBooking) return;
-    const bestTech = [...technicians].sort((a, b) => {
+    if (isBooking) return;
+    const bestTech = technicians.length > 0 ? [...technicians].sort((a, b) => {
       if ((b.rating || 0) !== (a.rating || 0)) return (b.rating || 0) - (a.rating || 0);
       return (b.jobsCompleted || 0) - (a.jobsCompleted || 0);
-    })[0];
+    })[0] : null;
 
-    setSelectedTech(bestTech);
+    if (bestTech) setSelectedTech(bestTech);
     setIsBooking(true);
 
-    setTimeout(async () => {
+    try {
+      await ensureAuthToken();
       const selectedServiceName = globalServices.find(s => s.id === formData.serviceId)?.name || 'Unknown Service';
-      try {
-        await ensureAuthToken();
-        const payload = {
-          ...formData,
-          service: selectedServiceName,
-          providerId: bestTech.id,
-          promoCode: promoCode,
-          discountPercentage: discountAmount
-        };
-        await api.post('/bookings', payload);
+      const payload = {
+        ...formData,
+        service: selectedServiceName,
+        providerId: bestTech ? (bestTech.id || bestTech._id) : null,
+        promoCode: promoCode,
+        discountPercentage: discountAmount
+      };
+      const res = await api.post('/bookings', payload);
+      const newBooking = res.data?.booking || res.data;
 
-        showToast('Technician Assigned Successfully! 👨‍🔧', `Matched with top expert ${bestTech.name}.`, 'success');
-        localStorage.removeItem('pendingBooking');
-        setShowForm(false);
-        setStep(1);
-        setSelectedTech(null);
-        fetchData(false);
-      } catch (error) {
-        console.warn("Lightning match API fallback:", error);
-        const localBooking = {
-          _id: 'booking_' + Date.now(),
-          serviceName: selectedServiceName,
-          serviceId: { name: selectedServiceName },
-          providerId: bestTech,
-          status: 'pending',
-          createdAt: new Date().toISOString(),
-          date: formData.date || new Date().toISOString().split('T')[0],
-          location: formData.location || 'Madanapalle Main Town',
-          amount: 199
-        };
-        setBookings(prev => [localBooking, ...(Array.isArray(prev) ? prev : [])]);
-        showToast('Technician Assigned Successfully! 👨‍🔧', `Matched with top expert ${bestTech.name}.`, 'success');
-        setShowForm(false);
-        setStep(1);
-        setSelectedTech(null);
-      } finally {
-        setIsBooking(false);
+      showToast('Technician Assigned Successfully! 👨‍🔧', bestTech ? `Matched with top expert ${bestTech.name}.` : 'Request dispatched to nearby technicians.', 'success');
+      localStorage.removeItem('pendingBooking');
+      setShowForm(false);
+      setStep(1);
+      setSelectedTech(null);
+      if (newBooking && newBooking._id) {
+        setBookings(prev => [newBooking, ...(Array.isArray(prev) ? prev : [])]);
       }
-    }, 1200);
+      fetchData(false);
+    } catch (error) {
+      console.error("Lightning match error:", error);
+      const errMsg = error.response?.data?.message || error.message || 'Failed to dispatch booking.';
+      showToast('Booking Failed ❌', errMsg, 'error');
+    } finally {
+      setIsBooking(false);
+    }
   };
 
   // AI Assistant Handlers
@@ -629,6 +602,7 @@ const UserDashboard = () => {
 
     try {
       setIsBooking(true);
+      await ensureAuthToken();
       const selectedServiceName = globalServices.find(s => s.id === draft.serviceId)?.name || draft.serviceName || 'Home Service';
       const payload = {
         ...formData,
@@ -642,10 +616,15 @@ const UserDashboard = () => {
         promoCode: promoCode || null,
         discountPercentage: discountAmount || 0
       };
-      await api.post('/bookings', payload);
+      const res = await api.post('/bookings', payload);
+      const newBooking = res.data?.booking || res.data;
+
       showToast('Booking Request Submitted 🚀', `Your booking for ${selectedServiceName} has been sent to our technicians.`, 'success');
       setShowAiModal(false);
       setShowForm(false);
+      if (newBooking && newBooking._id) {
+        setBookings(prev => [newBooking, ...(Array.isArray(prev) ? prev : [])]);
+      }
       fetchData(false);
     } catch (error) {
       console.error('AI Direct Booking error:', error);
