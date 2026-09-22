@@ -74,7 +74,20 @@ const UserDashboard = () => {
     }
   }, [authUser?._id || authUser?.id || authUser?.email]);
 
-  const [bookings, setBookings] = useState([]);
+  const [bookings, setBookings] = useState(() => {
+    try {
+      const storedUser = localStorage.getItem('user');
+      if (storedUser) {
+        const u = JSON.parse(storedUser);
+        const uid = u?.user?._id || u?.user?.id || u?._id || u?.id || u?.email;
+        if (uid) {
+          const cached = localStorage.getItem('cached_bookings_' + uid);
+          if (cached) return JSON.parse(cached);
+        }
+      }
+    } catch (e) {}
+    return [];
+  });
   const [activeSubTab, setActiveSubTab] = useState('overview');
   const switchTab = (tabId) => {
     setShowForm(false);
@@ -296,14 +309,32 @@ const UserDashboard = () => {
       if (showLoading) setLoading(true);
       setFetchError(null);
 
-      const token = localStorage.getItem('token');
+      let token = await ensureAuthToken();
       
       let bookingFailed = false;
       try {
         if (token) {
-          const bookingsRes = await api.get('/bookings');
+          let bookingsRes;
+          try {
+            bookingsRes = await api.get('/bookings');
+          } catch (apiErr) {
+            if (apiErr.response?.status === 401) {
+              token = await ensureAuthToken(true);
+              if (token) {
+                bookingsRes = await api.get('/bookings');
+              } else {
+                throw apiErr;
+              }
+            } else {
+              throw apiErr;
+            }
+          }
           const list = Array.isArray(bookingsRes.data) ? bookingsRes.data : (bookingsRes.data?.bookings || []);
           setBookings(list);
+          const uid = profile?._id || profile?.id || currentUserId;
+          if (uid && list.length > 0) {
+            localStorage.setItem('cached_bookings_' + uid, JSON.stringify(list));
+          }
 
           list.filter(b => b && b.status === 'accepted' && b.providerId).forEach(b => {
             socket.emit('track_tech', b.providerId);
@@ -327,8 +358,22 @@ const UserDashboard = () => {
         console.warn('Could not fetch profile from backend API:', err.message);
       }
 
-      if (bookingFailed && !bookings.length) {
-        setFetchError('Backend server is waking up or temporarily unavailable. Showing saved local session data.');
+      if (bookingFailed) {
+        const uid = profile?._id || profile?.id || currentUserId;
+        if (uid) {
+          try {
+            const cached = localStorage.getItem('cached_bookings_' + uid);
+            if (cached) {
+              const list = JSON.parse(cached);
+              if (list && list.length > 0) {
+                setBookings(list);
+              }
+            }
+          } catch (e) {}
+        }
+        if (!bookings.length) {
+          setFetchError('Backend server is waking up or temporarily unavailable. Showing saved local session data.');
+        }
       }
 
     } catch (error) { 

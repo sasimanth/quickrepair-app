@@ -473,15 +473,28 @@ const getBookings = async (req, res) => {
       .sort('-createdAt');
     } else {
       // Regular User - Filter by logged-in user ID, user email, or phone
+      const rawEmail = req.user.email ? req.user.email.trim() : null;
+      const rawPhone = req.user.phone ? req.user.phone.trim() : null;
       const userPhone = normalizePhone(req.user.phone);
+
       const userQueries = [
         { userId: req.user.id },
-        { userId: req.user._id ? req.user._id.toString() : null },
-        { userEmail: req.user.email }
+        { userId: req.user._id ? req.user._id.toString() : null }
       ];
+
+      if (rawEmail) {
+        userQueries.push({ userEmail: rawEmail });
+        userQueries.push({ userEmail: new RegExp(`^${rawEmail.replace(/[-\/\\^$*+?.()|[\]{}]/g, '\\$&')}$`, 'i') });
+      }
+
       if (userPhone && userPhone !== '0000000000') {
         userQueries.push({ phone: userPhone });
+        userQueries.push({ phone: new RegExp(`${userPhone}$`) });
       }
+      if (rawPhone && rawPhone !== userPhone) {
+        userQueries.push({ phone: rawPhone });
+      }
+
       bookings = await Booking.find({ $or: userQueries })
         .populate('serviceId', 'name price')
         .sort('-createdAt');
