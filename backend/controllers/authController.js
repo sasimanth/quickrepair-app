@@ -267,9 +267,16 @@ const login = async (req, res) => {
     }
 
     // Check if account is currently locked
-    if (user.lockUntil && user.lockUntil > Date.now()) {
-      const minutesLeft = Math.ceil((user.lockUntil - Date.now()) / 60000);
-      return res.status(403).json({ message: `Account is temporarily locked due to multiple failed login attempts. Try again in ${minutesLeft} minutes.` });
+    if (user.lockUntil) {
+      if (user.lockUntil > Date.now()) {
+        const minutesLeft = Math.ceil((user.lockUntil - Date.now()) / 60000);
+        return res.status(403).json({ message: `Account is temporarily locked due to multiple failed login attempts. Try again in ${minutesLeft} minutes.` });
+      } else {
+        // Lock duration expired; reset lockout state
+        user.loginAttempts = 0;
+        user.lockUntil = null;
+        await user.save();
+      }
     }
 
     const isMatch = await bcrypt.compare(password, user.password);
@@ -735,6 +742,11 @@ const googleAuth = async (req, res) => {
         user.avatar = avatar;
         modified = true;
       }
+      if (user.loginAttempts > 0 || user.lockUntil) {
+        user.loginAttempts = 0;
+        user.lockUntil = null;
+        modified = true;
+      }
       if (modified) {
         await user.save();
       }
@@ -813,6 +825,10 @@ const phoneLogin = async (req, res) => {
         isEmailVerified: true,
         isPhoneVerified: true
       });
+    } else if (user.loginAttempts > 0 || user.lockUntil) {
+      user.loginAttempts = 0;
+      user.lockUntil = null;
+      await user.save();
     }
 
     const token = generateToken(user._id, user.role, user.email);
