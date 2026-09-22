@@ -2168,7 +2168,7 @@ const UserDashboard = () => {
 
                     {/* App Version Footer */}
                     <div className="text-center py-4">
-                      <p className="text-xs font-bold text-slate-400 tracking-wider">v2.4.0</p>
+                      <p className="text-xs font-black text-slate-400 tracking-wider">V2.4.0</p>
                     </div>
 
                   </div>

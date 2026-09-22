@@ -3,8 +3,8 @@ import { X, ShieldCheck, MapPin, PhoneCall, Mail, Award, CheckCircle2, Heart } f
 
 const AboutFixvoModal = ({ onClose }) => {
   return (
-    <div className="fixed inset-0 bg-slate-900/70 backdrop-blur-md z-[100] flex items-center justify-center p-3 sm:p-4 animate-in fade-in duration-300">
-      <div className="bg-white border border-slate-200 rounded-[2rem] w-full max-w-lg max-h-[90vh] flex flex-col shadow-2xl overflow-hidden relative font-sans text-slate-900">
+    <div className="fixed inset-0 bg-slate-900/70 backdrop-blur-md z-[100] flex items-center justify-center p-0 sm:p-4 animate-in fade-in duration-300">
+      <div className="bg-white border-0 sm:border border-slate-200 rounded-none sm:rounded-[2rem] w-full h-full sm:h-auto min-h-[100dvh] sm:min-h-0 sm:max-w-lg sm:max-h-[90vh] flex flex-col shadow-2xl overflow-hidden relative font-sans text-slate-900">
         
         {/* Header */}
         <div className="p-5 sm:p-6 border-b border-slate-100 flex items-center justify-between bg-slate-50/80 sticky top-0 z-10 backdrop-blur-md">
@@ -13,7 +13,10 @@ const AboutFixvoModal = ({ onClose }) => {
               F
             </div>
             <div>
-              <h3 className="text-lg font-black tracking-tight text-slate-900 leading-tight">About Fixvo</h3>
+              <div className="flex items-center gap-2">
+                <h3 className="text-lg font-black tracking-tight text-slate-900 leading-tight">About Fixvo</h3>
+                <span className="bg-blue-100 text-blue-800 text-[10px] font-black px-2 py-0.5 rounded-full border border-blue-200">V2.4.0</span>
+              </div>
               <p className="text-[11px] text-slate-500 font-semibold mt-0.5">India's Trusted On-Demand Doorstep Repair Network</p>
             </div>
           </div>

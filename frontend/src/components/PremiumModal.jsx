@@ -49,8 +49,8 @@ const PremiumModal = ({ onClose, onSuccess }) => {
   };
 
   return (
-    <div className="fixed inset-0 bg-[#0B0F19]/80 backdrop-blur-md flex items-center justify-center p-3 sm:p-4 z-[999] animate-in fade-in duration-300">
-      <div className="bg-[#111827] border border-amber-500/30 rounded-3xl w-full max-w-lg max-h-[90vh] overflow-y-auto flex flex-col shadow-[0_0_50px_rgba(245,158,11,0.15)] relative animate-in fade-in zoom-in duration-300 text-white font-sans">
+    <div className="fixed inset-0 bg-[#0B0F19]/80 backdrop-blur-md flex items-center justify-center p-0 sm:p-4 z-[999] animate-in fade-in duration-300">
+      <div className="bg-[#111827] border-0 sm:border border-amber-500/30 rounded-none sm:rounded-3xl w-full h-full min-h-[100dvh] sm:min-h-0 sm:h-auto sm:max-w-lg sm:max-h-[90vh] overflow-y-auto flex flex-col shadow-[0_0_50px_rgba(245,158,11,0.15)] relative animate-in fade-in zoom-in duration-300 text-white font-sans">
         
         {step !== 'success' && (
           <button 

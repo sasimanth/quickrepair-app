@@ -74,8 +74,8 @@ const SettingsModal = ({ role, currentProfile, onClose, onSuccess }) => {
   const avatars = ['👤', '👨‍💻', '👩‍💻', '👩‍🔧', '👨‍🔧', '👱‍♂️', '👩‍🦰', '🕵️'];
 
   return (
-    <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-xs z-[100] flex items-center justify-center p-4 animate-in fade-in duration-300">
-      <div className="bg-white w-full h-full sm:h-auto sm:max-h-[90vh] sm:max-w-2xl sm:rounded-[2.5rem] shadow-2xl border border-slate-200 overflow-hidden flex flex-col transform transition-all animate-in zoom-in-95 duration-300 text-slate-900">
+    <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-xs z-[100] flex items-center justify-center p-0 sm:p-4 animate-in fade-in duration-300">
+      <div className="bg-white w-full h-full min-h-[100dvh] sm:min-h-0 sm:h-auto sm:max-h-[90vh] sm:max-w-2xl rounded-none sm:rounded-[2.5rem] shadow-2xl border-0 sm:border border-slate-200 overflow-hidden flex flex-col transform transition-all animate-in zoom-in-95 duration-300 text-slate-900">
         
         {/* Header */}
         <div className="px-6 py-5 border-b border-slate-100 flex items-center justify-between bg-slate-50 sticky top-0 z-10">

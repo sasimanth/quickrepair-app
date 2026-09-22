@@ -132,8 +132,8 @@ const VerificationModal = ({ currentStatus, onClose, onSuccess }) => {
   };
 
   return (
-    <div className="fixed inset-0 z-[110] flex items-center justify-center bg-slate-950/60 backdrop-blur-md p-4 animate-in fade-in duration-300">
-      <div className="bg-white max-w-lg w-full rounded-[2.5rem] shadow-2xl overflow-hidden relative transform transition-all animate-in zoom-in-95 duration-300 border border-slate-100">
+    <div className="fixed inset-0 z-[110] flex items-center justify-center bg-slate-950/60 backdrop-blur-md p-0 sm:p-4 animate-in fade-in duration-300">
+      <div className="bg-white w-full h-full min-h-[100dvh] sm:min-h-0 sm:h-auto sm:max-h-[90vh] sm:max-w-lg rounded-none sm:rounded-[2.5rem] shadow-2xl overflow-y-auto relative transform transition-all animate-in zoom-in-95 duration-300 border-0 sm:border border-slate-100 flex flex-col justify-center">
         
         {/* Close Button */}
         <button 

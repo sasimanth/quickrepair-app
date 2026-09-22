@@ -26,8 +26,8 @@ const TechReferralModal = ({ onClose, profile, showToast }) => {
   const whatsappUrl = `https://api.whatsapp.com/send?text=${inviteText}`;
 
   return (
-    <div className="fixed inset-0 bg-slate-900/70 backdrop-blur-md z-[100] flex items-center justify-center p-3 sm:p-4 animate-in fade-in duration-300">
-      <div className="bg-white border border-slate-200 rounded-[2rem] w-full max-w-lg max-h-[90vh] flex flex-col shadow-2xl overflow-hidden relative font-sans text-slate-900">
+    <div className="fixed inset-0 bg-slate-900/70 backdrop-blur-md z-[100] flex items-center justify-center p-0 sm:p-4 animate-in fade-in duration-300">
+      <div className="bg-white border-0 sm:border border-slate-200 rounded-none sm:rounded-[2rem] w-full h-full min-h-[100dvh] sm:min-h-0 sm:h-auto sm:max-w-lg sm:max-h-[90vh] flex flex-col shadow-2xl overflow-hidden relative font-sans text-slate-900">
         
         {/* Header */}
         <div className="p-5 sm:p-6 border-b border-slate-100 flex items-center justify-between bg-slate-50/80 sticky top-0 z-10 backdrop-blur-md">

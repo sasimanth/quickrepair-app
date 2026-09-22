@@ -200,8 +200,8 @@ const FixvoAiAssistantModal = ({
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 z-[100] flex items-center justify-center bg-slate-900/60 backdrop-blur-sm p-3 sm:p-4 animate-in fade-in duration-200">
-      <div className="bg-white w-full max-w-lg h-[94vh] max-h-[740px] rounded-3xl shadow-2xl flex flex-col overflow-hidden border border-slate-200/80 font-sans">
+    <div className="fixed inset-0 z-[100] flex items-center justify-center bg-slate-900/60 backdrop-blur-sm p-0 sm:p-4 animate-in fade-in duration-200">
+      <div className="bg-white w-full h-full min-h-[100dvh] sm:min-h-0 sm:max-w-lg sm:h-[94vh] sm:max-h-[740px] rounded-none sm:rounded-3xl shadow-2xl flex flex-col overflow-hidden border-0 sm:border border-slate-200/80 font-sans">
         
         {/* Top Header */}
         <div className="bg-gradient-to-r from-blue-600 via-indigo-600 to-blue-700 px-5 py-4 text-white flex items-center justify-between shadow-md relative">
@@ -474,6 +474,13 @@ const FixvoAiAssistantModal = ({
                         <span className="text-slate-700">{msg.draft.date} • {msg.draft.timeSlot || 'Morning'}</span>
                       </div>
                     </div>
+
+                    {msg.draft.estimatedPriceRange && (
+                      <div className="p-2.5 bg-emerald-50 border border-emerald-200 rounded-xl text-xs flex justify-between items-center my-1">
+                        <span className="font-extrabold text-emerald-900">Est. Price Range:</span>
+                        <span className="font-black text-emerald-700 text-sm">{msg.draft.estimatedPriceRange}</span>
+                      </div>
+                    )}
 
                     {msg.availableTechnicians && msg.availableTechnicians.length > 0 && (
                       <div className="flex items-start gap-2 pt-1 border-t border-slate-100">

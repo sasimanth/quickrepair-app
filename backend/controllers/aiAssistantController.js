@@ -643,7 +643,68 @@ const handleAiConversation = async (req, res) => {
       updatedDraft.location = detectedLocality;
     }
 
-    // Address & Saved Address handling
+    // Symptom Diagnosis & Price Range Estimation Helper
+    const estimateDiagnosticAdvice = (serviceId, problemText) => {
+      const p = (problemText || '').toLowerCase();
+      let diagnosis = 'General inspection and diagnostic check.';
+      let estMin = 199;
+      let estMax = 499;
+
+      if (serviceId === 'ac_repair') {
+        if (p.includes('leak') || p.includes('water')) {
+          diagnosis = 'Clogged drain tray or dust buildup in condensate pipe.';
+          estMin = 299; estMax = 599;
+        } else if (p.includes('cool') || p.includes('gas') || p.includes('warm')) {
+          diagnosis = 'Low refrigerant gas pressure or dusty outdoor compressor coils.';
+          estMin = 399; estMax = 999;
+        } else if (p.includes('noise') || p.includes('sound')) {
+          diagnosis = 'Loose fan motor bearing or unaligned blower wheel.';
+          estMin = 250; estMax = 600;
+        } else {
+          diagnosis = 'AC electrical / cooling efficiency diagnostic required.';
+          estMin = 199; estMax = 499;
+        }
+      } else if (serviceId === 'washing_machine') {
+        if (p.includes('spin') || p.includes('drain') || p.includes('water')) {
+          diagnosis = 'Drain pump blockage or worn drive belt.';
+          estMin = 299; estMax = 650;
+        } else if (p.includes('noise') || p.includes('vibrat')) {
+          diagnosis = 'Unbalanced shock absorber or tub bearing wear.';
+          estMin = 350; estMax = 750;
+        } else {
+          diagnosis = 'Control board or drum cycle inspection required.';
+          estMin = 199; estMax = 499;
+        }
+      } else if (serviceId === 'refrigerator') {
+        if (p.includes('cool') || p.includes('freez')) {
+          diagnosis = 'Defrost timer fault or compressor relay issue.';
+          estMin = 350; estMax = 850;
+        } else if (p.includes('leak') || p.includes('water')) {
+          diagnosis = 'Blocked defrost drain tube.';
+          estMin = 250; estMax = 450;
+        } else {
+          diagnosis = 'Thermostat and cooling loop inspection.';
+          estMin = 199; estMax = 499;
+        }
+      } else if (serviceId === 'plumbing_work') {
+        if (p.includes('leak') || p.includes('drip') || p.includes('tap')) {
+          diagnosis = 'Worn rubber washer or pipe joint sealant renewal.';
+          estMin = 149; estMax = 350;
+        } else if (p.includes('block') || p.includes('clog')) {
+          diagnosis = 'Drainage blockage removal.';
+          estMin = 250; estMax = 500;
+        }
+      } else if (serviceId === 'electric_wiring') {
+        if (p.includes('trip') || p.includes('short') || p.includes('spark')) {
+          diagnosis = 'Circuit overload or loose terminal wire grounding.';
+          estMin = 199; estMax = 450;
+        }
+      }
+
+      return { diagnosis, estMin, estMax };
+    };
+
+    // Address & Locality extraction
     const savedAddressMatches = lowerText.match(/home address|saved address|my address|use my saved|use home|use my home|office address/i);
     if (savedAddressMatches) {
       const savedAddr = profileDoc?.address || userDoc?.address || '';
@@ -658,12 +719,26 @@ const handleAiConversation = async (req, res) => {
       } else {
         updatedDraft.useSavedAddress = true;
       }
-    } else if (lowerText.match(/door no|flat|street|road|near|opposite|cross/i)) {
-      updatedDraft.detailedAddress = userText;
+    } else if (userText.length > 5 && !matchedService) {
+      // Check if user provided street or address info
+      if (lowerText.match(/road|street|nagar|colony|near|opposite|flat|house|door|area|bypass|junction|town|bazaar/i)) {
+        updatedDraft.detailedAddress = userText;
+      }
+    }
+
+    // Auto-populate detailed address if not set
+    if (!updatedDraft.detailedAddress) {
+      if (profileDoc?.address) {
+        updatedDraft.detailedAddress = profileDoc.address;
+      } else if (updatedDraft.area) {
+        updatedDraft.detailedAddress = `${updatedDraft.area} Main Area`;
+      } else {
+        updatedDraft.detailedAddress = 'Madanapalle Town';
+      }
     }
 
     // Problem description
-    if (userText.length > 8 && !savedAddressMatches && !lowerText.startsWith('use ') && !lowerText.startsWith('actually')) {
+    if (userText.length > 5 && !savedAddressMatches && !lowerText.startsWith('use ') && !lowerText.startsWith('actually')) {
       if (matchedService || updatedDraft.serviceId) {
         updatedDraft.problemDescription = extractProblem(userText, matchedService || { name: updatedDraft.serviceName });
       } else if (!updatedDraft.problemDescription) {
@@ -672,7 +747,7 @@ const handleAiConversation = async (req, res) => {
     }
 
     // Default fallback values
-    if (!updatedDraft.area) updatedDraft.area = 'Madanapalle';
+    if (!updatedDraft.area) updatedDraft.area = detectArea(updatedDraft.detailedAddress) || 'Madanapalle';
     if (!updatedDraft.location) updatedDraft.location = updatedDraft.area;
     if (!updatedDraft.date) updatedDraft.date = new Date().toISOString().split('T')[0];
     if (!updatedDraft.timeSlot) updatedDraft.timeSlot = 'Morning (9 AM - 12 PM)';
@@ -697,31 +772,26 @@ const handleAiConversation = async (req, res) => {
       }
     }
 
+    // Diagnostic & Price Estimate
+    const { diagnosis, estMin, estMax } = estimateDiagnosticAdvice(updatedDraft.serviceId, updatedDraft.problemDescription || userText);
+    updatedDraft.estimatedPriceRange = `₹${estMin} - ₹${estMax}`;
+    updatedDraft.diagnosisInsight = diagnosis;
+
     // Generate conversational response
     let reply = '';
     let isComplete = false;
 
     if (!updatedDraft.serviceId) {
-      reply = "I understand you need assistance. Which appliance or service would you like us to fix? (e.g. AC repair, washing machine, plumbing, electrical, refrigerator)";
-    } else if (!updatedDraft.problemDescription || updatedDraft.problemDescription.length < 4) {
-      reply = `Got it, ${updatedDraft.serviceName}. Could you briefly describe what specific problem you are experiencing?`;
-    } else if (!updatedDraft.area) {
-      reply = `Which area should I dispatch the technician to? (e.g. Madanapalle, Angallu, Kadiri)`;
-    } else if (!updatedDraft.detailedAddress) {
-      if (profileDoc?.address) {
-        reply = `I found your saved address: "${profileDoc.address}". Would you like to use this address, or enter a new one?`;
-      } else {
-        reply = `Please share your street address or landmark in ${updatedDraft.area} for the technician's visit.`;
-      }
+      reply = "I analyzed your request. Which appliance or service would you like us to inspect? (e.g. AC Repair, Washing Machine, Refrigeration, Plumbing, Electrical)";
     } else {
       isComplete = true;
       const techCount = matchedTechnicians.length;
       const bestTech = matchedTechnicians[0];
       const techNotice = bestTech 
-        ? `I found ${techCount} verified specialist(s) in ${updatedDraft.area} (Top recommendation: ${bestTech.name}, ⭐${bestTech.rating.toFixed(1)}).`
-        : `We will auto-match the closest available verified technician in ${updatedDraft.area}.`;
+        ? `Top matched expert: **${bestTech.name}** (⭐${bestTech.rating.toFixed(1)} rating, ${bestTech.area}).`
+        : `Nearest verified technician in ${updatedDraft.area} will be auto-matched.`;
 
-      reply = `I have prepared your booking summary for **${updatedDraft.serviceName}** on **${updatedDraft.date}** (${updatedDraft.timeSlot}). ${techNotice} Please review the summary card below and confirm your booking.`;
+      reply = `I've analyzed your problem: **"${updatedDraft.problemDescription || 'Inspection requested'}"**.\n\n🔍 **AI Diagnostic Insight**: ${diagnosis}\n💰 **Estimated Price Range**: ₹${estMin} - ₹${estMax}\n👨‍🔧 ${techNotice}\n\nI have prepared your Fixvo Booking Draft below. Please review and tap **Confirm Booking** to place your order!`;
     }
 
     return res.json({

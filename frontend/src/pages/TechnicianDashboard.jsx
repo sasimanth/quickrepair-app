@@ -18,6 +18,7 @@ import { motion } from 'framer-motion';
 import { playNotificationSound, startDispatchRingtone, stopDispatchRingtone } from '../services/soundEffects';
 import DispatchOverlay from '../components/DispatchOverlay';
 import { queueOfflineAction, syncOfflineActions } from '../services/offlineSync';
+import fixvoLogo from '../assets/logos/fixvo-app-icon-dark.png';
 
 const formatPhoneLink = (phone) => {
   if (!phone) return '';
@@ -772,16 +773,14 @@ const TechnicianDashboard = () => {
       {/* Premium Sleek Header Bar */}
       <header className="sticky top-0 z-40 bg-white/95 backdrop-blur-md border-b border-slate-200/80 shadow-xs px-4 sm:px-8 py-3 flex items-center justify-between">
         <div className="flex items-center gap-2.5">
-          <Link to="/" className="flex items-center gap-2 group no-underline">
-            <div className="w-9 h-9 rounded-2xl bg-blue-600 flex items-center justify-center text-white font-black shadow-md shadow-blue-600/30">
-              F
-            </div>
-            <span className="font-black text-lg sm:text-xl tracking-tight text-slate-900">
-              Fix<span className="text-blue-600">vo</span>
+          <Link to="/" className="flex items-center gap-2.5 group no-underline">
+            <img src={fixvoLogo} alt="Fixvo Logo" className="w-8 h-8 sm:w-9 sm:h-9 object-contain rounded-xl drop-shadow-sm group-hover:scale-105 transition-transform" />
+            <span className="font-black text-xl sm:text-2xl tracking-tight text-slate-900">
+              FIX<span className="text-blue-600">VO</span>
             </span>
           </Link>
-          <span className="bg-slate-100 border border-slate-200 text-slate-700 text-[10px] font-black px-2.5 py-1 rounded-full uppercase tracking-wider hidden sm:inline-block">
-            Technician Portal
+          <span className="bg-blue-100 text-blue-800 border border-blue-200 text-[10px] font-black px-2.5 py-0.5 rounded-full uppercase tracking-wider hidden sm:inline-block">
+            V2.4.0 (Pro)
           </span>
         </div>
 
@@ -1867,8 +1866,8 @@ const TechnicianDashboard = () => {
 
       {/* Withdrawal Request Modal */}
       {showWithdrawModal && (
-        <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-xs z-[999] flex items-center justify-center p-4 animate-in fade-in duration-300">
-          <div className="bg-white border border-slate-200 rounded-[2.5rem] w-full max-w-md overflow-hidden shadow-2xl text-slate-900 p-6 sm:p-8 space-y-6 relative">
+        <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-xs z-[999] flex items-center justify-center p-0 sm:p-4 animate-in fade-in duration-300">
+          <div className="bg-white border-0 sm:border border-slate-200 rounded-none sm:rounded-[2.5rem] w-full h-full min-h-[100dvh] sm:min-h-0 sm:h-auto sm:max-w-md overflow-y-auto shadow-2xl text-slate-900 p-6 sm:p-8 space-y-6 relative flex flex-col justify-center">
             <button 
               onClick={() => setShowWithdrawModal(false)} 
               className="absolute top-4 right-4 text-slate-400 hover:text-slate-700 bg-slate-100 rounded-full p-2 transition-all cursor-pointer border-none"
@@ -1984,8 +1983,8 @@ const TechnicianDashboard = () => {
         const categoryId = (serviceNameLower.includes('paint') || service.categoryId === 'painting') ? 'painting' : (service.categoryId || 'repair');
         
         return (
-          <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-xs z-[100] flex items-center justify-center p-4 animate-in fade-in duration-300">
-            <div className="bg-white border border-slate-200 rounded-[2.5rem] w-full max-w-md overflow-hidden shadow-2xl text-slate-900">
+          <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-xs z-[100] flex items-center justify-center p-0 sm:p-4 animate-in fade-in duration-300">
+            <div className="bg-white border-0 sm:border border-slate-200 rounded-none sm:rounded-[2.5rem] w-full h-full min-h-[100dvh] sm:min-h-0 sm:h-auto sm:max-w-md overflow-hidden shadow-2xl flex flex-col text-slate-900">
               <div className="p-6 border-b border-slate-100 flex justify-between items-center bg-slate-50">
                 <div>
                   <h3 className="text-lg font-extrabold text-slate-900 tracking-tight">
