@@ -535,6 +535,7 @@ const UserDashboard = () => {
       if (newBooking && newBooking._id) {
         setBookings(prev => [newBooking, ...(Array.isArray(prev) ? prev : [])]);
       }
+      setActiveSubTab('bookings');
       fetchData(false);
     } catch (error) {
       console.error("Booking submission error:", error);
@@ -587,6 +588,7 @@ const UserDashboard = () => {
       if (newBooking && newBooking._id) {
         setBookings(prev => [newBooking, ...(Array.isArray(prev) ? prev : [])]);
       }
+      setActiveSubTab('bookings');
       fetchData(false);
     } catch (error) {
       console.error("Lightning match error:", error);
@@ -656,6 +658,7 @@ const UserDashboard = () => {
       if (newBooking && newBooking._id) {
         setBookings(prev => [newBooking, ...(Array.isArray(prev) ? prev : [])]);
       }
+      setActiveSubTab('bookings');
       fetchData(false);
     } catch (error) {
       console.error('AI Direct Booking error:', error);
@@ -806,7 +809,7 @@ const UserDashboard = () => {
     return matchesSearch;
   });
 
-  const activeBooking = safeBookingsList.find(b => b && ['requested', 'accepted', 'assigned', 'on_the_way', 'in_progress', 'inspection_started', 'quote_pending', 'quote_clarification'].includes(b.status));
+  const activeBooking = safeBookingsList.find(b => b && ['pending', 'requested', 'assigned', 'accepted', 'on_the_way', 'arrived', 'inspection_started', 'quote_pending', 'quote_clarification', 'quote_approved', 'in_progress'].includes(b.status));
 
   const sidebarItems = [
     { id: 'overview', label: 'Overview', icon: LayoutDashboard },
@@ -1575,6 +1578,44 @@ const UserDashboard = () => {
                       <span className="text-[10px] font-extrabold text-slate-400 uppercase tracking-wider block">Saved Addresses</span>
                       <span className="text-2xl font-black text-amber-600 mt-1 block">{safeAddresses.length}</span>
                     </div>
+                  </div>
+
+                  {/* Recent Service History Overview */}
+                  <div className="space-y-3 pt-2">
+                    <div className="flex justify-between items-center ml-1">
+                      <h3 className="font-extrabold text-xs text-slate-400 uppercase tracking-wider">Recent Booking History</h3>
+                      {safeBookingsList.length > 0 && (
+                        <button
+                          onClick={() => switchTab('bookings')}
+                          className="text-[11px] font-extrabold text-blue-600 hover:text-blue-700 underline cursor-pointer bg-transparent border-none p-0"
+                        >
+                          View All ({safeBookingsList.length}) →
+                        </button>
+                      )}
+                    </div>
+                    {safeBookingsList.length === 0 ? (
+                      <div className="bg-white border border-slate-200 rounded-3xl p-6 text-center space-y-2">
+                        <p className="text-xs text-slate-500 font-semibold">No service bookings placed yet.</p>
+                      </div>
+                    ) : (
+                      <div className="space-y-3">
+                        {safeBookingsList.slice(0, 4).map(b => (
+                          <div key={b._id || b.id} className="bg-white border border-slate-200 rounded-2xl p-4 flex items-center justify-between gap-4 shadow-xs">
+                            <div className="space-y-1 min-w-0">
+                              <div className="flex items-center gap-2">
+                                <span className="font-extrabold text-slate-900 text-xs sm:text-sm truncate">{b.serviceName || 'Home Service'}</span>
+                                <span className="text-[10px] font-mono font-bold text-slate-400">#{((b._id || b.id || '').toString()).slice(-6).toUpperCase()}</span>
+                              </div>
+                              <p className="text-[11px] text-slate-500 font-medium truncate">{b.location}</p>
+                            </div>
+                            <div className="flex items-center gap-3 shrink-0">
+                              <span className="font-black text-slate-900 text-xs sm:text-sm">₹{b.finalQuote || b.amount || 0}</span>
+                              {getStatusBadge(b.status)}
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    )}
                   </div>
                 </div>
               )}

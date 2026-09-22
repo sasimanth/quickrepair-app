@@ -350,7 +350,18 @@ const TechnicianDashboard = () => {
     };
 
     const handleJobUpdate = (updatedJob) => {
-      fetchJobs(true);
+      if (updatedJob && (updatedJob._id || updatedJob.id)) {
+        const uId = updatedJob._id || updatedJob.id;
+        setJobs(prev => {
+          const exists = prev.some(j => (j._id === uId || j.id === uId));
+          if (exists) {
+            return prev.map(j => (j._id === uId || j.id === uId) ? { ...j, ...updatedJob } : j);
+          } else {
+            return [updatedJob, ...prev];
+          }
+        });
+      }
+
       const isSelfGenerated = updatedJob.initiatorId === profileRef.current?.userId || updatedJob.initiatorRole === 'technician';
 
       if (!isSelfGenerated) {
@@ -359,13 +370,13 @@ const TechnicianDashboard = () => {
 
         showToast(
           '🔄 Job Update', 
-          `Job #${updatedJob._id.slice(-6)} is now: ${updatedJob.status.replace(/_/g, ' ').toUpperCase()}`, 
+          `Job #${(updatedJob._id || updatedJob.id || '').slice(-6)} is now: ${(updatedJob.status || '').replace(/_/g, ' ').toUpperCase()}`, 
           'info',
           !isCritical
         );
-        triggerBrowserNotification('🔄 Job Update', `Job #${updatedJob._id.slice(-6)} is now: ${updatedJob.status.replace(/_/g, ' ').toUpperCase()}`, {
-          tag: `job-${updatedJob._id}`,
-          data: { url: `/dashboard?jobId=${updatedJob._id}` }
+        triggerBrowserNotification('🔄 Job Update', `Job #${(updatedJob._id || updatedJob.id || '').slice(-6)} is now: ${(updatedJob.status || '').replace(/_/g, ' ').toUpperCase()}`, {
+          tag: `job-${updatedJob._id || updatedJob.id}`,
+          data: { url: `/dashboard?jobId=${updatedJob._id || updatedJob.id}` }
         });
 
         if (updatedJob.status === 'quote_approved' || updatedJob.paymentStatus === 'completed') {
@@ -373,7 +384,7 @@ const TechnicianDashboard = () => {
         }
       }
       
-      if (activeAlertJob && updatedJob._id === activeAlertJob._id) {
+      if (activeAlertJob && (updatedJob._id === activeAlertJob._id || updatedJob.id === activeAlertJob._id)) {
         if (updatedJob.providerId !== profileRef.current?.userId) {
           setActiveAlertJob(null);
           stopAlarm();
@@ -485,16 +496,24 @@ const TechnicianDashboard = () => {
       } else {
         setRefreshing(true);
       }
-      const profileRes = await api.get('/technicians/profile');
-      setProfile(profileRes.data);
+      
+      const [profileRes, bookingsRes] = await Promise.all([
+        api.get('/technicians/profile').catch(e => { console.warn(e); return { data: null }; }),
+        api.get('/bookings').catch(e => { console.warn(e); return { data: [] }; })
+      ]);
 
-      if (profileRes.data.isProfileComplete) {
-        const { data } = await api.get('/bookings');
-        const sortedJobs = data.sort((a,b) => new Date(b.createdAt) - new Date(a.createdAt));
+      if (profileRes.data) {
+        setProfile(profileRes.data);
+      }
+      
+      if (Array.isArray(bookingsRes.data)) {
+        const sortedJobs = bookingsRes.data.sort((a,b) => new Date(b.createdAt) - new Date(a.createdAt));
         setJobs(sortedJobs);
-        const reviewsRes = await api.get(`/reviews/technician/${profileRes.data.userId}`);
-        setReviews(reviewsRes.data);
-        await fetchNotifications();
+      }
+
+      if (profileRes.data?.userId) {
+        api.get(`/reviews/technician/${profileRes.data.userId}`).then(r => setReviews(r.data)).catch(() => {});
+        fetchNotifications().catch(() => {});
       }
     } catch (error) { 
       console.error('Error fetching dashboard data', error); 
