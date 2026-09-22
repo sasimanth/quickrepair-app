@@ -21,6 +21,12 @@
     },
     "PushNotifications": {
       "presentationOptions": ["badge", "sound", "alert"]
+    },
+    "SocialLogin": {
+      "google": {
+        "webClientId": "232674695663-poi562drcj2t6s6usrh84vbbnrn7maib.apps.googleusercontent.com"
+      }
     }
   }
 }
+

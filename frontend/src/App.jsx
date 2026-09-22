@@ -1,5 +1,8 @@
 import React, { useState, useEffect, Suspense, lazy } from 'react';
-import { BrowserRouter as Router, Routes, Route, Navigate, useLocation } from 'react-router-dom';
+import { BrowserRouter as Router, Routes, Route, Navigate, useLocation, useNavigate } from 'react-router-dom';
+import { Capacitor } from '@capacitor/core';
+import { App as CapApp } from '@capacitor/app';
+
 import Home from './pages/Home';
 import Login from './pages/Login';
 import Signup from './pages/Signup';
@@ -123,13 +126,63 @@ const PromoBanner = () => {
 
 const AppContent = () => {
   const location = useLocation();
+  const navigate = useNavigate();
+  const { user, loading } = useAuth();
+  const isNative = Capacitor.isNativePlatform();
+
   const isHome = location.pathname === '/';
   const isDashboard = ['/dashboard', '/technician-dashboard', '/admin-dashboard'].includes(location.pathname);
 
+  // 1. Native Android Hardware Back Button Handler
+  useEffect(() => {
+    if (isNative) {
+      let listenerHandler;
+      CapApp.addListener('backButton', ({ canGoBack }) => {
+        const currentPath = window.location.pathname;
+        const isRootPage = ['/login', '/dashboard', '/technician-dashboard', '/admin-dashboard'].includes(currentPath);
+        if (isRootPage || !canGoBack) {
+          CapApp.exitApp();
+        } else {
+          window.history.back();
+        }
+      }).then(handler => {
+        listenerHandler = handler;
+      });
+
+      return () => {
+        if (listenerHandler && typeof listenerHandler.remove === 'function') {
+          listenerHandler.remove();
+        }
+      };
+    }
+  }, [isNative]);
+
+  // 2. Native Android Gate Redirection
+  useEffect(() => {
+    if (!isNative || loading) return;
+
+    if (!user) {
+      if (location.pathname !== '/login') {
+        navigate('/login', { replace: true });
+      }
+    } else {
+      const role = user.role || 'user';
+      const targetDashboard = role === 'admin' 
+        ? '/admin-dashboard' 
+        : role === 'technician' 
+          ? '/technician-dashboard' 
+          : '/dashboard';
+
+      if (location.pathname !== targetDashboard) {
+        navigate(targetDashboard, { replace: true });
+      }
+    }
+  }, [isNative, user, loading, location.pathname, navigate]);
+
   return (
     <div className="min-h-screen bg-slate-50 flex flex-col relative">
-      {isHome && <PromoBanner />}
-      <Navbar />
+      {!isNative && isHome && <PromoBanner />}
+      {!isNative && <Navbar />}
       <main className="flex-grow flex flex-col">
         <Suspense fallback={<LoadingSpinner text="Initializing Fixvo Secure Platform..." />}>
           <Routes>
@@ -180,7 +233,7 @@ const AppContent = () => {
           </Routes>
         </Suspense>
       </main>
-      {!isDashboard && <Footer />}
+      {!isNative && !isDashboard && <Footer />}
     </div>
   );
 };
@@ -244,3 +297,4 @@ function App() {
 }
 
 export default App;
+

@@ -4,4 +4,6 @@
     <string name="title_activity_main">FIXVO</string>
     <string name="package_name">com.fixvo.app</string>
     <string name="custom_url_scheme">com.fixvo.app</string>
+    <string name="server_client_id">232674695663-poi562drcj2t6s6usrh84vbbnrn7maib.apps.googleusercontent.com</string>
 </resources>
+

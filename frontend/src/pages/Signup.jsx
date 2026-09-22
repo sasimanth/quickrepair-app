@@ -2,6 +2,8 @@ import { useState, useEffect } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { Wrench, Mail, Lock, User, Phone, Briefcase, MapPin, ArrowRight, Loader2, X, Check, Search, RefreshCw } from 'lucide-react';
 import { useGoogleLogin } from '@react-oauth/google';
+import { Capacitor } from '@capacitor/core';
+import { SocialLogin } from '@capgo/capacitor-social-login';
 import api from '../services/api';
 import CanvasCaptcha from '../components/CanvasCaptcha';
 import { register } from '../services/auth';
@@ -32,6 +34,39 @@ const Signup = () => {
   const [agreeTechTerms, setAgreeTechTerms] = useState(false);
   const navigate = useNavigate();
 
+  // Pre-initialize native SocialLogin on Android/iOS
+  useEffect(() => {
+    const isNative = Capacitor.isNativePlatform() || Capacitor.getPlatform() !== 'web';
+    if (isNative) {
+      const webClientId = (import.meta.env.VITE_GOOGLE_CLIENT_ID || '232674695663-poi562drcj2t6s6usrh84vbbnrn7maib.apps.googleusercontent.com').trim();
+      SocialLogin.initialize({
+        google: {
+          webClientId: webClientId
+        }
+      }).catch(err => console.warn('SocialLogin init warning:', err));
+    }
+  }, []);
+
+  const handleAuthSuccess = (data) => {
+    const userObj = data.user || data;
+    if (userObj.isEmailVerified === undefined) userObj.isEmailVerified = true;
+    if (userObj.isPhoneVerified === undefined) userObj.isPhoneVerified = true;
+    
+    if (data.token) {
+      localStorage.setItem('token', data.token);
+    }
+    localStorage.setItem('user', JSON.stringify(userObj));
+    setUser(userObj);
+
+    const targetPath = userObj.role === 'admin' 
+      ? '/admin-dashboard' 
+      : userObj.role === 'technician' 
+        ? '/technician-dashboard' 
+        : '/dashboard';
+
+    navigate(targetPath);
+  };
+
   const googleLogin = useGoogleLogin({
     onSuccess: async (tokenResponse) => {
       setGoogleLoading(true);
@@ -41,22 +76,7 @@ const Signup = () => {
           accessToken: tokenResponse.access_token,
           idToken: tokenResponse.id_token
         });
-
-        const userObj = data.user || data;
-        if (userObj.isEmailVerified === undefined) userObj.isEmailVerified = true;
-        if (userObj.isPhoneVerified === undefined) userObj.isPhoneVerified = true;
-        
-        localStorage.setItem('token', data.token);
-        localStorage.setItem('user', JSON.stringify(userObj));
-        setUser(userObj);
-
-        const targetPath = userObj.role === 'admin' 
-          ? '/admin-dashboard' 
-          : userObj.role === 'technician' 
-            ? '/technician-dashboard' 
-            : '/dashboard';
-
-        navigate(targetPath);
+        handleAuthSuccess(data);
       } catch (err) {
         console.error('Google Sign-Up backend error:', err);
         setError(err.response?.data?.message || 'Unable to complete Google registration. Please try again.');
@@ -70,6 +90,55 @@ const Signup = () => {
       setError('Google registration was cancelled or encountered an error. Please try again.');
     }
   });
+
+  const handleNativeGoogleLogin = async () => {
+    setGoogleLoading(true);
+    setError('');
+    try {
+      const webClientId = (import.meta.env.VITE_GOOGLE_CLIENT_ID || '232674695663-poi562drcj2t6s6usrh84vbbnrn7maib.apps.googleusercontent.com').trim();
+      try {
+        await SocialLogin.initialize({
+          google: {
+            webClientId: webClientId
+          }
+        });
+      } catch (initErr) {
+        console.warn('SocialLogin re-initialize:', initErr);
+      }
+
+      const res = await SocialLogin.login({
+        provider: 'google',
+        options: {
+          scopes: ['email', 'profile']
+        }
+      });
+
+      const idToken = res.result?.idToken || res.result?.token || res.result?.id_token;
+      const accessToken = res.result?.accessToken || res.result?.access_token;
+
+      if (!idToken && !accessToken) {
+        throw new Error('No Google credentials returned from native account selector.');
+      }
+
+      const { data } = await api.post('/auth/google', {
+        idToken: idToken,
+        accessToken: accessToken
+      });
+
+      handleAuthSuccess(data);
+    } catch (err) {
+      console.error('Native Google Sign-Up exception:', err);
+      const errMsg = err?.message || String(err);
+      if (errMsg.toLowerCase().includes('cancel') || err?.code === 'userCanceled' || errMsg.toLowerCase().includes('closed')) {
+        setError('Google sign-in was cancelled.');
+      } else {
+        setError(err.response?.data?.message || errMsg || 'Unable to complete native Google sign-in.');
+      }
+    } finally {
+      setGoogleLoading(false);
+    }
+  };
+
 
   // Password Complexity Verification State
   const [passwordStrength, setPasswordStrength] = useState({
@@ -437,12 +506,14 @@ const Signup = () => {
           type="button"
           onClick={() => {
             setError('');
-            const clientId = (import.meta.env.VITE_GOOGLE_CLIENT_ID || '').trim();
-            if (!clientId && !import.meta.env.PROD) {
-              console.warn('VITE_GOOGLE_CLIENT_ID not loaded in env, using fallback');
+            const isNative = Capacitor.isNativePlatform() || Capacitor.getPlatform() !== 'web';
+            if (isNative) {
+              handleNativeGoogleLogin();
+            } else {
+              googleLogin();
             }
-            googleLogin();
           }}
+
           disabled={loading || googleLoading}
           className="w-full py-3.5 bg-white border-2 border-slate-200 hover:bg-slate-50 disabled:opacity-60 text-slate-800 font-bold rounded-2xl shadow-sm transition-all flex items-center justify-center gap-3 cursor-pointer outline-none hover:border-slate-300 transform hover:-translate-y-0.5"
         >
