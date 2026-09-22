@@ -19,9 +19,9 @@ router.post('/:id/create-payment-intent', protect, authorize('user'), createPaym
 router.put('/:id/cancel', protect, cancelBooking);
 
 // New startup quote endpoints
-router.put('/:id/quote', protect, authorize('technician'), submitQuote);
-router.put('/:id/approve-quote', protect, authorize('user'), approveQuote);
-router.put('/:id/clarify-quote', protect, authorize('user'), requestQuoteClarification);
-router.put('/:id/respond-quote', protect, authorize('technician'), respondQuoteClarification);
+router.put('/:id/quote', protect, authorize('technician', 'admin'), submitQuote);
+router.put('/:id/approve-quote', protect, authorize('user', 'customer', 'admin'), approveQuote);
+router.put('/:id/clarify-quote', protect, authorize('user', 'customer', 'admin'), requestQuoteClarification);
+router.put('/:id/respond-quote', protect, authorize('technician', 'admin'), respondQuoteClarification);
 
 module.exports = router;

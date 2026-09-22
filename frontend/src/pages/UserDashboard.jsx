@@ -63,12 +63,16 @@ const UserDashboard = () => {
   
   useEffect(() => {
     if (authUser) {
-      setProfile(prev => prev || authUser);
+      setProfile(authUser);
+      fetchData(true);
     } else {
       const stored = getStoredUser();
-      if (stored) setProfile(prev => prev || stored);
+      if (stored) {
+        setProfile(stored);
+        fetchData(true);
+      }
     }
-  }, [authUser]);
+  }, [authUser?._id || authUser?.id || authUser?.email]);
 
   const [bookings, setBookings] = useState([]);
   const [activeSubTab, setActiveSubTab] = useState('overview');
@@ -471,27 +475,20 @@ const UserDashboard = () => {
     const isInvalidToken = !token || token.startsWith('demo_token') || !token.includes('.');
 
     if (isInvalidToken || forceRefresh) {
-      localStorage.removeItem('token');
-      const userStr = localStorage.getItem('user');
-      let phone = profile?.phone || '';
-      let name = profile?.name || 'Customer';
-      if (userStr) {
+      const userObj = authUser || getStoredUser();
+      const phone = userObj?.phone || profile?.phone;
+      const name = userObj?.name || profile?.name || 'Customer';
+
+      if (phone) {
         try {
-          const u = JSON.parse(userStr);
-          phone = phone || u.phone || u.user?.phone || '';
-          name = name || u.name || u.user?.name || 'Customer';
-        } catch (e) {}
-      }
-      if (!phone) phone = '9876543210';
-      try {
-        const { data } = await api.post('/auth/phone-login', { phone, name });
-        if (data.token) {
-          localStorage.setItem('token', data.token);
-          localStorage.setItem('user', JSON.stringify(data));
-          token = data.token;
+          const { data } = await api.post('/auth/phone-login', { phone, name });
+          if (data.token) {
+            localStorage.setItem('token', data.token);
+            token = data.token;
+          }
+        } catch (e) {
+          console.warn("Could not re-acquire auth token:", e);
         }
-      } catch (e) {
-        console.warn("Could not acquire auth token via phone-login:", e);
       }
     }
     return token;

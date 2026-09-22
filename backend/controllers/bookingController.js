@@ -875,9 +875,14 @@ const approveQuote = async (req, res) => {
     const booking = await Booking.findById(req.params.id);
     if (!booking) return res.status(404).json({ message: 'Booking not found' });
     
-    const isOwnerById = booking.userId && booking.userId.toString() === req.user.id.toString();
-    if (!isOwnerById) {
-       return res.status(403).json({ message: 'Not authorized to approve quote' });
+    const userPhone = normalizePhone(req.user.phone);
+    const isOwner = req.user.role === 'admin' ||
+      (booking.userId && (booking.userId.toString() === req.user.id.toString() || booking.userId.toString() === req.user._id?.toString())) ||
+      (booking.userEmail && booking.userEmail === req.user.email) ||
+      (userPhone && userPhone !== '0000000000' && normalizePhone(booking.phone) === userPhone);
+
+    if (!isOwner) {
+       return res.status(403).json({ message: 'Not authorized for this booking quote' });
     }
 
     const lastRevision = booking.quoteRevisions && booking.quoteRevisions.length > 0
@@ -941,8 +946,13 @@ const requestQuoteClarification = async (req, res) => {
     const booking = await Booking.findById(req.params.id);
     if (!booking) return res.status(404).json({ message: 'Booking not found' });
 
-    const isOwnerById = booking.userId && booking.userId.toString() === req.user.id.toString();
-    if (!isOwnerById) return res.status(403).json({ message: 'Not authorized' });
+    const userPhone = normalizePhone(req.user.phone);
+    const isOwner = req.user.role === 'admin' ||
+      (booking.userId && (booking.userId.toString() === req.user.id.toString() || booking.userId.toString() === req.user._id?.toString())) ||
+      (booking.userEmail && booking.userEmail === req.user.email) ||
+      (userPhone && userPhone !== '0000000000' && normalizePhone(booking.phone) === userPhone);
+
+    if (!isOwner) return res.status(403).json({ message: 'Not authorized for this booking quote' });
 
     const lastRevision = booking.quoteRevisions && booking.quoteRevisions.length > 0
       ? booking.quoteRevisions[booking.quoteRevisions.length - 1]
