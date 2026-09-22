@@ -466,34 +466,32 @@ const UserDashboard = () => {
 
   const [isBooking, setIsBooking] = useState(false);
 
-  const ensureAuthToken = async () => {
+  const ensureAuthToken = async (forceRefresh = false) => {
     let token = localStorage.getItem('token');
-    if (!token) {
+    const isInvalidToken = !token || token.startsWith('demo_token') || !token.includes('.');
+
+    if (isInvalidToken || forceRefresh) {
+      localStorage.removeItem('token');
       const userStr = localStorage.getItem('user');
       let phone = profile?.phone || '';
-      if (!phone && userStr) {
+      let name = profile?.name || 'Customer';
+      if (userStr) {
         try {
           const u = JSON.parse(userStr);
-          phone = u.phone || u.user?.phone || '';
+          phone = phone || u.phone || u.user?.phone || '';
+          name = name || u.name || u.user?.name || 'Customer';
         } catch (e) {}
       }
       if (!phone) phone = '9876543210';
       try {
-        const { data } = await api.post('/auth/phone-login', { phone, name: profile?.name || 'Customer' });
+        const { data } = await api.post('/auth/phone-login', { phone, name });
         if (data.token) {
           localStorage.setItem('token', data.token);
           localStorage.setItem('user', JSON.stringify(data));
           token = data.token;
         }
       } catch (e) {
-        console.warn("Could not acquire quick auth token:", e);
-      }
-      if (!token) {
-        token = 'demo_token_' + Date.now();
-        localStorage.setItem('token', token);
-        if (!localStorage.getItem('user')) {
-          localStorage.setItem('user', JSON.stringify({ name: 'Customer', phone: '+91 98765 43210', role: 'user' }));
-        }
+        console.warn("Could not acquire auth token via phone-login:", e);
       }
     }
     return token;
@@ -515,7 +513,18 @@ const UserDashboard = () => {
         promoCode: promoCode,
         discountPercentage: discountAmount
       };
-      const res = await api.post('/bookings', payload);
+      
+      let res;
+      try {
+        res = await api.post('/bookings', payload);
+      } catch (err) {
+        if (err.response?.status === 401) {
+          await ensureAuthToken(true);
+          res = await api.post('/bookings', payload);
+        } else {
+          throw err;
+        }
+      }
       const newBooking = res.data?.booking || res.data;
       
       showToast('Booking Request Submitted 🚀', 'Your booking request has been sent successfully.', 'success');
@@ -556,7 +565,18 @@ const UserDashboard = () => {
         promoCode: promoCode,
         discountPercentage: discountAmount
       };
-      const res = await api.post('/bookings', payload);
+      
+      let res;
+      try {
+        res = await api.post('/bookings', payload);
+      } catch (err) {
+        if (err.response?.status === 401) {
+          await ensureAuthToken(true);
+          res = await api.post('/bookings', payload);
+        } else {
+          throw err;
+        }
+      }
       const newBooking = res.data?.booking || res.data;
 
       showToast('Technician Assigned Successfully! 👨‍🔧', bestTech ? `Matched with top expert ${bestTech.name}.` : 'Request dispatched to nearby technicians.', 'success');
@@ -616,7 +636,18 @@ const UserDashboard = () => {
         promoCode: promoCode || null,
         discountPercentage: discountAmount || 0
       };
-      const res = await api.post('/bookings', payload);
+      
+      let res;
+      try {
+        res = await api.post('/bookings', payload);
+      } catch (err) {
+        if (err.response?.status === 401) {
+          await ensureAuthToken(true);
+          res = await api.post('/bookings', payload);
+        } else {
+          throw err;
+        }
+      }
       const newBooking = res.data?.booking || res.data;
 
       showToast('Booking Request Submitted 🚀', `Your booking for ${selectedServiceName} has been sent to our technicians.`, 'success');
