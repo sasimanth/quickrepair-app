@@ -70,6 +70,9 @@ const Login = () => {
   };
 
   const googleLogin = useGoogleLogin({
+    flow: 'implicit',
+    scope: 'openid email profile',
+    prompt: 'select_account',
     onSuccess: async (tokenResponse) => {
       setGoogleLoading(true);
       setError('');
