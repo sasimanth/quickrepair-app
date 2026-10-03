@@ -1,4 +1,7 @@
 const rateLimitStore = new Map(); // key -> array of request timestamps
+// KNOWN LIMITATION: This store is in-process memory only.
+// It is NOT shared across Render worker instances or horizontal replicas.
+// For multi-instance deployments, replace with Redis (e.g. rate-limiter-flexible + ioredis).
 
 const createRateLimiter = (options = {}) => {
   const {
@@ -11,9 +14,9 @@ const createRateLimiter = (options = {}) => {
   return async (req, res, next) => {
     const ip = req.ip || req.connection.remoteAddress || 'unknown-ip';
     
-    // Bypass rate limits in development or for local loopback testing
+    // Bypass rate limits ONLY for loopback/local testing (supertest, jest).
+    // Do NOT bypass for NODE_ENV==='development' — staging environments share real IPs.
     if (
-      process.env.NODE_ENV === 'development' || 
       ip === '::1' || 
       ip === '127.0.0.1' || 
       ip.includes('127.0.0.1') || 
@@ -21,6 +24,7 @@ const createRateLimiter = (options = {}) => {
     ) {
       return next();
     }
+
 
     const userId = req.user ? (req.user.id || req.user._id || 'guest') : 'guest';
     const route = req.originalUrl || req.url;
@@ -113,5 +117,32 @@ module.exports = {
     max: 20,
     message: 'Message rate limit exceeded. Please wait a moment before sending more messages.',
     alertType: 'RATE_LIMIT_VIOLATION'
+  }),
+  kycLimiter: createRateLimiter({
+    windowMs: 24 * 60 * 60 * 1000, // 24 hours
+    max: 5,
+    message: 'KYC submission rate limit exceeded. You can submit up to 5 KYC requests per 24 hours.',
+    alertType: 'KYC_RAPID_RESUBMISSION'
+  }),
+  verificationLimiter: createRateLimiter({
+    windowMs: 24 * 60 * 60 * 1000, // 24 hours
+    max: 3,
+    message: 'Verification submission rate limit exceeded. You can submit up to 3 verification requests per 24 hours.',
+    alertType: 'KYC_RAPID_RESUBMISSION'
+  }),
+  // WhatsApp Business Cloud API webhook (unauthenticated, called by Meta infrastructure)
+  whatsappWebhookLimiter: createRateLimiter({
+    windowMs: 60 * 1000, // 1 minute
+    max: 200,
+    message: 'WhatsApp webhook rate limit exceeded.',
+    alertType: 'RATE_LIMIT_VIOLATION'
+  }),
+  // Opt-in/opt-out endpoint — authenticated but still bounded to prevent abuse
+  whatsappOptInLimiter: createRateLimiter({
+    windowMs: 60 * 60 * 1000, // 1 hour
+    max: 5,
+    message: 'WhatsApp opt-in request limit exceeded. Try again in an hour.',
+    alertType: 'RATE_LIMIT_VIOLATION'
   })
 };
+

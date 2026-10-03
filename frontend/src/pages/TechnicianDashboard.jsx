@@ -1736,7 +1736,7 @@ const TechnicianDashboard = () => {
       {/* Verification Modal */}
       {showVerification && (
         <VerificationModal 
-          currentStatus={profile?.backgroundCheckStatus}
+          currentStatus={profile?.verificationStatus || profile?.backgroundCheckStatus}
           onClose={() => setShowVerification(false)}
           onSuccess={() => {
             setShowVerification(false);
@@ -1749,6 +1749,9 @@ const TechnicianDashboard = () => {
       {showKyc && (
         <KycModal
           onClose={() => setShowKyc(false)}
+          currentKycStatus={profile?.kycStatus || (profile?.kycCompleted ? 'approved' : 'not_submitted')}
+          rejectionReason={profile?.kycRejectionReason}
+          bankDetails={profile?.bankDetails}
           onSuccess={() => {
             setShowKyc(false);
             fetchJobs();

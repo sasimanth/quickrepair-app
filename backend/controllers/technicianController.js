@@ -1,6 +1,9 @@
 const Technician = require('../models/Technician');
 const User = require('../models/User');
 const QuickBooking = require('../models/QuickBooking');
+const { encrypt, decrypt, isEncrypted, maskAccountNumber, maskIfscCode, hashDocument } = require('../utils/encryption');
+const { validateIfscCode, validateAccountNumber, validateAccountName, validateDocumentFile, sanitizeText } = require('../utils/validators');
+const { uploadPrivateDocument, getSignedDocumentUrl } = require('../services/cloudinaryService');
 
 // @desc    Get or create technician profile
 // @route   GET /api/technicians/profile
@@ -105,6 +108,28 @@ const getProfile = async (req, res) => {
     const techObj = tech.toObject();
     techObj.withdrawals = withdrawals;
     
+    // === SECURITY: Strip sensitive KYC fields from API response ===
+    // Remove raw document data (base64 / Cloudinary publicIds)
+    delete techObj.governmentIdUrl;
+    delete techObj.selfieUrl;
+    delete techObj.addressProofUrl;
+    delete techObj.documents;
+
+    // Replace bank details with masked versions for display
+    if (techObj.bankDetails) {
+      techObj.bankDetails = {
+        accountName: techObj.bankDetails.accountName || '',
+        accountNumberMasked: techObj.bankDetails.accountNumberMasked || maskAccountNumber(''),
+        ifscCodeMasked: techObj.bankDetails.ifscCodeMasked || maskIfscCode(''),
+        hasIdProof: !!(techObj.bankDetails.idProofUrl || tech.documents?.idProof?.publicId),
+        verifiedAt: techObj.bankDetails.verifiedAt || null
+      };
+    }
+
+    // Add KYC status flags for frontend display
+    techObj.hasDocumentsSubmitted = !!(tech.documents?.governmentId?.publicId || tech.governmentIdUrl);
+    techObj.kycStatus = tech.kycStatus || (tech.kycCompleted ? 'approved' : 'not_submitted');
+
     // Attach dynamically calculated statistics
     techObj.grossEarnings = walletStats.grossEarnings;
     techObj.platformFee = walletStats.platformFee;
@@ -300,87 +325,123 @@ const getNearbyTechnicians = async (req, res) => {
   }
 };
 
+// Retained for backward compatibility — new code uses validators.js
 const validateBase64File = (base64String) => {
-  if (!base64String) return { valid: false, message: 'File is required' };
-  
-  // Check if it's already a URL (e.g. from seeded database scripts or fallback)
-  if (base64String.startsWith('http://') || base64String.startsWith('https://')) {
-    return { valid: true, isUrl: true };
-  }
-  
-  const matches = base64String.match(/^data:([a-zA-Z0-9]+\/[a-zA-Z0-9-.+]+);base64,(.+)$/);
-  if (!matches) {
-    return { valid: false, message: 'Invalid file format. Must be a valid Base64 data URL.' };
-  }
-  
-  const mimeType = matches[1];
-  const base64Content = matches[2];
-  
-  const allowedMimeTypes = ['image/png', 'image/jpeg', 'image/jpg', 'application/pdf'];
-  if (!allowedMimeTypes.includes(mimeType.toLowerCase())) {
-    return { valid: false, message: `Invalid file type: ${mimeType}. Only PNG, JPEG, and PDF are allowed.` };
-  }
-  
-  // Estimate size
-  const estimatedSize = (base64Content.length * 3) / 4;
-  if (estimatedSize > 5 * 1024 * 1024) {
-    return { valid: false, message: 'File size exceeds maximum limit of 5MB.' };
-  }
-  
-  // Verify magic bytes
-  const buffer = Buffer.from(base64Content.substring(0, 32), 'base64');
-  
-  let isMagicValid = false;
-  if (mimeType.includes('png')) {
-    isMagicValid = buffer[0] === 0x89 && buffer[1] === 0x50 && buffer[2] === 0x4E && buffer[3] === 0x47;
-  } else if (mimeType.includes('jpeg') || mimeType.includes('jpg')) {
-    isMagicValid = buffer[0] === 0xFF && buffer[1] === 0xD8 && buffer[2] === 0xFF;
-  } else if (mimeType.includes('pdf')) {
-    isMagicValid = buffer[0] === 0x25 && buffer[1] === 0x50 && buffer[2] === 0x44 && buffer[3] === 0x46;
-  }
-  
-  if (!isMagicValid) {
-    return { valid: false, message: 'MIME type mismatch. The file contents do not match its extension.' };
-  }
-  
-  return { valid: true, mimeType, isUrl: false };
+  return validateDocumentFile(base64String);
 };
 
-// @desc    Submit Identity Verification Documents
+// @desc    Submit Identity Verification Documents (SECURED)
 // @route   POST /api/technicians/verify
 const submitVerification = async (req, res) => {
   const { governmentId, selfie, addressProof } = req.body;
   try {
     const tech = await Technician.findOne({ userId: req.user.id });
-    if (!tech) return res.status(404).json({ message: 'Technician not found' });
+    if (!tech) return res.status(404).json({ error: true, code: 'TECH_NOT_FOUND', message: 'Technician not found' });
 
-    // Validate inputs
-    if (!governmentId || !selfie || !addressProof) {
-      return res.status(400).json({ message: 'All documents (Government ID, Selfie, and Address Proof) are required.' });
+    // Prevent re-submission if already pending or under review
+    if (['pending', 'under_review'].includes(tech.verificationStatus)) {
+      return res.status(400).json({ 
+        error: true, 
+        code: 'VERIFICATION_ALREADY_PENDING', 
+        message: 'Your verification is already pending admin review. Please wait for a response before resubmitting.' 
+      });
     }
 
-    const idVal = validateBase64File(governmentId);
-    if (!idVal.valid) return res.status(400).json({ message: `Government ID Error: ${idVal.message}` });
+    // Validate all required documents
+    if (!governmentId || !selfie || !addressProof) {
+      return res.status(400).json({ error: true, code: 'MISSING_DOCUMENTS', message: 'All documents (Government ID, Selfie, and Address Proof) are required.' });
+    }
 
-    const selfieVal = validateBase64File(selfie);
-    if (!selfieVal.valid) return res.status(400).json({ message: `Selfie Error: ${selfieVal.message}` });
+    const idVal = validateDocumentFile(governmentId);
+    if (!idVal.valid) return res.status(400).json({ error: true, message: `Government ID Error: ${idVal.message}` });
 
-    const addrVal = validateBase64File(addressProof);
-    if (!addrVal.valid) return res.status(400).json({ message: `Address Proof Error: ${addrVal.message}` });
+    const selfieVal = validateDocumentFile(selfie);
+    if (!selfieVal.valid) return res.status(400).json({ error: true, message: `Selfie Error: ${selfieVal.message}` });
 
-    // Save Base64 or URL data
-    tech.governmentIdUrl = governmentId;
-    tech.selfieUrl = selfieie || selfie; // backward compatibility or direct assignment
-    tech.selfieUrl = selfie;
-    tech.addressProofUrl = addressProof;
+    const addrVal = validateDocumentFile(addressProof);
+    if (!addrVal.valid) return res.status(400).json({ error: true, message: `Address Proof Error: ${addrVal.message}` });
+
+    // === SECURITY: Upload to private Cloudinary storage ===
+    // Only publicIds + hashes are stored in MongoDB — NOT raw base64
+    const govIdHash = hashDocument(governmentId);
+    const selfieHash = hashDocument(selfie);
+    const addrHash = hashDocument(addressProof);
+
+    // Duplicate document detection (same document used by another technician)
+    try {
+      const duplicateCheck = await Technician.findOne({
+        userId: { $ne: req.user.id },
+        $or: [
+          { 'documents.governmentId.hash': govIdHash },
+          { 'documents.addressProof.hash': addrHash }
+        ]
+      });
+      if (duplicateCheck) {
+        // Create security alert but don't block — admin will review
+        const SecurityAlert = require('../models/SecurityAlert');
+        await SecurityAlert.create({
+          userId: req.user._id,
+          userEmail: tech.email,
+          alertType: 'KYC_DUPLICATE_DOCUMENT',
+          severity: 'high',
+          description: `Technician ${tech.name} (${tech.email}) submitted a document that matches another technician's KYC submission.`,
+          metadata: { technicianId: req.user.id, matchedTechnicianId: duplicateCheck.userId }
+        });
+      }
+    } catch (dupErr) {
+      console.error('Duplicate document check failed (non-blocking):', dupErr.message);
+    }
+
+    // Upload documents to private cloud storage
+    const [govUpload, selfieUpload, addrUpload] = await Promise.all([
+      uploadPrivateDocument(governmentId, req.user.id, 'governmentId'),
+      uploadPrivateDocument(selfie, req.user.id, 'selfie'),
+      uploadPrivateDocument(addressProof, req.user.id, 'addressProof')
+    ]);
+
+    // Store only Cloudinary publicIds + hashes in MongoDB
+    const now = new Date();
+    tech.documents = {
+      governmentId: { publicId: govUpload?.publicId || '', hash: govIdHash, uploadedAt: now },
+      selfie: { publicId: selfieUpload?.publicId || '', hash: selfieHash, uploadedAt: now },
+      addressProof: { publicId: addrUpload?.publicId || '', hash: addrHash, uploadedAt: now },
+      idProof: (tech.documents && tech.documents.idProof && tech.documents.idProof.publicId) ? tech.documents.idProof : { publicId: '', hash: '', uploadedAt: now }
+    };
+
+    // Clear legacy base64 fields (DO NOT store raw document data in MongoDB)
+    tech.governmentIdUrl = '';
+    tech.selfieUrl = '';
+    tech.addressProofUrl = '';
+
     tech.verificationStatus = 'pending';
     tech.backgroundCheckStatus = 'pending';
     tech.isVerified = false; // Revoke until approved by admin
     await tech.save();
 
     // Revoke verified status on User document until admin approves
-    const User = require('../models/User');
     await User.findByIdAndUpdate(req.user.id, { isVerified: false });
+
+    // Create audit log
+    try {
+      const AdminAuditLog = require('../models/AdminAuditLog');
+      await AdminAuditLog.create({
+        adminId: req.user._id,
+        adminName: tech.name,
+        adminEmail: tech.email,
+        action: 'KYC_SUBMITTED',
+        targetId: req.user.id,
+        targetType: 'Technician',
+        details: { 
+          techName: tech.name,
+          documentsUploaded: ['governmentId', 'selfie', 'addressProof'],
+          previousStatus: tech.verificationStatus
+        },
+        ipAddress: req.ip,
+        userAgent: req.headers['user-agent']
+      });
+    } catch (auditErr) {
+      console.error('Failed to create KYC audit log:', auditErr.message);
+    }
 
     // Send email/notification to admin asynchronously about new review request
     try {
@@ -401,9 +462,15 @@ const submitVerification = async (req, res) => {
       console.error('Failed to initiate admin notification for technician review:', e);
     }
 
-    res.json({ message: 'Verification documents submitted successfully. Status is now Pending Review.', tech });
+    // SECURITY: Return only status — NOT the full tech object
+    res.json({ 
+      message: 'Verification documents submitted successfully. Status is now Pending Review.', 
+      verificationStatus: 'pending',
+      hasDocumentsSubmitted: true
+    });
   } catch (error) {
-    res.status(500).json({ message: error.message });
+    console.error('submitVerification error:', error);
+    res.status(500).json({ error: true, message: 'Failed to submit verification documents. Please try again.' });
   }
 };
 
@@ -477,8 +544,16 @@ const requestWithdrawal = async (req, res) => {
     if (!tech) return res.status(404).json({ message: 'Technician not found' });
 
     // Enforce KYC and bank details checks
-    if (!tech.kycCompleted || !tech.bankDetails || !tech.bankDetails.accountNumber || !tech.bankDetails.accountName || !tech.bankDetails.ifscCode) {
-      return res.status(400).json({ message: 'KYC and bank details must be completed and approved before requesting withdrawal.' });
+    // === SECURITY: Require both identity verification AND bank KYC approval for withdrawals ===
+    const kycApproved = tech.kycStatus === 'approved' || tech.kycCompleted; // Legacy backward compat
+    if (!kycApproved || !tech.bankDetails || !tech.bankDetails.accountNumber || !tech.bankDetails.accountName || !tech.bankDetails.ifscCode) {
+      return res.status(400).json({ 
+        error: true, 
+        code: 'KYC_NOT_APPROVED',
+        message: 'KYC and bank details must be completed and approved by admin before requesting withdrawal.',
+        kycStatus: tech.kycStatus || 'not_submitted',
+        verificationStatus: tech.verificationStatus || 'unverified'
+      });
     }
 
     // Recalculate dynamic wallet stats before validating withdrawal
@@ -573,20 +648,156 @@ const requestWithdrawal = async (req, res) => {
 };
 
 
-// @desc    Submit KYC details
+// @desc    Submit KYC / Bank Details (SECURED — requires admin approval)
 // @route   POST /api/technicians/kyc
 const submitKyc = async (req, res) => {
-  const { accountName, accountNumber, ifscCode, idProofUrl } = req.body;
+  const { accountName, accountNumber, ifscCode, idProofUrl, consentGranted, consentToKycProcessing } = req.body;
   try {
     const tech = await Technician.findOne({ userId: req.user.id });
-    if (!tech) return res.status(404).json({ message: 'Technician not found' });
+    if (!tech) return res.status(404).json({ error: true, code: 'TECH_NOT_FOUND', message: 'Technician not found' });
+
+    // === SECURITY: Require explicit consent (DPDPA 2023 compliance) ===
+    const isConsentGiven = consentGranted || consentToKycProcessing;
+    if (!isConsentGiven) {
+      return res.status(400).json({ 
+        error: true, 
+        code: 'CONSENT_REQUIRED', 
+        message: 'Explicit consent is required for processing KYC and bank data.' 
+      });
+    }
+
+    // Prevent re-submission if already pending review
+    if (tech.kycStatus === 'pending_review') {
+      return res.status(400).json({ 
+        error: true, 
+        code: 'KYC_ALREADY_PENDING', 
+        message: 'Your KYC is already pending admin review. Please wait for approval.' 
+      });
+    }
+
+    // === Validate all inputs ===
+    const nameVal = validateAccountName(accountName);
+    if (!nameVal.valid) return res.status(400).json({ error: true, message: nameVal.message });
+
+    const acctVal = validateAccountNumber(accountNumber);
+    if (!acctVal.valid) return res.status(400).json({ error: true, message: acctVal.message });
+
+    const ifscVal = validateIfscCode(ifscCode);
+    if (!ifscVal.valid) return res.status(400).json({ error: true, message: ifscVal.message });
+
+    // === SECURITY: Detect suspicious bank detail changes ===
+    if (tech.bankDetails?.accountNumber && tech.kycStatus === 'approved') {
+      try {
+        const SecurityAlert = require('../models/SecurityAlert');
+        await SecurityAlert.create({
+          userId: req.user._id,
+          userEmail: tech.email,
+          alertType: 'KYC_SUSPICIOUS_BANK_CHANGE',
+          severity: 'medium',
+          description: `Technician ${tech.name} (${tech.email}) changed bank details after KYC was already approved.`,
+          metadata: { technicianId: req.user.id }
+        });
+      } catch (alertErr) {
+        console.error('Failed to create bank change alert:', alertErr.message);
+      }
+    }
+
+    // === SECURITY: Encrypt sensitive bank fields before storage ===
+    const encryptedAccountNumber = encrypt(accountNumber.trim());
+    const encryptedIfscCode = encrypt(ifscCode.trim().toUpperCase());
+
+    // Upload ID proof document to private storage if provided
+    let idProofDocRef = tech.documents?.idProof || {};
+    if (idProofUrl && !idProofUrl.startsWith('http')) {
+      const idProofUpload = await uploadPrivateDocument(idProofUrl, req.user.id, 'idProof');
+      if (idProofUpload) {
+        idProofDocRef = { publicId: idProofUpload.publicId, hash: hashDocument(idProofUrl), uploadedAt: new Date() };
+      }
+    }
     
-    tech.bankDetails = { accountName, accountNumber, ifscCode, idProofUrl };
-    tech.kycCompleted = true;
+    tech.bankDetails = { 
+      accountName: sanitizeText(accountName.trim(), 100), 
+      accountNumber: encryptedAccountNumber,
+      accountNumberMasked: maskAccountNumber(accountNumber.trim()),
+      ifscCode: encryptedIfscCode,
+      ifscCodeMasked: maskIfscCode(ifscCode.trim().toUpperCase()),
+      idProofUrl: idProofUrl && idProofUrl.startsWith('http') ? idProofUrl : '', // Legacy compat
+      verifiedAt: null // Will be set by admin on approval
+    };
+
+    // Update documents sub-schema
+    if (!tech.documents) tech.documents = {};
+    tech.documents.idProof = idProofDocRef;
+    tech.markModified('documents');
+
+    // === CRITICAL: Do NOT auto-approve — require admin review ===
+    tech.kycStatus = 'pending_review';
+    tech.kycSubmittedAt = new Date();
+    tech.kycCompleted = false; // Legacy field — stays false until admin approves
+    tech.kycRejectionReason = ''; // Clear any previous rejection reason
+
+    // Record consent (DPDPA 2023 compliance)
+    if (consentGranted) {
+      tech.kycConsentGrantedAt = new Date();
+      tech.kycConsentVersion = '1.0';
+    }
+
     await tech.save();
-    res.json({ message: 'KYC submitted successfully', tech });
+
+    // Create audit log
+    try {
+      const AdminAuditLog = require('../models/AdminAuditLog');
+      await AdminAuditLog.create({
+        adminId: req.user._id,
+        adminName: tech.name,
+        adminEmail: tech.email,
+        action: 'KYC_SUBMITTED',
+        targetId: req.user.id,
+        targetType: 'Technician',
+        details: { 
+          techName: tech.name,
+          kycType: 'bank_details',
+          hasIdProof: !!idProofUrl
+        },
+        ipAddress: req.ip,
+        userAgent: req.headers['user-agent']
+      });
+    } catch (auditErr) {
+      console.error('Failed to create KYC audit log:', auditErr.message);
+    }
+
+    // Notify admin about new KYC submission
+    try {
+      const { notifyUser } = require('../services/NotificationService');
+      notifyUser({
+        email: process.env.ADMIN_EMAIL || 'admin@fixvo.com',
+        type: 'email',
+        subject: `New KYC Submission from ${tech.name} 🏦`,
+        text: `Technician ${tech.name} has submitted bank details for KYC verification. Please review in the Admin Dashboard.`,
+        templateName: 'adminNewTechRegistration',
+        templateData: {
+          techName: tech.name,
+          specialties: 'Bank KYC Review',
+          url: `${process.env.FRONTEND_URL || 'http://localhost:5173'}/admin-dashboard`
+        }
+      }).catch(err => console.error('Failed to notify admin on KYC submission:', err));
+    } catch (e) {
+      console.error('Failed to initiate admin notification for KYC:', e);
+    }
+
+    // SECURITY: Return only status confirmation — NOT the full tech object with encrypted data
+    res.json({ 
+      message: 'KYC submitted successfully. Your bank details are pending admin verification.', 
+      kycStatus: 'pending_review',
+      bankDetails: {
+        accountName: tech.bankDetails.accountName,
+        accountNumberMasked: tech.bankDetails.accountNumberMasked,
+        ifscCodeMasked: tech.bankDetails.ifscCodeMasked
+      }
+    });
   } catch (error) {
-    res.status(500).json({ message: error.message });
+    console.error('submitKyc error:', error);
+    res.status(500).json({ error: true, message: 'Failed to submit KYC details. Please try again.' });
   }
 };
 

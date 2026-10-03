@@ -370,6 +370,142 @@ const adminAlert = (subject, message, url) => compileLayout({
   ctaUrl: url
 });
 
+/**
+ * Invoice email sent to customer after booking completion.
+ * @param {object} invoice - Invoice document fields
+ * @param {string} appUrl - Base URL of the Fixvo frontend
+ */
+const customerInvoiceEmail = (invoice, appUrl = 'https://fixvo.in') => {
+  const cust = invoice.customerDetails || {};
+  const biz = invoice.businessDetails || {};
+  const paidMethod = (invoice.paymentMethod || 'cash').toUpperCase();
+  const issueDate = invoice.issueDate
+    ? new Date(invoice.issueDate).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' })
+    : new Date().toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' });
+
+  const itemRows = (invoice.itemizedCharges || []).map(item => `
+    <tr>
+      <td style="padding: 10px 8px; font-size: 13px; color: #0f172a; border-bottom: 1px solid #f1f5f9;">${item.description || 'Service'}</td>
+      <td style="padding: 10px 8px; font-size: 13px; color: #64748b; text-align: center; border-bottom: 1px solid #f1f5f9;">${item.category || 'Repair'}</td>
+      <td style="padding: 10px 8px; font-size: 13px; font-weight: 700; color: #0f172a; text-align: right; border-bottom: 1px solid #f1f5f9;">₹${item.amount || 0}</td>
+    </tr>
+  `).join('');
+
+  const discountRow = invoice.discountAmount > 0 ? `
+    <tr>
+      <td colspan="2" style="padding: 8px; font-size: 12px; color: #047857;">Promotional Discount</td>
+      <td style="padding: 8px; font-size: 12px; font-weight: 700; color: #047857; text-align: right;">-₹${invoice.discountAmount}</td>
+    </tr>
+  ` : '';
+
+  const gstRows = invoice.isGstApplicable ? `
+    ${invoice.cgstAmount > 0 ? `
+    <tr>
+      <td colspan="2" style="padding: 6px 8px; font-size: 12px; color: #64748b;">CGST (${invoice.cgstRate}%)</td>
+      <td style="padding: 6px 8px; font-size: 12px; color: #0f172a; text-align: right;">₹${invoice.cgstAmount}</td>
+    </tr>` : ''}
+    ${invoice.sgstAmount > 0 ? `
+    <tr>
+      <td colspan="2" style="padding: 6px 8px; font-size: 12px; color: #64748b;">SGST (${invoice.sgstRate}%)</td>
+      <td style="padding: 6px 8px; font-size: 12px; color: #0f172a; text-align: right;">₹${invoice.sgstAmount}</td>
+    </tr>` : ''}
+  ` : '';
+
+  const contentHtml = `
+    <p style="font-size: 15px; color: #334155; margin: 0 0 6px;">Hi <strong>${cust.name || 'Valued Customer'}</strong>,</p>
+    <p style="font-size: 14px; color: #475569; margin: 0 0 20px; line-height: 1.6;">
+      Thank you for using <strong>Fixvo</strong>! Your service has been completed and payment received. Please find your tax invoice below for your records.
+    </p>
+
+    <!-- Invoice Header Box -->
+    <table width="100%" cellpadding="0" cellspacing="0" style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 10px; margin-bottom: 20px;">
+      <tr>
+        <td style="padding: 14px 16px;">
+          <table width="100%" cellpadding="0" cellspacing="0">
+            <tr>
+              <td>
+                <div style="font-size: 22px; font-weight: 900; color: #0f172a; line-height: 1;">Fix<span style="color: #2563eb;">vo</span></div>
+                <div style="font-size: 11px; color: #64748b; margin-top: 2px;">${biz.tradeName || 'On-Demand Home Services & Certified Care'}</div>
+              </td>
+              <td style="text-align: right; vertical-align: top;">
+                <span style="display: inline-block; background: #ecfdf5; color: #047857; border: 1px solid #a7f3d0; border-radius: 999px; padding: 3px 10px; font-size: 10px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.5px;">✓ Verified Paid</span>
+                <div style="font-family: monospace; font-size: 12px; font-weight: 800; color: #0f172a; margin-top: 6px;">${invoice.invoiceNumber}</div>
+                <div style="font-size: 11px; color: #64748b;">Date: ${issueDate}</div>
+              </td>
+            </tr>
+          </table>
+        </td>
+      </tr>
+    </table>
+
+    <!-- Billed To / Provider -->
+    <table width="100%" cellpadding="0" cellspacing="0" style="margin-bottom: 20px;">
+      <tr>
+        <td width="50%" style="padding: 12px 14px; background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px; vertical-align: top;">
+          <div style="font-size: 9px; font-weight: 800; color: #94a3b8; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 6px;">Billed To</div>
+          <div style="font-size: 13px; font-weight: 700; color: #0f172a;">${cust.name || 'Valued Customer'}</div>
+          ${cust.phone ? `<div style="font-size: 12px; color: #64748b; margin-top: 3px;">${cust.phone}</div>` : ''}
+          ${cust.address ? `<div style="font-size: 12px; color: #64748b; margin-top: 2px;">${cust.address}</div>` : ''}
+        </td>
+        <td width="8px"></td>
+        <td width="50%" style="padding: 12px 14px; background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px; vertical-align: top;">
+          <div style="font-size: 9px; font-weight: 800; color: #94a3b8; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 6px;">Service Professional</div>
+          <div style="font-size: 13px; font-weight: 700; color: #0f172a;">${(invoice.providerDetails || {}).name || 'Certified Fixvo Expert'}</div>
+          <div style="font-size: 12px; color: #64748b; margin-top: 3px;">✓ Background Verified Partner</div>
+        </td>
+      </tr>
+    </table>
+
+    <!-- Line Items Table -->
+    <table width="100%" cellpadding="0" cellspacing="0" style="margin-bottom: 16px; border: 1px solid #e2e8f0; border-radius: 8px; overflow: hidden;">
+      <thead>
+        <tr style="background: #f1f5f9;">
+          <th style="padding: 10px 8px; font-size: 10px; color: #64748b; text-align: left; font-weight: 800; text-transform: uppercase; letter-spacing: 0.5px;">Description</th>
+          <th style="padding: 10px 8px; font-size: 10px; color: #64748b; text-align: center; font-weight: 800; text-transform: uppercase; letter-spacing: 0.5px;">Category</th>
+          <th style="padding: 10px 8px; font-size: 10px; color: #64748b; text-align: right; font-weight: 800; text-transform: uppercase; letter-spacing: 0.5px;">Amount (₹)</th>
+        </tr>
+      </thead>
+      <tbody>
+        ${itemRows}
+        ${discountRow}
+        ${gstRows}
+        <tr style="background: #eff6ff;">
+          <td colspan="2" style="padding: 12px 8px; font-size: 14px; font-weight: 800; color: #1e40af;">Total Paid (${paidMethod})</td>
+          <td style="padding: 12px 8px; font-size: 16px; font-weight: 900; color: #2563eb; text-align: right;">₹${invoice.totalAmount}</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <!-- Transaction ID -->
+    <p style="font-size: 11px; color: #94a3b8; font-family: monospace; margin: 0 0 18px;">
+      Transaction ID: ${invoice.transactionId || 'N/A'}
+    </p>
+
+    <!-- Warranty Note -->
+    <table width="100%" cellpadding="0" cellspacing="0" style="background: #eff6ff; border: 1px solid #bfdbfe; border-radius: 8px; margin-bottom: 20px;">
+      <tr>
+        <td style="padding: 12px 16px;">
+          <div style="font-size: 13px; font-weight: 800; color: #1e3a8a; margin-bottom: 4px;">🛡️ 30-Day Fixvo Service Warranty</div>
+          <div style="font-size: 12px; color: #1d4ed8; line-height: 1.5;">This service is protected under Fixvo's 30-day rework guarantee. For warranty claims, contact <a href="mailto:fixvosupport@gmail.com" style="color: #2563eb;">fixvosupport@gmail.com</a>.</div>
+        </td>
+      </tr>
+    </table>
+
+    <p style="font-size: 12px; color: #94a3b8; text-align: center;">
+      ${biz.legalName || 'Fixvo Technologies'} • ${biz.address || 'Andhra Pradesh, India'}<br>
+      ${biz.email || 'fixvosupport@gmail.com'} • ${biz.phone || '+91 95159 80170'}
+    </p>
+  `;
+
+  return compileLayout({
+    title: `Fixvo Invoice ${invoice.invoiceNumber}`,
+    preheader: `Your Fixvo invoice ${invoice.invoiceNumber} for ₹${invoice.totalAmount}. Service completed & payment received.`,
+    contentHtml,
+    ctaText: 'View Bookings',
+    ctaUrl: `${appUrl}/bookings`
+  });
+};
+
 module.exports = {
   customerWelcome,
   customerBookingConfirmation,
@@ -377,14 +513,15 @@ module.exports = {
   customerQuoteProposal,
   customerPaymentReceipt,
   customerServiceCompleted,
-  
+  customerInvoiceEmail,
+
   technicianWelcome,
   technicianProfileApproved,
   technicianNewJobAssigned,
   technicianQuoteApproved,
   technicianWithdrawalProcessed,
   technicianPaymentReleased,
-  
+
   adminNewTechRegistration,
   adminWithdrawalRequest,
   adminAlert

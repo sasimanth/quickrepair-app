@@ -30,6 +30,9 @@ import RewardsView from '../components/RewardsView';
 import HelpSupportView from '../components/HelpSupportView';
 import InvoiceModal from '../components/InvoiceModal';
 import WarrantyModal from '../components/WarrantyModal';
+import LocationHeader from '../components/LocationHeader';
+import BookingTimeline from '../components/BookingTimeline';
+import { useLocation as useGeoLocation } from '../contexts/LocationContext';
 import fixvoLogo from '../assets/logos/fixvo-app-icon-dark.png';
 
 const formatPhoneLink = (phone) => {
@@ -46,6 +49,7 @@ const UserDashboard = () => {
   const location = useLocation();
   const navigate = useNavigate();
   const { user: authUser, logout } = useAuth();
+  const { location: geoLocation, openLocationExplanationModal } = useGeoLocation();
 
   const getStoredUser = () => {
     try {
@@ -1334,17 +1338,19 @@ const UserDashboard = () => {
                     </div>
 
                     <div 
-                      onClick={() => setIsLocationModalOpen(true)}
+                      onClick={openLocationExplanationModal}
                       className="bg-white border border-slate-200 hover:border-slate-300 rounded-2xl p-2 px-3 shadow-xs flex items-center justify-between gap-3 cursor-pointer transition-all max-w-[210px] sm:max-w-xs"
                     >
                       <MapPin size={20} className="text-slate-900 shrink-0 fill-slate-900/10" />
                       <div className="min-w-0 flex-1 text-left">
                         <div className="flex items-center gap-1">
-                          <h4 className="text-xs font-black text-slate-900 truncate">{selectedLocation}</h4>
+                          <h4 className="text-xs font-black text-slate-900 truncate">
+                            {geoLocation?.area || geoLocation?.city || selectedLocation || 'Angallu'}
+                          </h4>
                           <ChevronDown size={12} className="text-slate-400 shrink-0" />
                         </div>
                         <p className="text-[10px] text-slate-400 font-semibold truncate leading-none mt-0.5">
-                          {selectedSubLocation}
+                          {geoLocation?.city ? `${geoLocation.city}${geoLocation.state ? `- ${geoLocation.state}` : ''}` : selectedSubLocation}
                         </p>
                       </div>
                     </div>
@@ -1771,14 +1777,17 @@ const UserDashboard = () => {
                                 {b.landmark && <p className="text-slate-600"><strong className="text-slate-900">Landmark:</strong> {b.landmark}</p>}
                                 {b.deviceType && <p className="text-slate-600"><strong className="text-slate-900">Device Type:</strong> {b.deviceType}</p>}
 
+                                {/* Flipkart-Style Live Order Tracking Timeline */}
+                                <BookingTimeline booking={b} />
+
                                 {/* Quick Actions */}
-                                <div className="grid grid-cols-2 gap-2 pt-2 border-t border-slate-100">
+                                <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 pt-2 border-t border-slate-100">
                                   {(b.providerPhone || b.providerId?.phone) && (
                                     <a 
                                       href={`tel:${formatPhoneLink(b.providerPhone || b.providerId?.phone)}`}
                                       className="flex items-center justify-center gap-1.5 py-2.5 rounded-xl text-xs font-black uppercase tracking-wider bg-emerald-600 text-white hover:bg-emerald-700 cursor-pointer no-underline text-center shadow-xs"
                                     >
-                                      <PhoneCall size={14} /> Call Technician
+                                      <PhoneCall size={14} /> Call Pro
                                     </a>
                                   )}
                                   <button 
@@ -1790,6 +1799,14 @@ const UserDashboard = () => {
                                       <span className="absolute -top-1.5 -right-1.5 bg-rose-600 text-white rounded-full text-[9px] font-black w-4.5 h-4.5 flex items-center justify-center border border-white animate-pulse">{b.unreadCount}</span>
                                     )}
                                   </button>
+                                  <a
+                                    href={`https://wa.me/?text=${encodeURIComponent(`Fixvo Service Booking Update:\nService: ${b.serviceName || 'Home Repair'} (#${((b._id || b.id || '').toString()).slice(-6).toUpperCase()})\nStatus: ${(b.status || 'Pending').replace(/_/g, ' ')}\nTechnician: ${b.technicianName || 'Expert Pro'}\nLocation: ${b.location || 'Madanapalle'}`)}`}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    className="col-span-2 sm:col-span-1 flex items-center justify-center gap-1.5 py-2.5 rounded-xl text-xs font-black uppercase tracking-wider bg-emerald-50 text-emerald-700 hover:bg-emerald-100 border border-emerald-200 cursor-pointer no-underline text-center shadow-xs"
+                                  >
+                                    <Share2 size={14} className="text-emerald-600" /> WhatsApp
+                                  </a>
                                 </div>
 
                                 {!['completed', 'cancelled', 'rejected'].includes(b.status) && (
@@ -2144,6 +2161,27 @@ const UserDashboard = () => {
                       </div>
                       <div className="w-10 h-10 sm:w-11 sm:h-11 rounded-2xl bg-purple-200/60 text-purple-700 flex items-center justify-center shadow-xs group-hover:scale-110 transition-transform shrink-0">
                         <Gift size={22} />
+                      </div>
+                    </div>
+
+                    {/* Admin Governance Console Switcher */}
+                    <div className="bg-gradient-to-r from-blue-50 via-indigo-50 to-purple-50 rounded-3xl p-1.5 border border-blue-200 shadow-xs mb-3">
+                      <div
+                        onClick={() => navigate('/admin-dashboard')}
+                        className="py-3 px-3 flex items-center justify-between cursor-pointer hover:bg-blue-100/60 rounded-2xl transition-all group"
+                      >
+                        <div className="flex items-center gap-3.5">
+                          <div className="p-2 bg-blue-600 text-white rounded-xl shadow-xs">
+                            <Shield size={18} />
+                          </div>
+                          <div>
+                            <span className="text-xs sm:text-sm font-black text-slate-900 block leading-tight">
+                              Admin Governance Console
+                            </span>
+                            <span className="text-[10px] text-slate-500 font-semibold">Live startup operations & dispatch center</span>
+                          </div>
+                        </div>
+                        <ChevronRight size={17} className="text-blue-600 group-hover:translate-x-0.5 transition-all" />
                       </div>
                     </div>
 

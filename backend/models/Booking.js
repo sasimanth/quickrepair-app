@@ -90,6 +90,22 @@ const bookingSchema = new mongoose.Schema({
     type: Date,
     default: null
   },
+  lastTechLat: {
+    type: Number,
+    default: null
+  },
+  lastTechLng: {
+    type: Number,
+    default: null
+  },
+  lastTechLocationUpdate: {
+    type: Date,
+    default: null
+  },
+  trackingActive: {
+    type: Boolean,
+    default: false
+  },
   isQueued: {
     type: Boolean,
     default: false
@@ -170,7 +186,7 @@ const bookingSchema = new mongoose.Schema({
   },
   paymentStatus: {
     type: String,
-    enum: ['pending', 'awaiting_payment', 'processing', 'completed', 'failed', 'refunded', 'cash_pending'],
+    enum: ['pending', 'awaiting_payment', 'processing', 'completed', 'failed', 'refunded', 'cash_pending', 'cash_completed'],
     default: 'pending'
   },
   paymentMethod: {
@@ -183,6 +199,19 @@ const bookingSchema = new mongoose.Schema({
     default: null
   },
   amount: {
+    type: Number,
+    default: 0
+  },
+  // Cash payment receipt metadata (added for cash-on-delivery flow)
+  cashCollectedAt: {
+    type: Date,
+    default: null
+  },
+  cashCollectedBy: {
+    type: String,
+    default: null
+  },
+  cashAmount: {
     type: Number,
     default: 0
   },
@@ -353,12 +382,21 @@ bookingSchema.pre('save', function() {
         desc = `Payment of ₹${this.amount || 0} completed successfully via ${this.paymentMethod || 'cash'}.`;
       } else if (this.paymentStatus === 'cash_pending') {
         desc = 'Payment method selected: Cash. Awaiting technician confirmation.';
+      } else if (this.paymentStatus === 'cash_completed') {
+        // Cash receipt confirmed by technician – avoid duplicate timeline entries
+        // Only push once when cashCollectedAt gets set for the first time
+        if (this.cashCollectedAt) {
+          desc = `Cash of ₹${this.cashAmount || 0} received and recorded by technician ${this.cashCollectedBy || ''}.`;
+        }
       }
-      this.timelineEvents.push({
-        status: `payment_${this.paymentStatus}`,
-        timestamp: new Date(),
-        description: desc
-      });
+      // Guard against duplicate events: only push when description changed
+      if (desc && (!this.timelineEvents || !this.timelineEvents.find(e => e.description === desc))) {
+        this.timelineEvents.push({
+          status: `payment_${this.paymentStatus}`,
+          timestamp: new Date(),
+          description: desc
+        });
+      }
     }
   }
 });

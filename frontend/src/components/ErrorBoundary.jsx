@@ -14,6 +14,14 @@ class ErrorBoundary extends React.Component {
   componentDidCatch(error, errorInfo) {
     console.error('Unhandled UI Exception caught by ErrorBoundary:', error, errorInfo);
     this.setState({ errorInfo });
+    // Report to Sentry — no-ops safely if Sentry is not initialized
+    try {
+      import('../utils/sentryFrontend.js').then(({ Sentry }) => {
+        Sentry.captureException(error, {
+          extra: { componentStack: errorInfo?.componentStack?.substring(0, 500) }
+        });
+      });
+    } catch { /* no-op */ }
   }
 
   handleReset = () => {

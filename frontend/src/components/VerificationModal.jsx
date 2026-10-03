@@ -1,11 +1,15 @@
 import React, { useState, useRef } from 'react';
-import { Shield, ShieldAlert, ShieldCheck, CheckCircle2, ScanFace, FileSignature, X, Loader2, Camera, Upload, Check } from 'lucide-react';
+import { Shield, ShieldAlert, ShieldCheck, CheckCircle2, ScanFace, FileSignature, X, Loader2, Camera, Upload, Check, Clock } from 'lucide-react';
 import api from '../services/api';
 
-const VerificationModal = ({ currentStatus, onClose, onSuccess }) => {
-  const [step, setStep] = useState(1);
+const VerificationModal = ({ currentStatus = 'unverified', onClose, onSuccess }) => {
+  const isPending = currentStatus === 'pending' || currentStatus === 'under_review';
+  const isVerified = currentStatus === 'approved';
+  
+  const [step, setStep] = useState(isPending ? 5 : isVerified ? 6 : 1);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+  const [consentGranted, setConsentGranted] = useState(false);
 
   // Document states (contain base64 data URLs)
   const [govId, setGovId] = useState(null);
@@ -88,7 +92,6 @@ const VerificationModal = ({ currentStatus, onClose, onSuccess }) => {
     const ctx = canvas.getContext('2d');
     if (!ctx) return;
 
-    // Center crop to square selfie
     const size = Math.min(video.videoWidth, video.videoHeight);
     const startX = (video.videoWidth - size) / 2;
     const startY = (video.videoHeight - size) / 2;
@@ -107,6 +110,10 @@ const VerificationModal = ({ currentStatus, onClose, onSuccess }) => {
       setError("Please ensure all documents are loaded.");
       return;
     }
+    if (!consentGranted) {
+      setError("Explicit consent is required before submitting identity documents.");
+      return;
+    }
 
     setLoading(true);
     setError('');
@@ -115,9 +122,10 @@ const VerificationModal = ({ currentStatus, onClose, onSuccess }) => {
       await api.post('/technicians/verify', {
         governmentId: govId,
         selfie,
-        addressProof
+        addressProof,
+        consentToVerification: true
       });
-      setStep(5); // Success state
+      setStep(5);
       if (onSuccess) onSuccess();
     } catch (err) {
       setError(err.response?.data?.message || err.message || "Failed to submit verification.");
@@ -173,7 +181,7 @@ const VerificationModal = ({ currentStatus, onClose, onSuccess }) => {
         {step === 2 && (
           <div className="p-8 sm:p-10">
             <div className="mb-6 flex justify-between items-center text-xs font-black uppercase text-indigo-600 tracking-wider">
-              <span>Step 1 of 4</span>
+              <span>Step 1 of 3</span>
               <span>Government ID</span>
             </div>
             <h2 className="text-xl font-extrabold text-slate-800 mb-2">Upload Government ID</h2>
@@ -220,7 +228,7 @@ const VerificationModal = ({ currentStatus, onClose, onSuccess }) => {
         {step === 3 && (
           <div className="p-8 sm:p-10">
             <div className="mb-6 flex justify-between items-center text-xs font-black uppercase text-indigo-600 tracking-wider">
-              <span>Step 2 of 4</span>
+              <span>Step 2 of 3</span>
               <span>Address Proof</span>
             </div>
             <h2 className="text-xl font-extrabold text-slate-800 mb-2">Upload Address Proof</h2>
@@ -267,8 +275,8 @@ const VerificationModal = ({ currentStatus, onClose, onSuccess }) => {
         {step === 4 && (
           <div className="p-8 sm:p-10 text-center">
             <div className="mb-6 flex justify-between items-center text-xs font-black uppercase text-indigo-600 tracking-wider">
-              <span>Step 3 of 4</span>
-              <span>Selfie Match</span>
+              <span>Step 3 of 3</span>
+              <span>Selfie & Consent</span>
             </div>
             <h2 className="text-xl font-extrabold text-slate-800 mb-2">Capture Live Selfie</h2>
             <p className="text-slate-500 text-sm font-medium mb-6">
@@ -282,7 +290,7 @@ const VerificationModal = ({ currentStatus, onClose, onSuccess }) => {
               </div>
             )}
 
-            <div className="relative w-48 h-48 mx-auto mb-6 rounded-full overflow-hidden bg-slate-950 border-4 border-indigo-50 shadow-inner flex items-center justify-center">
+            <div className="relative w-44 h-44 mx-auto mb-6 rounded-full overflow-hidden bg-slate-950 border-4 border-indigo-50 shadow-inner flex items-center justify-center">
               {useCamera ? (
                 <>
                   <video ref={videoRef} autoPlay playsInline muted className="w-full h-full object-cover scale-x-[-1]" />
@@ -297,7 +305,7 @@ const VerificationModal = ({ currentStatus, onClose, onSuccess }) => {
 
             <canvas ref={canvasRef} className="hidden" />
 
-            <div className="space-y-3">
+            <div className="space-y-3 mb-6">
               {useCamera ? (
                 <button 
                   onClick={captureSelfie}
@@ -314,7 +322,6 @@ const VerificationModal = ({ currentStatus, onClose, onSuccess }) => {
                     <Camera size={18} /> {selfie ? 'Retake Selfie' : 'Use Webcam'}
                   </button>
                   
-                  {/* File Upload Fallback */}
                   <label className="flex-1 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold py-3 rounded-2xl flex items-center justify-center gap-2 cursor-pointer border border-slate-200 transition">
                     <input type="file" accept="image/png, image/jpeg, image/jpg" onChange={(e) => handleFileChange(e, 'selfie')} className="hidden" />
                     <Upload size={18} /> Upload Image
@@ -323,7 +330,22 @@ const VerificationModal = ({ currentStatus, onClose, onSuccess }) => {
               )}
             </div>
 
-            <div className="mt-8 flex gap-3">
+            {/* DPDPA Consent Checkbox */}
+            <div className="p-3.5 bg-slate-50 border border-slate-200 rounded-2xl text-left mb-6">
+              <label className="flex items-start gap-2.5 cursor-pointer">
+                <input 
+                  type="checkbox"
+                  checked={consentGranted}
+                  onChange={(e) => setConsentGranted(e.target.checked)}
+                  className="mt-0.5 w-4 h-4 rounded border-slate-300 text-indigo-600 focus:ring-indigo-500 shrink-0"
+                />
+                <span className="text-[11px] text-slate-600 font-semibold leading-normal">
+                  I consent to Fixvo storing my ID documents securely in encrypted cloud storage for verification under India DPDPA 2023.
+                </span>
+              </label>
+            </div>
+
+            <div className="flex gap-3">
               <button 
                 onClick={() => { stopCamera(); setStep(3); }} 
                 className="flex-1 bg-slate-50 hover:bg-slate-100 text-slate-600 font-bold py-3.5 rounded-2xl transition cursor-pointer"
@@ -332,7 +354,7 @@ const VerificationModal = ({ currentStatus, onClose, onSuccess }) => {
               </button>
               <button 
                 onClick={handleVerifySubmit} 
-                disabled={loading || !selfie}
+                disabled={loading || !selfie || !consentGranted}
                 className="flex-1 bg-indigo-600 hover:bg-indigo-700 disabled:opacity-50 text-white font-bold py-3.5 rounded-2xl flex items-center justify-center gap-2 transition cursor-pointer"
               >
                 {loading ? <Loader2 size={18} className="animate-spin text-white" /> : 'Submit Verification'}
@@ -343,14 +365,14 @@ const VerificationModal = ({ currentStatus, onClose, onSuccess }) => {
 
         {step === 5 && (
           <div className="p-8 sm:p-10 text-center">
-            <div className="w-20 h-20 bg-emerald-100 rounded-full flex items-center justify-center mx-auto mb-6">
-              <ShieldCheck className="text-emerald-500" size={42} />
+            <div className="w-20 h-20 bg-amber-50 rounded-full flex items-center justify-center mx-auto mb-6 border border-amber-100">
+              <Clock className="text-amber-500 animate-spin" size={42} />
             </div>
             
-            <h2 className="text-2xl font-black text-slate-800 mb-3 tracking-tight">Documents Submitted!</h2>
+            <h2 className="text-2xl font-black text-slate-800 mb-3 tracking-tight">Documents Pending Review!</h2>
             <p className="text-slate-500 font-medium text-sm leading-relaxed mb-8">
-              Your credentials are under review by our administrative team.
-              We will notify you via email/SMS as soon as review is complete (usually in 12-24 hours).
+              Your credentials are under review by our administrative compliance team.
+              We will notify you via email as soon as verification is completed.
             </p>
 
             <button 
@@ -362,9 +384,30 @@ const VerificationModal = ({ currentStatus, onClose, onSuccess }) => {
           </div>
         )}
 
+        {step === 6 && (
+          <div className="p-8 sm:p-10 text-center">
+            <div className="w-20 h-20 bg-emerald-100 rounded-full flex items-center justify-center mx-auto mb-6">
+              <ShieldCheck className="text-emerald-500" size={42} />
+            </div>
+            
+            <h2 className="text-2xl font-black text-slate-800 mb-3 tracking-tight">Identity Verified!</h2>
+            <p className="text-slate-500 font-medium text-sm leading-relaxed mb-8">
+              Your Fixvo professional identity and credentials have been verified and approved.
+            </p>
+
+            <button 
+              onClick={handleModalClose}
+              className="w-full bg-slate-900 hover:bg-slate-800 text-white font-bold py-4 rounded-2xl transition cursor-pointer"
+            >
+              Close Window
+            </button>
+          </div>
+        )}
+
       </div>
     </div>
   );
 };
 
 export default VerificationModal;
+

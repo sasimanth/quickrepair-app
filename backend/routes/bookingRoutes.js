@@ -3,7 +3,7 @@ const router = express.Router();
 const { 
   createBooking, getBookings, updateBookingStatus, assignBooking, processPayment, 
   createPaymentIntent, submitQuote, approveQuote, cancelBooking, 
-  requestQuoteClarification, respondQuoteClarification 
+  requestQuoteClarification, respondQuoteClarification, getBookingTracking 
 } = require('../controllers/bookingController');
 const { protect, authorize, optionalAuth, ensureVerified } = require('../middleware/auth');
 const { bookingLimiter } = require('../middleware/rateLimiter');
@@ -12,6 +12,7 @@ router.route('/')
   .post(protect, ensureVerified, bookingLimiter, createBooking)
   .get(protect, getBookings); // Controller handles logic based on role
 
+router.get('/:id/tracking', protect, getBookingTracking);
 router.put('/:id/status', protect, authorize('user', 'technician', 'admin'), updateBookingStatus);
 router.put('/:id/assign', protect, authorize('admin'), assignBooking);
 router.put('/:id/pay', protect, authorize('user', 'technician'), processPayment);

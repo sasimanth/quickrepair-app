@@ -1,6 +1,6 @@
 import axios from 'axios';
 
-let API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
+let API_URL = import.meta.env.VITE_API_URL || 'https://fixvo-backend.onrender.com/api';
 
 // Ensure the API URL has the /api suffix, as backend routes are prefixed with /api
 if (API_URL && !API_URL.endsWith('/api') && !API_URL.endsWith('/api/')) {
@@ -23,9 +23,26 @@ api.interceptors.request.use((config) => {
 api.interceptors.response.use(
   (response) => response,
   (error) => {
-    if (error.response && error.response.status === 401) {
+    const status = error.response?.status;
+    const url = error.config?.url || 'unknown';
+
+    if (status === 401) {
       console.warn('Unauthorized API response (401). Token may be expired.');
     }
+
+    // Add a Sentry breadcrumb so failed API calls appear in error traces.
+    // Never log Authorization headers or response body (may contain tokens/PII).
+    try {
+      import('../utils/sentryFrontend.js').then(({ Sentry }) => {
+        Sentry.addBreadcrumb({
+          category: 'api',
+          message: `API ${error.config?.method?.toUpperCase() || 'REQUEST'} ${url} → ${status || 'network error'}`,
+          level: status >= 500 ? 'error' : 'warning',
+          data: { url, status }
+        });
+      });
+    } catch { /* no-op */ }
+
     return Promise.reject(error);
   }
 );

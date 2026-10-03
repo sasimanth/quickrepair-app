@@ -1,12 +1,29 @@
 const jwt = require('jsonwebtoken');
 
+// SECURITY: Refuse to start with the weak default secret in production.
+// This surfaces misconfig immediately on boot rather than silently using 'secret123'.
+const JWT_SECRET = process.env.JWT_SECRET;
+if (!JWT_SECRET || JWT_SECRET === 'secret123' || JWT_SECRET.length < 32) {
+  if (process.env.NODE_ENV === 'production') {
+    throw new Error(
+      'FATAL: JWT_SECRET is missing, too short, or is the insecure default. ' +
+      'Set a strong random secret (>= 32 chars) in your production .env.'
+    );
+  }
+  if (process.env.NODE_ENV !== 'test') {
+    console.warn('⚠️  JWT_SECRET not set — using insecure default. DO NOT use in production.');
+  }
+}
+
+const EFFECTIVE_JWT_SECRET = JWT_SECRET || 'secret123';
+
 const protect = async (req, res, next) => {
   let token;
 
   if (req.headers.authorization && req.headers.authorization.startsWith('Bearer')) {
     try {
       token = req.headers.authorization.split(' ')[1];
-      const decoded = jwt.verify(token, process.env.JWT_SECRET || 'secret123');
+      const decoded = jwt.verify(token, EFFECTIVE_JWT_SECRET);
       
       const User = require('../models/User');
       const user = await User.findById(decoded.id).select('-password');
@@ -38,7 +55,7 @@ const optionalAuth = async (req, res, next) => {
   if (req.headers.authorization && req.headers.authorization.startsWith('Bearer')) {
     try {
       const token = req.headers.authorization.split(' ')[1];
-      const decoded = jwt.verify(token, process.env.JWT_SECRET || 'secret123');
+      const decoded = jwt.verify(token, EFFECTIVE_JWT_SECRET);
       
       const User = require('../models/User');
       const user = await User.findById(decoded.id).select('-password');

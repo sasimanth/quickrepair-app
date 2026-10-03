@@ -101,12 +101,21 @@ const sendFcmNotification = async ({ token, title, body, data = {}, priority = '
     } catch (error) {
       console.error('❌ Error sending FCM notification:', error);
       // If token is invalid or unregistered, mark it as inactive
-      if (error.code === 'messaging/registration-token-not-registered' || 
-          error.code === 'messaging/invalid-argument') {
+      const isInvalidTokenError = 
+        error.code === 'messaging/registration-token-not-registered' || 
+        error.code === 'messaging/invalid-argument' ||
+        error.code === 'messaging/invalid-registration-token' ||
+        (error.message && (
+          error.message.includes('not-registered') ||
+          error.message.includes('invalid-argument') ||
+          error.message.includes('invalid token')
+        ));
+
+      if (isInvalidTokenError) {
         try {
           const FcmToken = require('../models/FcmToken');
           await FcmToken.updateMany({ token }, { isActive: false });
-          console.log(`扫 Marked invalid FCM token as inactive: ${token}`);
+          console.log(`🧹 Marked invalid FCM token as inactive: ${token}`);
         } catch (dbErr) {
           console.error('Failed to mark invalid token as inactive in database:', dbErr);
         }

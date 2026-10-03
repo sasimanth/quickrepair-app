@@ -2,7 +2,7 @@ const express = require('express');
 const router = express.Router();
 const { 
   getDashboardStats, getAllUsers, getWithdrawals, updateWithdrawalStatus,
-  getPendingVerifications, reviewTechnician 
+  getPendingVerifications, reviewTechnician, reviewKyc, getDocumentSignedUrl 
 } = require('../controllers/adminController');
 const { protect, authorize } = require('../middleware/auth');
 
@@ -14,8 +14,11 @@ router.get('/users', getAllUsers);
 router.get('/withdrawals', getWithdrawals);
 router.put('/withdrawals/:id/status', updateWithdrawalStatus);
 
-// Verification Review Routes
+// Verification & KYC Review Routes
 router.get('/technicians/pending', getPendingVerifications);
 router.put('/technicians/:id/verify', reviewTechnician);
+router.put('/technicians/:id/kyc-review', reviewKyc);
+router.get('/technicians/:id/documents/:docType', getDocumentSignedUrl);
 
 module.exports = router;
+

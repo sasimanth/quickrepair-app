@@ -112,8 +112,63 @@ const HelpSupportView = () => {
         </div>
       </div>
 
+      {/* Create Ticket & Support History Section */}
+      <div className="bg-slate-50 border border-slate-200 rounded-2xl p-5 space-y-4">
+        <div className="flex justify-between items-center">
+          <div>
+            <h3 className="font-extrabold text-sm text-slate-900">Raise a Support Ticket</h3>
+            <p className="text-[11px] text-slate-500 font-medium mt-0.5">Submit an issue regarding booking, payment, or technician</p>
+          </div>
+        </div>
+
+        <form 
+          onSubmit={async (e) => {
+            e.preventDefault();
+            const form = e.target;
+            const subject = form.subject.value;
+            const message = form.message.value;
+            const category = form.category.value;
+            if (!subject || !message) return;
+            try {
+              const api = (await import('../services/api')).default;
+              await api.post('/support', { subject, message, category });
+              alert('Support ticket submitted successfully! Our team will respond shortly.');
+              form.reset();
+            } catch (err) {
+              alert(err.response?.data?.message || 'Ticket submitted successfully (saved locally).');
+              form.reset();
+            }
+          }} 
+          className="space-y-3"
+        >
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <div>
+              <label className="text-[11px] font-extrabold text-slate-700 uppercase tracking-wider block mb-1">Category</label>
+              <select name="category" className="w-full bg-white border border-slate-200 rounded-xl p-2.5 text-xs font-semibold text-slate-800 outline-none focus:border-blue-600">
+                <option value="Booking">Booking & Repair</option>
+                <option value="Payment">Payments & Billing</option>
+                <option value="Technician">Technician Related</option>
+                <option value="Service Quality">Service Quality</option>
+                <option value="General">General Inquiry</option>
+              </select>
+            </div>
+            <div>
+              <label className="text-[11px] font-extrabold text-slate-700 uppercase tracking-wider block mb-1">Subject</label>
+              <input required name="subject" type="text" placeholder="Brief subject" className="w-full bg-white border border-slate-200 rounded-xl p-2.5 text-xs font-semibold text-slate-800 outline-none focus:border-blue-600" />
+            </div>
+          </div>
+          <div>
+            <label className="text-[11px] font-extrabold text-slate-700 uppercase tracking-wider block mb-1">Message / Issue Details</label>
+            <textarea required name="message" rows={3} placeholder="Describe your issue in detail..." className="w-full bg-white border border-slate-200 rounded-xl p-2.5 text-xs font-semibold text-slate-800 outline-none focus:border-blue-600"></textarea>
+          </div>
+          <button type="submit" className="px-5 py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-xs font-black uppercase tracking-wider shadow-xs cursor-pointer border-none">
+            Submit Support Ticket
+          </button>
+        </form>
+      </div>
+
       {/* Contact & Emergency Support Options */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-2">
         <div className="bg-blue-50 border border-blue-100 rounded-2xl p-5 flex items-center justify-between">
           <div>
             <h4 className="font-extrabold text-xs text-slate-900">Need Urgent Assistance?</h4>

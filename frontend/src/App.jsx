@@ -238,6 +238,9 @@ const AppContent = () => {
   );
 };
 
+import { LocationProvider } from './contexts/LocationContext';
+import LocationPermissionModal from './components/LocationPermissionModal';
+
 function App() {
   useEffect(() => {
     // 1. Explicit Service Worker Registration
@@ -287,10 +290,13 @@ function App() {
   return (
     <ErrorBoundary>
       <AuthProvider>
-        <Router>
-          <ScrollToTop />
-          <AppContent />
-        </Router>
+        <LocationProvider>
+          <Router>
+            <ScrollToTop />
+            <AppContent />
+            <LocationPermissionModal />
+          </Router>
+        </LocationProvider>
       </AuthProvider>
     </ErrorBoundary>
   );

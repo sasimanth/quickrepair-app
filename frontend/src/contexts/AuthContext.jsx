@@ -1,6 +1,8 @@
 import React, { createContext, useContext, useEffect, useState } from 'react';
 import api from '../services/api';
 import { logout as authLogout } from '../services/auth';
+import { identify as analyticsIdentify } from '../utils/analytics';
+import { setSentryUser } from '../utils/sentryFrontend';
 
 const AuthContext = createContext({});
 
@@ -80,6 +82,9 @@ export const AuthProvider = ({ children }) => {
       setUser(userObj);
       setSession({ token, user: userObj });
       localStorage.setItem('user', JSON.stringify(userObj));
+      // Link analytics session to this user (MongoDB _id only — never email/phone)
+      analyticsIdentify(userObj._id || userObj.id);
+      setSentryUser(userObj._id || userObj.id);
       return userObj;
     } catch (err) {
       console.warn('Backend /auth/me call failed during loginUser, using fallback:', err.message);
@@ -106,6 +111,8 @@ export const AuthProvider = ({ children }) => {
 
   const logout = async () => {
     await authLogout();
+    // Clear analytics and Sentry user context on logout
+    try { setSentryUser(null); } catch { /* no-op */ }
     setUser(null);
     setSession(null);
     window.location.reload();

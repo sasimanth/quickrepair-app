@@ -188,5 +188,96 @@ const registerFcmToken = async (req, res) => {
   }
 };
 
-module.exports = { getNotifications, markRead, markAllRead, getVapidPublicKey, subscribe, registerFcmToken };
+// @desc    Unregister / Deactivate Firebase Cloud Messaging (FCM) Token on Logout
+// @route   DELETE /api/notifications/fcm-token
+const unregisterFcmToken = async (req, res) => {
+  try {
+    const { deviceId, token } = req.body;
+    const FcmToken = require('../models/FcmToken');
+    const DeviceSession = require('../models/DeviceSession');
+
+    const query = { userId: req.user.id };
+    if (deviceId) query.deviceId = deviceId;
+    if (token) query.token = token;
+
+    await FcmToken.updateMany(query, { isActive: false });
+    if (deviceId) {
+      await DeviceSession.updateMany({ userId: req.user.id, deviceId }, { isActive: false });
+    }
+
+    res.status(200).json({ success: true, message: 'FCM token deactivated successfully' });
+  } catch (err) {
+    console.error('Error in unregisterFcmToken:', err);
+    res.status(500).json({ message: err.message });
+  }
+};
+
+// @desc    Get user notification preferences
+// @route   GET /api/notifications/preferences
+const getNotificationPreferences = async (req, res) => {
+  try {
+    const User = require('../models/User');
+    const user = await User.findById(req.user.id).select('notificationPreferences');
+    if (!user) return res.status(404).json({ message: 'User not found' });
+
+    const defaults = {
+      pushEnabled: true,
+      emailEnabled: true,
+      smsEnabled: true,
+      bookingUpdates: true,
+      promotions: false
+    };
+
+    res.json({
+      success: true,
+      preferences: { ...defaults, ...(user.notificationPreferences || {}) }
+    });
+  } catch (err) {
+    res.status(500).json({ message: err.message });
+  }
+};
+
+// @desc    Update user notification preferences
+// @route   PUT /api/notifications/preferences
+const updateNotificationPreferences = async (req, res) => {
+  try {
+    const User = require('../models/User');
+    const user = await User.findById(req.user.id);
+    if (!user) return res.status(404).json({ message: 'User not found' });
+
+    const { pushEnabled, emailEnabled, smsEnabled, bookingUpdates, promotions } = req.body;
+    
+    if (!user.notificationPreferences) {
+      user.notificationPreferences = {};
+    }
+
+    if (typeof pushEnabled === 'boolean') user.notificationPreferences.pushEnabled = pushEnabled;
+    if (typeof emailEnabled === 'boolean') user.notificationPreferences.emailEnabled = emailEnabled;
+    if (typeof smsEnabled === 'boolean') user.notificationPreferences.smsEnabled = smsEnabled;
+    if (typeof bookingUpdates === 'boolean') user.notificationPreferences.bookingUpdates = bookingUpdates;
+    if (typeof promotions === 'boolean') user.notificationPreferences.promotions = promotions;
+
+    await user.save();
+
+    res.json({
+      success: true,
+      message: 'Notification preferences updated successfully',
+      preferences: user.notificationPreferences
+    });
+  } catch (err) {
+    res.status(500).json({ message: err.message });
+  }
+};
+
+module.exports = {
+  getNotifications,
+  markRead,
+  markAllRead,
+  getVapidPublicKey,
+  subscribe,
+  registerFcmToken,
+  unregisterFcmToken,
+  getNotificationPreferences,
+  updateNotificationPreferences
+};
 

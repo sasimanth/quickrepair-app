@@ -118,6 +118,18 @@ const userSchema = new mongoose.Schema({
   premiumBenefits: {
     inspectionsUsed: { type: Number, default: 0 },
     totalSaved: { type: Number, default: 0 }
+  },
+  notificationPreferences: {
+    pushEnabled: { type: Boolean, default: true },
+    emailEnabled: { type: Boolean, default: true },
+    smsEnabled: { type: Boolean, default: true },
+    bookingUpdates: { type: Boolean, default: true },
+    promotions: { type: Boolean, default: false },
+    // WhatsApp: explicit opt-in ONLY (default false — Meta policy + DPDPA 2023 compliance)
+    whatsappEnabled: { type: Boolean, default: false },
+    whatsappOptInAt: { type: Date, default: null },
+    whatsappOptOutAt: { type: Date, default: null },
+    whatsappOptInVersion: { type: String, default: null } // consent text version for audit trail
   }
 }, { timestamps: true });
 

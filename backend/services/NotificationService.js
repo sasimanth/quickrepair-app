@@ -381,7 +381,8 @@ const notifyUser = async ({
   bookingId = null, 
   priority = null,
   templateName = null,
-  templateData = {}
+  templateData = {},
+  channel = null
 }) => {
   let htmlContent = null;
   if (templateName) {
@@ -427,16 +428,83 @@ const notifyUser = async ({
 
   // Fire In-App DB Notification & Web Push & FCM
   if (userId) {
+    const User = require('../models/User');
+    let pushAllowed = true;
+    let emailAllowed = true;
+    let smsAllowed = true;
+    let cachedUser = null; // cache for reuse in WhatsApp block below
+
+    try {
+      cachedUser = await User.findById(userId).select('phone notificationPreferences');
+      if (cachedUser && cachedUser.notificationPreferences) {
+        if (cachedUser.notificationPreferences.pushEnabled === false) pushAllowed = false;
+        if (cachedUser.notificationPreferences.emailEnabled === false) emailAllowed = false;
+        if (cachedUser.notificationPreferences.smsEnabled === false) smsAllowed = false;
+      }
+    } catch (prefErr) {
+      console.error('Error reading notification preferences:', prefErr.message);
+    }
+
     await sendInAppPush(userId, subject, text, notifType, bookingId);
-    await sendWebPush(userId, subject, text, bookingId, priority);
-    await sendFcmPush(userId, subject, text, bookingId, priority);
+    
+    if (pushAllowed) {
+      await sendWebPush(userId, subject, text, bookingId, priority);
+      await sendFcmPush(userId, subject, text, bookingId, priority);
+    } else {
+      console.log(`⚠️ Push notifications disabled by user preferences for user ${userId}`);
+    }
+
+    // Determine type filtering for external dispatch
+    if (emailAllowed && smsAllowed) {
+      // keep type as requested
+    } else if (!emailAllowed && smsAllowed) {
+      type = type === 'both' || type === 'email' ? 'sms' : type;
+    } else if (emailAllowed && !smsAllowed) {
+      type = type === 'both' || type === 'sms' ? 'email' : type;
+    } else if (!emailAllowed && !smsAllowed) {
+      type = 'none';
+    }
+
+    // WhatsApp channel handling — explicit opt-in required
+    // Used when caller passes channel: 'whatsapp' and a templateName
+    if (channel === 'whatsapp') {
+      try {
+        const waUser = cachedUser; // reuse already-fetched document
+        if (!waUser) {
+          console.warn(`[WhatsApp] User not found for ID ${userId}`);
+        } else if (!waUser.phone) {
+          console.warn(`[WhatsApp] User ${userId} has no phone number — skipping`);
+        } else if (waUser.notificationPreferences?.whatsappEnabled) {
+          const WhatsAppService = require('./WhatsAppService');
+          const waVars = templateData && typeof templateData === 'object'
+            ? Object.values(templateData).map(String)
+            : [];
+          const result = await WhatsAppService.sendWhatsAppTemplate(
+            userId.toString(),
+            waUser.phone,
+            templateName || 'default_notification',
+            waVars,
+            bookingId
+          );
+          if (result.success) {
+            console.log(`[Notification] WhatsApp sent via template "${templateName}"`);
+          } else {
+            console.warn(`[Notification] WhatsApp send failed: ${result.error}`);
+          }
+        } else {
+          console.log(`[Notification] WhatsApp opt-in not set for user ${userId} — skipping`);
+        }
+      } catch (waErr) {
+        console.error('[Notification] WhatsApp channel error (suppressed):', waErr.message);
+      }
+    }
   }
 
-  // Simulate remote external (Twilio / Resend)
-  if (email || phone) {
+  // Dispatch remote external (Twilio / Resend) if allowed
+  if ((email || phone) && type !== 'none') {
     await dispatchExternal(email, phone, type, subject, text, htmlContent);
   }
 };
 
-module.exports = { notifyUser };
+module.exports = { notifyUser, sendFcmPush, sendWebPush, sendInAppPush };
 

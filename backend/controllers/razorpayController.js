@@ -1,6 +1,8 @@
 const Razorpay = require('razorpay');
 const crypto = require('crypto');
 const Booking = require('../models/Booking');
+const { generateAndEmailInvoice } = require('../services/InvoiceService');
+const Sentry = require('@sentry/node');
 
 const razorpay = new Razorpay({
   key_id: process.env.RAZORPAY_KEY_ID || 'rzp_test_FIXVO123',
@@ -39,6 +41,10 @@ const createOrder = async (req, res) => {
     });
   } catch (error) {
     console.error('Razorpay Create Order Error:', error);
+    Sentry.captureException(error, {
+      tags: { subsystem: 'payment', gateway: 'razorpay', operation: 'createOrder' },
+      extra: { bookingId } // never include keys/secrets
+    });
     res.status(500).json({ message: error.message || 'Payment order creation failed.' });
   }
 };
@@ -55,9 +61,10 @@ const verifyPayment = async (req, res) => {
       .update(body.toString())
       .digest('hex');
 
-    const isAuthentic = expectedSignature === razorpay_signature;
+    // Use timing-safe comparison for signature verification
+    const isAuthentic = crypto.timingSafeEqual(Buffer.from(expectedSignature), Buffer.from(razorpay_signature));
 
-    if (isAuthentic || process.env.NODE_ENV !== 'production') {
+    if (isAuthentic) {
       const booking = await Booking.findById(bookingId);
       if (booking) {
         booking.paymentStatus = 'completed';
@@ -88,14 +95,199 @@ const verifyPayment = async (req, res) => {
         }
       }
 
-      return res.json({ success: true, message: 'Payment verified successfully.' });
+        // Auto-generate invoice and email to customer (fire-and-forget)
+        generateAndEmailInvoice(bookingId).catch(err =>
+          console.error('[razorpay] Invoice generation failed (non-critical):', err.message)
+        );
+
+        return res.json({ success: true, message: 'Payment verified successfully.' });
     } else {
       return res.status(400).json({ success: false, message: 'Invalid payment signature.' });
     }
   } catch (error) {
     console.error('Razorpay Verify Error:', error);
+    Sentry.captureException(error, {
+      tags: { subsystem: 'payment', gateway: 'razorpay', operation: 'verifyPayment' },
+      extra: { bookingId } // never include razorpay_signature or razorpay_payment_id
+    });
     res.status(500).json({ message: error.message || 'Payment verification failed.' });
   }
 };
+// @desc    Handle Razorpay Webhook Events
+// @route   POST /api/payments/razorpay/webhook
+const RazorpayEvent = require('../models/RazorpayEvent');
+const transactionSupport = require('../utils/transactionSupport');
+const handleWebhook = async (req, res) => {
+  // Ensure webhook secret is configured
+  if (!process.env.RAZORPAY_WEBHOOK_SECRET) {
+    console.error('RAZORPAY_WEBHOOK_SECRET not set');
+    return res.status(500).json({ success: false, message: 'Server configuration error' });
+  }
+  const signature = req.headers['x-razorpay-signature'];
+  const webhookSecret = process.env.RAZORPAY_WEBHOOK_SECRET;
+  const payload = req.rawBody; // Buffer from rawBody middleware
 
-module.exports = { createOrder, verifyPayment };
+  // Verify signature using timing-safe comparison
+  const expected = crypto.createHmac('sha256', webhookSecret).update(payload).digest('hex');
+  if (!signature || signature.length !== expected.length || !crypto.timingSafeEqual(Buffer.from(expected), Buffer.from(signature))) {
+    return res.status(400).json({ success: false, message: 'Invalid webhook signature' });
+  }
+
+  let event;
+  try {
+    event = JSON.parse(payload.toString());
+  } catch (e) {
+    return res.status(400).json({ success: false, message: 'Invalid JSON payload' });
+  }
+
+// Use transaction for atomic processing
+  try {
+    let processedBooking = null;
+    await transactionSupport.withTransaction(async (session) => {
+      // Idempotency: attempt to create event doc; if duplicate, skip processing
+      const eventDoc = new RazorpayEvent({ eventId: event.id, eventType: event.event, rawPayload: event });
+      let isDuplicate = false;
+      try {
+        await eventDoc.save({ session });
+      } catch (err) {
+        if (err.code === 11000) {
+          // Duplicate event – skip processing
+          isDuplicate = true;
+        } else {
+          throw err;
+        }
+      }
+      if (isDuplicate) return;
+
+      // Extract bookingId from Razorpay payload
+      const bookingId = event.payload?.payment?.entity?.notes?.bookingId || event.payload?.order?.entity?.receipt?.split('_')[1] || event.payload?.refund?.entity?.notes?.bookingId;
+      if (!bookingId) {
+        // No associated booking; ignore the event safely
+        return res.status(200).json({ success: true, message: 'No booking ID found, ignored.' });
+      }
+
+      let booking;
+if (session) {
+  booking = await Booking.findById(bookingId).session(session);
+} else {
+  booking = await Booking.findById(bookingId);
+}
+      if (!booking) {
+        throw new Error('Booking not found');
+      }
+
+      const eventType = event.event;
+      switch (eventType) {
+        case 'payment.captured': {
+          if (booking.transactionId && booking.transactionId === event.payload.payment.entity.id) {
+            processedBooking = booking;
+            break; // already processed
+          }
+          booking.paymentStatus = 'completed';
+          booking.paymentMethod = 'razorpay';
+          booking.transactionId = event.payload.payment.entity.id;
+          if (session) {
+  await booking.save({ session });
+} else {
+  await booking.save();
+}
+
+          if (booking.providerId) {
+            const Technician = require('../models/Technician');
+            let tech;
+if (session) {
+  tech = await Technician.findOne({ userId: booking.providerId }).session(session);
+} else {
+  tech = await Technician.findOne({ userId: booking.providerId });
+}
+            if (tech && !booking.walletUpdated) {
+              tech.walletBalance = (tech.walletBalance || 0) + (booking.finalQuote || booking.amount || 0);
+              if (session) {
+  if (session) {
+  await tech.save({ session });
+} else {
+  await tech.save();
+}
+} else {
+  await tech.save();
+}
+              booking.walletUpdated = true;
+              await booking.save({ session });
+            }
+          }
+
+          if (booking.userId) {
+            try {
+              const User = require('../models/User');
+              const customer = await User.findById(booking.userId).session(session);
+              if (customer) {
+                const pointsEarned = Math.round((booking.finalQuote || booking.amount || 0) * 0.10);
+                customer.rewardPoints = (customer.rewardPoints || 0) + pointsEarned;
+                if (session) {
+  if (session) {
+  await customer.save({ session });
+} else {
+  await customer.save();
+}
+} else {
+  await customer.save();
+}
+              }
+            } catch (e) {}
+          }
+          processedBooking = booking;
+          break;
+        }
+        case 'payment.failed': {
+          if (!['completed', 'refunded'].includes(booking.paymentStatus)) {
+            booking.paymentStatus = 'failed';
+            if (session) {
+  await booking.save({ session });
+} else {
+  await booking.save();
+}
+            processedBooking = booking;
+          }
+          break;
+        }
+        case 'refund.processed': {
+          if (booking.paymentStatus === 'completed') {
+            booking.paymentStatus = 'refunded';
+            if (session) {
+  await booking.save({ session });
+} else {
+  await booking.save();
+}
+            processedBooking = booking;
+          }
+          break;
+        }
+        default:
+          break;
+      }
+
+      // Send notifications after transaction commit
+      if (processedBooking) {
+        try {
+          const { triggerNotifications } = require('../controllers/bookingController');
+          if (triggerNotifications) {
+            await triggerNotifications(req, processedBooking, event.event);
+          }
+        } catch (e) {}
+      }
+    });
+  } catch (err) {
+    console.error('Webhook processing error:', err);
+    Sentry.captureException(err, {
+      tags: { subsystem: 'payment', gateway: 'razorpay', operation: 'webhook' }
+      // No payload data — may contain raw payment body
+    });
+    return res.status(500).json({ success: false, message: 'Webhook processing failed' });
+  }
+
+  return res.json({ success: true, message: 'Webhook processed' });
+
+  // duplicate return removed
+};
+
+module.exports = { createOrder, verifyPayment, handleWebhook };

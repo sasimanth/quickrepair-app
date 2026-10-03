@@ -1,14 +1,17 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import api from '../services/api';
+import { useAuth } from '../contexts/AuthContext';
 import { globalServices, globalCategories } from '../data/services';
 import { 
   Users, Briefcase, LayoutDashboard, Settings, Search, SlidersHorizontal, 
   ChevronDown, ChevronUp, Calendar, MapPin, CheckCircle, Clock, XCircle, 
   ChevronLeft, ChevronRight, AlertCircle, CreditCard, UserCheck, Eye, Sparkles, Star, Shield, Loader2, RefreshCw, ShieldAlert,
-  DollarSign, TrendingUp, BarChart3, PieChart, Activity, FileText, Lock, Award, CheckSquare, Layers, Plus, Filter, Trash2, Edit, X
+  DollarSign, TrendingUp, BarChart3, PieChart, Activity, FileText, Lock, Award, CheckSquare, Layers, Plus, Filter, Trash2, Edit, X,
+  LogOut, Tag, Zap, ToggleLeft, ToggleRight, Check, AlertTriangle, Smartphone, Globe, Headphones, MessageSquare, ChevronRight as ChevronRightIcon
 } from 'lucide-react';
 
 const AdminDashboard = () => {
+  const { logout } = useAuth();
   const [stats, setStats] = useState({ 
     totalUsers: 0, 
     totalTechnicians: 0, 
@@ -33,9 +36,48 @@ const AdminDashboard = () => {
   // Navigation state
   const [activeTab, setActiveTab] = useState('overview');
 
-  // Financial Settings & Commission States
+  // Financial Settings, Surge Pricing & Auto-Dispatch Controls
   const [commissionRate, setCommissionRate] = useState(15);
   const [isUpdatingCommission, setIsUpdatingCommission] = useState(false);
+  const [surgePricing, setSurgePricing] = useState(false);
+  const [surgeMultiplier, setSurgeMultiplier] = useState(1.25);
+  const [autoDispatch, setAutoDispatch] = useState(true);
+
+  // Startup Launch Promo Codes & Discount Coupons State
+  const [promos, setPromos] = useState([
+    { id: 'p1', code: 'WELCOME100', discount: '₹100 OFF', category: 'All Services', usageCount: 42, active: true },
+    { id: 'p2', code: 'FIXVO20', discount: '20% OFF', category: 'AC & Appliance Repair', usageCount: 128, active: true },
+    { id: 'p3', code: 'SUMMERFEST', discount: '15% OFF', category: 'Home Cleaning', usageCount: 65, active: false }
+  ]);
+  const [showAddPromoForm, setShowAddPromoForm] = useState(false);
+  const [newPromoForm, setNewPromoForm] = useState({ code: '', discount: '', category: 'All Services' });
+
+  const handleAddPromo = (e) => {
+    e.preventDefault();
+    if (!newPromoForm.code || !newPromoForm.discount) return;
+    const newEntry = {
+      id: 'p_' + Date.now(),
+      code: newPromoForm.code.toUpperCase().trim(),
+      discount: newPromoForm.discount,
+      category: newPromoForm.category,
+      usageCount: 0,
+      active: true
+    };
+    setPromos([newEntry, ...promos]);
+    setNewPromoForm({ code: '', discount: '', category: 'All Services' });
+    setShowAddPromoForm(false);
+    alert(`Promo code ${newEntry.code} launched successfully!`);
+  };
+
+  const handleTogglePromo = (id) => {
+    setPromos(promos.map(p => p.id === id ? { ...p, active: !p.active } : p));
+  };
+
+  const handleDeletePromo = (id) => {
+    if (window.confirm("Remove this promo code?")) {
+      setPromos(promos.filter(p => p.id !== id));
+    }
+  };
 
   // Service Catalog Management States
   const [serviceList, setServiceList] = useState(globalServices);
@@ -91,19 +133,23 @@ const AdminDashboard = () => {
   const [assigningBookingId, setAssigningBookingId] = useState(null);
   const [selectedTechnicianId, setSelectedTechnicianId] = useState('');
 
+  const [supportTickets, setSupportTickets] = useState([]);
+
   const fetchData = async () => {
     try {
       setLoading(true);
-      const [statsRes, bookingsRes, usersRes, withdrawalsRes] = await Promise.all([
+      const [statsRes, bookingsRes, usersRes, withdrawalsRes, supportRes] = await Promise.all([
         api.get('/admin/stats').catch(() => ({ data: { totalUsers: 24, totalTechnicians: 8, totalBookings: 18 }})),
         api.get('/bookings').catch(() => ({ data: [] })),
         api.get('/admin/users').catch(() => ({ data: [] })),
-        api.get('/admin/withdrawals').catch(() => ({ data: [] }))
+        api.get('/admin/withdrawals').catch(() => ({ data: [] })),
+        api.get('/support/admin/tickets').catch(() => ({ data: [] }))
       ]);
       setStats(prev => ({ ...prev, ...statsRes.data }));
       setBookings(Array.isArray(bookingsRes.data) ? bookingsRes.data : []);
       setUsers(Array.isArray(usersRes.data) ? usersRes.data : []);
       setWithdrawals(Array.isArray(withdrawalsRes.data) ? withdrawalsRes.data : []);
+      setSupportTickets(Array.isArray(supportRes.data) ? supportRes.data : []);
     } catch (error) {
       console.error('Error fetching admin data', error);
     } finally {
@@ -256,13 +302,49 @@ const AdminDashboard = () => {
         status,
         adminNotes: verificationNotes
       });
-      alert(`Technician status updated to ${status} successfully!`);
+      alert(`Technician identity status updated to ${status} successfully!`);
       setSelectedVerificationTech(null);
       setVerificationNotes('');
       fetchPendingVerifications();
     } catch (err) {
       console.error(err);
       alert(err.response?.data?.message || 'Failed to submit technician document review');
+    }
+  };
+
+  const [secureDocUrl, setSecureDocUrl] = useState(null);
+  const [viewingDocType, setViewingDocType] = useState('');
+  const [loadingDocUrl, setLoadingDocUrl] = useState(false);
+
+  const handleViewSecureDocument = async (userId, docType) => {
+    setLoadingDocUrl(true);
+    setViewingDocType(docType);
+    try {
+      const { data } = await api.get(`/admin/technicians/${userId}/documents/${docType}`);
+      if (data.signedUrl) {
+        setSecureDocUrl(data.signedUrl);
+      } else {
+        alert("Signed document URL not returned.");
+      }
+    } catch (err) {
+      console.error("Failed to fetch signed document URL", err);
+      alert(err.response?.data?.message || "Document not available or access denied.");
+    } finally {
+      setLoadingDocUrl(false);
+    }
+  };
+
+  const handleReviewKyc = async (userId, status, reason = '') => {
+    try {
+      await api.put(`/admin/technicians/${userId}/kyc-review`, {
+        status,
+        rejectionReason: reason
+      });
+      alert(`Bank KYC status updated to ${status} successfully!`);
+      fetchPendingVerifications();
+    } catch (err) {
+      console.error('Failed to review KYC', err);
+      alert(err.response?.data?.message || 'Failed to update KYC status');
     }
   };
 
@@ -479,12 +561,14 @@ const AdminDashboard = () => {
     { id: 'overview', label: 'Executive Overview', icon: LayoutDashboard },
     { id: 'bookings', label: 'Dispatch Center', icon: Briefcase, count: bookings.length },
     { id: 'verifications', label: 'Tech Verifications', icon: UserCheck, count: pendingVerifications.length },
-    { id: 'revenue', label: 'Revenue & Commission', icon: DollarSign },
+    { id: 'revenue', label: 'Revenue & Surge', icon: DollarSign },
     { id: 'withdrawals', label: 'Wallet Withdrawals', icon: CreditCard, count: withdrawals.filter(w => w.status === 'pending').length },
+    { id: 'promos', label: 'Marketing & Promos', icon: Tag, count: promos.filter(p => p.active).length },
     { id: 'services', label: 'Service Catalog', icon: Layers, count: serviceList.length },
     { id: 'users', label: 'User Directory', icon: Users, count: users.length },
     { id: 'legal', label: 'Compliance & Policy', icon: Shield },
-    { id: 'security', label: 'Security & Audit', icon: ShieldAlert, count: securityAlerts.length }
+    { id: 'security', label: 'Security & Audit', icon: ShieldAlert, count: securityAlerts.length },
+    { id: 'support', label: 'Support Tickets', icon: Headphones, count: supportTickets.filter(t => t.status === 'open').length }
   ];
 
   if (loading) {
@@ -524,9 +608,22 @@ const AdminDashboard = () => {
           
           <button
             onClick={() => setActiveTab('services')}
-            className="bg-blue-600 hover:bg-blue-700 text-white font-extrabold px-3.5 py-2 rounded-xl text-xs uppercase tracking-wider flex items-center gap-1.5 shadow-sm border-none cursor-pointer"
+            className="bg-blue-600 hover:bg-blue-700 text-white font-extrabold px-3.5 py-2 rounded-xl text-xs uppercase tracking-wider items-center gap-1.5 shadow-sm border-none cursor-pointer hidden sm:flex"
           >
             <Plus size={14} /> Add Service
+          </button>
+
+          <button
+            onClick={() => {
+              if (window.confirm("Are you sure you want to log out of Admin Console?")) {
+                logout();
+              }
+            }}
+            className="bg-rose-50 hover:bg-rose-100 text-rose-700 font-extrabold px-3 py-2 rounded-xl text-xs uppercase tracking-wider flex items-center gap-1.5 border border-rose-200 cursor-pointer transition shadow-xs"
+            title="Logout Admin Session"
+          >
+            <LogOut size={14} />
+            <span className="hidden sm:inline">Logout</span>
           </button>
         </div>
       </header>
@@ -543,11 +640,11 @@ const AdminDashboard = () => {
               </div>
               <div>
                 <h3 className="font-black text-slate-900 text-sm tracking-tight">Fixvo Admin</h3>
-                <p className="text-[10px] text-slate-400 font-semibold">Governance & Ops</p>
+                <p className="text-[10px] text-slate-400 font-semibold">Governance & Operations</p>
               </div>
             </div>
 
-            <div className="space-y-1">
+            <div className="space-y-1 flex-1">
               <span className="text-[10px] font-black text-slate-400 uppercase tracking-wider block px-2 mb-1">Management Modules</span>
               {navItems.map(item => {
                 const IconComp = item.icon;
@@ -556,7 +653,7 @@ const AdminDashboard = () => {
                   <button
                     key={item.id}
                     onClick={() => setActiveTab(item.id)}
-                    className={`w-full flex items-center justify-between px-3.5 py-3 rounded-2xl text-xs font-extrabold transition-all cursor-pointer border-none outline-none text-left tracking-wide ${
+                    className={`w-full flex items-center justify-between px-3.5 py-2.5 rounded-2xl text-xs font-extrabold transition-all cursor-pointer border-none outline-none text-left tracking-wide ${
                       isSelected 
                         ? 'bg-blue-600 text-white shadow-md shadow-blue-600/20' 
                         : 'text-slate-600 hover:text-slate-900 hover:bg-slate-50'
@@ -576,6 +673,24 @@ const AdminDashboard = () => {
                   </button>
                 );
               })}
+            </div>
+
+            {/* Desktop Sidebar Bottom Logout Card */}
+            <div className="pt-4 border-t border-slate-100 mt-auto">
+              <button
+                onClick={() => {
+                  if (window.confirm("Are you sure you want to log out of Admin Console?")) {
+                    logout();
+                  }
+                }}
+                className="w-full flex items-center justify-between px-3.5 py-3 rounded-2xl text-xs font-black text-rose-600 bg-rose-50 hover:bg-rose-100 transition-all cursor-pointer border border-rose-100"
+              >
+                <div className="flex items-center gap-2.5">
+                  <LogOut size={16} />
+                  <span>Log Out Session</span>
+                </div>
+                <span className="text-[10px] bg-rose-200 text-rose-800 px-2 py-0.5 rounded-full font-bold">Admin</span>
+              </button>
             </div>
           </div>
 
@@ -942,8 +1057,31 @@ const AdminDashboard = () => {
               <div className="space-y-6 animate-in fade-in duration-300">
                 <div className="border-b border-slate-100 pb-4">
                   <h2 className="text-xl sm:text-2xl font-black text-slate-900 tracking-tight">Technician Verification Hub</h2>
-                  <p className="text-xs text-slate-500 font-semibold mt-0.5">Review identity documents and approve background check applications</p>
+                  <p className="text-xs text-slate-500 font-semibold mt-0.5">Review identity documents (15-min signed URLs) and approve bank KYC details</p>
                 </div>
+
+                {/* Secure Document Preview Modal */}
+                {secureDocUrl && (
+                  <div className="fixed inset-0 bg-slate-950/70 backdrop-blur-md z-[120] flex items-center justify-center p-4">
+                    <div className="bg-white rounded-3xl p-6 max-w-lg w-full shadow-2xl space-y-4 border border-slate-200">
+                      <div className="flex justify-between items-center border-b pb-3">
+                        <span className="text-xs font-black uppercase text-indigo-600 flex items-center gap-1.5">
+                          <ShieldCheck size={16} /> Secure Document Viewer (15-Min Expiry)
+                        </span>
+                        <button onClick={() => setSecureDocUrl(null)} className="text-slate-400 hover:text-slate-600 font-bold">✕</button>
+                      </div>
+                      <div className="relative rounded-2xl overflow-hidden border border-slate-200 aspect-video bg-slate-950 flex items-center justify-center">
+                        <img src={secureDocUrl} alt="Secure KYC Document" className="w-full h-full object-contain" />
+                      </div>
+                      <div className="p-3 bg-indigo-50 border border-indigo-100 rounded-xl text-[11px] text-indigo-700 font-semibold text-center">
+                        🔒 Document rendered via Cloudinary Authenticated Signed URL. Access logged for audit.
+                      </div>
+                      <button onClick={() => setSecureDocUrl(null)} className="w-full bg-slate-900 hover:bg-slate-800 text-white font-extrabold py-3 rounded-xl text-xs">
+                        Close Document Viewer
+                      </button>
+                    </div>
+                  </div>
+                )}
 
                 {loadingVerifications ? (
                   <div className="py-12 text-center text-blue-600 font-bold text-xs">
@@ -955,39 +1093,110 @@ const AdminDashboard = () => {
                   </div>
                 ) : (
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    {pendingVerifications.map(tech => (
-                      <div key={tech._id || tech.id} className="bg-slate-50 border border-slate-200 p-5 rounded-2xl space-y-3">
-                        <div className="flex justify-between items-start">
-                          <div>
-                            <h3 className="font-extrabold text-slate-900 text-sm">{tech.name}</h3>
-                            <p className="text-xs text-slate-500 font-medium">{tech.email} • {tech.phone || 'No Phone'}</p>
+                    {pendingVerifications.map(tech => {
+                      const techId = tech._id || tech.id || tech.userId;
+                      return (
+                        <div key={techId} className="bg-slate-50 border border-slate-200 p-5 rounded-2xl space-y-4 shadow-xs">
+                          <div className="flex justify-between items-start">
+                            <div>
+                              <h3 className="font-extrabold text-slate-900 text-sm">{tech.name}</h3>
+                              <p className="text-xs text-slate-500 font-medium">{tech.email} • {tech.phone || 'No Phone'}</p>
+                            </div>
+                            <div className="flex flex-col gap-1 items-end">
+                              <span className={`text-[10px] px-2 py-0.5 rounded font-black uppercase border ${
+                                tech.verificationStatus === 'approved' ? 'bg-emerald-100 text-emerald-800 border-emerald-200' : 'bg-amber-100 text-amber-800 border-amber-200'
+                              }`}>
+                                ID: {tech.verificationStatus || 'pending'}
+                              </span>
+                              <span className={`text-[10px] px-2 py-0.5 rounded font-black uppercase border ${
+                                tech.kycStatus === 'approved' ? 'bg-emerald-100 text-emerald-800 border-emerald-200' : 'bg-indigo-100 text-indigo-800 border-indigo-200'
+                              }`}>
+                                KYC: {tech.kycStatus || 'not_submitted'}
+                              </span>
+                            </div>
                           </div>
-                          <span className="text-[10px] bg-amber-100 text-amber-800 border border-amber-200 px-2 py-0.5 rounded font-black uppercase">
-                            Pending Review
-                          </span>
-                        </div>
 
-                        <div className="text-xs text-slate-600 space-y-1 bg-white p-3 rounded-xl border border-slate-200">
-                          <p><strong className="text-slate-900">Submitted Area:</strong> {tech.area || 'Madanapalle'}</p>
-                          <p><strong className="text-slate-900">Experience:</strong> {tech.experience || '3+ Years'}</p>
-                        </div>
+                          <div className="text-xs text-slate-600 space-y-2 bg-white p-3.5 rounded-xl border border-slate-200">
+                            <p><strong className="text-slate-900">Area:</strong> {tech.area || 'Madanapalle'}</p>
+                            
+                            {/* Bank Details */}
+                            {tech.bankDetails && (
+                              <div className="pt-2 border-t border-slate-100 space-y-1">
+                                <p className="font-extrabold text-slate-900 text-[11px] uppercase tracking-wider text-indigo-600">Bank Account Details:</p>
+                                <p><strong className="text-slate-900">Holder:</strong> {tech.bankDetails.accountName || 'N/A'}</p>
+                                <p><strong className="text-slate-900">Account #:</strong> {tech.bankDetails.accountNumberMasked || '••••••••'}</p>
+                                <p><strong className="text-slate-900">IFSC:</strong> {tech.bankDetails.ifscCodeMasked || '••••••••'}</p>
+                              </div>
+                            )}
 
-                        <div className="flex gap-2 pt-1">
-                          <button
-                            onClick={() => handleReviewTechnician(tech._id || tech.id, 'approved')}
-                            className="flex-1 bg-emerald-600 hover:bg-emerald-700 text-white font-extrabold py-2 rounded-xl text-xs uppercase cursor-pointer border-none"
-                          >
-                            ✓ Approve Pro
-                          </button>
-                          <button
-                            onClick={() => handleReviewTechnician(tech._id || tech.id, 'rejected')}
-                            className="flex-1 bg-rose-50 hover:bg-rose-100 text-rose-700 border border-rose-200 font-extrabold py-2 rounded-xl text-xs uppercase cursor-pointer"
-                          >
-                            ✕ Reject
-                          </button>
+                            {/* Private Document Viewers */}
+                            <div className="pt-2 border-t border-slate-100 space-y-1">
+                              <p className="font-extrabold text-slate-900 text-[11px] uppercase tracking-wider text-slate-500">Secure Document Access:</p>
+                              <div className="flex flex-wrap gap-1.5 pt-1">
+                                <button
+                                  onClick={() => handleViewSecureDocument(techId, 'governmentId')}
+                                  className="px-2.5 py-1 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold rounded-lg text-[10px] flex items-center gap-1 border border-slate-200"
+                                >
+                                  👁️ Gov ID
+                                </button>
+                                <button
+                                  onClick={() => handleViewSecureDocument(techId, 'selfie')}
+                                  className="px-2.5 py-1 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold rounded-lg text-[10px] flex items-center gap-1 border border-slate-200"
+                                >
+                                  👁️ Selfie
+                                </button>
+                                <button
+                                  onClick={() => handleViewSecureDocument(techId, 'addressProof')}
+                                  className="px-2.5 py-1 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold rounded-lg text-[10px] flex items-center gap-1 border border-slate-200"
+                                >
+                                  👁️ Address Proof
+                                </button>
+                              </div>
+                            </div>
+                          </div>
+
+                          {/* Action Buttons */}
+                          <div className="space-y-2">
+                            {/* Identity Review */}
+                            <div className="flex gap-2">
+                              <button
+                                onClick={() => handleReviewTechnician(techId, 'approved')}
+                                className="flex-1 bg-emerald-600 hover:bg-emerald-700 text-white font-extrabold py-2 rounded-xl text-[11px] uppercase cursor-pointer border-none"
+                              >
+                                ✓ Approve Identity
+                              </button>
+                              <button
+                                onClick={() => handleReviewTechnician(techId, 'rejected')}
+                                className="flex-1 bg-rose-50 hover:bg-rose-100 text-rose-700 border border-rose-200 font-extrabold py-2 rounded-xl text-[11px] uppercase cursor-pointer"
+                              >
+                                ✕ Reject Identity
+                              </button>
+                            </div>
+
+                            {/* Bank KYC Review */}
+                            {tech.kycStatus === 'pending_review' && (
+                              <div className="flex gap-2 pt-1">
+                                <button
+                                  onClick={() => handleReviewKyc(techId, 'approved')}
+                                  className="flex-1 bg-indigo-600 hover:bg-indigo-700 text-white font-extrabold py-2 rounded-xl text-[11px] uppercase cursor-pointer border-none"
+                                >
+                                  ✓ Approve Bank KYC
+                                </button>
+                                <button
+                                  onClick={() => {
+                                    const reason = prompt("Enter KYC rejection reason:");
+                                    if (reason) handleReviewKyc(techId, 'rejected', reason);
+                                  }}
+                                  className="flex-1 bg-slate-100 hover:bg-slate-200 text-slate-700 border border-slate-300 font-extrabold py-2 rounded-xl text-[11px] uppercase cursor-pointer"
+                                >
+                                  ✕ Reject Bank KYC
+                                </button>
+                              </div>
+                            )}
+                          </div>
                         </div>
-                      </div>
-                    ))}
+                      );
+                    })}
                   </div>
                 )}
               </div>
@@ -1033,8 +1242,47 @@ const AdminDashboard = () => {
                     </button>
                   </div>
 
+                  {/* Startup Peak Surge & Dispatch Settings */}
+                  <div className="bg-slate-50 border border-slate-200 p-6 rounded-3xl space-y-4">
+                    <h3 className="text-xs font-black text-slate-900 uppercase tracking-wider flex items-center gap-2">
+                      <Zap size={16} className="text-amber-500" /> Peak Surge & Dispatch Mode
+                    </h3>
+                    
+                    <div className="space-y-3 pt-1">
+                      <div className="flex items-center justify-between bg-white p-3 rounded-xl border border-slate-200">
+                        <div>
+                          <span className="text-xs font-extrabold text-slate-900 block">Surge Pricing Mode</span>
+                          <span className="text-[10px] text-slate-500 font-medium">Apply multiplier on high demand</span>
+                        </div>
+                        <button
+                          onClick={() => setSurgePricing(!surgePricing)}
+                          className={`px-3 py-1 rounded-full text-[10px] font-black uppercase border cursor-pointer transition ${
+                            surgePricing ? 'bg-amber-100 text-amber-800 border-amber-300' : 'bg-slate-100 text-slate-500 border-slate-200'
+                          }`}
+                        >
+                          {surgePricing ? `ACTIVE (${surgeMultiplier}x)` : 'OFF'}
+                        </button>
+                      </div>
+
+                      <div className="flex items-center justify-between bg-white p-3 rounded-xl border border-slate-200">
+                        <div>
+                          <span className="text-xs font-extrabold text-slate-900 block">Auto Pro Matching</span>
+                          <span className="text-[10px] text-slate-500 font-medium">Instant geo-radius dispatch</span>
+                        </div>
+                        <button
+                          onClick={() => setAutoDispatch(!autoDispatch)}
+                          className={`px-3 py-1 rounded-full text-[10px] font-black uppercase border cursor-pointer transition ${
+                            autoDispatch ? 'bg-emerald-100 text-emerald-800 border-emerald-300' : 'bg-slate-100 text-slate-500 border-slate-200'
+                          }`}
+                        >
+                          {autoDispatch ? 'AUTO DISPATCH' : 'MANUAL'}
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+
                   {/* Financial summary card */}
-                  <div className="md:col-span-2 bg-gradient-to-br from-blue-600 to-indigo-700 p-6 rounded-3xl text-white flex flex-col justify-between shadow-md">
+                  <div className="bg-gradient-to-br from-blue-600 to-indigo-700 p-6 rounded-3xl text-white flex flex-col justify-between shadow-md">
                     <div>
                       <span className="text-[10px] bg-white/20 px-3 py-1 rounded-full font-black uppercase tracking-wider">
                         Total Platform Fee Earnings
@@ -1044,11 +1292,11 @@ const AdminDashboard = () => {
 
                     <div className="grid grid-cols-2 gap-4 border-t border-white/20 pt-4 mt-6 text-xs font-bold">
                       <div>
-                        <span className="text-blue-200 block text-[10px]">Gross Booking Volume (GMV)</span>
+                        <span className="text-blue-200 block text-[10px]">Gross GMV Volume</span>
                         <span className="text-base font-black">₹{revenueData.totalGMV.toLocaleString()}</span>
                       </div>
                       <div>
-                        <span className="text-blue-200 block text-[10px]">Net Technician Earnings Payout</span>
+                        <span className="text-blue-200 block text-[10px]">Net Technician Payout</span>
                         <span className="text-base font-black">₹{Math.round(revenueData.techNetPayouts).toLocaleString()}</span>
                       </div>
                     </div>
@@ -1118,6 +1366,98 @@ const AdminDashboard = () => {
                       )}
                     </tbody>
                   </table>
+                </div>
+              </div>
+            )}
+
+            {/* TAB 5.5: MARKETING & PROMO CODES */}
+            {activeTab === 'promos' && (
+              <div className="space-y-6 animate-in fade-in duration-300">
+                <div className="border-b border-slate-100 pb-4 flex justify-between items-center">
+                  <div>
+                    <h2 className="text-xl sm:text-2xl font-black text-slate-900 tracking-tight">Startup Launch Promos & Coupons</h2>
+                    <p className="text-xs text-slate-500 font-semibold mt-0.5">Manage user acquisition discount codes and target categories</p>
+                  </div>
+                  <button
+                    onClick={() => setShowAddPromoForm(!showAddPromoForm)}
+                    className="px-4 py-2 bg-blue-600 text-white font-extrabold rounded-xl text-xs uppercase cursor-pointer border-none flex items-center gap-1 shadow-xs"
+                  >
+                    <Plus size={14} /> {showAddPromoForm ? 'Cancel' : 'Launch New Code'}
+                  </button>
+                </div>
+
+                {showAddPromoForm && (
+                  <form onSubmit={handleAddPromo} className="bg-slate-50 p-5 rounded-2xl border border-slate-200 space-y-4">
+                    <h3 className="font-extrabold text-sm text-slate-900 flex items-center gap-2">
+                      <Tag size={16} className="text-blue-600" /> Create Startup Promo Code
+                    </h3>
+                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                      <input
+                        required
+                        type="text"
+                        placeholder="Coupon Code (e.g. FIXVO50)"
+                        value={newPromoForm.code}
+                        onChange={(e) => setNewPromoForm({ ...newPromoForm, code: e.target.value })}
+                        className="px-4 py-2.5 bg-white border border-slate-200 rounded-xl text-xs font-bold uppercase outline-none"
+                      />
+                      <input
+                        required
+                        type="text"
+                        placeholder="Discount Value (e.g. 20% OFF or ₹100 OFF)"
+                        value={newPromoForm.discount}
+                        onChange={(e) => setNewPromoForm({ ...newPromoForm, discount: e.target.value })}
+                        className="px-4 py-2.5 bg-white border border-slate-200 rounded-xl text-xs font-bold outline-none"
+                      />
+                      <select
+                        value={newPromoForm.category}
+                        onChange={(e) => setNewPromoForm({ ...newPromoForm, category: e.target.value })}
+                        className="px-4 py-2.5 bg-white border border-slate-200 rounded-xl text-xs font-bold outline-none"
+                      >
+                        <option value="All Services">All Services</option>
+                        <option value="AC & Appliance Repair">AC & Appliance Repair</option>
+                        <option value="Electrical & Plumbing">Electrical & Plumbing</option>
+                        <option value="Home Cleaning">Home Cleaning</option>
+                      </select>
+                    </div>
+                    <button type="submit" className="w-full bg-blue-600 text-white font-extrabold py-2.5 rounded-xl text-xs uppercase cursor-pointer border-none shadow-xs">
+                      Publish Coupon to App & Web
+                    </button>
+                  </form>
+                )}
+
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                  {promos.map(promo => (
+                    <div key={promo.id} className="bg-slate-50 border border-slate-200 p-5 rounded-2xl space-y-3 relative">
+                      <div className="flex justify-between items-start">
+                        <div>
+                          <span className="font-black text-slate-900 text-base font-mono block tracking-wider">{promo.code}</span>
+                          <span className="text-xs font-bold text-blue-600">{promo.discount}</span>
+                        </div>
+                        <button
+                          onClick={() => handleTogglePromo(promo.id)}
+                          className={`px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase border cursor-pointer ${
+                            promo.active ? 'bg-emerald-100 text-emerald-800 border-emerald-200' : 'bg-slate-200 text-slate-600 border-slate-300'
+                          }`}
+                        >
+                          {promo.active ? 'ACTIVE' : 'INACTIVE'}
+                        </button>
+                      </div>
+
+                      <div className="text-[11px] text-slate-500 font-medium space-y-1 bg-white p-3 rounded-xl border border-slate-200">
+                        <p><strong className="text-slate-700">Scope:</strong> {promo.category}</p>
+                        <p><strong className="text-slate-700">Redemptions:</strong> {promo.usageCount} Customer Uses</p>
+                      </div>
+
+                      <div className="flex justify-end pt-1">
+                        <button
+                          onClick={() => handleDeletePromo(promo.id)}
+                          className="text-rose-600 hover:text-rose-800 text-[11px] font-extrabold flex items-center gap-1 bg-transparent border-none cursor-pointer"
+                        >
+                          <Trash2 size={12} /> Remove
+                        </button>
+                      </div>
+                    </div>
+                  ))}
                 </div>
               </div>
             )}
@@ -1311,18 +1651,134 @@ const AdminDashboard = () => {
               </div>
             )}
 
+            {/* TAB: SUPPORT TICKETS */}
+            {activeTab === 'support' && (
+              <div className="space-y-6 animate-in fade-in duration-300">
+                <div className="border-b border-slate-100 pb-4 flex items-center justify-between">
+                  <div>
+                    <h2 className="text-xl sm:text-2xl font-black text-slate-900 tracking-tight">Support Tickets</h2>
+                    <p className="text-xs text-slate-500 font-semibold mt-0.5">User-submitted issues and help requests across all accounts</p>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <span className="px-3 py-1.5 bg-rose-100 text-rose-700 font-black text-xs rounded-full border border-rose-200">
+                      {supportTickets.filter(t => t.status === 'open').length} Open
+                    </span>
+                    <span className="px-3 py-1.5 bg-amber-100 text-amber-700 font-black text-xs rounded-full border border-amber-200">
+                      {supportTickets.filter(t => t.status === 'in_progress').length} In Progress
+                    </span>
+                    <span className="px-3 py-1.5 bg-emerald-100 text-emerald-700 font-black text-xs rounded-full border border-emerald-200">
+                      {supportTickets.filter(t => t.status === 'resolved').length} Resolved
+                    </span>
+                  </div>
+                </div>
+
+                {supportTickets.length === 0 ? (
+                  <div className="bg-white border border-slate-200 rounded-2xl p-12 text-center">
+                    <Headphones size={36} className="text-slate-300 mx-auto mb-3" />
+                    <p className="font-extrabold text-slate-500 text-sm">No support tickets yet</p>
+                    <p className="text-xs text-slate-400 font-medium mt-1">Tickets submitted by users will appear here</p>
+                  </div>
+                ) : (
+                  <div className="space-y-3">
+                    {supportTickets.map(ticket => {
+                      const statusColor = ticket.status === 'open' 
+                        ? 'bg-rose-100 text-rose-700 border-rose-200'
+                        : ticket.status === 'in_progress'
+                        ? 'bg-amber-100 text-amber-700 border-amber-200'
+                        : 'bg-emerald-100 text-emerald-700 border-emerald-200';
+
+                      const categoryColor = ticket.category === 'Payment'
+                        ? 'bg-blue-100 text-blue-700'
+                        : ticket.category === 'Technical'
+                        ? 'bg-purple-100 text-purple-700'
+                        : ticket.category === 'Technician'
+                        ? 'bg-orange-100 text-orange-700'
+                        : 'bg-slate-100 text-slate-700';
+
+                      return (
+                        <div key={ticket._id} className="bg-white border border-slate-200 rounded-2xl p-5 shadow-xs space-y-3">
+                          <div className="flex items-start justify-between gap-3">
+                            <div className="space-y-1 flex-1 min-w-0">
+                              <div className="flex items-center gap-2 flex-wrap">
+                                <span className={`px-2 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider ${categoryColor}`}>
+                                  {ticket.category || 'General'}
+                                </span>
+                                <span className={`px-2 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider border ${statusColor}`}>
+                                  {(ticket.status || 'open').replace('_', ' ')}
+                                </span>
+                              </div>
+                              <h4 className="font-black text-slate-900 text-sm truncate">{ticket.subject || 'No subject'}</h4>
+                              <p className="text-xs text-slate-600 font-medium leading-relaxed line-clamp-2">{ticket.message}</p>
+                            </div>
+                            <div className="text-right shrink-0 space-y-1">
+                              <p className="text-[10px] text-slate-400 font-semibold">
+                                {ticket.createdAt ? new Date(ticket.createdAt).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' }) : 'Recently'}
+                              </p>
+                              {ticket.userId && (
+                                <p className="text-[10px] font-extrabold text-slate-600">
+                                  User: {ticket.userId?.name || ticket.userId?.email || String(ticket.userId).slice(-6)}
+                                </p>
+                              )}
+                            </div>
+                          </div>
+
+                          <div className="pt-2 border-t border-slate-100 flex items-center gap-2 flex-wrap">
+                            {ticket.status !== 'in_progress' && (
+                              <button
+                                onClick={async () => {
+                                  try {
+                                    await api.put(`/support/admin/tickets/${ticket._id}`, { status: 'in_progress' });
+                                    setSupportTickets(prev => prev.map(t => t._id === ticket._id ? { ...t, status: 'in_progress' } : t));
+                                  } catch (e) {
+                                    setSupportTickets(prev => prev.map(t => t._id === ticket._id ? { ...t, status: 'in_progress' } : t));
+                                  }
+                                }}
+                                className="px-3 py-1.5 bg-amber-50 hover:bg-amber-100 border border-amber-200 text-amber-700 font-extrabold text-xs rounded-xl cursor-pointer transition"
+                              >
+                                Mark In Progress
+                              </button>
+                            )}
+                            {ticket.status !== 'resolved' && (
+                              <button
+                                onClick={async () => {
+                                  try {
+                                    await api.put(`/support/admin/tickets/${ticket._id}`, { status: 'resolved' });
+                                    setSupportTickets(prev => prev.map(t => t._id === ticket._id ? { ...t, status: 'resolved' } : t));
+                                  } catch (e) {
+                                    setSupportTickets(prev => prev.map(t => t._id === ticket._id ? { ...t, status: 'resolved' } : t));
+                                  }
+                                }}
+                                className="px-3 py-1.5 bg-emerald-50 hover:bg-emerald-100 border border-emerald-200 text-emerald-700 font-extrabold text-xs rounded-xl cursor-pointer transition"
+                              >
+                                <Check size={12} className="inline mr-1" />Mark Resolved
+                              </button>
+                            )}
+                            {ticket.status === 'resolved' && (
+                              <span className="flex items-center gap-1 text-[11px] font-extrabold text-emerald-600">
+                                <CheckCircle size={13} /> Ticket Resolved
+                              </span>
+                            )}
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                )}
+              </div>
+            )}
+
           </div>
         </div>
       </div>
 
       {/* Urban Company Mobile Bottom App Navigation Bar */}
-      <nav className="md:hidden fixed bottom-0 left-0 right-0 bg-white border-t border-slate-200 py-2 px-4 flex justify-around items-center z-50 shadow-lg">
+      <nav className="md:hidden fixed bottom-0 left-0 right-0 bg-white border-t border-slate-200 py-2 px-3 flex justify-around items-center z-50 shadow-lg">
         {[
           { id: 'overview', label: 'Overview', icon: LayoutDashboard },
           { id: 'bookings', label: 'Dispatch', icon: Briefcase },
           { id: 'verifications', label: 'Verify', icon: UserCheck },
-          { id: 'revenue', label: 'Revenue', icon: DollarSign },
-          { id: 'users', label: 'Users', icon: Users }
+          { id: 'promos', label: 'Promos', icon: Tag },
+          { id: 'revenue', label: 'Revenue', icon: DollarSign }
         ].map(nav => {
           const IconComp = nav.icon;
           const isActive = activeTab === nav.id;
@@ -1339,6 +1795,18 @@ const AdminDashboard = () => {
             </button>
           );
         })}
+
+        <button
+          onClick={() => {
+            if (window.confirm("Are you sure you want to log out of Admin Console?")) {
+              logout();
+            }
+          }}
+          className="flex flex-col items-center justify-center gap-1 text-rose-500 hover:text-rose-700 transition-all border-none outline-none cursor-pointer bg-transparent"
+        >
+          <LogOut size={18} />
+          <span className="text-[10px] tracking-tight font-bold">Logout</span>
+        </button>
       </nav>
     </div>
   );

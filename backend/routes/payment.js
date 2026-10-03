@@ -1,9 +1,11 @@
 const express = require("express");
 const router = express.Router();
 const razorpay = require("../config/razorpay");
+const { handleWebhook } = require("../controllers/razorpayController");
 const crypto = require("crypto");
 const Booking = require("../models/Booking");
-const { protect } = require("../middleware/auth");
+const { protect, authorize } = require("../middleware/auth");
+const { confirmCashPayment } = require("../controllers/cashPaymentController");
 
 // Create Razorpay Order
 router.post("/create-order", async (req, res) => {
@@ -46,8 +48,8 @@ router.post("/create-order", async (req, res) => {
       keyId: keyId
     });
   } catch (err) {
-    console.log(err); // 👈 Adding this so you can see the exact Razorpay error in your terminal!
-    res.status(400).json({ error: "Error creating order", details: err });
+    console.error('[payment] Create order error:', err.message);
+    res.status(400).json({ error: "Error creating order", details: err.message });
   }
 });
 
@@ -72,11 +74,23 @@ router.post("/verify", async (req, res) => {
 
   const body = razorpay_order_id + "|" + razorpay_payment_id;
   const expectedSignature = crypto
-    .createHmac("sha256", process.env.RAZORPAY_KEY_SECRET || "QxxpseKMRQaSOa7qQoyeyr69")
+    .createHmac("sha256", process.env.RAZORPAY_KEY_SECRET || "")
     .update(body.toString())
     .digest("hex");
 
-  if (expectedSignature === razorpay_signature) {
+  // SECURITY: use timing-safe comparison to prevent timing-oracle attacks
+  let signaturesMatch = false;
+  try {
+    signaturesMatch = crypto.timingSafeEqual(
+      Buffer.from(expectedSignature, 'hex'),
+      Buffer.from(razorpay_signature || '', 'hex')
+    );
+  } catch {
+    // Buffer.from will throw if hex string is malformed — treat as mismatch
+    signaturesMatch = false;
+  }
+
+  if (signaturesMatch) {
     // Payment is verified
     try {
       if (bookingId) {
@@ -134,7 +148,11 @@ router.post("/verify-premium", protect, async (req, res) => {
     .update(body.toString())
     .digest("hex");
 
-  if (expectedSignature === razorpay_signature) {
+  const expectedBuf = Buffer.from(expectedSignature, "utf8");
+  const receivedBuf = Buffer.from(razorpay_signature || "", "utf8");
+  const isValidSignature = expectedBuf.length === receivedBuf.length && crypto.timingSafeEqual(expectedBuf, receivedBuf);
+
+  if (isValidSignature) {
     try {
       const User = require("../models/User");
       const user = await User.findById(req.user.id);
@@ -190,5 +208,9 @@ router.post("/verify-premium", protect, async (req, res) => {
     res.status(400).json({ success: false, message: "Invalid signature" });
   }
 });
+
+// Razorpay Webhook endpoint
+router.post('/razorpay/webhook', handleWebhook);
+router.post('/cash/confirm', protect, authorize('technician'), confirmCashPayment);
 
 module.exports = router;

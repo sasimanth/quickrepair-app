@@ -1,5 +1,6 @@
 const mongoose = require('mongoose');
 const dns = require('dns');
+const Sentry = require('@sentry/node');
 
 // Fix for Windows/ISP DNS bug: Force Google Public DNS for SRV lookups on Windows dev
 if (process.platform === 'win32') {
@@ -49,12 +50,37 @@ const connectDB = async () => {
     } catch (syncErr) {
       console.warn('⚠️ Index sync notice:', syncErr.message);
     }
-    
+
+    // ─── MongoDB connection event handlers ─────────────────────────────────
+    // Register event handlers once to avoid duplicate handler registration on re-connects.
+    if (mongoose.connection.listenerCount('error') === 0) {
+      mongoose.connection.on('error', (err) => {
+        console.error(`❌ MongoDB connection error: ${err.message}`);
+        Sentry.captureException(err, {
+          tags: { subsystem: 'mongodb', event: 'connection_error' }
+        });
+      });
+
+      mongoose.connection.on('disconnected', () => {
+        console.warn('⚠️ MongoDB disconnected');
+        Sentry.captureMessage('MongoDB disconnected', {
+          level: 'warning',
+          tags: { subsystem: 'mongodb', event: 'disconnected' }
+        });
+      });
+
+      mongoose.connection.on('reconnected', () => {
+        console.log('✅ MongoDB reconnected');
+      });
+    }
+
   } catch (error) {
     console.error(`❌ MongoDB Atlas Connection Error: ${error.message}`);
+    Sentry.captureException(error, {
+      tags: { subsystem: 'mongodb', event: 'initial_connection_failed' }
+    });
     // Do not terminate process so cloud web servers (Render/Railway) bind to PORT successfully
   }
 };
 
 module.exports = connectDB;
-// trigger nodemon restart

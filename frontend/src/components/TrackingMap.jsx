@@ -60,13 +60,38 @@ const createTechnicianIcon = () => {
   });
 };
 
-export default function TrackingMap({ customerLat, customerLng, techLat, techLng }) {
+// Haversine distance helper (in kilometers)
+function calculateDistance(lat1, lon1, lat2, lon2) {
+  const R = 6371; // Earth radius in km
+  const dLat = (lat2 - lat1) * (Math.PI / 180);
+  const dLon = (lon2 - lon1) * (Math.PI / 180);
+  const a =
+    Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+    Math.cos(lat1 * (Math.PI / 180)) *
+      Math.cos(lat2 * (Math.PI / 180)) *
+      Math.sin(dLon / 2) *
+      Math.sin(dLon / 2);
+  const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+  return R * c;
+}
+
+export default function TrackingMap({ customerLat, customerLng, techLat, techLng, lastUpdated, techName = 'Technician' }) {
   const customerCoords = customerLat && customerLng ? [parseFloat(customerLat), parseFloat(customerLng)] : null;
   const techCoords = techLat && techLng ? [parseFloat(techLat), parseFloat(techLng)] : null;
 
+  let distanceKm = null;
+  let etaMins = null;
+  if (customerCoords && techCoords) {
+    distanceKm = calculateDistance(customerCoords[0], customerCoords[1], techCoords[0], techCoords[1]);
+    // Assuming 25 km/h average urban speed
+    etaMins = Math.max(2, Math.round((distanceKm / 25) * 60));
+  }
+
+  const isStale = lastUpdated ? (Date.now() - new Date(lastUpdated).getTime() > 45000) : false;
+
   if (!customerCoords) {
     return (
-      <div className="w-full h-64 rounded-2xl bg-slate-100 flex items-center justify-center border border-slate-205">
+      <div className="w-full h-64 rounded-2xl bg-slate-100 flex items-center justify-center border border-slate-200">
         <p className="text-slate-500 text-xs font-semibold">Location coordinates unavailable</p>
       </div>
     );
@@ -76,6 +101,38 @@ export default function TrackingMap({ customerLat, customerLng, techLat, techLng
 
   return (
     <div className="w-full h-64 sm:h-80 rounded-3xl overflow-hidden border border-slate-200 shadow-inner relative z-0">
+      
+      {/* Live ETA & Distance Overlay Banner */}
+      {techCoords && (
+        <div className="absolute top-3 left-3 right-3 z-[400] flex flex-col sm:flex-row items-center justify-between gap-2 p-3 bg-white/95 backdrop-blur-md rounded-2xl shadow-lg border border-slate-100 text-xs font-bold text-slate-800">
+          <div className="flex items-center gap-2">
+            <span className="flex h-3 w-3 relative">
+              <span className={`animate-ping absolute inline-flex h-full w-full rounded-full ${isStale ? 'bg-amber-400 opacity-75' : 'bg-emerald-400 opacity-75'}`}></span>
+              <span className={`relative inline-flex rounded-full h-3 w-3 ${isStale ? 'bg-amber-500' : 'bg-emerald-500'}`}></span>
+            </span>
+            <span>{techName} is en route</span>
+          </div>
+
+          <div className="flex items-center gap-3">
+            {distanceKm !== null && (
+              <span className="px-2.5 py-1 bg-indigo-50 text-indigo-700 rounded-xl border border-indigo-100 font-extrabold">
+                📍 {distanceKm < 1 ? `${Math.round(distanceKm * 1000)} m` : `${distanceKm.toFixed(1)} km`} away
+              </span>
+            )}
+            {etaMins !== null && (
+              <span className="px-2.5 py-1 bg-emerald-50 text-emerald-700 rounded-xl border border-emerald-100 font-extrabold">
+                ⏱️ ~{etaMins} mins
+              </span>
+            )}
+            {isStale && (
+              <span className="px-2.5 py-1 bg-amber-50 text-amber-700 rounded-xl border border-amber-100 font-bold text-[11px]">
+                ⚠️ Connection Paused
+              </span>
+            )}
+          </div>
+        </div>
+      )}
+
       <MapContainer
         center={center}
         zoom={14}

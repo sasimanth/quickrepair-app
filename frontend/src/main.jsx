@@ -3,6 +3,11 @@ import { createRoot } from 'react-dom/client'
 import './index.css'
 import App from './App.jsx'
 import { AlertTriangle, RefreshCw, Home } from 'lucide-react';
+import { initSentry } from './utils/sentryFrontend.js';
+
+// Initialize Sentry before React mounts — captures all errors from boot
+initSentry();
+
 
 class ErrorBoundary extends Component {
   constructor(props) {
@@ -14,6 +19,12 @@ class ErrorBoundary extends Component {
   }
   componentDidCatch(error, errorInfo) {
     console.error("ErrorBoundary caught an error:", error, errorInfo);
+    // Report to Sentry (no-ops safely if Sentry is not initialized)
+    try {
+      import('./utils/sentryFrontend.js').then(({ Sentry }) => {
+        Sentry.captureException(error, { extra: { componentStack: errorInfo?.componentStack?.substring(0, 500) } });
+      });
+    } catch { /* no-op */ }
   }
   render() {
     if (this.state.hasError) {

@@ -19,9 +19,20 @@ const OpenAppModal = ({ isOpen, onClose }) => {
       setPhase('loading');
       setMobileNumber('');
       setIsSubmitting(false);
+
+      // Attempt native deep linking if on mobile/Capacitor environment
+      const isMobile = /Android|iPhone|iPad|iPod/i.test(navigator.userAgent) || window.Capacitor;
+      if (isMobile) {
+        try {
+          window.location.href = 'intent://open#Intent;scheme=com.fixvo.app;package=com.fixvo.app;end';
+        } catch (e) {
+          console.warn("Native app launcher notice:", e);
+        }
+      }
+
       const timer = setTimeout(() => {
         setPhase('login');
-      }, 1000);
+      }, 800);
       return () => clearTimeout(timer);
     }
   }, [isOpen]);
@@ -30,21 +41,11 @@ const OpenAppModal = ({ isOpen, onClose }) => {
 
   const handleSkip = async () => {
     onClose();
-    if (!localStorage.getItem('token')) {
-      try {
-        const { data } = await api.post('/auth/phone-login', { phone: '9876543210', name: 'Guest User' });
-        if (data.token) {
-          localStorage.setItem('token', data.token);
-          localStorage.setItem('user', JSON.stringify(data));
-        }
-      } catch (err) {
-        if (!localStorage.getItem('user')) {
-          localStorage.setItem('user', JSON.stringify({ name: 'Guest User', phone: '+91 98765 43210', role: 'user' }));
-        }
-      }
+    if (localStorage.getItem('token')) {
+      navigate('/dashboard');
+    } else {
+      navigate('/login');
     }
-    navigate('/dashboard');
-    window.location.href = '/dashboard';
   };
 
   const handleMobileSubmit = async (e) => {
