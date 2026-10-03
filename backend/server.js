@@ -41,8 +41,16 @@ app.use(Sentry.Handlers.requestHandler());
 // ─── CORS configuration ───────────────────────────────────────────────────────
 // In production: restrict to FRONTEND_URL only.
 // In dev/test: allow all origins for local tooling.
+const productionOrigins = [
+  process.env.FRONTEND_URL,
+  'http://localhost:5173',
+  'http://localhost',
+  'https://localhost',
+  'capacitor://localhost'
+].filter(Boolean);
+
 const allowedOrigins = process.env.NODE_ENV === 'production'
-  ? [process.env.FRONTEND_URL].filter(Boolean)
+  ? productionOrigins
   : ['*'];
 
 const corsOptions = {

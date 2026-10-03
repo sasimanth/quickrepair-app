@@ -660,8 +660,10 @@ const googleAuth = async (req, res) => {
           console.error('Google tokeninfo API error:', apiErr.message);
         }
       }
-    } else if (accessToken) {
-      // Verify via Google UserInfo API using Access Token
+    }
+
+    if (!googleUser && accessToken) {
+      // Fall back to Google UserInfo when an ID token is absent or rejected.
       try {
         const response = await fetch('https://www.googleapis.com/oauth2/v3/userinfo', {
           headers: { Authorization: `Bearer ${accessToken}` }

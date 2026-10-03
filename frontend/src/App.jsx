@@ -157,15 +157,16 @@ const AppContent = () => {
     }
   }, [isNative]);
 
-  // 2. Native Android Gate Redirection
+  // 2. Native app auth gate
   useEffect(() => {
     if (!isNative || loading) return;
 
+    const publicAuthPaths = ['/login', '/signup', '/verify-account'];
     if (!user) {
-      if (location.pathname !== '/login') {
+      if (!publicAuthPaths.includes(location.pathname)) {
         navigate('/login', { replace: true });
       }
-    } else {
+    } else if (location.pathname !== '/verify-account') {
       const role = user.role || 'user';
       const targetDashboard = role === 'admin' 
         ? '/admin-dashboard' 
