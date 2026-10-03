@@ -12,7 +12,7 @@ import { useAuth } from '../contexts/AuthContext';
 
 const Login = () => {
   const { setUser } = useAuth();
-  const [loginMethod, setLoginMethod] = useState('phone'); // 'phone' or 'email'
+  const [loginMethod, setLoginMethod] = useState('email'); // 'phone' or 'email'
   
   // Phone Auth state
   const [phone, setPhone] = useState('');
@@ -45,6 +45,11 @@ const Login = () => {
 
   const handleAuthSuccess = (data) => {
     const userObj = data.user || data;
+    const role = data.role || userObj.role;
+    if (!['user', 'technician', 'admin'].includes(role)) {
+      setError('Unable to determine your account type. Please contact support.');
+      return;
+    }
     if (userObj.isEmailVerified === undefined) userObj.isEmailVerified = true;
     if (userObj.isPhoneVerified === undefined) userObj.isPhoneVerified = true;
     
@@ -56,7 +61,6 @@ const Login = () => {
 
     const queryParams = new URLSearchParams(document.location.search);
     const redirectPath = queryParams.get('redirect');
-    const role = data.role || userObj.role || 'user';
     if (redirectPath && role === 'user') {
       navigate(redirectPath);
     } else {
@@ -256,20 +260,7 @@ const Login = () => {
       handleAuthSuccess(data);
     } catch (err) {
       if (err.message === 'Network Error' || !err.response || err.code === 'ECONNABORTED' || err.message?.includes('timeout')) {
-        let fallbackRole = 'user';
-        if (formData.email.includes('admin')) fallbackRole = 'admin';
-        if (formData.email.includes('tech')) fallbackRole = 'technician';
-        
-        const fallbackUserObj = { 
-          email: formData.email, 
-          name: formData.email.split('@')[0] || 'User', 
-          role: fallbackRole,
-          phone: '+91 95159 80170',
-          isEmailVerified: true,
-          isPhoneVerified: true
-        };
-
-        handleAuthSuccess({ user: fallbackUserObj, token: 'demo-token-' + Date.now(), role: fallbackRole });
+        setError('Unable to reach Fixvo authentication. Please check your connection and try again.');
         return;
       }
 
