@@ -2,12 +2,13 @@ import React, { useState } from 'react';
 import { X, Smartphone, Tv, Wrench, ShieldCheck, Plus, CheckCircle2, ChevronRight, Cpu, Laptop, HardDrive } from 'lucide-react';
 
 const NativeDevicesModal = ({ onClose, onRequestService }) => {
-  const [devices, setDevices] = useState([
-    { id: 1, name: 'Living Room Inverter AC', type: 'Air Conditioner', brand: 'Daikin 1.5 Ton', serial: 'DK-2025-9981', warranty: 'Active (Fixvo Protect)', lastService: '12 Aug 2026', status: 'Optimal' },
-    { id: 2, name: 'Double Door Refrigerator', type: 'Refrigerator', brand: 'Samsung 340L', serial: 'SS-340-RF77', warranty: 'Active (Manufacturer)', lastService: '04 Jun 2026', status: 'Optimal' },
-    { id: 3, name: 'Front Load Washing Machine', type: 'Washing Machine', brand: 'Bosch 8Kg', serial: 'BS-800-WM12', warranty: 'Expired', lastService: '15 Jan 2026', status: 'Needs Service' },
-    { id: 4, name: 'RO Water Purifier', type: 'Water Purifier', brand: 'Kent Grand Plus', serial: 'KT-RO-4421', warranty: 'Active (Fixvo Protect)', lastService: '01 Jul 2026', status: 'Filter Change Due' }
-  ]);
+  const [devices, setDevices] = useState(() => {
+    try {
+      const saved = localStorage.getItem('fixvo_user_native_devices');
+      if (saved) return JSON.parse(saved);
+    } catch (e) {}
+    return [];
+  });
 
   const [showAddForm, setShowAddForm] = useState(false);
   const [newDevice, setNewDevice] = useState({ name: '', type: 'Air Conditioner', brand: '', serial: '' });
@@ -27,7 +28,11 @@ const NativeDevicesModal = ({ onClose, onRequestService }) => {
       status: 'Optimal'
     };
 
-    setDevices([device, ...devices]);
+    const updated = [device, ...devices];
+    setDevices(updated);
+    try {
+      localStorage.setItem('fixvo_user_native_devices', JSON.stringify(updated));
+    } catch (e) {}
     setNewDevice({ name: '', type: 'Air Conditioner', brand: '', serial: '' });
     setShowAddForm(false);
   };

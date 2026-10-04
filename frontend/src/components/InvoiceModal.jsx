@@ -366,7 +366,7 @@ const InvoiceModal = ({ booking, onClose }) => {
               <div className="space-y-1">
                 <span className="text-[9px] font-black uppercase tracking-wider text-slate-400 block">Payment Method</span>
                 <p className="text-xs font-extrabold text-slate-900 uppercase">
-                  {inv.paymentMethod === 'cash' ? '💵 Cash on Delivery' : `💳 ${(inv.paymentMethod || 'Online').toUpperCase()}`}
+                  {inv.paymentMethod === 'cash' ? '💵 Cash (Collected by Technician)' : `💳 ${(inv.paymentMethod || 'Online').toUpperCase()}`}
                 </p>
                 <p className="text-[10px] text-slate-500 font-mono break-all">
                   Txn: {inv.transactionId || 'N/A'}
@@ -387,14 +387,19 @@ const InvoiceModal = ({ booking, onClose }) => {
               </div>
             )}
 
-            {/* 30-Day Warranty */}
+            {/* 30-Day Warranty with Exact Expiry Date */}
             <div className="p-3.5 bg-blue-50/60 border border-blue-100 rounded-2xl flex items-center gap-3">
               <div className="w-8 h-8 rounded-xl bg-blue-100 text-blue-600 flex items-center justify-center shrink-0">
                 <ShieldCheck size={18} />
               </div>
               <div>
-                <h5 className="text-xs font-black text-blue-950">30-Day Fixvo Service Warranty</h5>
-                <p className="text-[10px] text-blue-800 leading-tight mt-0.5">
+                <div className="flex flex-wrap items-center gap-2">
+                  <h5 className="text-xs font-black text-blue-950">30-Day Fixvo Service Warranty</h5>
+                  <span className="px-2 py-0.5 bg-blue-600 text-white rounded font-mono text-[10px] font-bold">
+                    Valid Until: {new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' })}
+                  </span>
+                </div>
+                <p className="text-[10px] text-blue-800 leading-tight mt-1">
                   This job is covered by Fixvo's 30-day rework guarantee. If any issue arises, raise a free warranty claim directly from your dashboard.
                 </p>
               </div>
@@ -403,7 +408,7 @@ const InvoiceModal = ({ booking, onClose }) => {
             {/* Footer */}
             <div className="pt-4 border-t border-slate-100 text-center text-[10px] text-slate-400 space-y-1">
               <p>{biz.legalName || 'Fixvo Technologies'} • {biz.address || 'Madanapalle & Region, Andhra Pradesh, India'}</p>
-              <p>Support: <strong>{biz.email || 'fixvosupport@gmail.com'}</strong> • Phone: <strong>{biz.phone || '+91 95159 80170'}</strong></p>
+              <p>Support: <strong>fixvosupport@gmail.com</strong> • Phone: <strong>+91 95159 80170</strong></p>
             </div>
 
           </div>

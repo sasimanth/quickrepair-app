@@ -115,8 +115,12 @@ const SettingsModal = ({ role, currentProfile, onClose, onSuccess }) => {
             
             {/* Avatar Section */}
             <div className="flex flex-col sm:flex-row items-center gap-6 bg-slate-50 p-5 rounded-2xl border border-slate-200">
-               <div className="w-20 h-20 bg-blue-50 border border-blue-200 rounded-2xl flex items-center justify-center text-4xl shadow-inner relative group cursor-pointer shrink-0">
-                 {formData.avatar}
+               <div className="w-20 h-20 bg-blue-50 border border-blue-200 rounded-2xl flex items-center justify-center text-3xl shadow-inner relative group cursor-pointer shrink-0 overflow-hidden">
+                 {formData.avatar && (formData.avatar.startsWith('http') || formData.avatar.startsWith('data:')) ? (
+                   <img src={formData.avatar} alt="Avatar" className="w-full h-full object-cover rounded-2xl" />
+                 ) : (
+                   <span>{typeof formData.avatar === 'string' && formData.avatar.length <= 4 ? formData.avatar : '👤'}</span>
+                 )}
                  <div className="absolute inset-0 bg-slate-900/40 opacity-0 group-hover:opacity-100 transition-opacity rounded-2xl flex items-center justify-center backdrop-blur-xs">
                     <Camera className="text-white w-5 h-5" />
                  </div>

@@ -1094,94 +1094,120 @@ const TechnicianDashboard = () => {
                                     </>
                                   )}
 
-                                  {job.status === 'accepted' && (
-                                    <button
-                                      disabled={isUpdating}
-                                      onClick={() => updateJobStatus(jobId, 'on_the_way')}
-                                      className="px-5 py-2.5 bg-orange-600 hover:bg-orange-700 text-white font-extrabold rounded-xl text-xs uppercase tracking-wider cursor-pointer border-none shadow-xs flex items-center gap-1.5"
-                                    >
-                                      <Truck size={14} /> Start Route
-                                    </button>
-                                  )}
-
-                                  {job.status === 'on_the_way' && (
-                                    <button
-                                      disabled={isUpdating}
-                                      onClick={() => updateJobStatus(jobId, 'arrived')}
-                                      className="px-5 py-2.5 bg-blue-600 hover:bg-blue-700 text-white font-extrabold rounded-xl text-xs uppercase tracking-wider cursor-pointer border-none shadow-xs flex items-center gap-1.5"
-                                    >
-                                      <MapPin size={14} /> Confirm Arrival
-                                    </button>
-                                  )}
-
-                                  {job.status === 'arrived' && (
-                                    <button
-                                      disabled={isUpdating}
-                                      onClick={() => updateJobStatus(jobId, 'inspection_started')}
-                                      className="px-5 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white font-extrabold rounded-xl text-xs uppercase tracking-wider cursor-pointer border-none shadow-xs flex items-center gap-1.5"
-                                    >
-                                      <Wrench size={14} /> Start Inspection
-                                    </button>
-                                  )}
-
-                                  {job.status === 'inspection_started' && (
-                                    <button
-                                      onClick={() => handleOpenQuoteModal(job)}
-                                      className="px-5 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white font-extrabold rounded-xl text-xs uppercase tracking-wider cursor-pointer border-none shadow-xs flex items-center gap-1.5"
-                                    >
-                                      <Wrench size={14} /> Submit Final Quote
-                                    </button>
-                                  )}
-
-                                  {job.status === 'quote_approved' && (
-                                    <button
-                                      disabled={isUpdating}
-                                      onClick={() => updateJobStatus(jobId, 'in_progress')}
-                                      className="px-5 py-2.5 bg-purple-600 hover:bg-purple-700 text-white font-extrabold rounded-xl text-xs uppercase tracking-wider cursor-pointer border-none shadow-xs flex items-center gap-1.5"
-                                    >
-                                      <Wrench size={14} /> Start Repair Work
-                                    </button>
-                                  )}
-
-                                  {job.status === 'in_progress' && (
-                                    <button
-                                      disabled={isUpdating}
-                                      onClick={() => updateJobStatus(jobId, 'completed')}
-                                      className="px-5 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white font-extrabold rounded-xl text-xs uppercase tracking-wider cursor-pointer border-none shadow-xs flex items-center gap-1.5"
-                                    >
-                                      <CheckCircle size={14} /> Complete Job
-                                    </button>
-                                  )}
-
-                                  {['accepted', 'quote_approved', 'on_the_way', 'arrived', 'inspection_started', 'quote_pending', 'in_progress'].includes(job.status) && (
-                                    <div className="flex flex-wrap items-center gap-2">
-                                      <a
-                                        href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(job.detailedAddress || job.location || 'Madanapalle')}`}
-                                        target="_blank"
-                                        rel="noopener noreferrer"
-                                        className="px-4 py-2.5 bg-blue-50 hover:bg-blue-100 text-blue-700 border border-blue-200 font-extrabold rounded-xl text-xs uppercase tracking-wider cursor-pointer no-underline shadow-xs flex items-center gap-1.5"
-                                      >
-                                        <MapPin size={14} /> Directions
-                                      </a>
-                                      {(job.customerPhone || job.phone) && (
-                                        <a
-                                          href={`tel:${formatPhoneLink(job.customerPhone || job.phone)}`}
-                                          className="px-4 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white font-extrabold rounded-xl text-xs uppercase tracking-wider cursor-pointer no-underline shadow-xs flex items-center gap-1.5"
+                                  {/* Re-laid out active job action buttons matching screenshot */}
+                                  <div className="flex flex-col gap-2.5 w-full mt-2">
+                                    {/* Primary Workflow Stage Button (Full Width) */}
+                                    {['pending', 'assigned'].includes(job.status) && (
+                                      <div className="grid grid-cols-2 gap-2">
+                                        <button
+                                          disabled={isUpdating}
+                                          onClick={() => updateJobStatus(jobId, 'accepted')}
+                                          className="py-3 bg-blue-600 hover:bg-blue-700 text-white font-extrabold rounded-2xl text-xs uppercase tracking-wider cursor-pointer border-none shadow-md flex items-center justify-center gap-1.5"
                                         >
-                                          <PhoneCall size={14} /> Call
+                                          <CheckCircle size={15} /> Accept Request
+                                        </button>
+                                        <button
+                                          disabled={isUpdating}
+                                          onClick={() => setDeclineJobId(jobId)}
+                                          className="py-3 bg-rose-50 text-rose-700 hover:bg-rose-100 border border-rose-200 font-extrabold rounded-2xl text-xs uppercase tracking-wider cursor-pointer flex items-center justify-center"
+                                        >
+                                          Decline
+                                        </button>
+                                      </div>
+                                    )}
+
+                                    {job.status === 'accepted' && (
+                                      <button
+                                        disabled={isUpdating}
+                                        onClick={() => updateJobStatus(jobId, 'on_the_way')}
+                                        className="w-full py-3.5 bg-[#E65100] hover:bg-orange-700 text-white font-black rounded-2xl text-xs sm:text-sm uppercase tracking-wider cursor-pointer border-none shadow-md flex items-center justify-center gap-2"
+                                      >
+                                        <Truck size={18} /> START ROUTE
+                                      </button>
+                                    )}
+
+                                    {job.status === 'on_the_way' && (
+                                      <button
+                                        disabled={isUpdating}
+                                        onClick={() => updateJobStatus(jobId, 'arrived')}
+                                        className="w-full py-3.5 bg-blue-600 hover:bg-blue-700 text-white font-black rounded-2xl text-xs sm:text-sm uppercase tracking-wider cursor-pointer border-none shadow-md flex items-center justify-center gap-2"
+                                      >
+                                        <MapPin size={18} /> CONFIRM ARRIVAL
+                                      </button>
+                                    )}
+
+                                    {job.status === 'arrived' && (
+                                      <button
+                                        disabled={isUpdating}
+                                        onClick={() => updateJobStatus(jobId, 'inspection_started')}
+                                        className="w-full py-3.5 bg-indigo-600 hover:bg-indigo-700 text-white font-black rounded-2xl text-xs sm:text-sm uppercase tracking-wider cursor-pointer border-none shadow-md flex items-center justify-center gap-2"
+                                      >
+                                        <Wrench size={18} /> START INSPECTION
+                                      </button>
+                                    )}
+
+                                    {job.status === 'inspection_started' && (
+                                      <button
+                                        onClick={() => handleOpenQuoteModal(job)}
+                                        className="w-full py-3.5 bg-indigo-600 hover:bg-indigo-700 text-white font-black rounded-2xl text-xs sm:text-sm uppercase tracking-wider cursor-pointer border-none shadow-md flex items-center justify-center gap-2"
+                                      >
+                                        <Wrench size={18} /> SUBMIT FINAL QUOTE
+                                      </button>
+                                    )}
+
+                                    {job.status === 'quote_approved' && (
+                                      <button
+                                        disabled={isUpdating}
+                                        onClick={() => updateJobStatus(jobId, 'in_progress')}
+                                        className="w-full py-3.5 bg-purple-600 hover:bg-purple-700 text-white font-black rounded-2xl text-xs sm:text-sm uppercase tracking-wider cursor-pointer border-none shadow-md flex items-center justify-center gap-2"
+                                      >
+                                        <Wrench size={18} /> START REPAIR WORK
+                                      </button>
+                                    )}
+
+                                    {job.status === 'in_progress' && (
+                                      <button
+                                        disabled={isUpdating}
+                                        onClick={() => updateJobStatus(jobId, 'completed')}
+                                        className="w-full py-3.5 bg-emerald-600 hover:bg-emerald-700 text-white font-black rounded-2xl text-xs sm:text-sm uppercase tracking-wider cursor-pointer border-none shadow-md flex items-center justify-center gap-2"
+                                      >
+                                        <CheckCircle size={18} /> COMPLETE JOB
+                                      </button>
+                                    )}
+
+                                    {/* Middle Row: 50/50 Split for DIRECTIONS & CALL */}
+                                    {['accepted', 'quote_approved', 'on_the_way', 'arrived', 'inspection_started', 'quote_pending', 'in_progress'].includes(job.status) && (
+                                      <div className="grid grid-cols-2 gap-2.5 w-full">
+                                        <a
+                                          href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(job.detailedAddress || job.location || 'Madanapalle')}`}
+                                          target="_blank"
+                                          rel="noopener noreferrer"
+                                          className="py-3 bg-blue-50 hover:bg-blue-100 text-blue-700 border border-blue-200 font-extrabold rounded-2xl text-xs uppercase tracking-wider flex items-center justify-center gap-1.5 no-underline shadow-xs"
+                                        >
+                                          <MapPin size={15} /> DIRECTIONS
                                         </a>
-                                      )}
+                                        <a
+                                          href={`tel:${formatPhoneLink(job.customerPhone || job.phone || '9515980170')}`}
+                                          className="py-3 bg-[#00897B] hover:bg-emerald-700 text-white font-extrabold rounded-2xl text-xs uppercase tracking-wider flex items-center justify-center gap-1.5 no-underline shadow-md shadow-emerald-600/10"
+                                        >
+                                          <PhoneCall size={15} /> CALL
+                                        </a>
+                                      </div>
+                                    )}
+
+                                    {/* Bottom Row: Full Width CHAT */}
+                                    {['accepted', 'quote_approved', 'on_the_way', 'arrived', 'inspection_started', 'quote_pending', 'in_progress', 'completed'].includes(job.status) && (
                                       <button
                                         onClick={() => setChatBookingId(jobId)}
-                                        className="px-4 py-2.5 bg-slate-800 hover:bg-slate-900 text-white font-extrabold rounded-xl text-xs uppercase tracking-wider cursor-pointer border-none shadow-xs flex items-center gap-1.5 relative"
+                                        className="w-full py-3.5 bg-[#0F172A] hover:bg-black text-white font-black rounded-2xl text-xs uppercase tracking-wider flex items-center justify-center gap-2 border-none shadow-md relative cursor-pointer"
                                       >
-                                        <MessageSquare size={14} /> Chat
+                                        <MessageSquare size={16} /> CHAT
                                         {job.unreadCount > 0 && (
-                                          <span className="absolute -top-1 -right-1 bg-rose-600 text-white rounded-full text-[9px] font-black w-4 h-4 flex items-center justify-center border border-white animate-pulse">{job.unreadCount}</span>
+                                          <span className="absolute -top-1 -right-1 bg-rose-600 text-white rounded-full text-[9px] font-black w-4.5 h-4.5 flex items-center justify-center border border-white animate-pulse">{job.unreadCount}</span>
                                         )}
                                       </button>
-                                    </div>
-                                  )}
+                                    )}
+                                  </div>
                                 </div>
                               );
                             })()}
@@ -1430,8 +1456,8 @@ const TechnicianDashboard = () => {
                     </div>
                     <h3 className="font-extrabold text-sm text-slate-900">Partner Helpline</h3>
                     <p className="text-xs text-slate-600 font-medium">Need immediate assistance on an active repair visit?</p>
-                    <a href="tel:+918000000000" className="inline-block bg-blue-600 hover:bg-blue-700 text-white font-extrabold px-4 py-2 rounded-xl text-xs uppercase tracking-wider no-underline shadow-xs">
-                      Call Support Team
+                    <a href="tel:9515980170" className="inline-block bg-blue-600 hover:bg-blue-700 text-white font-extrabold px-4 py-2 rounded-xl text-xs uppercase tracking-wider no-underline shadow-xs">
+                      Call Support Team (9515980170)
                     </a>
                   </div>
 

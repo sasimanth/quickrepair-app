@@ -371,25 +371,25 @@ const Home = () => {
     if (!items || items.length === 0) return null;
 
     return (
-      <div className="relative group/carousel py-2 sm:py-3 border-b border-white/5 last:border-0">
+      <div className="relative group/carousel py-2 sm:py-3 border-b border-slate-200/60 last:border-0">
         <div className="flex justify-between items-end mb-3 sm:mb-4 px-4 md:px-0">
           <div>
-            <h3 className="text-xl sm:text-2xl font-black text-white tracking-tight flex items-center gap-2">
+            <h3 className="text-xl sm:text-2xl font-black text-slate-900 tracking-tight flex items-center gap-2">
               {title}
             </h3>
-            {subtitle && <p className="text-xs sm:text-sm text-slate-400 font-semibold mt-0.5">{subtitle}</p>}
+            {subtitle && <p className="text-xs sm:text-sm text-slate-500 font-medium mt-0.5">{subtitle}</p>}
           </div>
           
           <div className="hidden sm:flex gap-2 opacity-0 group-hover/carousel:opacity-100 transition-opacity duration-300">
             <button 
               onClick={() => scroll('left')}
-              className="w-9 h-9 rounded-full bg-white/5 border border-white/10 hover:bg-white/10 text-slate-400 hover:text-white flex items-center justify-center transition active:scale-95 cursor-pointer"
+              className="w-9 h-9 rounded-full bg-white border border-slate-200 hover:bg-slate-50 text-slate-600 hover:text-slate-900 flex items-center justify-center transition active:scale-95 cursor-pointer shadow-sm"
             >
               <ChevronRight className="rotate-180 w-5 h-5" />
             </button>
             <button 
               onClick={() => scroll('right')}
-              className="w-9 h-9 rounded-full bg-white/5 border border-white/10 hover:bg-white/10 text-slate-400 hover:text-white flex items-center justify-center transition active:scale-95 cursor-pointer"
+              className="w-9 h-9 rounded-full bg-white border border-slate-200 hover:bg-slate-50 text-slate-600 hover:text-slate-900 flex items-center justify-center transition active:scale-95 cursor-pointer shadow-sm"
             >
               <ChevronRight className="w-5 h-5" />
             </button>
@@ -410,7 +410,7 @@ const Home = () => {
                 transition={{ duration: 0.4, delay: Math.min(idx * 0.05, 0.3) }}
                 whileHover={{ y: -6, scale: 1.02 }}
                 onClick={() => handleBookingClick(service.id)}
-                className="group/card shrink-0 snap-start bg-slate-900/90 border border-white/10 hover:border-blue-500/50 rounded-2xl overflow-hidden flex flex-col justify-between w-[220px] sm:w-[250px] cursor-pointer transition-all duration-300 shadow-lg hover:shadow-blue-500/20 relative"
+                className="group/card shrink-0 snap-start bg-white border border-slate-200/80 hover:border-blue-500 rounded-2xl overflow-hidden flex flex-col justify-between w-[220px] sm:w-[250px] cursor-pointer transition-all duration-300 shadow-sm hover:shadow-xl hover:shadow-blue-500/10 relative"
               >
                 <div className="relative h-[185px] sm:h-[210px] w-full overflow-hidden">
                   <img 
@@ -423,11 +423,11 @@ const Home = () => {
                     }}
                     className="w-full h-full object-cover transition-transform duration-700 group-hover/card:scale-110" 
                   />
-                  <div className="absolute inset-0 bg-gradient-to-t from-slate-950 via-transparent to-transparent opacity-80"></div>
+                  <div className="absolute inset-0 bg-gradient-to-t from-slate-900/60 via-transparent to-transparent opacity-60"></div>
                 </div>
 
-                <div className="p-3 sm:p-4 bg-slate-900/95 flex items-center justify-center border-t border-white/5 min-h-[52px]">
-                  <h4 className="font-extrabold text-xs sm:text-sm text-white group-hover/card:text-blue-400 transition text-center line-clamp-2 leading-snug w-full">
+                <div className="p-3 sm:p-4 bg-white flex items-center justify-center border-t border-slate-100 min-h-[52px]">
+                  <h4 className="font-extrabold text-xs sm:text-sm text-slate-800 group-hover/card:text-blue-600 transition text-center line-clamp-2 leading-snug w-full">
                     {service.name}
                   </h4>
                 </div>
@@ -456,17 +456,15 @@ const Home = () => {
   const popularNearYouIds = locationPopularMap[selectedLocation] || locationPopularMap.Madanapalle;
 
   return (
-    <div className="relative w-full min-h-screen bg-[#0B0F19] text-white overflow-x-hidden font-sans">
-      {/* Dynamic Ambient Light Gradients */}
-      <div className="absolute top-[-5%] left-[-10%] w-[70%] h-[50%] bg-blue-600/15 rounded-full blur-[120px] pointer-events-none"></div>
-      <div className="absolute top-[15%] right-[-10%] w-[60%] h-[60%] bg-purple-600/10 rounded-full blur-[120px] pointer-events-none"></div>
-
-
+    <div className="relative w-full min-h-screen bg-slate-50 text-slate-900 overflow-x-hidden font-sans">
+      {/* Subtle Light Ambient Gradients */}
+      <div className="absolute top-[-5%] left-[-10%] w-[70%] h-[50%] bg-blue-500/5 rounded-full blur-[120px] pointer-events-none"></div>
+      <div className="absolute top-[15%] right-[-10%] w-[60%] h-[60%] bg-indigo-500/5 rounded-full blur-[120px] pointer-events-none"></div>
 
       <div className="max-w-5xl mx-auto px-4 pb-24 relative z-10">
         
-        {/* 2. HERO & SMART SEARCH BAR SECTION (Fixipy Benchmark) */}
-        <section className="pt-24 sm:pt-28 md:pt-32 pb-16 text-center max-w-4xl mx-auto relative z-10">
+        {/* 2. HERO & SMART SEARCH BAR SECTION */}
+        <section className="pt-24 sm:pt-28 md:pt-32 pb-14 text-center max-w-4xl mx-auto relative z-10">
           <motion.div 
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
@@ -474,66 +472,66 @@ const Home = () => {
             className="space-y-6"
           >
             {/* Eyebrow Badge */}
-            <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-blue-500/10 border border-blue-500/20 backdrop-blur-sm text-xs font-black uppercase tracking-widest text-blue-400">
-              <Zap size={13} className="text-amber-400 fill-current" />
+            <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-blue-50 border border-blue-100 text-xs font-black uppercase tracking-widest text-blue-700 shadow-sm">
+              <Zap size={13} className="text-amber-500 fill-current" />
               <span>⚡ 30-Minute Dispatch Guarantee • Madanapalle & Region</span>
             </div>
 
             {/* Headline */}
-            <h1 className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-black text-white tracking-tight leading-[1.05]">
+            <h1 className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-black text-slate-900 tracking-tight leading-[1.05]">
               Instant Doorstep Repairs & <br />
-              <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-400 via-sky-300 to-cyan-400">
+              <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-600 via-indigo-600 to-sky-600">
                 Certified Home Care.
               </span>
             </h1>
 
             {/* Subtitle */}
-            <p className="text-slate-400 text-sm sm:text-base md:text-lg max-w-2xl mx-auto leading-relaxed font-normal">
+            <p className="text-slate-600 text-sm sm:text-base md:text-lg max-w-2xl mx-auto leading-relaxed font-medium">
               Book background-checked local technicians for AC, appliance, plumbing, and deep home cleaning with fixed upfront quotes and zero hidden fees.
             </p>
 
-            {/* 4 Trust Pills (Fixvo Unique) */}
+            {/* 4 Trust Pills */}
             <div className="flex flex-wrap justify-center gap-2.5 pt-2">
-              <div className="flex items-center gap-2 rounded-full border border-white/10 bg-white/5 px-3.5 py-1.5 backdrop-blur-md">
-                <ShieldCheck size={14} className="text-blue-400" />
-                <span className="text-xs font-bold text-slate-200">Certified Technicians</span>
+              <div className="flex items-center gap-2 rounded-full border border-slate-200 bg-white px-3.5 py-1.5 shadow-sm">
+                <ShieldCheck size={14} className="text-blue-600" />
+                <span className="text-xs font-bold text-slate-700">Certified Technicians</span>
               </div>
-              <div className="flex items-center gap-2 rounded-full border border-white/10 bg-white/5 px-3.5 py-1.5 backdrop-blur-md">
-                <Clock size={14} className="text-cyan-400" />
-                <span className="text-xs font-bold text-slate-200">30-Min Dispatch</span>
+              <div className="flex items-center gap-2 rounded-full border border-slate-200 bg-white px-3.5 py-1.5 shadow-sm">
+                <Clock size={14} className="text-sky-600" />
+                <span className="text-xs font-bold text-slate-700">30-Min Dispatch</span>
               </div>
-              <div className="flex items-center gap-2 rounded-full border border-white/10 bg-white/5 px-3.5 py-1.5 backdrop-blur-md">
-                <Star size={14} className="text-amber-400 fill-current" />
-                <span className="text-xs font-bold text-slate-200">4.9/5 Rating</span>
+              <div className="flex items-center gap-2 rounded-full border border-slate-200 bg-white px-3.5 py-1.5 shadow-sm">
+                <Star size={14} className="text-amber-500 fill-current" />
+                <span className="text-xs font-bold text-slate-700">4.9/5 Rating</span>
               </div>
-              <div className="flex items-center gap-2 rounded-full border border-white/10 bg-white/5 px-3.5 py-1.5 backdrop-blur-md">
-                <CheckCircle2 size={14} className="text-emerald-400" />
-                <span className="text-xs font-bold text-slate-200">Upfront Digital Quotes</span>
+              <div className="flex items-center gap-2 rounded-full border border-slate-200 bg-white px-3.5 py-1.5 shadow-sm">
+                <CheckCircle2 size={14} className="text-emerald-600" />
+                <span className="text-xs font-bold text-slate-700">Upfront Digital Quotes</span>
               </div>
             </div>
 
-            {/* Service Promise Cards & App Live Preview (Fixvo Unique) */}
+            {/* Service Promise Cards */}
             <div className="grid gap-4 sm:grid-cols-2 pt-6 text-left">
-              <div className="rounded-2xl border border-white/10 bg-white/[0.03] p-5 backdrop-blur-md">
+              <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm hover:shadow-md transition-shadow">
                 <div className="flex items-center gap-3">
-                  <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-emerald-500/20 text-emerald-400">
+                  <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-emerald-50 text-emerald-600 border border-emerald-100">
                     <ShieldCheck size={20} />
                   </span>
                   <div>
                     <p className="text-[10px] font-black uppercase tracking-[0.18em] text-slate-400">Fixvo Guarantee</p>
-                    <p className="text-sm font-extrabold text-white">Upfront digital estimates. Police-verified fixers.</p>
+                    <p className="text-sm font-extrabold text-slate-800">Upfront digital estimates. Police-verified fixers.</p>
                   </div>
                 </div>
               </div>
 
-              <div className="rounded-2xl border border-white/10 bg-white/[0.03] p-5 backdrop-blur-md">
+              <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm hover:shadow-md transition-shadow">
                 <div className="flex items-center gap-3">
-                  <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-sky-500/20 text-sky-400">
+                  <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-sky-50 text-sky-600 border border-sky-100">
                     <MapPin size={20} />
                   </span>
                   <div>
                     <p className="text-[10px] font-black uppercase tracking-[0.18em] text-slate-400">Active Coverage</p>
-                    <p className="text-sm font-extrabold text-white">Madanapalle, Kadiri, Rayachoty, Galiveedu & region.</p>
+                    <p className="text-sm font-extrabold text-slate-800">Madanapalle, Kadiri, Rayachoty, Galiveedu & region.</p>
                   </div>
                 </div>
               </div>
@@ -541,11 +539,45 @@ const Home = () => {
           </motion.div>
         </section>
 
-        {/* 3. CATEGORY GRID */}
+        {/* 3. HOW FIXVO WORKS IN 4 STEPS (New Highlighted Section) */}
+        <section className="my-12 py-10 px-6 bg-gradient-to-br from-blue-600 via-indigo-600 to-indigo-700 rounded-[2.5rem] shadow-xl text-white relative overflow-hidden">
+          <div className="absolute top-0 right-0 w-80 h-80 bg-white/10 rounded-full blur-3xl pointer-events-none"></div>
+          
+          <div className="text-center max-w-2xl mx-auto mb-10 relative z-10">
+            <span className="px-3.5 py-1 rounded-full bg-white/20 text-white font-extrabold text-xs uppercase tracking-widest backdrop-blur-md border border-white/20">
+              Simple & Fast
+            </span>
+            <h2 className="text-3xl sm:text-4xl font-black tracking-tight mt-3">How Fixvo Works in 4 Easy Steps</h2>
+            <p className="text-blue-100 text-xs sm:text-sm mt-2 font-medium">Get doorstep repairs and home services done hassle-free in minutes.</p>
+          </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 relative z-10">
+            {[
+              { step: "01", title: "Select Service", desc: "Choose from 25+ repair, installation, or cleaning services.", icon: "📱" },
+              { step: "02", title: "Instant Match", desc: "Police-verified local fixer assigned & dispatched in 30 mins.", icon: "⚡" },
+              { step: "03", title: "Upfront Quote", desc: "Approve the transparent in-app quote before any work starts.", icon: "📋" },
+              { step: "04", title: "Pay & Warranty", desc: "Pay via online or cash after completion with 30-day warranty.", icon: "✨" },
+            ].map((s, idx) => (
+              <div key={idx} className="bg-white/10 border border-white/20 backdrop-blur-md rounded-2xl p-6 relative flex flex-col justify-between hover:bg-white/15 transition duration-300">
+                <span className="text-xs font-black text-blue-200 tracking-widest uppercase">Step {s.step}</span>
+                <div className="my-4">
+                  <div className="text-3xl mb-2">{s.icon}</div>
+                  <h3 className="font-extrabold text-lg text-white mb-1">{s.title}</h3>
+                  <p className="text-xs text-blue-100 leading-relaxed font-normal">{s.desc}</p>
+                </div>
+                <div className="w-full h-1 bg-white/20 rounded-full overflow-hidden mt-2">
+                  <div className="h-full bg-emerald-400 rounded-full" style={{ width: `${(idx + 1) * 25}%` }}></div>
+                </div>
+              </div>
+            ))}
+          </div>
+        </section>
+
+        {/* 4. CATEGORY GRID */}
         <section className="mt-8 mb-16 px-4 md:px-0">
           <div className="mb-8 text-center">
-            <h2 className="text-2xl sm:text-4xl font-extrabold text-white">Explore Categories</h2>
-            <p className="text-slate-400 text-sm mt-2 max-w-xl mx-auto">Select a category to quickly discover available home maintenance solutions.</p>
+            <h2 className="text-2xl sm:text-4xl font-extrabold text-slate-900">Explore Categories</h2>
+            <p className="text-slate-500 text-sm mt-2 max-w-xl mx-auto font-medium">Select a category to quickly discover available home maintenance solutions.</p>
           </div>
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4 sm:gap-6">
             {globalCategories.map((cat) => {
@@ -564,7 +596,7 @@ const Home = () => {
                   }}
                   whileHover={{ scale: 1.03, y: -4 }}
                   whileTap={{ scale: 0.98 }}
-                  className="relative h-32 sm:h-40 rounded-[2rem] overflow-hidden group border border-white/5 hover:border-blue-500/30 transition-all duration-300 text-left shadow-lg cursor-pointer w-full bg-transparent"
+                  className="relative h-32 sm:h-40 rounded-[2rem] overflow-hidden group border border-slate-200 hover:border-blue-500/50 transition-all duration-300 text-left shadow-sm hover:shadow-lg cursor-pointer w-full bg-white"
                 >
                   <img 
                     src={visual.img} 
@@ -573,12 +605,12 @@ const Home = () => {
                   />
                   <div className={`absolute inset-0 bg-gradient-to-br ${visual.gradient} opacity-80 group-hover:opacity-85 transition-opacity`}></div>
                   <div className="absolute inset-0 p-4 sm:p-5 flex flex-col justify-between z-10">
-                    <div className="w-10 h-10 rounded-xl bg-white/10 backdrop-blur-md flex items-center justify-center text-white border border-white/10 shadow-sm">
+                    <div className="w-10 h-10 rounded-xl bg-white/20 backdrop-blur-md flex items-center justify-center text-white border border-white/20 shadow-sm">
                       <CatIcon size={20} />
                     </div>
                     <div>
                       <h4 className="font-extrabold text-sm sm:text-base text-white tracking-tight">{cat.name}</h4>
-                      <p className="text-[10px] text-slate-200 mt-0.5 line-clamp-1">{cat.desc}</p>
+                      <p className="text-[10px] text-slate-100 mt-0.5 line-clamp-1">{cat.desc}</p>
                     </div>
                   </div>
                 </motion.button>
@@ -640,22 +672,22 @@ const Home = () => {
         </section>
 
         {/* 5. DAY & NIGHT SERVICES PROMINENT SHOWCASE */}
-        <section id="emergency-section" className="mt-16 md:mt-24 relative overflow-hidden bg-gradient-to-r from-slate-950 via-[#0D1322] to-slate-950 border border-indigo-500/20 rounded-[2.5rem] p-6 sm:p-10 shadow-2xl">
-          <div className="absolute -right-10 -top-10 w-64 h-64 bg-indigo-500/10 rounded-full blur-3xl pointer-events-none"></div>
+        <section id="emergency-section" className="mt-16 md:mt-24 relative overflow-hidden bg-gradient-to-br from-indigo-900 via-slate-900 to-blue-900 border border-indigo-200 rounded-[2.5rem] p-6 sm:p-10 shadow-xl text-white">
+          <div className="absolute -right-10 -top-10 w-64 h-64 bg-indigo-500/20 rounded-full blur-3xl pointer-events-none"></div>
           
           <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-6 mb-8 relative z-10">
             <div>
-              <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-indigo-500/20 border border-indigo-500/30 text-indigo-300 text-xs font-black uppercase tracking-wider mb-3">
+              <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-white/10 border border-white/20 text-blue-200 text-xs font-black uppercase tracking-wider mb-3 backdrop-blur-md">
                 <span>🌙</span> 24×7 Day & Night Services
               </div>
               <h2 className="text-2xl sm:text-4xl font-extrabold text-white">Emergency Repairs Anytime, Anywhere</h2>
-              <p className="text-slate-400 text-sm mt-1">Whether it's midnight or a Sunday holiday, verified Fixvo technicians are on call.</p>
+              <p className="text-blue-100 text-sm mt-1 font-medium">Whether it's midnight or a Sunday holiday, verified Fixvo technicians are on call.</p>
             </div>
             <a 
               href="tel:+919515980170" 
-              className="px-6 py-3 bg-gradient-to-r from-indigo-600 to-blue-600 hover:from-indigo-500 hover:to-blue-500 text-white font-extrabold text-xs sm:text-sm rounded-xl shadow-lg shadow-indigo-600/30 transition transform hover:-translate-y-0.5 flex items-center gap-2 no-underline"
+              className="px-6 py-3 bg-white hover:bg-slate-100 text-indigo-900 font-extrabold text-xs sm:text-sm rounded-xl shadow-lg transition transform hover:-translate-y-0.5 flex items-center gap-2 no-underline"
             >
-              <PhoneCall size={16} /> 24/7 Helpline: +91 95159 80170
+              <PhoneCall size={16} className="text-indigo-600" /> 24/7 Helpline: +91 95159 80170
             </a>
           </div>
 
@@ -667,16 +699,16 @@ const Home = () => {
               { title: "Weekend Availability", desc: "Sat & Sun active slots", icon: CheckCircle2, badge: "No Extra Charge" },
               { title: "Holiday Service", desc: "Open 365 days a year", icon: Sparkles, badge: "Open Today" }
             ].map((item, i) => (
-              <div key={i} className="bg-white/[0.02] border border-white/10 rounded-2xl p-4 flex flex-col justify-between h-36 hover:bg-white/[0.05] transition duration-300">
+              <div key={i} className="bg-white/10 border border-white/20 rounded-2xl p-4 flex flex-col justify-between h-36 hover:bg-white/15 transition duration-300 backdrop-blur-sm">
                 <div className="flex justify-between items-start">
-                  <div className="w-8 h-8 rounded-lg bg-indigo-500/20 border border-indigo-500/30 flex items-center justify-center text-indigo-400">
+                  <div className="w-8 h-8 rounded-lg bg-white/20 border border-white/30 flex items-center justify-center text-white">
                     <item.icon size={16} />
                   </div>
-                  <span className="text-[9px] font-black text-indigo-400 bg-indigo-500/10 px-2 py-0.5 rounded border border-indigo-500/20 uppercase">{item.badge}</span>
+                  <span className="text-[9px] font-black text-blue-200 bg-white/10 px-2 py-0.5 rounded border border-white/20 uppercase">{item.badge}</span>
                 </div>
                 <div>
                   <h4 className="font-extrabold text-xs text-white leading-snug">{item.title}</h4>
-                  <p className="text-[10px] text-slate-400 mt-0.5">{item.desc}</p>
+                  <p className="text-[10px] text-blue-100 mt-0.5">{item.desc}</p>
                 </div>
               </div>
             ))}
@@ -684,32 +716,32 @@ const Home = () => {
         </section>
 
         {/* 6. WHY FIXVO EXCELS */}
-        <section id="why-fixvo" className="mt-16 md:mt-24 bg-gradient-to-br from-white/[0.02] to-transparent border border-white/5 backdrop-blur-md rounded-[2.5rem] p-6 sm:p-10 mx-4 sm:mx-0">
+        <section id="why-fixvo" className="mt-16 md:mt-24 bg-white border border-slate-200/80 rounded-[2.5rem] p-6 sm:p-10 shadow-sm">
           <div className="mb-8">
-            <h2 className="text-2xl sm:text-4xl font-extrabold text-white tracking-tight flex items-center gap-2">
-              <Sparkles className="text-cyan-400 w-6 h-6 animate-pulse" /> Why Fixvo Excels
+            <h2 className="text-2xl sm:text-4xl font-extrabold text-slate-900 tracking-tight flex items-center gap-2">
+              <Sparkles className="text-blue-600 w-6 h-6 animate-pulse" /> Why Fixvo Excels
             </h2>
-            <p className="text-slate-400 text-sm mt-1">Our platform standards ensure you get professional, trustworthy repair and installation solutions.</p>
+            <p className="text-slate-500 text-sm mt-1 font-medium">Our platform standards ensure you get professional, trustworthy repair and installation solutions.</p>
           </div>
           <div className="grid grid-cols-2 md:grid-cols-3 gap-4 sm:gap-6">
             {[
-              { id: 'emergency', label: "24×7 Support", value: "Instant Emergency Response", icon: Zap, color: "text-amber-400", bg: "bg-amber-500/10", border: "border-amber-500/20" },
-              { id: 'tracking', label: "Live Tracking", value: "Real-time Technician ETA", icon: MapPin, color: "text-cyan-400", bg: "bg-cyan-500/10", border: "border-cyan-500/20" },
-              { id: 'payments', label: "Digital Payments", value: "100% Secure Checkout", icon: Banknote, color: "text-indigo-400", bg: "bg-indigo-500/10", border: "border-indigo-500/20" },
-              { id: 'techs', label: "Verified Professionals", value: "Background & Police Checked", icon: ShieldCheck, color: "text-emerald-400", bg: "bg-emerald-500/10", border: "border-emerald-500/20" },
-              { id: 'sameday', label: "Same Day Service", value: "30-Min Dispatch Guarantee", icon: CheckCircle2, color: "text-blue-400", bg: "bg-blue-500/10", border: "border-blue-500/20" },
-              { id: 'pricing', label: "Transparent Pricing", value: "Upfront Quotes & No Hidden Fees", icon: Star, color: "text-yellow-400", bg: "bg-yellow-500/10", border: "border-yellow-500/20" },
+              { id: 'emergency', label: "24×7 Support", value: "Instant Emergency Response", icon: Zap, color: "text-amber-600", bg: "bg-amber-50", border: "border-amber-200" },
+              { id: 'tracking', label: "Live Tracking", value: "Real-time Technician ETA", icon: MapPin, color: "text-sky-600", bg: "bg-sky-50", border: "border-sky-200" },
+              { id: 'payments', label: "Digital Payments", value: "100% Secure Checkout", icon: Banknote, color: "text-indigo-600", bg: "bg-indigo-50", border: "border-indigo-200" },
+              { id: 'techs', label: "Verified Professionals", value: "Background & Police Checked", icon: ShieldCheck, color: "text-emerald-600", bg: "bg-emerald-50", border: "border-emerald-200" },
+              { id: 'sameday', label: "Same Day Service", value: "30-Min Dispatch Guarantee", icon: CheckCircle2, color: "text-blue-600", bg: "bg-blue-50", border: "border-blue-200" },
+              { id: 'pricing', label: "Transparent Pricing", value: "Upfront Quotes & No Hidden Fees", icon: Star, color: "text-amber-500", bg: "bg-amber-50", border: "border-amber-200" },
             ].map((stat) => (
               <div 
                 key={stat.id}
-                className="p-6 bg-white/[0.01] hover:bg-white/[0.04] border border-white/5 hover:border-blue-500/30 rounded-[2rem] flex flex-col justify-between gap-4 transition duration-300 shadow-md"
+                className="p-6 bg-slate-50 hover:bg-slate-100/80 border border-slate-200/60 rounded-[2rem] flex flex-col justify-between gap-4 transition duration-300 shadow-sm"
               >
                 <div className={`w-12 h-12 rounded-2xl ${stat.bg} ${stat.border} border flex items-center justify-center ${stat.color}`}>
                   <stat.icon size={22} />
                 </div>
                 <div>
                   <p className="text-[10px] text-slate-500 font-extrabold uppercase tracking-wider">{stat.label}</p>
-                  <p className="text-sm font-extrabold text-white mt-1 leading-snug">{stat.value}</p>
+                  <p className="text-sm font-extrabold text-slate-900 mt-1 leading-snug">{stat.value}</p>
                 </div>
               </div>
             ))}
@@ -717,23 +749,23 @@ const Home = () => {
         </section>
 
         {/* 7. TRUST & TRANSPARENCY SECTION */}
-        <section className="mt-16 md:mt-24 border-t border-white/5 pt-16 md:pt-24 px-4 sm:px-0">
+        <section className="mt-16 md:mt-24 border-t border-slate-200/60 pt-16 md:pt-24 px-4 sm:px-0">
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 sm:gap-16 items-center">
             <div>
-              <h2 className="text-3xl sm:text-4xl md:text-5xl font-extrabold text-white mb-6 leading-tight">Elevating the home service industry.</h2>
+              <h2 className="text-3xl sm:text-4xl md:text-5xl font-extrabold text-slate-900 mb-6 leading-tight">Elevating the home service industry.</h2>
               <div className="space-y-6 sm:space-y-8 mt-8 sm:mt-10">
                 {[
-                  { title: "No Hidden Prices", desc: "Standard inspection fee of ₹99. We show an estimated range upfront. The technician must enter the exact quote in-app before starting, and wait for your one-click approval.", icon: Banknote, color: "text-blue-400", bg: "bg-blue-500/10" },
-                  { title: "Quality Backed by Data", desc: "See technician skill scores. We track success rates, repeat bookings, and require before/after photo proof for high-priced jobs.", icon: CheckCircle2, color: "text-emerald-400", bg: "bg-emerald-500/10" },
-                  { title: "30-Minute Arrival Guarantee", desc: "Water leaking? AC dead in summer? Select our premium emergency option and we guarantee a verified technician at your door within 30 minutes.", icon: Clock, color: "text-purple-400", bg: "bg-purple-500/10" },
+                  { title: "No Hidden Prices", desc: "Standard inspection fee of ₹99. We show an estimated range upfront. The technician must enter the exact quote in-app before starting, and wait for your one-click approval.", icon: Banknote, color: "text-blue-600", bg: "bg-blue-50" },
+                  { title: "Quality Backed by Data", desc: "See technician skill scores. We track success rates, repeat bookings, and require before/after photo proof for high-priced jobs.", icon: CheckCircle2, color: "text-emerald-600", bg: "bg-emerald-50" },
+                  { title: "30-Minute Arrival Guarantee", desc: "Water leaking? AC dead in summer? Select our premium emergency option and we guarantee a verified technician at your door within 30 minutes.", icon: Clock, color: "text-indigo-600", bg: "bg-indigo-50" },
                 ].map((item, i) => (
                   <div key={i} className="flex gap-4">
-                    <div className={`shrink-0 w-12 h-12 rounded-full ${item.bg} flex items-center justify-center ${item.color}`}>
+                    <div className={`shrink-0 w-12 h-12 rounded-full ${item.bg} border border-slate-200 flex items-center justify-center ${item.color}`}>
                       <item.icon size={24} />
                     </div>
                     <div>
-                      <h4 className="text-lg sm:text-xl font-bold text-white mb-2">{item.title}</h4>
-                      <p className="text-sm sm:text-base text-slate-400 leading-relaxed">{item.desc}</p>
+                      <h4 className="text-lg sm:text-xl font-bold text-slate-900 mb-2">{item.title}</h4>
+                      <p className="text-sm sm:text-base text-slate-600 leading-relaxed font-medium">{item.desc}</p>
                     </div>
                   </div>
                 ))}
@@ -741,30 +773,30 @@ const Home = () => {
             </div>
             
             <div className="relative mt-8 lg:mt-0">
-              <div className="bg-[#101524] border border-white/10 rounded-[2.5rem] p-6 sm:p-8 shadow-2xl relative z-10 w-full max-w-md mx-auto">
-                <div className="flex justify-between items-center border-b border-white/5 pb-4 mb-6">
-                  <h3 className="font-bold text-base sm:text-lg text-white">Smart AC Diagnostics</h3>
-                  <span className="px-3 py-1 bg-amber-500/20 text-amber-400 rounded-full text-[10px] sm:text-xs font-bold">Inspection Completed</span>
+              <div className="bg-white border border-slate-200 rounded-[2.5rem] p-6 sm:p-8 shadow-xl relative z-10 w-full max-w-md mx-auto">
+                <div className="flex justify-between items-center border-b border-slate-100 pb-4 mb-6">
+                  <h3 className="font-bold text-base sm:text-lg text-slate-900">Smart AC Diagnostics</h3>
+                  <span className="px-3 py-1 bg-amber-100 text-amber-800 rounded-full text-[10px] sm:text-xs font-bold border border-amber-200">Inspection Completed</span>
                 </div>
                 <div className="flex items-center gap-4 mb-6">
-                  <img src="https://images.unsplash.com/photo-1621905251189-08b45d6a269e?q=80&w=200&auto=format&fit=crop" className="w-14 h-14 sm:w-16 sm:h-16 rounded-full object-cover border border-white/10" alt="Tech" />
+                  <img src="https://images.unsplash.com/photo-1621905251189-08b45d6a269e?q=80&w=200&auto=format&fit=crop" className="w-14 h-14 sm:w-16 sm:h-16 rounded-full object-cover border border-slate-200" alt="Tech" />
                   <div>
-                    <h4 className="font-bold text-white text-sm sm:text-base">Amit Verma</h4>
-                    <p className="text-[11px] text-indigo-400 font-bold">Senior HVAC Specialist</p>
-                    <div className="flex flex-wrap items-center text-xs sm:text-sm text-slate-400 gap-2 mt-1">
-                       <span className="flex items-center text-amber-400"><Star size={14} className="fill-current mr-1"/> 4.9</span>
+                    <h4 className="font-bold text-slate-900 text-sm sm:text-base">Amit Verma</h4>
+                    <p className="text-[11px] text-blue-600 font-bold">Senior HVAC Specialist</p>
+                    <div className="flex flex-wrap items-center text-xs sm:text-sm text-slate-500 gap-2 mt-1">
+                       <span className="flex items-center text-amber-500"><Star size={14} className="fill-current mr-1"/> 4.9</span>
                        <span>• 512 Jobs</span>
-                       <span className="flex items-center text-emerald-400"><ShieldCheck size={14} className="mr-1"/> Verified</span>
+                       <span className="flex items-center text-emerald-600"><ShieldCheck size={14} className="mr-1"/> Verified</span>
                     </div>
                   </div>
                 </div>
-                <div className="bg-[#0b0f19] rounded-xl p-4 mb-6 space-y-3">
+                <div className="bg-slate-50 rounded-xl p-4 mb-6 space-y-3 border border-slate-100">
                   <div>
                     <p className="text-xs text-slate-500 uppercase font-black tracking-wider">Diagnosed Issue:</p>
-                    <p className="font-semibold text-slate-200 text-sm mt-0.5">AC Starter Capacitor failed. Condenser unable to start. Requires swap.</p>
+                    <p className="font-semibold text-slate-800 text-sm mt-0.5">AC Starter Capacitor failed. Condenser unable to start. Requires swap.</p>
                   </div>
                   
-                  <div className="border-t border-white/10 pt-3 space-y-1.5 text-xs text-slate-400">
+                  <div className="border-t border-slate-200 pt-3 space-y-1.5 text-xs text-slate-600">
                     <div className="flex justify-between">
                       <span>Diagnostic Visit Fee:</span>
                       <span className="text-slate-300 font-semibold">₹0 <span className="text-[10px] text-amber-400 font-bold bg-amber-500/10 px-1.5 rounded ml-1 uppercase">Plus Benefit</span></span>

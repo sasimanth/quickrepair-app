@@ -71,67 +71,80 @@ const KycModal = ({ onClose, onSuccess, currentKycStatus = 'not_submitted', reje
   };
 
   return (
-    <div className="fixed inset-0 bg-[#0B0F19]/80 backdrop-blur-md z-[100] flex items-center justify-center p-0 sm:p-4 animate-in fade-in duration-300">
-      <div className="bg-[#111827] w-full h-full sm:h-auto sm:max-w-md sm:rounded-3xl border border-white/5 overflow-hidden flex flex-col shadow-[0_0_50px_rgba(99,102,241,0.1)] text-white">
+    <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-xs z-[100] flex items-center justify-center p-0 sm:p-4 animate-in fade-in duration-300">
+      <div className="bg-white w-full h-full sm:h-auto sm:max-w-md sm:rounded-3xl border border-slate-200 overflow-hidden flex flex-col shadow-2xl text-slate-900 font-sans">
         
         {/* Header */}
-        <div className="px-6 py-5 border-b border-white/5 flex items-center justify-between bg-slate-900/60 sticky top-0 z-10 backdrop-blur-md">
+        <div className="px-6 py-5 border-b border-slate-100 flex items-center justify-between bg-slate-50 sticky top-0 z-10">
           <div>
-            <h3 className="text-lg font-extrabold text-white tracking-tight flex items-center gap-2">
-              <Landmark size={20} className="text-indigo-400" /> Bank Account KYC
+            <h3 className="text-lg font-black text-slate-900 tracking-tight flex items-center gap-2">
+              <Landmark size={20} className="text-blue-600" /> Bank Account & KYC Verification
             </h3>
-            <p className="text-[10px] text-slate-400 font-bold uppercase tracking-wider mt-0.5">Secure Bank Verification (DPDPA Compliant)</p>
+            <p className="text-[10px] text-slate-500 font-bold uppercase tracking-wider mt-0.5">Automated Bank Verification (DPDPA Compliant)</p>
           </div>
           <button 
             onClick={onClose} 
-            className="p-2 text-slate-400 hover:text-white bg-white/5 hover:bg-white/10 rounded-full transition-all"
+            className="p-2 text-slate-400 hover:text-slate-700 bg-white border border-slate-200 rounded-full transition-all cursor-pointer"
           >
             <X size={18} />
           </button>
         </div>
 
+        {/* Verification Explanation Banner */}
+        <div className="mx-6 mt-4 p-4 bg-blue-50/80 border border-blue-200 rounded-2xl space-y-1 text-xs">
+          <div className="flex items-center gap-2 text-blue-900 font-black">
+            <ShieldCheck size={16} className="text-blue-600" />
+            <span>How Verification Works</span>
+          </div>
+          <p className="text-slate-600 text-[11px] leading-relaxed font-medium">
+            1. Submit account number & IFSC code.<br/>
+            2. Instant automated penny-drop verification checks if the account holder name matches your government ID.<br/>
+            3. Approved accounts unlock 24-hour instant payouts to your bank!
+          </p>
+        </div>
+
         {/* Status Lifecycle Indicator Banner */}
         {isPending && (
-          <div className="mx-6 mt-4 p-3.5 bg-amber-500/10 border border-amber-500/20 rounded-2xl flex items-center gap-3">
-            <Clock className="text-amber-400 shrink-0" size={20} />
+          <div className="mx-6 mt-3 p-3.5 bg-amber-50 border border-amber-200 rounded-2xl flex items-center gap-3">
+            <Clock className="text-amber-600 shrink-0" size={20} />
             <div>
-              <p className="text-xs font-bold text-amber-300">KYC Under Admin Review</p>
-              <p className="text-[10px] text-amber-400/80">Your bank details are currently being verified by Fixvo Compliance.</p>
+              <p className="text-xs font-bold text-amber-900">KYC Under Admin Review</p>
+              <p className="text-[10px] text-amber-700 font-medium">Your bank details are currently being verified by Fixvo Compliance Team.</p>
             </div>
           </div>
         )}
 
         {isApproved && (
-          <div className="mx-6 mt-4 p-3.5 bg-emerald-500/10 border border-emerald-500/20 rounded-2xl flex items-center gap-3">
-            <CheckCircle className="text-emerald-400 shrink-0" size={20} />
+          <div className="mx-6 mt-3 p-3.5 bg-emerald-50 border border-emerald-200 rounded-2xl flex items-center gap-3">
+            <CheckCircle className="text-emerald-600 shrink-0" size={20} />
             <div>
-              <p className="text-xs font-bold text-emerald-300">KYC Verified & Approved</p>
-              <p className="text-[10px] text-emerald-400/80">Bank account active: {bankDetails?.accountNumberMasked || '••••••••'}</p>
+              <p className="text-xs font-bold text-emerald-900">KYC Verified & Active</p>
+              <p className="text-[10px] text-emerald-700 font-medium">Bank account active: {bankDetails?.accountNumberMasked || '••••••••'}</p>
             </div>
           </div>
         )}
 
         {isRejected && (
-          <div className="mx-6 mt-4 p-3.5 bg-rose-500/10 border border-rose-500/20 rounded-2xl flex items-center gap-3">
-            <XCircle className="text-rose-400 shrink-0" size={20} />
+          <div className="mx-6 mt-3 p-3.5 bg-rose-50 border border-rose-200 rounded-2xl flex items-center gap-3">
+            <XCircle className="text-rose-600 shrink-0" size={20} />
             <div>
-              <p className="text-xs font-bold text-rose-300">KYC Rejected</p>
-              <p className="text-[10px] text-rose-400/80">{rejectionReason || 'Verification failed. Please update details and resubmit.'}</p>
+              <p className="text-xs font-bold text-rose-900">KYC Verification Failed</p>
+              <p className="text-[10px] text-rose-700 font-medium">{rejectionReason || 'Name mismatch or invalid IFSC. Please correct and resubmit.'}</p>
             </div>
           </div>
         )}
 
         {/* Progress Tracker */}
         {!isApproved && !isPending && (
-          <div className="px-6 pt-5 flex items-center justify-between gap-4">
+          <div className="px-6 pt-4 flex items-center justify-between gap-4">
             <div className="flex-1 flex items-center gap-2">
-              <span className={`w-6 h-6 rounded-full flex items-center justify-center text-xs font-black border transition-all ${step >= 1 ? 'bg-indigo-600 border-indigo-400 text-white shadow-lg' : 'bg-slate-800 border-white/5 text-slate-500'}`}>1</span>
-              <span className="text-[10px] font-bold uppercase tracking-wider text-slate-300">Bank Info</span>
+              <span className={`w-6 h-6 rounded-full flex items-center justify-center text-xs font-black border transition-all ${step >= 1 ? 'bg-blue-600 border-blue-600 text-white shadow-xs' : 'bg-slate-100 border-slate-200 text-slate-400'}`}>1</span>
+              <span className="text-[10px] font-extrabold uppercase tracking-wider text-slate-700">Bank Details</span>
             </div>
-            <div className="w-10 h-0.5 bg-slate-800"></div>
+            <div className="w-10 h-0.5 bg-slate-200"></div>
             <div className="flex-1 flex items-center gap-2 justify-end">
-              <span className={`w-6 h-6 rounded-full flex items-center justify-center text-xs font-black border transition-all ${step >= 2 ? 'bg-indigo-600 border-indigo-400 text-white shadow-lg' : 'bg-slate-800 border-white/5 text-slate-500'}`}>2</span>
-              <span className="text-[10px] font-bold uppercase tracking-wider text-slate-300">Consent & Submit</span>
+              <span className={`w-6 h-6 rounded-full flex items-center justify-center text-xs font-black border transition-all ${step >= 2 ? 'bg-blue-600 border-blue-600 text-white shadow-xs' : 'bg-slate-100 border-slate-200 text-slate-400'}`}>2</span>
+              <span className="text-[10px] font-extrabold uppercase tracking-wider text-slate-700">Consent & Verify</span>
             </div>
           </div>
         )}
@@ -141,8 +154,8 @@ const KycModal = ({ onClose, onSuccess, currentKycStatus = 'not_submitted', reje
           <div className="space-y-4">
             
             {validationError && (
-              <div className="p-3.5 bg-rose-500/10 text-rose-400 border border-rose-500/20 rounded-2xl flex items-center gap-2 font-bold text-xs animate-in fade-in slide-in-from-top-2">
-                <AlertCircle size={16} className="shrink-0" />
+              <div className="p-3.5 bg-rose-50 text-rose-800 border border-rose-200 rounded-2xl flex items-center gap-2 font-bold text-xs animate-in fade-in">
+                <AlertCircle size={16} className="shrink-0 text-rose-600" />
                 <span>{validationError}</span>
               </div>
             )}
@@ -150,44 +163,44 @@ const KycModal = ({ onClose, onSuccess, currentKycStatus = 'not_submitted', reje
             {!isPending && !isApproved && step === 1 && (
               <div className="space-y-4 animate-in slide-in-from-left-4 fade-in duration-300">
                 <div className="space-y-1">
-                  <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-widest ml-1">Bank Account Holder Name</label>
+                  <label className="block text-[10px] font-extrabold text-slate-500 uppercase tracking-wider ml-1">Bank Account Holder Name</label>
                   <input 
                     required 
                     type="text" 
                     value={formData.accountName} 
                     onChange={(e) => setFormData({...formData, accountName: e.target.value})} 
-                    className="w-full px-4 py-3 rounded-xl bg-slate-900 border border-white/5 focus:border-indigo-500 focus:ring-4 focus:ring-indigo-500/20 outline-none text-slate-100 text-sm font-semibold transition-all" 
-                    placeholder="Enter recipient name exactly as in bank" 
+                    className="w-full px-4 py-3 rounded-xl bg-slate-50 border border-slate-200 focus:border-blue-600 focus:bg-white outline-none text-slate-900 text-sm font-bold transition-all" 
+                    placeholder="Exact name as printed in passbook" 
                   />
                 </div>
                 
                 <div className="space-y-1">
-                  <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-widest ml-1">Bank Account Number</label>
+                  <label className="block text-[10px] font-extrabold text-slate-500 uppercase tracking-wider ml-1">Bank Account Number</label>
                   <input 
                     required 
                     type="text" 
                     value={formData.accountNumber} 
                     onChange={(e) => setFormData({...formData, accountNumber: e.target.value})} 
-                    className="w-full px-4 py-3 rounded-xl bg-slate-900 border border-white/5 focus:border-indigo-500 focus:ring-4 focus:ring-indigo-500/20 outline-none text-slate-100 text-sm font-semibold tracking-wider transition-all" 
+                    className="w-full px-4 py-3 rounded-xl bg-slate-50 border border-slate-200 focus:border-blue-600 focus:bg-white outline-none text-slate-900 text-sm font-bold tracking-wider transition-all" 
                     placeholder="9-18 digit account number" 
                   />
                 </div>
 
                 <div className="space-y-1">
-                  <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-widest ml-1">IFSC / Routing Code</label>
+                  <label className="block text-[10px] font-extrabold text-slate-500 uppercase tracking-wider ml-1">IFSC Code</label>
                   <input 
                     required 
                     type="text" 
                     value={formData.ifscCode} 
                     onChange={(e) => setFormData({...formData, ifscCode: e.target.value.toUpperCase()})} 
-                    className="w-full px-4 py-3 rounded-xl bg-slate-900 border border-white/5 focus:border-indigo-500 focus:ring-4 focus:ring-indigo-500/20 outline-none text-slate-100 text-sm font-semibold tracking-widest transition-all" 
+                    className="w-full px-4 py-3 rounded-xl bg-slate-50 border border-slate-200 focus:border-blue-600 focus:bg-white outline-none text-slate-900 text-sm font-bold tracking-widest transition-all" 
                     placeholder="e.g. HDFC0001234" 
                   />
                 </div>
 
-                <div className="p-3.5 bg-slate-900/60 border border-white/5 rounded-2xl flex items-center gap-3">
-                  <ShieldCheck className="text-emerald-400 shrink-0" size={18} />
-                  <p className="text-[10px] text-slate-400 font-bold uppercase tracking-wider">Account details are encrypted using AES-256-GCM at rest.</p>
+                <div className="p-3.5 bg-slate-50 border border-slate-200 rounded-2xl flex items-center gap-3">
+                  <ShieldCheck className="text-emerald-600 shrink-0" size={18} />
+                  <p className="text-[10px] text-slate-600 font-bold uppercase tracking-wider">Account details are encrypted using AES-256 bank grade security.</p>
                 </div>
               </div>
             )}
@@ -195,27 +208,27 @@ const KycModal = ({ onClose, onSuccess, currentKycStatus = 'not_submitted', reje
             {!isPending && !isApproved && step === 2 && (
               <div className="space-y-4 animate-in slide-in-from-right-4 fade-in duration-300">
                 <div className="space-y-1">
-                  <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-widest ml-1">Passbook / Canceled Cheque Reference URL (Optional)</label>
+                  <label className="block text-[10px] font-extrabold text-slate-500 uppercase tracking-wider ml-1">Passbook / Cheque Image URL (Optional)</label>
                   <input 
                     type="url" 
                     value={formData.idProofUrl} 
                     onChange={(e) => setFormData({...formData, idProofUrl: e.target.value})} 
-                    className="w-full px-4 py-3 rounded-xl bg-slate-900 border border-white/5 focus:border-indigo-500 focus:ring-4 focus:ring-indigo-500/20 outline-none text-slate-100 text-sm font-semibold transition-all" 
+                    className="w-full px-4 py-3 rounded-xl bg-slate-50 border border-slate-200 focus:border-blue-600 focus:bg-white outline-none text-slate-900 text-sm font-bold transition-all" 
                     placeholder="https://example.com/passbook.jpg" 
                   />
                 </div>
 
-                {/* Consent Checkbox for DPDPA 2023 */}
-                <div className="p-4 bg-slate-900/80 border border-indigo-500/20 rounded-2xl space-y-2">
+                {/* Consent Checkbox */}
+                <div className="p-4 bg-blue-50/60 border border-blue-200 rounded-2xl space-y-2">
                   <label className="flex items-start gap-3 cursor-pointer">
                     <input 
                       type="checkbox"
                       checked={formData.consentGranted}
                       onChange={(e) => setFormData({...formData, consentGranted: e.target.checked})}
-                      className="mt-1 w-4 h-4 rounded border-slate-700 text-indigo-600 focus:ring-indigo-500 bg-slate-800 shrink-0"
+                      className="mt-1 w-4 h-4 rounded border-slate-300 text-blue-600 focus:ring-blue-500 bg-white shrink-0"
                     />
-                    <span className="text-xs text-slate-300 leading-normal font-semibold">
-                      I consent to Fixvo storing and processing my bank details for payout settlements under Digital Personal Data Protection Act (DPDPA 2023).
+                    <span className="text-xs text-slate-800 leading-normal font-bold">
+                      I consent to Fixvo storing and verifying my bank details for automated payout settlements under DPDPA 2023.
                     </span>
                   </label>
                 </div>
@@ -226,12 +239,12 @@ const KycModal = ({ onClose, onSuccess, currentKycStatus = 'not_submitted', reje
 
           {/* Action Row */}
           {!isPending && !isApproved && (
-            <div className="flex gap-3 pt-4 border-t border-white/5 bg-slate-900/90 sm:bg-transparent fixed bottom-0 left-0 right-0 p-4 sm:p-0 sm:relative z-20 backdrop-blur-md">
+            <div className="flex gap-3 pt-4 border-t border-slate-100 bg-slate-50 sm:bg-transparent fixed bottom-0 left-0 right-0 p-4 sm:p-0 sm:relative z-20">
               {step === 2 && (
                 <button 
                   type="button"
                   onClick={() => setStep(1)}
-                  className="flex-1 px-5 py-3.5 text-xs font-bold text-slate-400 hover:text-white bg-white/5 hover:bg-white/10 rounded-xl transition-all uppercase tracking-wider outline-none"
+                  className="flex-1 px-5 py-3.5 text-xs font-extrabold text-slate-600 hover:bg-slate-100 bg-white border border-slate-200 rounded-xl transition-all uppercase tracking-wider cursor-pointer"
                 >
                   <div className="flex items-center justify-center gap-1"><ArrowLeft size={14}/> Back</div>
                 </button>
@@ -240,14 +253,14 @@ const KycModal = ({ onClose, onSuccess, currentKycStatus = 'not_submitted', reje
               <button 
                 type="submit" 
                 disabled={loading} 
-                className="flex-2 bg-indigo-600 hover:bg-indigo-500 text-white font-black py-3.5 rounded-xl transition-all flex justify-center items-center gap-2 cursor-pointer text-xs uppercase tracking-widest shadow-lg shadow-indigo-500/20 active:scale-[0.98] outline-none w-full"
+                className="flex-2 bg-blue-600 hover:bg-blue-700 text-white font-black py-3.5 rounded-xl transition-all flex justify-center items-center gap-2 cursor-pointer text-xs uppercase tracking-wider shadow-md shadow-blue-600/10 active:scale-[0.98] outline-none w-full border-none"
               >
                 {loading ? (
-                  <span>Submitting KYC...</span>
+                  <span>Verifying KYC...</span>
                 ) : step === 1 ? (
                   <>Next Step <ArrowRight size={14} /></>
                 ) : (
-                  <><ShieldCheck size={16} /> Submit KYC</>
+                  <><ShieldCheck size={16} /> Submit & Verify KYC</>
                 )}
               </button>
             </div>

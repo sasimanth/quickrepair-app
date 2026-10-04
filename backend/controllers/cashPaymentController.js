@@ -35,41 +35,55 @@ exports.confirmCashPayment = async (req, res) => {
     if (booking.providerId?.toString() !== techId.toString()) {
       return res.status(403).json({ message: 'Technician not assigned to this booking' });
     }
-    if (booking.paymentStatus !== 'cash_pending') {
-      return res.status(400).json({ message: `Invalid payment state: ${booking.paymentStatus}` });
-    }
-    if (booking.cashCollectedAt) {
-      return res.status(400).json({ message: 'Cash payment already confirmed' });
-    }
-    // Validate received amount matches expected booking amount (or finalQuote if amount not set)
-    const expectedAmount = booking.amount || booking.finalQuote || 0;
-    if (amount !== expectedAmount) {
-      return res.status(400).json({ message: `Cash amount mismatch. Expected ${expectedAmount}` });
+    if (booking.paymentStatus !== 'cash_pending' && booking.paymentStatus !== 'awaiting_payment' && booking.paymentStatus !== 'pending') {
+      if (booking.cashCollectedAt || booking.paymentStatus === 'cash_completed') {
+        return res.status(400).json({ message: 'Cash payment already confirmed' });
+      }
     }
 
     // Atomic conditional update
     const updated = await Booking.findOneAndUpdate(
       {
         _id: bookingId,
-        paymentStatus: 'cash_pending',
-        providerId: techId,
-        cashCollectedAt: null
+        providerId: techId
       },
       {
         $set: {
+          status: 'completed',
           paymentStatus: 'cash_completed',
           cashCollectedAt: new Date(),
           cashCollectedBy: techId,
           cashAmount: amount,
-          paymentMethod: 'cash'
+          paymentMethod: 'cash',
+          amount: amount
         }
       },
       { new: true }
     ).populate('serviceId', 'name price');
 
     if (!updated) {
-      // Should not happen due to prior checks, but fallback error
       return res.status(400).json({ message: 'Unable to confirm cash payment' });
+    }
+
+    // Award 100 Fixvo Loyalty Reward Points to customer
+    if (updated.userId) {
+      const User = require('../models/User');
+      await User.findByIdAndUpdate(updated.userId, { $inc: { rewardPoints: 100 } }).catch(e => console.warn('Reward points error:', e.message));
+    }
+
+    // Credit/update technician wallet
+    const { updateTechnicianWallet, triggerNotifications } = require('./bookingController');
+    if (updateTechnicianWallet) {
+      await updateTechnicianWallet(updated).catch(e => console.warn('Wallet update error:', e.message));
+    }
+    if (triggerNotifications) {
+      await triggerNotifications(req, updated, 'payment_completed').catch(e => console.warn('Trigger notif error:', e.message));
+    }
+
+    // Real-time socket update for instant timeline green checkmark
+    if (global.io) {
+      if (updated.userId) global.io.to(`user_${updated.userId}`).emit('job_update', updated.toObject ? updated.toObject() : updated);
+      if (updated.providerId) global.io.to(`user_${updated.providerId}`).emit('job_update', updated.toObject ? updated.toObject() : updated);
     }
 
     // Auto-generate invoice and email to customer (fire-and-forget, non-blocking)

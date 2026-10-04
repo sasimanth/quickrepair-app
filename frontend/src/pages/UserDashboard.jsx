@@ -123,7 +123,7 @@ const UserDashboard = () => {
   // Settings & Profile states
   const [isDarkMode, setIsDarkMode] = useState(false);
   const [preferredLanguage, setPreferredLanguage] = useState('English');
-  const [filterTab, setFilterTab] = useState('all');
+  const [filterTab, setFilterTab] = useState('active');
   const [expandedBookings, setExpandedBookings] = useState({});
   const toggleExpand = (id) => setExpandedBookings(prev => ({ ...prev, [id]: !prev[id] }));
   const [invoiceBooking, setInvoiceBooking] = useState(null);
@@ -282,6 +282,16 @@ const UserDashboard = () => {
     }
   };
 
+  const getSavedAddress = () => {
+    try {
+      const saved = localStorage.getItem('fixvo_user_saved_location');
+      if (saved) return JSON.parse(saved);
+    } catch (e) {}
+    return null;
+  };
+
+  const savedLoc = getSavedAddress();
+
   const [formData, setFormData] = useState({
     serviceId: initialService || '',
     date: new Date().toISOString().split('T')[0],
@@ -296,9 +306,9 @@ const UserDashboard = () => {
     vehicleServiceType: 'Doorstep Visit',
     applianceBrand: '',
     problemDescription: '',
-    location: 'Madanapalle Main Town',
-    detailedAddress: '',
-    landmark: '',
+    location: savedLoc?.location || 'Madanapalle Main Town',
+    detailedAddress: savedLoc?.detailedAddress || '',
+    landmark: savedLoc?.landmark || '',
     gpsLocation: null,
     imageUrl: '',
     serviceOption: 'direct',
@@ -574,6 +584,16 @@ const UserDashboard = () => {
       const newBooking = res.data?.booking || res.data;
       
       showToast('Booking Request Submitted 🚀', 'Your booking request has been sent successfully.', 'success');
+      // Save address for future bookings so user isn't asked again & again
+      try {
+        if (formData.location || formData.detailedAddress) {
+          localStorage.setItem('fixvo_user_saved_location', JSON.stringify({
+            location: formData.location,
+            detailedAddress: formData.detailedAddress,
+            landmark: formData.landmark
+          }));
+        }
+      } catch (e) {}
       localStorage.removeItem('pendingBooking');
       setShowForm(false);
       setStep(1);
@@ -1682,12 +1702,6 @@ const UserDashboard = () => {
                     {/* Filter Tabs */}
                     <div className="flex items-center gap-1.5 bg-slate-100 p-1 rounded-xl border border-slate-200 text-xs font-bold flex-wrap">
                       <button
-                        onClick={() => setFilterTab('all')}
-                        className={`px-3 py-1.5 rounded-lg transition-all border-none cursor-pointer ${filterTab === 'all' ? 'bg-white text-blue-600 shadow-xs' : 'text-slate-600 hover:text-slate-900 bg-transparent'}`}
-                      >
-                        All ({safeBookingsList.length})
-                      </button>
-                      <button
                         onClick={() => setFilterTab('active')}
                         className={`px-3 py-1.5 rounded-lg transition-all border-none cursor-pointer ${filterTab === 'active' ? 'bg-white text-blue-600 shadow-xs' : 'text-slate-600 hover:text-slate-900 bg-transparent'}`}
                       >
@@ -1704,6 +1718,12 @@ const UserDashboard = () => {
                         className={`px-3 py-1.5 rounded-lg transition-all border-none cursor-pointer ${filterTab === 'cancelled' ? 'bg-rose-50 text-rose-700 font-extrabold shadow-xs' : 'text-slate-600 hover:text-slate-900 bg-transparent'}`}
                       >
                         Cancelled ({safeBookingsList.filter(b => ['cancelled', 'rejected'].includes(b?.status)).length})
+                      </button>
+                      <button
+                        onClick={() => setFilterTab('all')}
+                        className={`px-3 py-1.5 rounded-lg transition-all border-none cursor-pointer ${filterTab === 'all' ? 'bg-white text-blue-600 shadow-xs' : 'text-slate-600 hover:text-slate-900 bg-transparent'}`}
+                      >
+                        All ({safeBookingsList.length})
                       </button>
                     </div>
                   </div>
@@ -2079,19 +2099,6 @@ const UserDashboard = () => {
                           extraText: `${safeAddresses.length} saved` 
                         },
                         { 
-                          id: 'payments', 
-                          title: 'Manage payment methods', 
-                          icon: CreditCard, 
-                          action: () => setShowPaymentMethodsModal(true) 
-                        },
-                        { 
-                          id: 'verification', 
-                          title: 'Account & Mobile Verification', 
-                          icon: Shield, 
-                          action: () => setShowVerificationModal(true),
-                          badge: (profile?.isEmailVerified && profile?.isPhoneVerified) ? 'Verified' : 'Verify OTP'
-                        },
-                        { 
                           id: 'become-tech', 
                           title: 'Become a Technician (Earn With Us)', 
                           icon: Briefcase, 
@@ -2103,12 +2110,6 @@ const UserDashboard = () => {
                           title: 'Customer Help & Support', 
                           icon: HelpCircle, 
                           action: () => switchTab('support') 
-                        },
-                        { 
-                          id: 'settings', 
-                          title: 'Settings & Profile', 
-                          icon: Settings, 
-                          action: () => setShowSettings(true) 
                         },
                         { 
                           id: 'about', 
@@ -2161,27 +2162,6 @@ const UserDashboard = () => {
                       </div>
                       <div className="w-10 h-10 sm:w-11 sm:h-11 rounded-2xl bg-purple-200/60 text-purple-700 flex items-center justify-center shadow-xs group-hover:scale-110 transition-transform shrink-0">
                         <Gift size={22} />
-                      </div>
-                    </div>
-
-                    {/* Admin Governance Console Switcher */}
-                    <div className="bg-gradient-to-r from-blue-50 via-indigo-50 to-purple-50 rounded-3xl p-1.5 border border-blue-200 shadow-xs mb-3">
-                      <div
-                        onClick={() => navigate('/admin-dashboard')}
-                        className="py-3 px-3 flex items-center justify-between cursor-pointer hover:bg-blue-100/60 rounded-2xl transition-all group"
-                      >
-                        <div className="flex items-center gap-3.5">
-                          <div className="p-2 bg-blue-600 text-white rounded-xl shadow-xs">
-                            <Shield size={18} />
-                          </div>
-                          <div>
-                            <span className="text-xs sm:text-sm font-black text-slate-900 block leading-tight">
-                              Admin Governance Console
-                            </span>
-                            <span className="text-[10px] text-slate-500 font-semibold">Live startup operations & dispatch center</span>
-                          </div>
-                        </div>
-                        <ChevronRight size={17} className="text-blue-600 group-hover:translate-x-0.5 transition-all" />
                       </div>
                     </div>
 

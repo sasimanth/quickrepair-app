@@ -183,42 +183,7 @@ const ChatModal = ({ booking, onClose, currentRole }) => {
                 const isMyMsg = !isSystemMsg && msg.senderId === activeUserId;
                 
                 if (isSystemMsg) {
-                  const cleanText = msg.text.replace(/^📢 System:\s*/, '');
-                  
-                  let StatusIcon = MessageCircle;
-                  let iconColor = 'text-slate-400';
-                  let cardBg = 'bg-slate-100/80 border-slate-200 text-slate-650';
-                  
-                  if (cleanText.includes('accepted') || cleanText.includes('approved')) {
-                    StatusIcon = CheckCircle;
-                    iconColor = 'text-emerald-500';
-                    cardBg = 'bg-emerald-500/10 border-emerald-500/20 text-emerald-450';
-                  } else if (cleanText.includes('en route') || cleanText.includes('arrived')) {
-                    StatusIcon = Truck;
-                    iconColor = 'text-blue-500';
-                    cardBg = 'bg-blue-500/10 border-blue-500/20 text-blue-450';
-                  } else if (cleanText.includes('quote') || cleanText.includes('revision') || cleanText.includes('clarification') || cleanText.includes('inspection')) {
-                    StatusIcon = CreditCard;
-                    iconColor = 'text-amber-500';
-                    cardBg = 'bg-amber-500/10 border-amber-500/20 text-amber-450';
-                  } else if (cleanText.includes('completed') || cleanText.includes('paid') || cleanText.includes('Payment')) {
-                    StatusIcon = Sparkles;
-                    iconColor = 'text-emerald-500';
-                    cardBg = 'bg-emerald-500/10 border-emerald-500/20 text-emerald-450';
-                  } else if (cleanText.includes('cancelled') || cleanText.includes('declined')) {
-                    StatusIcon = XCircle;
-                    iconColor = 'text-rose-500';
-                    cardBg = 'bg-rose-500/10 border-rose-500/20 text-rose-450';
-                  }
-
-                  return (
-                    <div key={msg._id || i} className="flex justify-center my-3.5 animate-in fade-in zoom-in-95 duration-300">
-                      <div className={`flex items-center gap-2 border rounded-full px-4 py-1.5 shadow-sm text-[11px] font-semibold tracking-wide ${cardBg}`}>
-                        <StatusIcon size={12} className={`${iconColor} shrink-0`} />
-                        <span>{cleanText}</span>
-                      </div>
-                    </div>
-                  );
+                  return null;
                 }
 
                 return (

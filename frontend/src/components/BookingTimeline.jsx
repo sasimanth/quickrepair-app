@@ -69,19 +69,21 @@ const BookingTimeline = ({ booking }) => {
   const paymentStatus = booking.paymentStatus || 'pending';
   const isCancelled = currentStatus === 'cancelled';
   const isRejected = currentStatus === 'rejected';
+  const isCompleted = currentStatus === 'completed' || paymentStatus === 'completed' || paymentStatus === 'cash_completed' || paymentStatus === 'paid';
 
   // Effective status calculation
   let effectiveRank = STATUS_RANK[currentStatus] || 1;
-  if (paymentStatus === 'completed' || paymentStatus === 'cash_completed') {
+  if (isCompleted) {
     effectiveRank = 10;
   }
 
   const timelineEvents = booking.timelineEvents || [];
 
   const getEventTime = (stageKey) => {
-    const match = timelineEvents.find(e => e.status === stageKey || (stageKey === 'payment_completed' && e.status.includes('payment_completed')));
+    const match = timelineEvents.find(e => e.status === stageKey || (stageKey === 'payment_completed' && (e.status.includes('payment') || e.status.includes('cash'))));
     if (match && match.timestamp) return formatDate(match.timestamp);
     if (stageKey === 'pending') return formatDate(booking.createdAt || booking.date);
+    if (isCompleted && (stageKey === 'completed' || stageKey === 'payment_completed')) return formatDate(booking.updatedAt || new Date());
     return null;
   };
 
@@ -96,9 +98,9 @@ const BookingTimeline = ({ booking }) => {
         </div>
         <span className={`px-2.5 py-1 rounded-full text-[10px] font-black uppercase tracking-wider ${
           isCancelled ? 'bg-rose-100 text-rose-700' :
-          effectiveRank >= 9 ? 'bg-emerald-100 text-emerald-700' : 'bg-blue-100 text-blue-700'
+          isCompleted ? 'bg-emerald-100 text-emerald-700' : 'bg-blue-100 text-blue-700'
         }`}>
-          {currentStatus.replace(/_/g, ' ')}
+          {isCompleted ? 'Completed & Paid' : currentStatus.replace(/_/g, ' ')}
         </span>
       </div>
 
@@ -119,8 +121,8 @@ const BookingTimeline = ({ booking }) => {
       <div className="relative pl-6 space-y-6 before:absolute before:left-3 before:top-2 before:bottom-2 before:w-0.5 before:bg-slate-200">
         {STAGES.map((stage, idx) => {
           const stageRank = STATUS_RANK[stage.key];
-          const isDone = !isCancelled && effectiveRank > stageRank;
-          const isCurrent = !isCancelled && effectiveRank === stageRank;
+          const isDone = !isCancelled && (effectiveRank > stageRank || (isCompleted && stageRank <= 10));
+          const isCurrent = !isCancelled && !isDone && effectiveRank === stageRank;
           const eventTime = getEventTime(stage.key);
 
           const StageIcon = stage.icon;
