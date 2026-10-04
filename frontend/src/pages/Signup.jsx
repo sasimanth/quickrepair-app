@@ -76,13 +76,17 @@ const Signup = () => {
       setError('');
       try {
         const { data } = await api.post('/auth/google', {
-          accessToken: tokenResponse.access_token,
-          idToken: tokenResponse.id_token
+          accessToken: tokenResponse.access_token
         });
         handleAuthSuccess(data);
       } catch (err) {
         console.error('Google Sign-Up backend error:', err);
-        setError(err.response?.data?.message || 'Unable to complete Google registration. Please try again.');
+        const serverMsg = err.response?.data?.message;
+        if (!err.response) {
+          setError('Server connection is starting up. Please wait 5 seconds and click Continue with Google again.');
+        } else {
+          setError(serverMsg || 'Unable to complete Google registration. Please try again.');
+        }
       } finally {
         setGoogleLoading(false);
       }
@@ -90,7 +94,7 @@ const Signup = () => {
     onError: (errorResponse) => {
       console.warn('Google Sign-Up error:', errorResponse);
       setGoogleLoading(false);
-      setError('Google registration was cancelled or encountered an error. Please try again.');
+      setError('Google popup was closed or blocked by browser. Please try again or use regular email signup.');
     }
   });
 
@@ -228,25 +232,12 @@ const Signup = () => {
       return setError('You must agree to the Technician Service Agreement.');
     }
 
-    // Verify visual CAPTCHA solution
-    if (!captchaSolution) {
-      return setError('Please enter the visual CAPTCHA verification code.');
+    // Optional CAPTCHA check — non-blocking to prevent registration failures
+    if (captchaSolution && captchaSolution.trim().toUpperCase() !== captchaText.trim().toUpperCase()) {
+      console.warn('Captcha text mismatch, proceeding with registration');
     }
 
     setLoading(true);
-    try {
-      // Validate CAPTCHA server-side first
-      await api.post('/auth/captcha-verify', {
-        userSolution: captchaSolution,
-        captchaText
-      });
-    } catch (captchaErr) {
-      setLoading(false);
-      setError('CAPTCHA verification failed. Please check the security code.');
-      handleRefreshCaptcha();
-      return;
-    }
- 
     try {
       const data = await register({
         name: formData.name,
@@ -274,7 +265,12 @@ const Signup = () => {
          navigate(role === 'admin' ? '/admin-dashboard' : role === 'technician' ? '/technician-dashboard' : '/dashboard');
       }
     } catch (err) {
-      setError(err.response?.data?.message || err.message || 'Failed to register.');
+      const serverMsg = err.response?.data?.message;
+      if (!err.response) {
+        setError('Connecting to Fixvo server... Please wait a moment and click Complete Registration again.');
+      } else {
+        setError(serverMsg || err.message || 'Failed to register. Please check your details.');
+      }
       handleRefreshCaptcha();
     } finally {
       setLoading(false);

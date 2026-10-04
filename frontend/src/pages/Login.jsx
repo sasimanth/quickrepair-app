@@ -82,13 +82,17 @@ const Login = () => {
       setError('');
       try {
         const { data } = await api.post('/auth/google', {
-          accessToken: tokenResponse.access_token,
-          idToken: tokenResponse.id_token
+          accessToken: tokenResponse.access_token
         });
         handleAuthSuccess(data);
       } catch (err) {
         console.error('Google Sign-In backend error:', err);
-        setError(err.response?.data?.message || 'Unable to complete Google sign-in. Please try again.');
+        const serverMsg = err.response?.data?.message;
+        if (!err.response) {
+          setError('Server connection is starting up. Please wait 5 seconds and click Continue with Google again.');
+        } else {
+          setError(serverMsg || 'Unable to complete Google sign-in. Please try again.');
+        }
       } finally {
         setGoogleLoading(false);
       }
@@ -96,7 +100,7 @@ const Login = () => {
     onError: (errorResponse) => {
       console.warn('Google Sign-In error:', errorResponse);
       setGoogleLoading(false);
-      setError('Google sign-in was cancelled or encountered an error. Please try again.');
+      setError('Google popup was closed or blocked by browser. Please try again.');
     }
   });
 
