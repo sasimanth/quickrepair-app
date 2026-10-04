@@ -439,116 +439,7 @@ const Home = () => {
     );
   };
 
-  // Premium Fixvo Live Video Showcase Sub-Component (Only User 3 Videos)
-  const AnimatedVideoServicesShowcase = () => {
-    const videoServices = [
-      {
-        id: 'ac_repair',
-        name: 'Doorstep Repair & Diagnostics',
-        badge: '30-Min Dispatch',
-        desc: 'Certified Fixvo technicians conducting fast fault diagnosis and repairs.',
-        videoUrl: '/videos/repair.mp4',
-        poster: 'https://images.unsplash.com/photo-1621905251189-08b45d6a269e?q=80&w=600&auto=format&fit=crop',
-        icon: Zap
-      },
-      {
-        id: 'home_clean',
-        name: 'Deep Home Scrubbing & Care',
-        badge: '100% Sanitized',
-        desc: 'Hygienic deep cleaning, steam scrubbing, and surface disinfection.',
-        videoUrl: '/videos/cleaning.mp4',
-        poster: 'https://images.unsplash.com/photo-1527515637462-cff94eecc1ac?q=80&w=600&auto=format&fit=crop',
-        icon: Sparkles
-      },
-      {
-        id: 'painting',
-        name: 'Wall Painting & Color Touch-Ups',
-        badge: 'Clean Finish',
-        desc: 'Dust-free surface preparation, wall painting, and smooth finishing.',
-        videoUrl: '/videos/painting.mp4',
-        poster: 'https://images.unsplash.com/photo-1589939705384-5185137a7f0f?q=80&w=600&auto=format&fit=crop',
-        icon: Wind
-      }
-    ];
 
-    return (
-      <section className="mt-12 sm:mt-16 px-4 sm:px-0">
-        <div className="text-center max-w-2xl mx-auto mb-8">
-          <div className="inline-flex items-center gap-2 px-4 py-1 rounded-full bg-blue-500/10 border border-blue-500/20 text-blue-400 text-xs font-black uppercase tracking-widest mb-3">
-            <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
-            <span>Fixvo Live Work Reels</span>
-          </div>
-          <h2 className="text-3xl sm:text-4xl font-black text-white tracking-tight">
-            See Our Certified Fixers at Work
-          </h2>
-          <p className="text-slate-400 text-xs sm:text-sm mt-2 leading-relaxed">
-            Real video recordings of doorstep repairs, deep cleaning, and professional wall painting by police-verified Fixvo technicians.
-          </p>
-        </div>
-
-        {/* 3-Column Video Showcase Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          {videoServices.map((v) => {
-            const VIcon = v.icon;
-            return (
-              <motion.div
-                key={v.id}
-                whileHover={{ y: -6, scale: 1.01 }}
-                onClick={() => handleBookingClick(v.id)}
-                className="group relative rounded-[2.5rem] overflow-hidden border border-white/10 hover:border-blue-500/50 bg-slate-950 shadow-2xl cursor-pointer transition-all duration-300 min-h-[400px] flex flex-col justify-between p-6"
-              >
-                {/* Auto-Playing Looping Video Background */}
-                <video
-                  autoPlay
-                  loop
-                  muted
-                  playsInline
-                  poster={v.poster}
-                  className="absolute inset-0 w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
-                >
-                  <source src={v.videoUrl} type="video/mp4" />
-                </video>
-
-                <div className="absolute inset-0 bg-gradient-to-t from-slate-950 via-slate-950/40 to-slate-950/20 group-hover:opacity-90 transition-opacity"></div>
-
-                {/* Top Video Status Pill */}
-                <div className="relative z-10 flex items-center justify-between">
-                  <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-slate-950/80 backdrop-blur-md text-white font-extrabold text-[10px] uppercase tracking-wider border border-white/15">
-                    <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-ping"></span>
-                    <span>Fixvo Work</span>
-                  </span>
-
-                  <span className="px-3 py-1 rounded-full bg-blue-500/20 backdrop-blur-md text-blue-300 font-extrabold text-[10px] uppercase tracking-wider border border-blue-500/30">
-                    {v.badge}
-                  </span>
-                </div>
-
-                {/* Bottom Video Card Info */}
-                <div className="relative z-10 space-y-3 pt-24">
-                  <div className="w-10 h-10 rounded-2xl bg-blue-600/90 text-white flex items-center justify-center shadow-lg border border-white/10">
-                    <VIcon size={20} />
-                  </div>
-                  <div>
-                    <h4 className="font-extrabold text-lg text-white group-hover:text-blue-400 transition leading-snug">
-                      {v.name}
-                    </h4>
-                    <p className="text-xs text-slate-300 mt-1 leading-relaxed">
-                      {v.desc}
-                    </p>
-                  </div>
-                  <div className="pt-1">
-                    <span className="inline-flex items-center gap-1 text-xs font-black uppercase tracking-wider text-blue-400 group-hover:translate-x-1 transition-transform">
-                      Book Service →
-                    </span>
-                  </div>
-                </div>
-              </motion.div>
-            );
-          })}
-        </div>
-      </section>
-    );
-  };
 
   const getServicesByIds = (ids) => {
     return ids.map(id => (safeServices || []).find(s => s && s.id === id)).filter(Boolean);
@@ -696,8 +587,7 @@ const Home = () => {
           </div>
         </section>
 
-        {/* Animated Video Services Showcase */}
-        <AnimatedVideoServicesShowcase />
+
 
         {/* 4. HORIZONTAL SERVICE CAROUSELS SECTION */}
         <section id="services" className="space-y-4 sm:space-y-6 mt-6 sm:mt-10">

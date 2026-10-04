@@ -39,29 +39,27 @@ if (!process.env.RAZORPAY_WEBHOOK_SECRET) {
 }
 app.use(Sentry.Handlers.requestHandler());
 // ─── CORS configuration ───────────────────────────────────────────────────────
-// In production: restrict to FRONTEND_URL only.
-// In dev/test: allow all origins for local tooling.
-const productionOrigins = [
-  process.env.FRONTEND_URL,
-  'http://localhost:5173',
-  'http://localhost',
-  'https://localhost',
-  'capacitor://localhost'
-].filter(Boolean);
-
-const allowedOrigins = process.env.NODE_ENV === 'production'
-  ? productionOrigins
-  : ['*'];
-
 const corsOptions = {
-  origin: allowedOrigins.length === 1 && allowedOrigins[0] === '*'
-    ? '*'
-    : (origin, cb) => {
-        if (!origin || allowedOrigins.includes(origin)) return cb(null, true);
-        cb(new Error('CORS policy violation'));
-      },
-  methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH'],
-  allowedHeaders: ['Content-Type', 'Authorization', 'X-Request-Id']
+  origin: (origin, cb) => {
+    // Allow server-to-server, mobile app, or tools with no origin header
+    if (!origin) return cb(null, true);
+
+    // Allow all vercel deployment subdomains (*.vercel.app), render domains, localhost, capacitor, and configured FRONTEND_URL
+    const isVercel = /\.vercel\.app$/.test(origin);
+    const isRender = /\.onrender\.com$/.test(origin);
+    const isLocal = /^http:\/\/(localhost|127\.0\.0\.1)/.test(origin) || origin.startsWith('capacitor://');
+    const isExplicit = process.env.FRONTEND_URL && origin === process.env.FRONTEND_URL;
+
+    if (isVercel || isRender || isLocal || isExplicit || process.env.NODE_ENV !== 'production') {
+      return cb(null, true);
+    }
+
+    console.warn(`[CORS] Blocked request from origin: ${origin}`);
+    return cb(new Error('CORS policy violation'));
+  },
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization', 'X-Request-Id', 'Accept'],
+  credentials: true
 };
 
 const server = http.createServer(app);
