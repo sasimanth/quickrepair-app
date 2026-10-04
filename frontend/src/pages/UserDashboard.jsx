@@ -34,6 +34,7 @@ import LocationHeader from '../components/LocationHeader';
 import BookingTimeline from '../components/BookingTimeline';
 import { useLocation as useGeoLocation } from '../contexts/LocationContext';
 import fixvoLogo from '../assets/logos/fixvo-app-icon-dark.png';
+import TechOnboardingModal from '../components/TechOnboardingModal';
 
 const formatPhoneLink = (phone) => {
   if (!phone) return '';
@@ -128,6 +129,7 @@ const UserDashboard = () => {
   const toggleExpand = (id) => setExpandedBookings(prev => ({ ...prev, [id]: !prev[id] }));
   const [invoiceBooking, setInvoiceBooking] = useState(null);
   const [warrantyBooking, setWarrantyBooking] = useState(null);
+  const [showTechOnboarding, setShowTechOnboarding] = useState(false);
 
   const [profileForm, setProfileForm] = useState({
     name: '',
@@ -2102,7 +2104,7 @@ const UserDashboard = () => {
                           id: 'become-tech', 
                           title: 'Become a Technician (Earn With Us)', 
                           icon: Briefcase, 
-                          action: () => navigate('/technician-agreement'),
+                          action: () => setShowTechOnboarding(true),
                           badge: 'Join'
                         },
                         { 
@@ -2474,6 +2476,18 @@ const UserDashboard = () => {
         onOpenChat={(bId) => setChatBookingId(bId)}
         onOpenWallet={() => switchTab('wallet')}
       />
+
+      {/* Tech Onboarding Application Modal */}
+      {showTechOnboarding && (
+        <TechOnboardingModal 
+          userProfile={profile} 
+          onClose={() => setShowTechOnboarding(false)} 
+          onSuccess={() => {
+            setShowTechOnboarding(false);
+            showToast('Application Submitted! 🚀', 'Our partner team will verify your details and contact you shortly.', 'success', true);
+          }}
+        />
+      )}
     </div>
   );
 };

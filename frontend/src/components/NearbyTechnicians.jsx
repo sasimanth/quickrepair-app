@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Search, Star, ShieldCheck, MapPin, Sparkles, Loader2, Compass } from 'lucide-react';
+import { Search, Star, ShieldCheck, MapPin, Sparkles, Loader2, Compass, Tag, Check, ChevronDown, ChevronUp } from 'lucide-react';
 import api from '../services/api';
 
 const NearbyTechnicians = () => {
@@ -9,21 +9,21 @@ const NearbyTechnicians = () => {
   const [technicians, setTechnicians] = useState([]);
   const [loading, setLoading] = useState(false);
   const [services, setServices] = useState([]);
+  const [showAllTechs, setShowAllTechs] = useState(false);
+  const [appliedPromo, setAppliedPromo] = useState('FIXVO100');
 
-  // Fetch list of services for the filter dropdown
   useEffect(() => {
     const fetchServices = async () => {
       try {
         const { data } = await api.get('/services');
         setServices(data || []);
       } catch (err) {
-        console.error('Failed to fetch services for discovery', err);
+        console.error('Failed to fetch services', err);
       }
     };
     fetchServices();
   }, []);
 
-  // Local database of verified technicians for instant real-time filtering
   const localTechniciansPool = [
     { id: 'tech_1', _id: 'tech_1', name: "Amit Verma", rating: 4.9, jobsCompleted: 512, area: "Madanapalle", isVerified: true, isOnline: true, defaultServiceId: "ac_repair", experience: "5 Years", skills: ["AC Repair", "AC Installation", "Gas Refill"], avatar: "https://images.unsplash.com/photo-1621905251189-08b45d6a269e?q=80&w=200&auto=format&fit=crop" },
     { id: 'tech_2', _id: 'tech_2', name: "Suresh Kumar", rating: 4.8, jobsCompleted: 340, area: "Madanapalle", isVerified: true, isOnline: true, defaultServiceId: "ro_install", experience: "4 Years", skills: ["RO Installation", "Filter Change", "Plumbing"], avatar: "https://images.unsplash.com/photo-1540569014015-19a7be504e3a?q=80&w=200&auto=format&fit=crop" },
@@ -31,31 +31,24 @@ const NearbyTechnicians = () => {
     { id: 'tech_4', _id: 'tech_4', name: "Kalyan Naidu", rating: 4.7, jobsCompleted: 280, area: "Galiveedu", isVerified: true, isOnline: true, defaultServiceId: "plumbing_work", experience: "3 Years", skills: ["Plumbing Work", "Pipe Fitting", "Tap Repair"], avatar: "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?q=80&w=200&auto=format&fit=crop" },
     { id: 'tech_5', _id: 'tech_5', name: "Venkatesh Rao", rating: 4.8, jobsCompleted: 410, area: "Kadiri", isVerified: true, isOnline: true, defaultServiceId: "electric_wiring", experience: "5 Years", skills: ["Electric Wiring", "MCB Repair", "Inverter"], avatar: "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?q=80&w=200&auto=format&fit=crop" },
     { id: 'tech_6', _id: 'tech_6', name: "Narahari Sharma", rating: 4.9, jobsCompleted: 390, area: "Rayachoty", isVerified: true, isOnline: true, defaultServiceId: "home_clean", experience: "4 Years", skills: ["Full Home Cleaning", "Sofa Cleaning", "Sanitization"], avatar: "https://images.unsplash.com/photo-1519085360753-af0119f7cbe7?q=80&w=200&auto=format&fit=crop" },
-    { id: 'tech_7', _id: 'tech_7', name: "Prasad Raju", rating: 4.8, jobsCompleted: 290, area: "Galiveedu", isVerified: true, isOnline: true, defaultServiceId: "mobile_repair", experience: "3 Years", skills: ["Mobile Repair", "Screen Fix", "Battery Replacement"], avatar: "https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?q=80&w=200&auto=format&fit=crop" },
   ];
 
-  // Deduplicate array helper
   const deduplicate = (arr) => {
     const seen = new Set();
     return arr.filter(item => {
-      const key = item.id || item._id || item.userId || item.name;
+      const key = item.id || item._id || item.name;
       if (seen.has(key)) return false;
       seen.add(key);
       return true;
     });
   };
 
-  // Fetch technicians based on search query and selected service
   const fetchTechnicians = async () => {
     setLoading(true);
     try {
       const params = new URLSearchParams();
-      if (searchQuery.trim()) {
-        params.append('search', searchQuery.trim());
-      }
-      if (selectedServiceId) {
-        params.append('serviceId', selectedServiceId);
-      }
+      if (searchQuery.trim()) params.append('search', searchQuery.trim());
+      if (selectedServiceId) params.append('serviceId', selectedServiceId);
       
       const res = await api.get(`/technicians/nearby?${params.toString()}`);
       if (res.data && res.data.length > 0) {
@@ -86,7 +79,6 @@ const NearbyTechnicians = () => {
     setTechnicians(deduplicate(list));
   };
 
-  // Debounce search input to avoid hitting API continuously
   useEffect(() => {
     const delayDebounce = setTimeout(() => {
       fetchTechnicians();
@@ -96,55 +88,53 @@ const NearbyTechnicians = () => {
   }, [searchQuery, selectedServiceId]);
 
   const handleBookDirect = (techId, defaultServiceId) => {
-    const serviceParam = defaultServiceId || selectedServiceId || 'mobile_repair';
-    window.location.href = `/dashboard?action=book&techId=${techId}&service=${serviceParam}`;
+    const serviceParam = defaultServiceId || selectedServiceId || 'ac_repair';
+    const promoParam = appliedPromo ? `&promo=${appliedPromo}` : '';
+    window.location.href = `/dashboard?action=book&techId=${techId}&service=${serviceParam}${promoParam}`;
   };
 
-  return (
-    <section className="py-20 px-4 sm:px-6 lg:px-8 border-t border-white/5 relative overflow-hidden">
-      {/* Decorative Blob */}
-      <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[70%] h-[70%] bg-indigo-600/5 rounded-full blur-[160px] pointer-events-none"></div>
+  // Top Most Match Technician (Highest rating & verified)
+  const topMatchTech = technicians[0] || localTechniciansPool[0];
 
-      <div className="max-w-6xl mx-auto relative z-10">
-        <div className="text-center mb-12">
-          <motion.div 
-            initial={{ opacity: 0, y: 10 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
-            className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-indigo-500/10 border border-indigo-500/20 backdrop-blur-md mb-4"
-          >
-            <Compass className="text-indigo-400 w-4 h-4 animate-spin-slow" />
-            <span className="text-xs font-extrabold text-indigo-300 uppercase tracking-widest">Live network discovery</span>
-          </motion.div>
+  return (
+    <section className="py-16 px-4 sm:px-6 lg:px-8 border-t border-white/5 relative overflow-hidden">
+      <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[70%] h-[70%] bg-blue-600/5 rounded-full blur-[160px] pointer-events-none"></div>
+
+      <div className="max-w-5xl mx-auto relative z-10">
+        <div className="text-center mb-10">
+          <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-blue-50 border border-blue-200 text-blue-700 font-extrabold text-xs uppercase tracking-widest mb-3">
+            <Compass className="w-4 h-4 text-blue-600" />
+            <span>Smart Technician Matcher</span>
+          </div>
           
-          <h2 className="text-3xl sm:text-5xl font-black text-white tracking-tight">
-            Available Technicians Nearby
+          <h2 className="text-3xl sm:text-4xl font-black text-slate-900 tracking-tight">
+            Find & Book the Top Expert Instant
           </h2>
-          <p className="text-slate-400 mt-4 max-w-2xl mx-auto text-base sm:text-lg">
-            Locate verified, real-time online experts in your town. Search by area name to check instantly available partners.
+          <p className="text-slate-500 mt-2 max-w-xl mx-auto text-xs sm:text-sm font-semibold">
+            We automatically match you with the highest-rated verified technician serving your area. No endless scrolling required.
           </p>
         </div>
 
-        {/* Premium Search and Filter Bar */}
-        <div className="bg-[#101626]/70 border border-white/10 backdrop-blur-xl rounded-[2rem] p-5 sm:p-6 shadow-2xl mb-12 max-w-4xl mx-auto flex flex-col md:flex-row gap-4 items-center">
+        {/* Search & Area Selector Bar */}
+        <div className="bg-white border border-slate-200/90 rounded-[2rem] p-4 sm:p-5 shadow-lg mb-8 flex flex-col md:flex-row gap-3 items-center">
           <div className="relative w-full flex-1">
-            <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-500 w-5 h-5" />
+            <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 w-4 h-4" />
             <input
               type="text"
-              placeholder="Search your area (e.g. Galiveedu, Madanapalle, Kadiri, Rayachoty...)"
+              placeholder="Search area (e.g. Madanapalle, Kadiri, Rayachoty, Galiveedu...)"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full pl-12 pr-4 py-4 bg-slate-950/50 hover:bg-slate-950/70 focus:bg-slate-950 border border-white/5 focus:border-indigo-500/50 rounded-2xl text-white font-semibold text-sm outline-none transition-all placeholder:text-slate-500"
+              className="w-full pl-11 pr-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-slate-900 font-bold text-xs outline-none focus:border-blue-600 focus:bg-white transition-all placeholder:text-slate-400"
             />
           </div>
           
-          <div className="w-full md:w-64">
+          <div className="w-full md:w-56">
             <select
               value={selectedServiceId}
               onChange={(e) => setSelectedServiceId(e.target.value)}
-              className="w-full px-4 py-4 bg-slate-950/50 hover:bg-slate-950/70 focus:bg-slate-950 border border-white/5 focus:border-indigo-500/50 rounded-2xl text-slate-300 focus:text-white font-semibold text-sm outline-none transition-all cursor-pointer"
+              className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-slate-900 font-bold text-xs outline-none focus:border-blue-600 focus:bg-white transition-all cursor-pointer"
             >
-              <option value="">All Services offered</option>
+              <option value="">All Service Experts</option>
               {services.map(s => (
                 <option key={s.id} value={s.id}>{s.name}</option>
               ))}
@@ -152,124 +142,126 @@ const NearbyTechnicians = () => {
           </div>
         </div>
 
-        {/* Discovery Grid */}
-        <div className="min-h-[300px] relative">
-          {loading && (
-            <div className="absolute inset-0 flex items-center justify-center bg-[#0B0F19]/40 backdrop-blur-sm rounded-3xl z-20">
-              <Loader2 className="w-12 h-12 text-indigo-500 animate-spin" />
+        {/* TOP MATCHED TECHNICIAN FEATURED CARD */}
+        {topMatchTech && (
+          <div className="bg-gradient-to-br from-white via-blue-50/40 to-indigo-50/60 border-2 border-blue-500/80 rounded-[2.5rem] p-6 sm:p-8 shadow-xl mb-6 relative overflow-hidden text-left">
+            <div className="absolute top-0 right-0 bg-blue-600 text-white font-black text-[10px] uppercase tracking-widest px-4 py-1.5 rounded-bl-2xl shadow-sm flex items-center gap-1.5">
+              <Sparkles size={12} /> Top Recommended Match
             </div>
-          )}
 
-          <AnimatePresence mode="popLayout">
-            {technicians.length === 0 ? (
-              <motion.div 
-                initial={{ opacity: 0, scale: 0.98 }}
-                animate={{ opacity: 1, scale: 1 }}
-                exit={{ opacity: 0, scale: 0.98 }}
-                className="text-center py-16 bg-[#101626]/40 border border-white/5 rounded-[2rem] backdrop-blur-md"
-              >
-                <p className="text-slate-400 font-bold text-lg">No technicians currently online in "{searchQuery || 'this area'}"</p>
-                <p className="text-slate-500 text-sm mt-2">Try searching another area like "Galiveedu" or clear search parameters.</p>
-              </motion.div>
+            <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-6">
+              
+              {/* Tech Info */}
+              <div className="flex items-center gap-4">
+                <div className="relative shrink-0">
+                  <div className="w-16 h-16 sm:w-20 sm:h-20 bg-white border-2 border-blue-300 rounded-2xl flex items-center justify-center text-3xl shadow-md overflow-hidden">
+                    {topMatchTech.avatar && topMatchTech.avatar.startsWith('http') ? (
+                      <img src={topMatchTech.avatar} alt={topMatchTech.name} className="w-full h-full object-cover" />
+                    ) : (
+                      <span>{topMatchTech.avatar || '👨‍🔧'}</span>
+                    )}
+                  </div>
+                  <span className="absolute -top-1 -right-1 flex h-4 w-4">
+                    <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+                    <span className="relative inline-flex rounded-full h-4 w-4 bg-emerald-500 border-2 border-white"></span>
+                  </span>
+                </div>
+
+                <div className="space-y-1">
+                  <div className="flex items-center gap-2">
+                    <h3 className="text-xl sm:text-2xl font-black text-slate-900">{topMatchTech.name}</h3>
+                    <ShieldCheck size={18} className="text-blue-600 shrink-0" title="Verified Fixvo Pro" />
+                  </div>
+
+                  <div className="flex flex-wrap items-center gap-2 text-xs font-extrabold text-slate-600">
+                    <span className="flex items-center text-amber-500 bg-amber-50 px-2 py-0.5 rounded-md border border-amber-200">
+                      ★ {topMatchTech.rating || '4.9'}
+                    </span>
+                    <span>•</span>
+                    <span>{topMatchTech.experience || '5 Years'} Exp</span>
+                    <span>•</span>
+                    <span className="text-emerald-700">{topMatchTech.jobsCompleted || 500}+ Jobs Done</span>
+                  </div>
+
+                  <p className="text-xs text-slate-500 font-semibold flex items-center gap-1 mt-1">
+                    <MapPin size={13} className="text-blue-600" /> Serves: <strong className="text-slate-800">{topMatchTech.area || 'Madanapalle Town'}</strong>
+                  </p>
+                </div>
+              </div>
+
+              {/* Booking Actions & Promo Box */}
+              <div className="w-full md:w-auto flex flex-col items-stretch md:items-end gap-3 shrink-0">
+                {/* Promo Code Quick Selector */}
+                <div className="bg-white border border-emerald-200 rounded-xl p-2.5 flex items-center gap-2 text-xs shadow-xs">
+                  <Tag size={14} className="text-emerald-600 shrink-0" />
+                  <span className="text-slate-600 font-bold">Promo: <strong className="text-emerald-700 font-black">{appliedPromo}</strong></span>
+                  <span className="text-[10px] bg-emerald-100 text-emerald-800 font-black px-2 py-0.5 rounded uppercase ml-auto">₹100 OFF</span>
+                </div>
+
+                {/* Primary Book Button */}
+                <button
+                  type="button"
+                  onClick={() => handleBookDirect(topMatchTech.id || topMatchTech._id, topMatchTech.defaultServiceId)}
+                  className="py-3.5 px-8 bg-blue-600 hover:bg-blue-700 text-white font-black text-xs uppercase tracking-wider rounded-xl shadow-md transition-all border-none cursor-pointer text-center active:scale-98"
+                >
+                  Book Top Match Expert (₹0 Service Fee)
+                </button>
+              </div>
+
+            </div>
+          </div>
+        )}
+
+        {/* Toggle to view more technicians */}
+        <div className="text-center">
+          <button
+            type="button"
+            onClick={() => setShowAllTechs(!showAllTechs)}
+            className="inline-flex items-center gap-1.5 px-4 py-2 bg-white hover:bg-slate-50 border border-slate-200 text-slate-700 font-extrabold text-xs rounded-full cursor-pointer transition-all shadow-xs"
+          >
+            {showAllTechs ? (
+              <><span>Hide Other Technicians</span> <ChevronUp size={14} /></>
             ) : (
-              <motion.div 
-                layout
-                className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6"
-              >
-                {technicians.map((tech) => {
-                  const techKey = tech.id || tech._id || tech.name;
-                  const isVerifiedTech = tech.isVerified || tech.verified;
-                  const jobsCount = tech.jobsCompleted || tech.completedJobs || 0;
-                  return (
-                    <motion.div
-                      key={techKey}
-                      layout
-                      initial={{ opacity: 0, y: 20 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      exit={{ opacity: 0, y: -20 }}
-                      transition={{ duration: 0.4 }}
-                      className="group relative bg-gradient-to-b from-[#161D2E]/90 to-[#0F1422]/90 border border-white/5 rounded-[2rem] p-6 shadow-xl hover:border-indigo-500/30 hover:shadow-indigo-500/5 transition-all duration-300 flex flex-col justify-between"
-                    >
-                      <div>
-                        {/* Card Header */}
-                        <div className="flex justify-between items-start mb-4">
-                          <div className="relative">
-                            <div className="w-14 h-14 bg-slate-900 border border-white/10 rounded-2xl flex items-center justify-center text-3xl shadow-inner group-hover:scale-105 transition-transform duration-300 overflow-hidden">
-                              {tech.avatar && tech.avatar.startsWith('http') ? (
-                                <img src={tech.avatar} alt={tech.name} className="w-full h-full object-cover" />
-                              ) : (
-                                <span>{tech.avatar || '👨‍🔧'}</span>
-                              )}
-                            </div>
-                            {/* Live Online Badge */}
-                            <span className="absolute -top-1 -right-1 flex h-3.5 w-3.5">
-                              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
-                              <span className="relative inline-flex rounded-full h-3.5 w-3.5 bg-emerald-500 border-2 border-[#161D2E]"></span>
-                            </span>
-                          </div>
-
-                          <div className="flex items-center gap-1.5 bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 px-2.5 py-1 rounded-lg text-[10px] font-black uppercase tracking-wider">
-                            <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
-                            Online
-                          </div>
-                        </div>
-
-                        {/* Profile details */}
-                        <div className="space-y-1 text-left">
-                          <div className="flex items-center gap-1.5">
-                            <h4 className="font-extrabold text-white text-lg tracking-tight truncate group-hover:text-indigo-300 transition-colors">
-                              {tech.name}
-                            </h4>
-                            {isVerifiedTech && (
-                              <ShieldCheck size={16} className="text-indigo-400 shrink-0" title="Verified Professional" />
-                            )}
-                          </div>
-
-                          <div className="flex items-center gap-2 text-xs sm:text-sm text-slate-400">
-                            <span className="flex items-center text-amber-400 font-bold">
-                              <Star size={14} className="fill-current mr-1 text-amber-400" />
-                              {tech.rating || '4.8'}
-                            </span>
-                            <span>•</span>
-                            <span>{tech.experience || '3+ Years'} Exp</span>
-                            <span>•</span>
-                            <span>{jobsCount} Jobs Done</span>
-                          </div>
-
-                          <p className="text-xs text-slate-500 flex items-center gap-1 mt-2.5 font-medium select-none">
-                            <MapPin size={12} className="text-slate-500" />
-                            Serves Area: <span className="text-slate-400 font-semibold">{tech.area || 'Nearby'}</span>
-                          </p>
-                        </div>
-
-                        {/* Skills tags */}
-                        <div className="flex flex-wrap gap-1.5 mt-5">
-                          {tech.skills && tech.skills.slice(0, 3).map((skill, index) => (
-                            <span 
-                              key={index}
-                              className="bg-white/5 border border-white/5 text-slate-400 text-[10px] font-extrabold px-2.5 py-1 rounded-md uppercase tracking-wider"
-                            >
-                              {skill}
-                            </span>
-                          ))}
-                        </div>
-                      </div>
-
-                      {/* Book Now Button */}
-                      <button
-                        type="button"
-                        onClick={() => handleBookDirect(techKey, tech.defaultServiceId || tech.services?.[0])}
-                        className="mt-6 w-full py-3.5 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white text-xs font-black uppercase tracking-wider rounded-xl transition-all shadow-md group-hover:shadow-lg active:scale-95 duration-150 border-none cursor-pointer outline-none"
-                      >
-                        Book Professional
-                      </button>
-                    </motion.div>
-                  );
-                })}
-              </motion.div>
+              <><span>Compare All Technicians ({technicians.length})</span> <ChevronDown size={14} /></>
             )}
-          </AnimatePresence>
+          </button>
         </div>
+
+        {/* Collapsible List of Other Technicians */}
+        {showAllTechs && (
+          <div className="mt-6 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 animate-in fade-in duration-300">
+            {technicians.map((tech) => {
+              const techKey = tech.id || tech._id || tech.name;
+              return (
+                <div 
+                  key={techKey}
+                  className="bg-white border border-slate-200/90 rounded-2xl p-4 shadow-xs flex items-center justify-between gap-3 text-left"
+                >
+                  <div className="flex items-center gap-3 min-w-0">
+                    <div className="w-12 h-12 bg-slate-100 border border-slate-200 rounded-xl flex items-center justify-center text-xl overflow-hidden shrink-0">
+                      {tech.avatar && tech.avatar.startsWith('http') ? (
+                        <img src={tech.avatar} alt={tech.name} className="w-full h-full object-cover" />
+                      ) : (
+                        <span>{tech.avatar || '👨‍🔧'}</span>
+                      )}
+                    </div>
+                    <div className="min-w-0">
+                      <h4 className="font-extrabold text-xs text-slate-900 truncate">{tech.name}</h4>
+                      <p className="text-[10px] text-slate-500 font-semibold">★ {tech.rating || '4.8'} • {tech.area}</p>
+                    </div>
+                  </div>
+                  <button
+                    onClick={() => handleBookDirect(techKey, tech.defaultServiceId)}
+                    className="px-3 py-2 bg-blue-50 text-blue-700 hover:bg-blue-600 hover:text-white font-extrabold text-[10px] uppercase tracking-wider rounded-lg transition-all border border-blue-200 shrink-0 cursor-pointer"
+                  >
+                    Select
+                  </button>
+                </div>
+              );
+            })}
+          </div>
+        )}
+
       </div>
     </section>
   );

@@ -539,34 +539,38 @@ const Home = () => {
           </motion.div>
         </section>
 
-        {/* 3. HOW FIXVO WORKS IN 4 STEPS (New Highlighted Section) */}
-        <section className="my-12 py-10 px-6 bg-gradient-to-br from-blue-600 via-indigo-600 to-indigo-700 rounded-[2.5rem] shadow-xl text-white relative overflow-hidden">
-          <div className="absolute top-0 right-0 w-80 h-80 bg-white/10 rounded-full blur-3xl pointer-events-none"></div>
+        {/* 3. HOW FIXVO WORKS IN 4 STEPS (Premium White Card Theme) */}
+        <section className="my-12 py-10 px-6 sm:px-10 bg-white border border-slate-200/90 rounded-[2.5rem] shadow-xl text-slate-900 relative overflow-hidden">
+          <div className="absolute top-0 right-0 w-80 h-80 bg-blue-50/60 rounded-full blur-3xl pointer-events-none"></div>
           
           <div className="text-center max-w-2xl mx-auto mb-10 relative z-10">
-            <span className="px-3.5 py-1 rounded-full bg-white/20 text-white font-extrabold text-xs uppercase tracking-widest backdrop-blur-md border border-white/20">
-              Simple & Fast
+            <span className="px-3.5 py-1 rounded-full bg-blue-50 text-blue-700 font-extrabold text-xs uppercase tracking-widest border border-blue-200/80">
+              Simple & Fast Workflow
             </span>
-            <h2 className="text-3xl sm:text-4xl font-black tracking-tight mt-3">How Fixvo Works in 4 Easy Steps</h2>
-            <p className="text-blue-100 text-xs sm:text-sm mt-2 font-medium">Get doorstep repairs and home services done hassle-free in minutes.</p>
+            <h2 className="text-3xl sm:text-4xl font-black tracking-tight text-slate-900 mt-3">How Fixvo Works in 4 Easy Steps</h2>
+            <p className="text-slate-500 text-xs sm:text-sm mt-2 font-semibold">Get doorstep repairs and home services done hassle-free in minutes.</p>
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 relative z-10">
             {[
-              { step: "01", title: "Select Service", desc: "Choose from 25+ repair, installation, or cleaning services.", icon: "📱" },
-              { step: "02", title: "Instant Match", desc: "Police-verified local fixer assigned & dispatched in 30 mins.", icon: "⚡" },
-              { step: "03", title: "Upfront Quote", desc: "Approve the transparent in-app quote before any work starts.", icon: "📋" },
-              { step: "04", title: "Pay & Warranty", desc: "Pay via online or cash after completion with 30-day warranty.", icon: "✨" },
+              { step: "01", title: "Select Service", desc: "Choose from 25+ repair, installation, or cleaning services.", icon: "📱", badge: "bg-blue-50 text-blue-600 border-blue-100" },
+              { step: "02", title: "Instant Match", desc: "Police-verified local fixer assigned & dispatched in 30 mins.", icon: "⚡", badge: "bg-amber-50 text-amber-600 border-amber-100" },
+              { step: "03", title: "Upfront Quote", desc: "Approve the transparent in-app quote before any work starts.", icon: "📋", badge: "bg-purple-50 text-purple-600 border-purple-100" },
+              { step: "04", title: "Pay & Warranty", desc: "Pay via online or cash after completion with 30-day warranty.", icon: "✨", badge: "bg-emerald-50 text-emerald-600 border-emerald-100" },
             ].map((s, idx) => (
-              <div key={idx} className="bg-white/10 border border-white/20 backdrop-blur-md rounded-2xl p-6 relative flex flex-col justify-between hover:bg-white/15 transition duration-300">
-                <span className="text-xs font-black text-blue-200 tracking-widest uppercase">Step {s.step}</span>
-                <div className="my-4">
-                  <div className="text-3xl mb-2">{s.icon}</div>
-                  <h3 className="font-extrabold text-lg text-white mb-1">{s.title}</h3>
-                  <p className="text-xs text-blue-100 leading-relaxed font-normal">{s.desc}</p>
+              <div key={idx} className="bg-slate-50/80 border border-slate-200/80 rounded-2xl p-6 relative flex flex-col justify-between hover:bg-white hover:shadow-md transition-all duration-300">
+                <div className="flex items-center justify-between">
+                  <span className="text-xs font-black text-slate-400 tracking-widest uppercase">Step {s.step}</span>
+                  <span className={`w-9 h-9 rounded-xl flex items-center justify-center text-xl border ${s.badge}`}>
+                    {s.icon}
+                  </span>
                 </div>
-                <div className="w-full h-1 bg-white/20 rounded-full overflow-hidden mt-2">
-                  <div className="h-full bg-emerald-400 rounded-full" style={{ width: `${(idx + 1) * 25}%` }}></div>
+                <div className="my-4 text-left">
+                  <h3 className="font-black text-lg text-slate-900 mb-1">{s.title}</h3>
+                  <p className="text-xs text-slate-500 leading-relaxed font-medium">{s.desc}</p>
+                </div>
+                <div className="w-full h-1.5 bg-slate-200 rounded-full overflow-hidden mt-2">
+                  <div className="h-full bg-blue-600 rounded-full" style={{ width: `${(idx + 1) * 25}%` }}></div>
                 </div>
               </div>
             ))}
@@ -1131,6 +1135,22 @@ const Home = () => {
 
       {/* Open App Modal */}
       <OpenAppModal isOpen={isAppModalOpen} onClose={() => setIsAppModalOpen(false)} />
+
+      {/* Unified App & Website Auth Modal */}
+      {showAuthModal && (
+        <AuthModal 
+          onClose={() => setShowAuthModal(false)}
+          onSuccess={() => {
+            setShowAuthModal(false);
+            if (postAuthAction) {
+              postAuthAction();
+              setPostAuthAction(null);
+            } else {
+              navigate('/dashboard');
+            }
+          }}
+        />
+      )}
 
       </div>
 
