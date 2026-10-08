@@ -1,76 +1,37 @@
 import React, { useState, useEffect } from 'react';
-import { useNavigate, useLocation } from 'react-router-dom';
-import { Mail, Lock, User, Phone, X, Loader2, ArrowRight, ChevronDown, ArrowLeft } from 'lucide-react';
+import { useNavigate, Link } from 'react-router-dom';
+import { Loader2, ChevronDown, ArrowLeft } from 'lucide-react';
 import { useGoogleLogin } from '@react-oauth/google';
 import { Capacitor } from '@capacitor/core';
 import { SocialLogin } from '@capgo/capacitor-social-login';
-import { login, register } from '../services/auth';
+import { login } from '../services/auth';
 import { useAuth } from '../contexts/AuthContext';
 import fixvoLogo from '../assets/logos/fixvo-app-icon-dark.png';
 import api from '../services/api';
 import { classifyAuthError } from '../utils/errorClassifier';
-import SearchableServiceSelector from '../components/SearchableServiceSelector';
-import SearchableAreaSelector from '../components/SearchableAreaSelector';
 
-const Login = ({ initialMode }) => {
+const Login = () => {
   const navigate = useNavigate();
-  const location = useLocation();
   const { loginUser, setUser } = useAuth();
 
-  const getInitialMode = () => {
-    if (initialMode) return initialMode;
-    if (location.pathname === '/signup') return 'signup';
-    return 'phone';
-  };
-
-  const [authMode, setAuthMode] = useState(getInitialMode); // 'phone', 'email', 'signup'
+  const [authMode, setAuthMode] = useState('phone'); // 'phone', 'email'
   const [phone, setPhone] = useState('');
-  const [formData, setFormData] = useState({
-    name: '',
-    email: '',
-    phone: '',
-    password: '',
-    role: 'user',
-    skills: [],
-    location: ''
-  });
-  const [agreeTerms, setAgreeTerms] = useState(true);
+  const [emailData, setEmailData] = useState({ email: '', password: '' });
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
   const [googleLoading, setGoogleLoading] = useState(false);
 
-  // Synchronize mode when location route changes
-  useEffect(() => {
-    if (!initialMode) {
-      if (location.pathname === '/signup') {
-        setAuthMode('signup');
-      } else if (location.pathname === '/login') {
-        setAuthMode('phone');
-      }
-    }
-  }, [location.pathname, initialMode]);
+  const isNative = Capacitor.isNativePlatform() || Capacitor.getPlatform() !== 'web';
 
   // Pre-initialize native SocialLogin on Android/iOS
   useEffect(() => {
-    const isNative = Capacitor.isNativePlatform() || Capacitor.getPlatform() !== 'web';
     if (isNative) {
       const webClientId = (import.meta.env.VITE_GOOGLE_CLIENT_ID || '232674695663-poi562drcj2t6s6usrh84vbbnrn7maib.apps.googleusercontent.com').trim();
       SocialLogin.initialize({
         google: { webClientId }
       }).catch(err => console.warn('SocialLogin init warning:', err));
     }
-  }, []);
-
-  const passwordStrength = {
-    length: formData.password.length >= 8,
-    uppercase: /[A-Z]/.test(formData.password),
-    number: /[0-9]/.test(formData.password),
-    specialChar: /[^A-Za-z0-9]/.test(formData.password)
-  };
-
-  const handleChange = (e) => {
-    setFormData({ ...formData, [e.target.name]: e.target.value });
-  };
+  }, [isNative]);
 
   const handleAuthSuccess = async (data) => {
     const userObj = data.user || data;
@@ -122,42 +83,10 @@ const Login = ({ initialMode }) => {
     setError('');
     setLoading(true);
     try {
-      let data;
-      if (authMode === 'signup') {
-        if (!agreeTerms) {
-          setError('Please accept Terms of Use & Privacy Policy to register.');
-          setLoading(false);
-          return;
-        }
-        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-        if (!emailRegex.test(formData.email)) {
-          setError('Please enter a valid email address.');
-          setLoading(false);
-          return;
-        }
-        const phoneDigits = (formData.phone || phone).replace(/\D/g, '');
-        if (phoneDigits.length < 10) {
-          setError('Please enter a valid 10-digit mobile phone number.');
-          setLoading(false);
-          return;
-        }
-
-        data = await register({
-          name: formData.name,
-          email: formData.email,
-          phone: phoneDigits,
-          password: formData.password,
-          role: formData.role || 'user',
-          skills: formData.role === 'technician' ? formData.skills : [],
-          location: formData.role === 'technician' ? formData.location : ''
-        });
-      } else {
-        data = await login({
-          email: formData.email,
-          password: formData.password
-        });
-      }
-
+      const data = await login({
+        email: emailData.email,
+        password: emailData.password
+      });
       await handleAuthSuccess(data);
     } catch (err) {
       const classified = classifyAuthError(err);
@@ -230,7 +159,6 @@ const Login = ({ initialMode }) => {
 
   const triggerGoogleLogin = () => {
     setError('');
-    const isNative = Capacitor.isNativePlatform() || Capacitor.getPlatform() !== 'web';
     if (isNative) {
       handleNativeGoogleLogin();
     } else {
@@ -238,15 +166,13 @@ const Login = ({ initialMode }) => {
     }
   };
 
-  const isNative = Capacitor.isNativePlatform() || Capacitor.getPlatform() !== 'web';
-
   return (
     <div className="min-h-screen bg-slate-100 flex items-center justify-center sm:p-4">
-      {/* Mobile view full stretchable container */}
+      {/* Mobile view full stretchable container matching App Login Page */}
       <div className="relative w-full min-h-screen sm:min-h-0 sm:max-w-md bg-white sm:rounded-[2.5rem] shadow-2xl border-0 sm:border border-slate-200 p-6 sm:p-8 text-slate-900 text-left flex flex-col justify-between">
         
         <div>
-          {/* Top Bar: Back to Home (Web) & Skip Button (App & Web) */}
+          {/* Top Bar: Back to Home (Web Only) & Skip Button */}
           <div className="flex justify-between items-center mb-4">
             {!isNative ? (
               <button 
@@ -277,14 +203,12 @@ const Login = ({ initialMode }) => {
           {/* Headline & Subtitle */}
           <div className="mb-5">
             <h2 className="text-2xl sm:text-3xl font-extrabold text-slate-900 tracking-tight">
-              {authMode === 'phone' ? 'Enter your phone number' : authMode === 'signup' ? 'Create new account' : 'Welcome back'}
+              {authMode === 'phone' ? 'Enter your phone number' : 'Welcome back'}
             </h2>
             <p className="text-slate-500 text-xs sm:text-sm mt-1 font-medium leading-relaxed">
               {authMode === 'phone' 
                 ? "We'll send you a text with a verification code. Standard tariff may apply." 
-                : authMode === 'signup' 
-                  ? 'Join Fixvo to book instant doorstep repairs and track service visits.' 
-                  : 'Sign in to access your saved addresses, bookings, and rewards.'}
+                : 'Sign in to access your saved addresses, bookings, and rewards.'}
             </p>
           </div>
 
@@ -325,46 +249,17 @@ const Login = ({ initialMode }) => {
             </form>
           )}
 
-          {/* Signup Registration Form & Email Form */}
-          {(authMode === 'email' || authMode === 'signup') && (
+          {/* Email Input Mode */}
+          {authMode === 'email' && (
             <form onSubmit={handleEmailSubmit} className="space-y-3">
-              {authMode === 'signup' && (
-                <>
-                  <div>
-                    <label className="text-[10px] font-extrabold text-slate-400 uppercase tracking-wider block ml-1 mb-1">Full Name</label>
-                    <input 
-                      type="text" 
-                      required 
-                      name="name" 
-                      value={formData.name} 
-                      onChange={handleChange}
-                      className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-2xl text-xs font-bold text-slate-900 focus:border-blue-600 focus:bg-white outline-none transition-all" 
-                      placeholder="Enter your full name"
-                    />
-                  </div>
-                  <div>
-                    <label className="text-[10px] font-extrabold text-slate-400 uppercase tracking-wider block ml-1 mb-1">Mobile Phone Number</label>
-                    <input 
-                      type="tel" 
-                      required 
-                      name="phone" 
-                      value={formData.phone} 
-                      onChange={handleChange}
-                      className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-2xl text-xs font-bold text-slate-900 focus:border-blue-600 focus:bg-white outline-none transition-all" 
-                      placeholder="10-digit mobile number"
-                    />
-                  </div>
-                </>
-              )}
-
               <div>
                 <label className="text-[10px] font-extrabold text-slate-400 uppercase tracking-wider block ml-1 mb-1">Email Address</label>
                 <input 
                   type="email" 
                   required 
                   name="email" 
-                  value={formData.email} 
-                  onChange={handleChange}
+                  value={emailData.email} 
+                  onChange={(e) => setEmailData({ ...emailData, email: e.target.value })}
                   className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-2xl text-xs font-bold text-slate-900 focus:border-blue-600 focus:bg-white outline-none transition-all" 
                   placeholder="name@example.com"
                 />
@@ -376,94 +271,19 @@ const Login = ({ initialMode }) => {
                   type="password" 
                   required 
                   name="password" 
-                  value={formData.password} 
-                  onChange={handleChange}
+                  value={emailData.password} 
+                  onChange={(e) => setEmailData({ ...emailData, password: e.target.value })}
                   className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-2xl text-xs font-bold text-slate-900 focus:border-blue-600 focus:bg-white outline-none transition-all" 
                   placeholder="••••••••"
                 />
-                {authMode === 'signup' && formData.password && (
-                  <div className="mt-2 bg-slate-50 border border-slate-200 rounded-xl p-2.5 grid grid-cols-2 gap-1 text-[11px] font-bold">
-                    <div className={`flex items-center gap-1 ${passwordStrength.length ? 'text-emerald-600' : 'text-slate-400'}`}>
-                      <span>{passwordStrength.length ? '✓' : '•'}</span> 8+ Chars
-                    </div>
-                    <div className={`flex items-center gap-1 ${passwordStrength.uppercase ? 'text-emerald-600' : 'text-slate-400'}`}>
-                      <span>{passwordStrength.uppercase ? '✓' : '•'}</span> Uppercase
-                    </div>
-                    <div className={`flex items-center gap-1 ${passwordStrength.number ? 'text-emerald-600' : 'text-slate-400'}`}>
-                      <span>{passwordStrength.number ? '✓' : '•'}</span> Number
-                    </div>
-                    <div className={`flex items-center gap-1 ${passwordStrength.specialChar ? 'text-emerald-600' : 'text-slate-400'}`}>
-                      <span>{passwordStrength.specialChar ? '✓' : '•'}</span> Special Char
-                    </div>
-                  </div>
-                )}
               </div>
-
-              {authMode === 'signup' && (
-                <>
-                  <div>
-                    <label className="text-[10px] font-extrabold text-slate-400 uppercase tracking-wider block ml-1 mb-1">I am registering as</label>
-                    <select 
-                      name="role" 
-                      value={formData.role} 
-                      onChange={handleChange}
-                      className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-2xl text-xs font-bold text-slate-900 focus:border-blue-600 focus:bg-white outline-none cursor-pointer transition-all"
-                    >
-                      <option value="user">Customer (I need doorstep repairs)</option>
-                      <option value="technician">Technician (I want to earn as a fixer)</option>
-                    </select>
-                  </div>
-
-                  {formData.role === 'technician' && (
-                    <div className="p-3.5 bg-blue-50/60 rounded-2xl space-y-2.5 border border-blue-100/50">
-                      <h4 className="font-extrabold text-blue-900 text-xs border-b border-blue-100 pb-1">Technician Details</h4>
-                      <div className="space-y-2">
-                        <div className="space-y-1">
-                          <label className="text-[10px] font-extrabold text-blue-900 uppercase tracking-widest block">
-                            Services You Offer
-                          </label>
-                          <SearchableServiceSelector
-                            value={formData.skills}
-                            onChange={(skills) => setFormData(prev => ({ ...prev, skills }))}
-                            multiSelect={true}
-                            theme="light"
-                            placeholder="Search services..."
-                          />
-                        </div>
-
-                        <div className="space-y-1">
-                          <label className="text-[10px] font-extrabold text-blue-900 uppercase tracking-widest block">
-                            Service Area
-                          </label>
-                          <SearchableAreaSelector
-                            value={formData.location}
-                            onChange={(location) => setFormData(prev => ({ ...prev, location }))}
-                            theme="light"
-                            placeholder="Search city..."
-                          />
-                        </div>
-                      </div>
-                    </div>
-                  )}
-
-                  <label className="flex items-center gap-2 pt-1 cursor-pointer select-none text-xs text-slate-600 font-semibold">
-                    <input 
-                      type="checkbox" 
-                      checked={agreeTerms} 
-                      onChange={(e) => setAgreeTerms(e.target.checked)} 
-                      className="w-4 h-4 text-blue-600 rounded border-slate-300 focus:ring-blue-500 cursor-pointer"
-                    />
-                    <span>I agree to <a href="/terms" target="_blank" className="text-blue-600 underline">Terms of Use</a> & <a href="/privacy" target="_blank" className="text-blue-600 underline">Privacy Policy</a></span>
-                  </label>
-                </>
-              )}
 
               <button
                 type="submit"
                 disabled={loading}
                 className="w-full py-3.5 bg-blue-600 hover:bg-blue-700 text-white font-extrabold text-sm rounded-2xl transition-all shadow-md flex items-center justify-center gap-2 cursor-pointer border-none outline-none mt-2 active:scale-98"
               >
-                {loading ? <Loader2 className="animate-spin" size={18} /> : authMode === 'signup' ? 'Complete Registration' : 'Sign In'}
+                {loading ? <Loader2 className="animate-spin" size={18} /> : 'Sign In'}
               </button>
             </form>
           )}
@@ -499,33 +319,22 @@ const Login = ({ initialMode }) => {
           </button>
         </div>
 
-        {/* Bottom Navigation & Account Switch Toggles */}
+        {/* Bottom Navigation Links */}
         <div className="mt-6 pt-4 border-t border-slate-100 text-xs font-bold text-slate-600">
           {authMode === 'phone' ? (
             <div className="flex items-center justify-between">
-              <button 
-                type="button" 
-                onClick={() => { setAuthMode('signup'); setError(''); }} 
-                className="text-blue-600 hover:underline cursor-pointer border-none bg-transparent font-bold text-xs"
+              <Link 
+                to="/signup" 
+                className="text-blue-600 hover:underline cursor-pointer font-bold text-xs"
               >
                 New user? Create Account
-              </button>
+              </Link>
               <button 
                 type="button" 
                 onClick={() => { setAuthMode('email'); setError(''); }} 
                 className="text-slate-600 hover:text-slate-900 underline cursor-pointer border-none bg-transparent font-bold text-xs"
               >
                 Email Login
-              </button>
-            </div>
-          ) : authMode === 'signup' ? (
-            <div className="text-center">
-              <button 
-                type="button" 
-                onClick={() => { setAuthMode('phone'); setError(''); }} 
-                className="text-blue-600 hover:underline cursor-pointer border-none bg-transparent font-bold text-xs"
-              >
-                Already have an account? Sign In
               </button>
             </div>
           ) : (
@@ -552,4 +361,5 @@ const Login = ({ initialMode }) => {
 };
 
 export default Login;
+
 
