@@ -999,31 +999,31 @@ const Home = () => {
 
         {/* 10. GET STARTED & MOBILE ROLLOUT SECTION (Fixvo Unique) */}
         <section className="mt-24 sm:mt-32">
-          <div className="relative overflow-hidden rounded-[2.5rem] border border-white/10 bg-gradient-to-br from-slate-900 via-slate-900 to-indigo-950/80 p-8 sm:p-12 shadow-2xl">
+          <div className="relative overflow-hidden rounded-[2.5rem] border border-blue-200/80 bg-gradient-to-br from-blue-50/90 via-slate-50 to-indigo-50/80 p-8 sm:p-12 shadow-lg text-slate-900">
             <div className="grid gap-8 lg:grid-cols-2 items-center">
               <div>
-                <span className="inline-block rounded-full bg-blue-500/10 px-3 py-1 text-xs font-black uppercase tracking-widest text-blue-400 border border-blue-500/20 mb-4">
+                <span className="inline-block rounded-full bg-blue-100 px-3.5 py-1 text-xs font-black uppercase tracking-widest text-blue-800 border border-blue-200 mb-4">
                   Fixvo Mobile App
                 </span>
-                <h2 className="text-3xl sm:text-4xl md:text-5xl font-black text-white tracking-tight leading-tight">
+                <h2 className="text-3xl sm:text-4xl md:text-5xl font-black text-slate-900 tracking-tight leading-tight">
                   Your Home Repairs, Simplified on Mobile.
                 </h2>
-                <p className="mt-4 text-sm sm:text-base text-slate-300 leading-relaxed max-w-lg">
+                <p className="mt-4 text-sm sm:text-base text-slate-600 leading-relaxed max-w-lg font-medium">
                   Request instant repairs, track technician arrival live on the map, and approve digital job estimates right from your phone.
                 </p>
 
                 <div className="flex flex-wrap gap-3 mt-8">
                   <button
                     onClick={() => setIsAppModalOpen(true)}
-                    className="px-6 py-3.5 bg-white text-slate-950 font-black text-xs sm:text-sm rounded-full shadow-lg hover:bg-slate-100 transition cursor-pointer border-none flex items-center gap-2"
+                    className="px-6 py-3.5 bg-blue-600 hover:bg-blue-700 text-white font-black text-xs sm:text-sm rounded-full shadow-md hover:shadow-lg transition cursor-pointer border-none flex items-center gap-2"
                   >
-                    <Smartphone size={16} className="text-blue-600" />
+                    <Smartphone size={16} className="text-white" />
                     <span>Open App</span>
                     <ArrowRight size={14} />
                   </button>
                   <Link
                     to="/technician-agreement"
-                    className="px-6 py-3.5 bg-slate-800 text-white font-black text-xs sm:text-sm rounded-full border border-slate-700 hover:bg-slate-700 transition cursor-pointer no-underline"
+                    className="px-6 py-3.5 bg-white text-slate-800 font-extrabold text-xs sm:text-sm rounded-full border border-slate-300 hover:bg-slate-100 transition cursor-pointer no-underline shadow-2xs"
                   >
                     Earn As A Fixer
                   </Link>
@@ -1032,40 +1032,40 @@ const Home = () => {
 
               <div className="space-y-4">
                 {/* Why Homeowners Choose Fixvo */}
-                <div className="rounded-2xl border border-white/10 bg-white/[0.03] p-5 backdrop-blur-md">
-                  <p className="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-3">Why Homeowners Trust Fixvo</p>
-                  <ul className="space-y-2 text-xs font-semibold text-slate-300">
-                    <li className="flex items-center gap-2">
-                      <span className="w-1.5 h-1.5 rounded-full bg-blue-400"></span>
+                <div className="rounded-2xl border border-slate-200/90 bg-white p-5 shadow-sm">
+                  <p className="text-[10px] font-black uppercase tracking-widest text-blue-700 mb-3">Why Homeowners Trust Fixvo</p>
+                  <ul className="space-y-2.5 text-xs font-bold text-slate-700">
+                    <li className="flex items-center gap-2.5">
+                      <span className="w-2 h-2 rounded-full bg-blue-600 shrink-0"></span>
                       <span>Upfront digital estimates approved before work begins</span>
                     </li>
-                    <li className="flex items-center gap-2">
-                      <span className="w-1.5 h-1.5 rounded-full bg-blue-400"></span>
+                    <li className="flex items-center gap-2.5">
+                      <span className="w-2 h-2 rounded-full bg-blue-600 shrink-0"></span>
                       <span>Direct emergency helpline with 30-minute dispatch</span>
                     </li>
-                    <li className="flex items-center gap-2">
-                      <span className="w-1.5 h-1.5 rounded-full bg-blue-400"></span>
+                    <li className="flex items-center gap-2.5">
+                      <span className="w-2 h-2 rounded-full bg-blue-600 shrink-0"></span>
                       <span>100% background-checked and police-verified fixers</span>
                     </li>
                   </ul>
                 </div>
 
                 {/* Mobile App Download Rollout Cards */}
-                <div className="rounded-2xl border border-white/10 bg-white/[0.03] p-5 backdrop-blur-md">
-                  <p className="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-3">Mobile Rollout</p>
+                <div className="rounded-2xl border border-slate-200/90 bg-white p-5 shadow-sm">
+                  <p className="text-[10px] font-black uppercase tracking-widest text-slate-500 mb-3">Mobile Rollout</p>
                   <div className="grid grid-cols-2 gap-3">
-                    <div className="flex items-center gap-3 rounded-xl border border-white/10 bg-white/5 p-3 text-white">
-                      <FaApple size={22} className="text-slate-200" />
+                    <div className="flex items-center gap-3 rounded-xl border border-slate-200 bg-slate-50 p-3 text-slate-900">
+                      <FaApple size={22} className="text-slate-800" />
                       <div>
-                        <p className="text-[9px] font-black uppercase text-slate-400">iOS Web App</p>
-                        <p className="text-xs font-bold text-white">App Store</p>
+                        <p className="text-[9px] font-black uppercase text-slate-500">iOS Web App</p>
+                        <p className="text-xs font-black text-slate-900">App Store</p>
                       </div>
                     </div>
-                    <div className="flex items-center gap-3 rounded-xl border border-white/10 bg-white/5 p-3 text-white">
-                      <FaGooglePlay size={20} className="text-emerald-400" />
+                    <div className="flex items-center gap-3 rounded-xl border border-slate-200 bg-slate-50 p-3 text-slate-900">
+                      <FaGooglePlay size={20} className="text-emerald-600" />
                       <div>
-                        <p className="text-[9px] font-black uppercase text-slate-400">Android APK</p>
-                        <p className="text-xs font-bold text-white">Play Store</p>
+                        <p className="text-[9px] font-black uppercase text-slate-500">Android APK</p>
+                        <p className="text-xs font-black text-slate-900">Play Store</p>
                       </div>
                     </div>
                   </div>
@@ -1081,21 +1081,21 @@ const Home = () => {
             initial={{ opacity: 0, scale: 0.95 }}
             whileInView={{ opacity: 1, scale: 1 }}
             viewport={{ once: true }}
-            className="bg-gradient-to-br from-blue-900/40 to-indigo-900/40 border border-blue-500/20 rounded-[2rem] sm:rounded-[3rem] p-8 sm:p-12 lg:p-20 relative overflow-hidden shadow-2xl shadow-blue-900/20"
+            className="bg-gradient-to-br from-blue-600 via-blue-700 to-indigo-700 rounded-[2rem] sm:rounded-[3rem] p-8 sm:p-12 lg:p-16 relative overflow-hidden shadow-2xl text-center text-white"
           >
-            <div className="absolute top-0 right-0 p-8 w-full h-full opacity-30 pointer-events-none">
-              <div className="absolute top-[-20%] right-[-10%] w-[50%] h-[50%] bg-blue-500/50 rounded-full blur-[100px]"></div>
+            <div className="absolute top-0 right-0 p-8 w-full h-full opacity-20 pointer-events-none">
+              <div className="absolute top-[-20%] right-[-10%] w-[50%] h-[50%] bg-white rounded-full blur-[100px]"></div>
             </div>
             
-            <h2 className="text-3xl sm:text-4xl md:text-5xl font-extrabold text-white mb-4 sm:mb-6 relative z-10">Stop guessing. Get it fixed.</h2>
-            <p className="text-lg sm:text-xl text-blue-200/80 mb-8 sm:mb-10 max-w-2xl mx-auto relative z-10">
-              Book now and get a <span className="text-white font-bold">100% Free Inspection</span> on your first booking.
+            <h2 className="text-3xl sm:text-4xl md:text-5xl font-black text-white mb-4 sm:mb-6 relative z-10 tracking-tight">Stop guessing. Get it fixed.</h2>
+            <p className="text-base sm:text-xl text-blue-100 mb-8 sm:mb-10 max-w-2xl mx-auto relative z-10 font-medium">
+              Book now and get a <span className="text-white font-extrabold underline decoration-amber-400">100% Free Inspection</span> on your first booking.
             </p>
             <button
               onClick={() => handleBookingClick('')}
-              className="inline-flex relative z-10 px-8 sm:px-10 py-4 sm:py-5 bg-white text-blue-900 font-extrabold rounded-2xl shadow-xl hover:shadow-2xl hover:scale-105 transition-all duration-300 items-center justify-center gap-2 w-full sm:w-auto border-none cursor-pointer outline-none font-sans"
+              className="inline-flex relative z-10 px-8 sm:px-10 py-4 sm:py-5 bg-white text-blue-900 hover:bg-blue-50 font-black rounded-2xl shadow-xl hover:shadow-2xl hover:scale-105 transition-all duration-300 items-center justify-center gap-2 w-full sm:w-auto border-none cursor-pointer outline-none font-sans"
             >
-              <span className="text-lg sm:text-xl font-bold">Book Now in 10 Seconds</span>
+              <span className="text-lg sm:text-xl font-black">Book Now in 10 Seconds</span>
             </button>
           </motion.div>
         </div>
