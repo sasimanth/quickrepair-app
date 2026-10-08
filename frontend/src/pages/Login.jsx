@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { Mail, Lock, User, Phone, X, Loader2, ArrowRight, ChevronDown, ArrowLeft } from 'lucide-react';
 import { useGoogleLogin } from '@react-oauth/google';
 import { Capacitor } from '@capacitor/core';
@@ -9,23 +9,46 @@ import { useAuth } from '../contexts/AuthContext';
 import fixvoLogo from '../assets/logos/fixvo-app-icon-dark.png';
 import api from '../services/api';
 import { classifyAuthError } from '../utils/errorClassifier';
+import SearchableServiceSelector from '../components/SearchableServiceSelector';
+import SearchableAreaSelector from '../components/SearchableAreaSelector';
 
-const Login = () => {
+const Login = ({ initialMode }) => {
   const navigate = useNavigate();
+  const location = useLocation();
   const { loginUser, setUser } = useAuth();
-  const [authMode, setAuthMode] = useState('phone'); // 'phone', 'email', 'signup'
+
+  const getInitialMode = () => {
+    if (initialMode) return initialMode;
+    if (location.pathname === '/signup') return 'signup';
+    return 'phone';
+  };
+
+  const [authMode, setAuthMode] = useState(getInitialMode); // 'phone', 'email', 'signup'
   const [phone, setPhone] = useState('');
   const [formData, setFormData] = useState({
     name: '',
     email: '',
     phone: '',
     password: '',
-    role: 'user'
+    role: 'user',
+    skills: [],
+    location: ''
   });
   const [agreeTerms, setAgreeTerms] = useState(true);
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
   const [googleLoading, setGoogleLoading] = useState(false);
+
+  // Synchronize mode when location route changes
+  useEffect(() => {
+    if (!initialMode) {
+      if (location.pathname === '/signup') {
+        setAuthMode('signup');
+      } else if (location.pathname === '/login') {
+        setAuthMode('phone');
+      }
+    }
+  }, [location.pathname, initialMode]);
 
   // Pre-initialize native SocialLogin on Android/iOS
   useEffect(() => {
@@ -37,6 +60,13 @@ const Login = () => {
       }).catch(err => console.warn('SocialLogin init warning:', err));
     }
   }, []);
+
+  const passwordStrength = {
+    length: formData.password.length >= 8,
+    uppercase: /[A-Z]/.test(formData.password),
+    number: /[0-9]/.test(formData.password),
+    specialChar: /[^A-Za-z0-9]/.test(formData.password)
+  };
 
   const handleChange = (e) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
@@ -99,12 +129,27 @@ const Login = () => {
           setLoading(false);
           return;
         }
+        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+        if (!emailRegex.test(formData.email)) {
+          setError('Please enter a valid email address.');
+          setLoading(false);
+          return;
+        }
+        const phoneDigits = (formData.phone || phone).replace(/\D/g, '');
+        if (phoneDigits.length < 10) {
+          setError('Please enter a valid 10-digit mobile phone number.');
+          setLoading(false);
+          return;
+        }
+
         data = await register({
           name: formData.name,
           email: formData.email,
-          phone: formData.phone || phone,
+          phone: phoneDigits,
           password: formData.password,
-          role: formData.role || 'user'
+          role: formData.role || 'user',
+          skills: formData.role === 'technician' ? formData.skills : [],
+          location: formData.role === 'technician' ? formData.location : ''
         });
       } else {
         data = await login({
@@ -193,26 +238,30 @@ const Login = () => {
     }
   };
 
+  const isNative = Capacitor.isNativePlatform() || Capacitor.getPlatform() !== 'web';
+
   return (
     <div className="min-h-screen bg-slate-100 flex items-center justify-center sm:p-4">
       {/* Mobile view full stretchable container */}
       <div className="relative w-full min-h-screen sm:min-h-0 sm:max-w-md bg-white sm:rounded-[2.5rem] shadow-2xl border-0 sm:border border-slate-200 p-6 sm:p-8 text-slate-900 text-left flex flex-col justify-between">
         
         <div>
-          {/* Top Bar with Back to Home (Top Left) & Skip Button (Top Right) */}
+          {/* Top Bar: Back to Home (Web) & Skip Button (App & Web) */}
           <div className="flex justify-between items-center mb-4">
-            <button 
-              type="button"
-              onClick={() => navigate('/')}
-              className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-full border border-slate-200 hover:bg-slate-50 text-slate-700 hover:text-slate-900 font-extrabold text-xs transition-all cursor-pointer bg-white shadow-2xs"
-            >
-              <ArrowLeft size={14} /> Back to Home
-            </button>
+            {!isNative ? (
+              <button 
+                type="button"
+                onClick={() => navigate('/')}
+                className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-full border border-slate-200 hover:bg-slate-50 text-slate-700 hover:text-slate-900 font-bold text-xs transition-all cursor-pointer bg-white shadow-2xs"
+              >
+                <ArrowLeft size={14} /> Back to Home
+              </button>
+            ) : <div />}
             
             <button 
               type="button"
               onClick={() => navigate('/dashboard')}
-              className="px-4 py-1.5 rounded-full border border-slate-300 hover:bg-slate-100 text-slate-700 font-extrabold text-xs transition-all cursor-pointer bg-white"
+              className="px-4 py-1.5 rounded-full border border-slate-300 hover:bg-slate-100 text-slate-700 font-bold text-xs transition-all cursor-pointer bg-white ml-auto"
             >
               Skip
             </button>
@@ -220,14 +269,14 @@ const Login = () => {
 
           {/* Brand Icon Header */}
           <div className="flex justify-start mb-5">
-            <div className="w-14 h-14 bg-blue-50 border border-blue-100 rounded-2xl flex items-center justify-center text-blue-600 shadow-sm overflow-hidden p-1">
+            <div className="w-14 h-14 bg-blue-50 border border-blue-100 rounded-2xl flex items-center justify-center text-blue-600 shadow-sm overflow-hidden p-1.5">
               <img src={fixvoLogo} alt="Fixvo" className="w-full h-full object-cover scale-110" />
             </div>
           </div>
 
           {/* Headline & Subtitle */}
           <div className="mb-5">
-            <h2 className="text-2xl sm:text-3xl font-black text-slate-900 tracking-tight">
+            <h2 className="text-2xl sm:text-3xl font-extrabold text-slate-900 tracking-tight">
               {authMode === 'phone' ? 'Enter your phone number' : authMode === 'signup' ? 'Create new account' : 'Welcome back'}
             </h2>
             <p className="text-slate-500 text-xs sm:text-sm mt-1 font-medium leading-relaxed">
@@ -250,8 +299,8 @@ const Login = () => {
           {/* Phone Input Mode */}
           {authMode === 'phone' && (
             <form onSubmit={handlePhoneSubmit} className="space-y-4">
-              <div className="flex border-2 border-blue-600 rounded-2xl overflow-hidden focus-within:ring-4 focus-within:ring-blue-100 transition-all bg-white">
-                <div className="flex items-center gap-1 px-3.5 py-3 bg-slate-50 border-r border-slate-200 text-sm font-extrabold text-slate-800 shrink-0">
+              <div className="flex border border-slate-300 rounded-2xl overflow-hidden focus-within:border-blue-600 focus-within:ring-2 focus-within:ring-blue-100 transition-all bg-white">
+                <div className="flex items-center gap-1.5 px-3.5 py-3.5 bg-slate-50/50 border-r border-slate-200 text-sm font-bold text-slate-800 shrink-0">
                   <span>+91</span>
                   <ChevronDown size={14} className="text-slate-500" />
                 </div>
@@ -262,21 +311,21 @@ const Login = () => {
                   value={phone}
                   onChange={(e) => setPhone(e.target.value.replace(/\D/g, ''))}
                   placeholder="Phone number"
-                  className="w-full px-4 py-3 text-base font-bold text-slate-900 outline-none bg-white placeholder:text-slate-300 tracking-wide"
+                  className="w-full px-4 py-3.5 text-base font-bold text-slate-900 outline-none bg-white placeholder:text-slate-300 tracking-wider"
                 />
               </div>
 
               <button
                 type="submit"
                 disabled={loading}
-                className="w-full py-4 bg-[#DCE4F7] hover:bg-blue-600 hover:text-white text-blue-900 font-extrabold text-sm rounded-2xl transition-all shadow-sm flex items-center justify-center gap-2 cursor-pointer border-none outline-none active:scale-98"
+                className="w-full py-3.5 bg-[#E8EEFD] hover:bg-blue-600 hover:text-white text-[#3B66D6] font-bold text-sm sm:text-base rounded-2xl transition-all shadow-none flex items-center justify-center gap-2 cursor-pointer border-none outline-none active:scale-98"
               >
                 {loading ? <Loader2 className="animate-spin" size={18} /> : 'Continue'}
               </button>
             </form>
           )}
 
-          {/* Full Restored Signup Registration Form & Email Form */}
+          {/* Signup Registration Form & Email Form */}
           {(authMode === 'email' || authMode === 'signup') && (
             <form onSubmit={handleEmailSubmit} className="space-y-3">
               {authMode === 'signup' && (
@@ -289,7 +338,7 @@ const Login = () => {
                       name="name" 
                       value={formData.name} 
                       onChange={handleChange}
-                      className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-2xl text-xs font-bold text-slate-900 focus:border-blue-600 outline-none" 
+                      className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-2xl text-xs font-bold text-slate-900 focus:border-blue-600 focus:bg-white outline-none transition-all" 
                       placeholder="Enter your full name"
                     />
                   </div>
@@ -301,7 +350,7 @@ const Login = () => {
                       name="phone" 
                       value={formData.phone} 
                       onChange={handleChange}
-                      className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-2xl text-xs font-bold text-slate-900 focus:border-blue-600 outline-none" 
+                      className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-2xl text-xs font-bold text-slate-900 focus:border-blue-600 focus:bg-white outline-none transition-all" 
                       placeholder="10-digit mobile number"
                     />
                   </div>
@@ -316,7 +365,7 @@ const Login = () => {
                   name="email" 
                   value={formData.email} 
                   onChange={handleChange}
-                  className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-2xl text-xs font-bold text-slate-900 focus:border-blue-600 outline-none" 
+                  className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-2xl text-xs font-bold text-slate-900 focus:border-blue-600 focus:bg-white outline-none transition-all" 
                   placeholder="name@example.com"
                 />
               </div>
@@ -329,9 +378,25 @@ const Login = () => {
                   name="password" 
                   value={formData.password} 
                   onChange={handleChange}
-                  className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-2xl text-xs font-bold text-slate-900 focus:border-blue-600 outline-none" 
+                  className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-2xl text-xs font-bold text-slate-900 focus:border-blue-600 focus:bg-white outline-none transition-all" 
                   placeholder="••••••••"
                 />
+                {authMode === 'signup' && formData.password && (
+                  <div className="mt-2 bg-slate-50 border border-slate-200 rounded-xl p-2.5 grid grid-cols-2 gap-1 text-[11px] font-bold">
+                    <div className={`flex items-center gap-1 ${passwordStrength.length ? 'text-emerald-600' : 'text-slate-400'}`}>
+                      <span>{passwordStrength.length ? '✓' : '•'}</span> 8+ Chars
+                    </div>
+                    <div className={`flex items-center gap-1 ${passwordStrength.uppercase ? 'text-emerald-600' : 'text-slate-400'}`}>
+                      <span>{passwordStrength.uppercase ? '✓' : '•'}</span> Uppercase
+                    </div>
+                    <div className={`flex items-center gap-1 ${passwordStrength.number ? 'text-emerald-600' : 'text-slate-400'}`}>
+                      <span>{passwordStrength.number ? '✓' : '•'}</span> Number
+                    </div>
+                    <div className={`flex items-center gap-1 ${passwordStrength.specialChar ? 'text-emerald-600' : 'text-slate-400'}`}>
+                      <span>{passwordStrength.specialChar ? '✓' : '•'}</span> Special Char
+                    </div>
+                  </div>
+                )}
               </div>
 
               {authMode === 'signup' && (
@@ -342,12 +407,44 @@ const Login = () => {
                       name="role" 
                       value={formData.role} 
                       onChange={handleChange}
-                      className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-2xl text-xs font-bold text-slate-900 focus:border-blue-600 outline-none cursor-pointer"
+                      className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-2xl text-xs font-bold text-slate-900 focus:border-blue-600 focus:bg-white outline-none cursor-pointer transition-all"
                     >
                       <option value="user">Customer (I need doorstep repairs)</option>
                       <option value="technician">Technician (I want to earn as a fixer)</option>
                     </select>
                   </div>
+
+                  {formData.role === 'technician' && (
+                    <div className="p-3.5 bg-blue-50/60 rounded-2xl space-y-2.5 border border-blue-100/50">
+                      <h4 className="font-extrabold text-blue-900 text-xs border-b border-blue-100 pb-1">Technician Details</h4>
+                      <div className="space-y-2">
+                        <div className="space-y-1">
+                          <label className="text-[10px] font-extrabold text-blue-900 uppercase tracking-widest block">
+                            Services You Offer
+                          </label>
+                          <SearchableServiceSelector
+                            value={formData.skills}
+                            onChange={(skills) => setFormData(prev => ({ ...prev, skills }))}
+                            multiSelect={true}
+                            theme="light"
+                            placeholder="Search services..."
+                          />
+                        </div>
+
+                        <div className="space-y-1">
+                          <label className="text-[10px] font-extrabold text-blue-900 uppercase tracking-widest block">
+                            Service Area
+                          </label>
+                          <SearchableAreaSelector
+                            value={formData.location}
+                            onChange={(location) => setFormData(prev => ({ ...prev, location }))}
+                            theme="light"
+                            placeholder="Search city..."
+                          />
+                        </div>
+                      </div>
+                    </div>
+                  )}
 
                   <label className="flex items-center gap-2 pt-1 cursor-pointer select-none text-xs text-slate-600 font-semibold">
                     <input 
@@ -356,7 +453,7 @@ const Login = () => {
                       onChange={(e) => setAgreeTerms(e.target.checked)} 
                       className="w-4 h-4 text-blue-600 rounded border-slate-300 focus:ring-blue-500 cursor-pointer"
                     />
-                    <span>I agree to <a href="#terms" className="text-blue-600 underline">Terms of Use</a> & <a href="#privacy" className="text-blue-600 underline">Privacy Policy</a></span>
+                    <span>I agree to <a href="/terms" target="_blank" className="text-blue-600 underline">Terms of Use</a> & <a href="/privacy" target="_blank" className="text-blue-600 underline">Privacy Policy</a></span>
                   </label>
                 </>
               )}
@@ -364,7 +461,7 @@ const Login = () => {
               <button
                 type="submit"
                 disabled={loading}
-                className="w-full py-3.5 bg-blue-600 hover:bg-blue-700 text-white font-extrabold text-sm rounded-2xl transition-all shadow-md flex items-center justify-center gap-2 cursor-pointer border-none outline-none mt-2"
+                className="w-full py-3.5 bg-blue-600 hover:bg-blue-700 text-white font-extrabold text-sm rounded-2xl transition-all shadow-md flex items-center justify-center gap-2 cursor-pointer border-none outline-none mt-2 active:scale-98"
               >
                 {loading ? <Loader2 className="animate-spin" size={18} /> : authMode === 'signup' ? 'Complete Registration' : 'Sign In'}
               </button>
@@ -372,11 +469,11 @@ const Login = () => {
           )}
 
           {/* OR Divider */}
-          <div className="relative my-4 text-center">
+          <div className="relative my-5 text-center">
             <div className="absolute inset-0 flex items-center">
               <div className="w-full border-t border-slate-200"></div>
             </div>
-            <span className="relative px-3 bg-white text-[11px] font-black uppercase text-slate-400 tracking-widest">
+            <span className="relative px-3 bg-white text-[11px] font-bold uppercase text-slate-400 tracking-widest">
               OR
             </span>
           </div>
@@ -386,7 +483,7 @@ const Login = () => {
             type="button"
             onClick={triggerGoogleLogin}
             disabled={googleLoading}
-            className="w-full py-3.5 px-4 bg-white hover:bg-slate-50 border border-slate-300 rounded-2xl text-slate-800 font-extrabold text-xs shadow-xs transition-all flex items-center justify-center gap-3 cursor-pointer"
+            className="w-full py-3.5 px-4 bg-white hover:bg-slate-50 border border-slate-300 rounded-2xl text-slate-800 font-bold text-xs sm:text-sm shadow-2xs transition-all flex items-center justify-center gap-3 cursor-pointer"
           >
             {googleLoading ? (
               <Loader2 className="animate-spin text-blue-600" size={18} />
@@ -403,20 +500,20 @@ const Login = () => {
         </div>
 
         {/* Bottom Navigation & Account Switch Toggles */}
-        <div className="mt-5 pt-4 border-t border-slate-100 text-xs font-bold text-slate-600">
+        <div className="mt-6 pt-4 border-t border-slate-100 text-xs font-bold text-slate-600">
           {authMode === 'phone' ? (
             <div className="flex items-center justify-between">
               <button 
                 type="button" 
                 onClick={() => { setAuthMode('signup'); setError(''); }} 
-                className="text-blue-600 hover:underline cursor-pointer border-none bg-transparent font-black"
+                className="text-blue-600 hover:underline cursor-pointer border-none bg-transparent font-bold text-xs"
               >
                 New user? Create Account
               </button>
               <button 
                 type="button" 
                 onClick={() => { setAuthMode('email'); setError(''); }} 
-                className="text-slate-600 hover:text-slate-900 underline cursor-pointer border-none bg-transparent font-bold"
+                className="text-slate-600 hover:text-slate-900 underline cursor-pointer border-none bg-transparent font-bold text-xs"
               >
                 Email Login
               </button>
@@ -426,7 +523,7 @@ const Login = () => {
               <button 
                 type="button" 
                 onClick={() => { setAuthMode('phone'); setError(''); }} 
-                className="text-blue-600 hover:underline cursor-pointer border-none bg-transparent font-black"
+                className="text-blue-600 hover:underline cursor-pointer border-none bg-transparent font-bold text-xs"
               >
                 Already have an account? Sign In
               </button>
@@ -436,7 +533,7 @@ const Login = () => {
               <button 
                 type="button" 
                 onClick={() => { setAuthMode('phone'); setError(''); }} 
-                className="text-blue-600 hover:underline cursor-pointer border-none bg-transparent font-black"
+                className="text-blue-600 hover:underline cursor-pointer border-none bg-transparent font-bold text-xs"
               >
                 ← Back to Phone Login
               </button>
@@ -445,7 +542,7 @@ const Login = () => {
 
           {/* Footer Notice */}
           <p className="mt-4 text-center text-[10px] text-slate-400 font-medium leading-relaxed">
-            By continuing, you agree to our <a href="#terms" className="text-slate-600 underline">Terms of Use</a> and <a href="#privacy" className="text-slate-600 underline">Privacy Policy</a>.
+            By continuing, you agree to our <a href="/terms" target="_blank" className="text-slate-600 underline">Terms of Use</a> and <a href="/privacy" target="_blank" className="text-slate-600 underline">Privacy Policy</a>.
           </p>
         </div>
 
@@ -455,3 +552,4 @@ const Login = () => {
 };
 
 export default Login;
+
