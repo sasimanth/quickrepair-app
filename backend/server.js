@@ -44,10 +44,12 @@ const corsOptions = {
     // Allow server-to-server, mobile app, or tools with no origin header
     if (!origin) return cb(null, true);
 
-    // Allow all vercel deployment subdomains (*.vercel.app), render domains, localhost, capacitor, and configured FRONTEND_URL
+    // Allow all vercel deployment subdomains (*.vercel.app), render domains, localhost (HTTP & HTTPS for Capacitor Android), capacitor, ionic, and configured FRONTEND_URL
     const isVercel = /\.vercel\.app$/.test(origin);
     const isRender = /\.onrender\.com$/.test(origin);
-    const isLocal = /^http:\/\/(localhost|127\.0\.0\.1)/.test(origin) || origin.startsWith('capacitor://');
+    const isLocal = /^https?:\/\/(localhost|127\.0\.0\.1)(:\d+)?$/.test(origin) || 
+                    origin.startsWith('capacitor://') || 
+                    origin.startsWith('ionic://');
     const isExplicit = process.env.FRONTEND_URL && origin === process.env.FRONTEND_URL;
 
     if (isVercel || isRender || isLocal || isExplicit || process.env.NODE_ENV !== 'production') {

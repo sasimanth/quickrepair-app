@@ -8,6 +8,7 @@ import { login, register } from '../services/auth';
 import { useAuth } from '../contexts/AuthContext';
 import fixvoLogo from '../assets/logos/fixvo-app-icon-dark.png';
 import api from '../services/api';
+import { classifyAuthError } from '../utils/errorClassifier';
 
 const AuthModal = ({ onClose, onSuccess }) => {
   const navigate = useNavigate();
@@ -33,7 +34,7 @@ const AuthModal = ({ onClose, onSuccess }) => {
       const webClientId = (import.meta.env.VITE_GOOGLE_CLIENT_ID || '232674695663-poi562drcj2t6s6usrh84vbbnrn7maib.apps.googleusercontent.com').trim();
       SocialLogin.initialize({
         google: { webClientId }
-      }).catch(err => console.warn('SocialLogin init:', err));
+      }).catch(err => console.warn('SocialLogin init warning:', err));
     }
   }, []);
 
@@ -64,25 +65,11 @@ const AuthModal = ({ onClose, onSuccess }) => {
     }
     setLoading(true);
     try {
-      const { data } = await api.post('/auth/phone-login', { phone: digits }).catch(async () => {
-        return {
-          data: {
-            token: 'demo_token_' + Date.now(),
-            user: {
-              _id: 'user_' + digits,
-              name: 'Customer (' + digits.slice(-4) + ')',
-              phone: digits,
-              email: `user_${digits}@fixvo.app`,
-              role: 'user',
-              isPhoneVerified: true
-            }
-          }
-        };
-      });
-
+      const { data } = await api.post('/auth/phone-login', { phone: digits });
       await handleAuthSuccess(data);
     } catch (err) {
-      setError(err.response?.data?.message || 'Authentication failed. Please try again.');
+      const classified = classifyAuthError(err);
+      setError(classified.message);
     } finally {
       setLoading(false);
     }
@@ -101,47 +88,23 @@ const AuthModal = ({ onClose, onSuccess }) => {
           return;
         }
         data = await register({
-          name: formData.name || 'Fixvo Customer',
+          name: formData.name,
           email: formData.email,
-          phone: formData.phone || phone || '9515980170',
+          phone: formData.phone || phone,
           password: formData.password,
           role: formData.role || 'user'
-        }).catch(async () => {
-          return {
-            token: 'reg_token_' + Date.now(),
-            user: {
-              _id: 'user_' + Date.now(),
-              name: formData.name || 'Fixvo Customer',
-              email: formData.email,
-              phone: formData.phone || phone || '9515980170',
-              role: formData.role || 'user',
-              isEmailVerified: true,
-              isPhoneVerified: true
-            }
-          };
         });
       } else {
         data = await login({
           email: formData.email,
           password: formData.password
-        }).catch(async () => {
-          return {
-            token: 'login_token_' + Date.now(),
-            user: {
-              _id: 'user_' + Date.now(),
-              name: formData.email.split('@')[0],
-              email: formData.email,
-              role: 'user',
-              isEmailVerified: true,
-              isPhoneVerified: true
-            }
-          };
         });
       }
 
       await handleAuthSuccess(data);
     } catch (err) {
-      setError(err.response?.data?.message || err.message || 'Authentication failed');
+      const classified = classifyAuthError(err);
+      setError(classified.message);
     } finally {
       setLoading(false);
     }
@@ -155,48 +118,21 @@ const AuthModal = ({ onClose, onSuccess }) => {
       setGoogleLoading(true);
       setError('');
       try {
-        let userEmail = 'verified_user@gmail.com';
-        let userName = 'Google Verified User';
-        try {
-          const userInfo = await fetch('https://www.googleapis.com/oauth2/v3/userinfo', {
-            headers: { Authorization: `Bearer ${tokenResponse.access_token}` }
-          }).then(res => res.json());
-          if (userInfo.email) userEmail = userInfo.email;
-          if (userInfo.name) userName = userInfo.name;
-        } catch (e) { /* keep defaults */ }
-
-        let resData;
-        try {
-          const { data } = await api.post('/auth/google', {
-            accessToken: tokenResponse.access_token,
-            email: userEmail,
-            name: userName
-          });
-          resData = data;
-        } catch (apiErr) {
-          resData = {
-            token: 'google_verified_token_' + Date.now(),
-            user: {
-              _id: 'google_user_' + Date.now(),
-              name: userName,
-              email: userEmail,
-              role: 'user',
-              isEmailVerified: true,
-              isPhoneVerified: true
-            }
-          };
-        }
-
-        await handleAuthSuccess(resData);
+        const { data } = await api.post('/auth/google', {
+          accessToken: tokenResponse.access_token
+        });
+        await handleAuthSuccess(data);
       } catch (err) {
-        console.warn('Web Google auth exception:', err);
+        const classified = classifyAuthError(err);
+        setError(classified.message);
       } finally {
         setGoogleLoading(false);
       }
     },
     onError: (err) => {
       console.warn('Google login popup error:', err);
-      handleGoogleFallback();
+      const classified = classifyAuthError(err);
+      setError(classified.message || 'Google authentication was cancelled or blocked.');
     }
   });
 
@@ -209,68 +145,27 @@ const AuthModal = ({ onClose, onSuccess }) => {
         await SocialLogin.initialize({ google: { webClientId } });
       } catch (initErr) { /* ignore */ }
 
-      let resEmail = 'google_user@gmail.com';
-      let resName = 'Google User';
+      const res = await SocialLogin.login({
+        provider: 'google',
+        options: { scopes: ['email', 'profile'] }
+      });
 
-      try {
-        const res = await SocialLogin.login({
-          provider: 'google',
-          options: { scopes: ['email', 'profile'] }
-        });
-        if (res.result?.profile?.email) {
-          resEmail = res.result.profile.email;
-          resName = res.result.profile.name || res.result.profile.givenName || 'Google User';
-        }
-      } catch (loginErr) {
-        console.warn('Native SocialLogin note:', loginErr);
+      const idToken = res.result?.idToken || res.result?.token || res.result?.id_token;
+      const accessToken = res.result?.accessToken || res.result?.access_token;
+
+      if (!idToken && !accessToken) {
+        throw new Error('No Google credentials returned from native account selector.');
       }
 
-      let resData;
-      try {
-        const { data } = await api.post('/auth/google', {
-          email: resEmail,
-          name: resName,
-          accessToken: 'native_google_token_' + Date.now()
-        });
-        resData = data;
-      } catch (apiErr) {
-        resData = {
-          token: 'google_verified_token_' + Date.now(),
-          user: {
-            _id: 'google_user_' + Date.now(),
-            name: resName,
-            email: resEmail,
-            role: 'user',
-            isEmailVerified: true,
-            isPhoneVerified: true
-          }
-        };
-      }
+      const { data } = await api.post('/auth/google', {
+        idToken,
+        accessToken
+      });
 
-      await handleAuthSuccess(resData);
+      await handleAuthSuccess(data);
     } catch (err) {
-      console.warn('Native Google auth fallback:', err);
-      handleGoogleFallback();
-    } finally {
-      setGoogleLoading(false);
-    }
-  };
-
-  const handleGoogleFallback = async () => {
-    setGoogleLoading(true);
-    try {
-      const resData = {
-        token: 'google_verified_token_' + Date.now(),
-        user: {
-          _id: 'google_user_' + Date.now(),
-          name: 'Google Verified User',
-          email: 'verified_user@gmail.com',
-          role: 'user',
-          isEmailVerified: true,
-          isPhoneVerified: true
-        }
-      };
-      await handleAuthSuccess(resData);
+      const classified = classifyAuthError(err);
+      setError(classified.message);
     } finally {
       setGoogleLoading(false);
     }
@@ -282,11 +177,7 @@ const AuthModal = ({ onClose, onSuccess }) => {
     if (isNative) {
       handleNativeGoogleLogin();
     } else {
-      try {
-        webGoogleLogin();
-      } catch (e) {
-        handleGoogleFallback();
-      }
+      webGoogleLogin();
     }
   };
 
@@ -351,7 +242,7 @@ const AuthModal = ({ onClose, onSuccess }) => {
 
           {/* Error Alert */}
           {error && (
-            <div className="bg-rose-50 text-rose-700 p-3 rounded-2xl mb-4 text-xs font-bold border border-rose-200 flex items-center gap-2">
+            <div className="bg-rose-50 text-rose-700 p-3.5 rounded-2xl mb-4 text-xs font-bold border border-rose-200 flex items-center gap-2.5 animate-in fade-in duration-200">
               <span className="w-4 h-4 rounded-full bg-rose-500 text-white flex items-center justify-center text-[10px] font-black shrink-0">!</span>
               <span>{error}</span>
             </div>
@@ -386,7 +277,7 @@ const AuthModal = ({ onClose, onSuccess }) => {
             </form>
           )}
 
-          {/* Email/Password & Full Restored Signup Form */}
+          {/* Full Restored Signup Registration Form & Email Form */}
           {(authMode === 'email' || authMode === 'signup') && (
             <form onSubmit={handleEmailSubmit} className="space-y-3">
               {authMode === 'signup' && (
