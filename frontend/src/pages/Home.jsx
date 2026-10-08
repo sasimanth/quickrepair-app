@@ -676,22 +676,22 @@ const Home = () => {
         </section>
 
         {/* 5. DAY & NIGHT SERVICES PROMINENT SHOWCASE */}
-        <section id="emergency-section" className="mt-16 md:mt-24 relative overflow-hidden bg-gradient-to-br from-indigo-900 via-slate-900 to-blue-900 border border-indigo-200 rounded-[2.5rem] p-6 sm:p-10 shadow-xl text-white">
-          <div className="absolute -right-10 -top-10 w-64 h-64 bg-indigo-500/20 rounded-full blur-3xl pointer-events-none"></div>
+        <section id="emergency-section" className="mt-16 md:mt-24 relative overflow-hidden bg-gradient-to-br from-blue-50/80 via-indigo-50/60 to-white border border-blue-200 rounded-[2.5rem] p-6 sm:p-10 shadow-md text-slate-900">
+          <div className="absolute -right-10 -top-10 w-64 h-64 bg-blue-500/10 rounded-full blur-3xl pointer-events-none"></div>
           
           <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-6 mb-8 relative z-10">
             <div>
-              <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-white/10 border border-white/20 text-blue-200 text-xs font-black uppercase tracking-wider mb-3 backdrop-blur-md">
+              <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-blue-100/80 border border-blue-200 text-blue-800 text-xs font-black uppercase tracking-wider mb-3">
                 <span>🌙</span> 24×7 Day & Night Services
               </div>
-              <h2 className="text-2xl sm:text-4xl font-extrabold text-white">Emergency Repairs Anytime, Anywhere</h2>
-              <p className="text-blue-100 text-sm mt-1 font-medium">Whether it's midnight or a Sunday holiday, verified Fixvo technicians are on call.</p>
+              <h2 className="text-2xl sm:text-4xl font-extrabold text-slate-900">Emergency Repairs Anytime, Anywhere</h2>
+              <p className="text-slate-600 text-sm mt-1 font-medium">Whether it's midnight or a Sunday holiday, verified Fixvo technicians are on call.</p>
             </div>
             <a 
               href="tel:+919515980170" 
-              className="px-6 py-3 bg-white hover:bg-slate-100 text-indigo-900 font-extrabold text-xs sm:text-sm rounded-xl shadow-lg transition transform hover:-translate-y-0.5 flex items-center gap-2 no-underline"
+              className="px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white font-extrabold text-xs sm:text-sm rounded-xl shadow-md transition transform hover:-translate-y-0.5 flex items-center gap-2 no-underline"
             >
-              <PhoneCall size={16} className="text-indigo-600" /> 24/7 Helpline: +91 95159 80170
+              <PhoneCall size={16} className="text-white" /> 24/7 Helpline: +91 95159 80170
             </a>
           </div>
 
@@ -703,16 +703,16 @@ const Home = () => {
               { title: "Weekend Availability", desc: "Sat & Sun active slots", icon: CheckCircle2, badge: "No Extra Charge" },
               { title: "Holiday Service", desc: "Open 365 days a year", icon: Sparkles, badge: "Open Today" }
             ].map((item, i) => (
-              <div key={i} className="bg-white/10 border border-white/20 rounded-2xl p-4 flex flex-col justify-between h-36 hover:bg-white/15 transition duration-300 backdrop-blur-sm">
+              <div key={i} className="bg-white border border-slate-200 rounded-2xl p-4 flex flex-col justify-between h-36 hover:shadow-md transition duration-300">
                 <div className="flex justify-between items-start">
-                  <div className="w-8 h-8 rounded-lg bg-white/20 border border-white/30 flex items-center justify-center text-white">
+                  <div className="w-8 h-8 rounded-lg bg-blue-50 border border-blue-100 flex items-center justify-center text-blue-600">
                     <item.icon size={16} />
                   </div>
-                  <span className="text-[9px] font-black text-blue-200 bg-white/10 px-2 py-0.5 rounded border border-white/20 uppercase">{item.badge}</span>
+                  <span className="text-[9px] font-black text-blue-700 bg-blue-50 px-2 py-0.5 rounded border border-blue-200 uppercase">{item.badge}</span>
                 </div>
                 <div>
-                  <h4 className="font-extrabold text-xs text-white leading-snug">{item.title}</h4>
-                  <p className="text-[10px] text-blue-100 mt-0.5">{item.desc}</p>
+                  <h4 className="font-extrabold text-xs text-slate-900 leading-snug">{item.title}</h4>
+                  <p className="text-[10px] text-slate-500 mt-0.5 font-medium">{item.desc}</p>
                 </div>
               </div>
             ))}
@@ -837,12 +837,12 @@ const Home = () => {
         </section>
 
         {/* Fixvo Plus Member section */}
-        <div id="pricing" className="mt-24 sm:mt-32 border-t border-white/5 pt-24 sm:pt-32 px-4 sm:px-0">
+        <div id="pricing" className="mt-24 sm:mt-32 border-t border-slate-200/80 pt-24 sm:pt-32 px-4 sm:px-0">
           <div className="text-center mb-12 sm:mb-16">
-            <h2 className="text-3xl sm:text-4xl md:text-5xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-amber-200 via-amber-400 to-yellow-500 mb-4 inline-flex items-center gap-3">
-              <Sparkles className="text-amber-400 w-8 h-8 md:w-10 md:h-10"/> Fixvo Plus Tiers
+            <h2 className="text-3xl sm:text-4xl md:text-5xl font-black text-slate-900 mb-3 tracking-tight inline-flex items-center gap-3">
+              <Sparkles className="text-amber-500 w-8 h-8 md:w-10 md:h-10"/> Fixvo Plus Tiers
             </h2>
-            <p className="text-base sm:text-lg text-slate-400 max-w-2xl mx-auto">
+            <p className="text-base sm:text-lg text-slate-600 max-w-2xl mx-auto font-medium">
               Upgrade to our premier membership tiers for priority dispatch, zero inspection fees, and exclusive repair discounts.
             </p>
           </div>
@@ -853,33 +853,31 @@ const Home = () => {
             <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
               
               {/* Monthly Premier Tier Card */}
-              <div className="bg-gradient-to-br from-[#1A2235] to-[#0B0F19] border-2 border-slate-700 hover:border-sky-500/50 rounded-[2.5rem] p-6 sm:p-8 relative overflow-hidden flex flex-col justify-between shadow-2xl transition-all duration-300 group">
-                <div className="absolute top-[-20%] right-[-10%] w-[50%] h-[50%] bg-blue-500/10 rounded-full blur-[80px] pointer-events-none"></div>
-
+              <div className="bg-white border-2 border-slate-200 hover:border-blue-500 rounded-[2.5rem] p-6 sm:p-8 relative overflow-hidden flex flex-col justify-between shadow-lg transition-all duration-300 text-slate-900 group">
                 <div>
                   <div className="flex justify-between items-center mb-4">
-                    <span className="inline-flex items-center justify-center px-3.5 py-1 bg-sky-500/10 text-sky-400 border border-sky-500/20 rounded-full text-[11px] font-extrabold uppercase tracking-wider">
+                    <span className="inline-flex items-center justify-center px-3.5 py-1 bg-blue-50 text-blue-700 border border-blue-200 rounded-full text-[11px] font-extrabold uppercase tracking-wider">
                       Monthly Premier Tier
                     </span>
-                    <span className="text-[10px] text-slate-400 font-bold bg-white/5 px-2.5 py-1 rounded-full border border-white/10">Flexible Access</span>
+                    <span className="text-[10px] text-slate-600 font-bold bg-slate-100 px-2.5 py-1 rounded-full border border-slate-200">Flexible Access</span>
                   </div>
 
-                  <h3 className="text-4xl sm:text-5xl font-black text-white mb-1 tracking-tight">
-                    ₹99<span className="text-base sm:text-lg text-slate-400 font-medium tracking-normal">/mo</span>
+                  <h3 className="text-4xl sm:text-5xl font-black text-slate-900 mb-1 tracking-tight">
+                    ₹99<span className="text-base sm:text-lg text-slate-500 font-medium tracking-normal">/mo</span>
                   </h3>
-                  <p className="text-xs text-slate-400 mb-6 font-medium">Billed monthly. Cancel anytime.</p>
+                  <p className="text-xs text-slate-500 mb-6 font-medium">Billed monthly. Cancel anytime.</p>
 
-                  <ul className="space-y-4 text-xs sm:text-sm text-slate-300 border-t border-white/10 pt-6">
+                  <ul className="space-y-4 text-xs sm:text-sm text-slate-700 border-t border-slate-100 pt-6">
                     <li className="flex items-start gap-3">
-                      <Clock size={16} className="text-sky-400 shrink-0 mt-0.5" />
+                      <Clock size={16} className="text-blue-600 shrink-0 mt-0.5" />
                       <span><strong>Priority Dispatch:</strong> Fast-track queue for nearby fixes</span>
                     </li>
                     <li className="flex items-start gap-3">
-                      <Banknote size={16} className="text-sky-400 shrink-0 mt-0.5" />
+                      <Banknote size={16} className="text-blue-600 shrink-0 mt-0.5" />
                       <span><strong>Zero Inspection Fee:</strong> Free diagnosis visit every month</span>
                     </li>
                     <li className="flex items-start gap-3">
-                      <CheckCircle2 size={16} className="text-sky-400 shrink-0 mt-0.5" />
+                      <CheckCircle2 size={16} className="text-blue-600 shrink-0 mt-0.5" />
                       <span><strong>5% Repair Discount:</strong> Instant savings on final quotes</span>
                     </li>
                   </ul>
@@ -888,7 +886,7 @@ const Home = () => {
                 <div className="mt-8 pt-4">
                   <button 
                     onClick={() => handleBookingClick()}
-                    className="w-full bg-gradient-to-r from-sky-500 to-blue-600 hover:from-sky-400 hover:to-blue-500 text-white font-black py-3.5 rounded-xl shadow-lg transition-all duration-300 text-sm cursor-pointer border-none"
+                    className="w-full bg-blue-600 hover:bg-blue-700 text-white font-black py-3.5 rounded-xl shadow-md transition-all text-sm cursor-pointer border-none"
                   >
                     Get Monthly Premier (₹99/mo)
                   </button>
@@ -896,33 +894,31 @@ const Home = () => {
               </div>
 
               {/* Annual Premier Tier Card */}
-              <div className="bg-gradient-to-br from-[#241C35] via-[#1A2235] to-[#0B0F19] border-2 border-amber-500/40 hover:border-amber-400 rounded-[2.5rem] p-6 sm:p-8 relative overflow-hidden flex flex-col justify-between shadow-[0_0_50px_rgba(245,158,11,0.15)] transition-all duration-300 group">
-                <div className="absolute top-[-20%] right-[-10%] w-[50%] h-[50%] bg-amber-500/15 rounded-full blur-[80px] pointer-events-none group-hover:bg-amber-500/25 transition-all duration-700"></div>
-
+              <div className="bg-white border-2 border-amber-400 hover:border-amber-500 rounded-[2.5rem] p-6 sm:p-8 relative overflow-hidden flex flex-col justify-between shadow-xl text-slate-900 transition-all duration-300 group">
                 <div>
                   <div className="flex justify-between items-center mb-4">
-                    <span className="inline-flex items-center justify-center px-3.5 py-1 bg-amber-500/20 text-amber-300 border border-amber-500/30 rounded-full text-[11px] font-extrabold uppercase tracking-wider">
+                    <span className="inline-flex items-center justify-center px-3.5 py-1 bg-amber-50 text-amber-800 border border-amber-200 rounded-full text-[11px] font-extrabold uppercase tracking-wider">
                       Annual Premier Tier
                     </span>
-                    <span className="text-[10px] text-amber-300 font-extrabold bg-amber-500/20 px-2.5 py-1 rounded-full border border-amber-500/30">Save 35% • Best Value</span>
+                    <span className="text-[10px] text-amber-800 font-extrabold bg-amber-100 px-2.5 py-1 rounded-full border border-amber-300">Save 35% • Best Value</span>
                   </div>
 
-                  <h3 className="text-4xl sm:text-5xl font-black text-white mb-1 tracking-tight">
-                    ₹999<span className="text-base sm:text-lg text-slate-400 font-medium tracking-normal">/yr</span>
+                  <h3 className="text-4xl sm:text-5xl font-black text-slate-900 mb-1 tracking-tight">
+                    ₹999<span className="text-base sm:text-lg text-slate-500 font-medium tracking-normal">/yr</span>
                   </h3>
-                  <p className="text-xs text-amber-400/90 mb-6 font-medium">Billed annually (effectively ₹83/mo). Cancel anytime.</p>
+                  <p className="text-xs text-amber-700 mb-6 font-semibold">Billed annually (effectively ₹83/mo). Cancel anytime.</p>
 
-                  <ul className="space-y-4 text-xs sm:text-sm text-slate-200 border-t border-white/10 pt-6">
+                  <ul className="space-y-4 text-xs sm:text-sm text-slate-700 border-t border-slate-100 pt-6">
                     <li className="flex items-start gap-3">
-                      <Clock size={16} className="text-amber-400 shrink-0 mt-0.5" />
+                      <Clock size={16} className="text-amber-500 shrink-0 mt-0.5" />
                       <span><strong>Top VIP Priority:</strong> Instant dispatch matching with 4.9★ fixers</span>
                     </li>
                     <li className="flex items-start gap-3">
-                      <Banknote size={16} className="text-amber-400 shrink-0 mt-0.5" />
+                      <Banknote size={16} className="text-amber-500 shrink-0 mt-0.5" />
                       <span><strong>Unlimited Zero Inspection Fees:</strong> Standard ₹99 fee waived all year</span>
                     </li>
                     <li className="flex items-start gap-3">
-                      <CheckCircle2 size={16} className="text-amber-400 shrink-0 mt-0.5" />
+                      <CheckCircle2 size={16} className="text-amber-500 shrink-0 mt-0.5" />
                       <span><strong>5% Flat Discount + Free Checkup:</strong> Maximum household savings</span>
                     </li>
                   </ul>
@@ -931,7 +927,7 @@ const Home = () => {
                 <div className="mt-8 pt-4">
                   <button 
                     onClick={() => handleBookingClick()}
-                    className="w-full bg-gradient-to-r from-amber-500 to-yellow-600 hover:from-amber-400 hover:to-yellow-500 text-[#0B0F19] font-black py-3.5 rounded-xl shadow-[0_0_25px_rgba(245,158,11,0.3)] hover:shadow-[0_0_35px_rgba(245,158,11,0.5)] transition-all duration-300 transform hover:-translate-y-0.5 text-sm cursor-pointer border-none"
+                    className="w-full bg-amber-500 hover:bg-amber-600 text-slate-950 font-black py-3.5 rounded-xl shadow-md transition-all text-sm cursor-pointer border-none"
                   >
                     Get Annual Premier (₹999/yr)
                   </button>
@@ -942,59 +938,58 @@ const Home = () => {
           </div>
         </div>
         
-        {/* Founder profile presentation card */}
-        <div className="mt-24 sm:mt-32 border-t border-white/5 pt-24 sm:pt-32 px-4 sm:px-0">
-          <div className="text-center mb-12 sm:mb-16">
-            <h2 className="text-3xl sm:text-4xl md:text-5xl font-extrabold text-white mb-4">Meet the Founder</h2>
-            <div className="w-16 sm:w-20 h-1.5 bg-gradient-to-r from-blue-500 to-indigo-500 mx-auto rounded-full"></div>
+        {/* Founder profile presentation card (White Theme High-Contrast) */}
+        <div className="mt-16 sm:mt-24 border-t border-slate-200/80 pt-16 sm:pt-24 px-4 sm:px-0">
+          <div className="text-center mb-10 sm:mb-12">
+            <h2 className="text-3xl sm:text-4xl md:text-5xl font-black text-slate-900 mb-3 tracking-tight">Meet the Founder</h2>
+            <div className="w-16 sm:w-20 h-1.5 bg-gradient-to-r from-blue-600 to-indigo-600 mx-auto rounded-full"></div>
           </div>
           
           <motion.div 
-            initial={{ opacity: 0, y: 40 }}
+            initial={{ opacity: 0, y: 30 }}
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true, margin: "-100px" }}
-            transition={{ duration: 0.8 }}
-            className="flex flex-col md:flex-row items-center justify-between gap-10 md:gap-16 lg:gap-20 max-w-5xl mx-auto bg-gradient-to-br from-white/[0.08] to-transparent border border-white/10 rounded-[2.5rem] p-8 sm:p-10 md:p-16 shadow-2xl relative overflow-hidden backdrop-blur-xl"
+            transition={{ duration: 0.7 }}
+            className="flex flex-col md:flex-row items-center justify-between gap-8 md:gap-12 lg:gap-16 max-w-5xl mx-auto bg-white border border-slate-200/90 rounded-[2.5rem] p-8 sm:p-10 md:p-14 shadow-xl relative overflow-hidden text-slate-900"
           >
-            <div className="absolute top-[-20%] left-[-10%] w-[60%] h-[60%] bg-blue-500/20 rounded-full blur-[100px] pointer-events-none"></div>
-            <div className="absolute bottom-[-20%] right-[-10%] w-[60%] h-[60%] bg-purple-500/20 rounded-full blur-[100px] pointer-events-none"></div>
+            <div className="absolute top-[-20%] left-[-10%] w-[50%] h-[50%] bg-blue-50/60 rounded-full blur-[100px] pointer-events-none"></div>
+            <div className="absolute bottom-[-20%] right-[-10%] w-[50%] h-[50%] bg-purple-50/60 rounded-full blur-[100px] pointer-events-none"></div>
             
             <div className="relative z-10 shrink-0 mx-auto md:mx-0">
               <div className="relative group p-2">
-                <div className="absolute inset-0 bg-gradient-to-r from-blue-500 via-indigo-500 to-purple-500 rounded-full blur-md opacity-60 group-hover:opacity-100 transition-opacity duration-500 animate-pulse"></div>
-                <div className="relative w-32 h-32 sm:w-40 sm:h-40 md:w-48 md:h-48 rounded-full overflow-hidden border-4 border-[#0B0F19] shadow-[0_0_20px_rgba(99,102,241,0.3)] bg-[#0B0F19]">
+                <div className="absolute inset-0 bg-gradient-to-r from-blue-600 via-indigo-600 to-purple-600 rounded-full blur-md opacity-40 group-hover:opacity-80 transition-opacity duration-500"></div>
+                <div className="relative w-36 h-36 sm:w-44 sm:h-44 md:w-52 md:h-52 rounded-full overflow-hidden border-4 border-white shadow-2xl bg-slate-100">
                   <img 
                     src={founderImg} 
                     alt="G. Sasimanth Reddy" 
-                    className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700" 
+                    className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700" 
                   />
                 </div>
               </div>
             </div>
             
             <div className="relative z-10 text-center md:text-left flex-1">
-              <h3 className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-extrabold text-white mb-2 tracking-tight">G. Sasimanth Reddy</h3>
-              <p className="text-indigo-400 font-bold mb-6 sm:mb-8 flex items-center justify-center md:justify-start gap-2 text-sm sm:text-base lg:text-lg uppercase tracking-wide">
-                <span className="w-1.5 h-1.5 sm:w-2 sm:h-2 rounded-full bg-indigo-400 shadow-[0_0_10px_rgba(129,140,248,0.8)]"></span>
+              <h3 className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-black text-slate-900 mb-2 tracking-tight">G. Sasimanth Reddy</h3>
+              <p className="text-blue-600 font-extrabold mb-5 sm:mb-6 flex items-center justify-center md:justify-start gap-2 text-sm sm:text-base uppercase tracking-wider">
+                <span className="w-2 h-2 rounded-full bg-blue-600"></span>
                 Founder & CEO
               </p>
               
-              <div className="relative mb-8 sm:mb-10">
-                <span className="absolute -top-4 -left-4 sm:-top-6 sm:-left-6 text-5xl sm:text-7xl text-white/5 font-serif select-none pointer-events-none">"</span>
-                <p className="text-sm sm:text-base md:text-lg lg:text-xl text-slate-300 leading-relaxed relative z-10 font-medium">
+              <div className="relative mb-6 sm:mb-8">
+                <p className="text-sm sm:text-base md:text-lg text-slate-600 leading-relaxed relative z-10 font-medium">
                   G. Sasimanth Reddy is the Founder & CEO of Fixvo, focused on building a reliable and transparent platform that connects customers with verified service professionals. With a vision to simplify everyday service needs, Fixvo aims to deliver fast, trustworthy, and hassle-free solutions for modern households.
                 </p>
               </div>
               
               <div className="flex items-center justify-center md:justify-start gap-3 sm:gap-4">
                 {[
-                  { icon: FaLinkedin, link: "https://www.linkedin.com/in/gsasimanthreddy", hover: "hover:bg-[#0077b5] hover:border-[#0077b5] hover:shadow-[#0077b5]/50" },
-                  { icon: FaInstagram, link: "https://www.instagram.com/sasimanth_9515?igsh=NXZ5amZxaDlkeGxy", hover: "hover:bg-gradient-to-tr hover:from-yellow-400 hover:via-pink-500 hover:to-purple-500 hover:border-pink-500 hover:shadow-pink-500/50" },
-                  { icon: FaXTwitter, link: "https://x.com/sasimanth_9515", hover: "hover:bg-black hover:border-white/30" },
-                  { icon: FaWhatsapp, link: "https://wa.me/9515980170", hover: "hover:bg-emerald-500 hover:border-emerald-500 hover:shadow-emerald-500/50" }
+                  { icon: FaLinkedin, link: "https://www.linkedin.com/in/gsasimanthreddy", color: "hover:bg-[#0077b5] hover:text-white" },
+                  { icon: FaInstagram, link: "https://www.instagram.com/sasimanth_9515?igsh=NXZ5amZxaDlkeGxy", color: "hover:bg-pink-600 hover:text-white" },
+                  { icon: FaXTwitter, link: "https://x.com/sasimanth_9515", color: "hover:bg-black hover:text-white" },
+                  { icon: FaWhatsapp, link: "https://wa.me/9515980170", color: "hover:bg-emerald-600 hover:text-white" }
                 ].map((social, i) => (
-                  <a key={i} href={social.link} target="_blank" rel="noopener noreferrer" className={`w-10 h-10 sm:w-12 sm:h-12 rounded-full bg-white/5 border border-white/10 flex items-center justify-center text-slate-400 hover:text-white ${social.hover} hover:shadow-lg transition-all duration-300 transform hover:-translate-y-1 hover:scale-110`}>
-                    <social.icon className="text-lg sm:text-xl" />
+                  <a key={i} href={social.link} target="_blank" rel="noopener noreferrer" className={`w-11 h-11 rounded-2xl bg-slate-100 border border-slate-200 flex items-center justify-center text-slate-700 ${social.color} transition-all duration-300 transform hover:-translate-y-1 shadow-xs`}>
+                    <social.icon className="text-lg" />
                   </a>
                 ))}
               </div>

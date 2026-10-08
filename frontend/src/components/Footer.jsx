@@ -36,34 +36,28 @@ const Footer = () => {
 
         <div className="container mx-auto px-4 max-w-6xl relative z-10">
 
-          {/* Pre-Footer Banner (Fixvo Unique) */}
-          <div className="relative mb-14 overflow-hidden rounded-[2rem] border border-slate-800 bg-gradient-to-r from-slate-900 via-slate-900 to-indigo-950/80 p-6 md:p-10 shadow-2xl">
-            <div className="absolute inset-y-0 right-0 hidden w-1/3 bg-[radial-gradient(circle_at_center,rgba(14,165,233,0.15),transparent_65%)] md:block"></div>
-            <div className="relative flex flex-col gap-6 md:flex-row md:items-center md:justify-between">
-              <div className="max-w-2xl">
-                <p className="text-xs font-black uppercase tracking-[0.24em] text-blue-400">FAST. TRUSTED. DONE.</p>
-                <h2 className="mt-2 font-black text-2xl md:text-3xl text-white tracking-tight">
-                  Need a certified fixer at your doorstep today?
+          {/* Urgent Repairs Helpline Banner */}
+          <div className="relative mb-14 overflow-hidden rounded-[2rem] border border-blue-500/30 bg-gradient-to-r from-blue-900 via-indigo-900 to-slate-900 p-6 md:p-8 shadow-2xl">
+            <div className="relative flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+              <div>
+                <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-rose-500/20 text-rose-300 border border-rose-500/30 text-xs font-black uppercase tracking-wider mb-2">
+                  <span className="w-2 h-2 rounded-full bg-rose-500 animate-pulse"></span>
+                  <span>24/7 Urgent Repair Helpline</span>
+                </div>
+                <h2 className="font-black text-2xl md:text-3xl text-white tracking-tight">
+                  Need Emergency Repair Assistance Right Now?
                 </h2>
-                <p className="mt-2 text-sm text-slate-400 leading-relaxed">
-                  Book certified Fixvo technicians in under 10 seconds with 30-minute emergency dispatch and fixed upfront quotes.
+                <p className="text-xs md:text-sm text-slate-300 mt-1 font-medium">
+                  Speak directly with our dispatch coordinator for 30-minute urgent repair visit.
                 </p>
               </div>
-              <div className="flex flex-col sm:flex-row gap-3">
-                <button
-                  onClick={() => setIsAppModalOpen(true)}
-                  className="inline-flex items-center justify-center gap-2 rounded-full bg-white px-6 py-3 text-sm font-extrabold text-slate-950 shadow-lg transition-all hover:bg-slate-100 hover:-translate-y-0.5"
-                >
-                  <Smartphone size={16} className="text-sky-600" />
-                  <span>Open the App</span>
-                </button>
-                <Link
-                  to="/contact"
-                  className="inline-flex items-center justify-center gap-2 rounded-full border border-slate-700 bg-slate-800/80 px-6 py-3 text-sm font-extrabold text-white transition-all hover:bg-slate-700"
-                >
-                  <span>Talk to Support</span>
-                </Link>
-              </div>
+              <a
+                href="tel:+919515980170"
+                className="inline-flex items-center justify-center gap-2.5 rounded-2xl bg-blue-600 hover:bg-blue-500 text-white px-6 py-3.5 text-xs md:text-sm font-black uppercase tracking-wider shadow-lg transition-all no-underline shrink-0 active:scale-95"
+              >
+                <Phone size={18} className="text-white" />
+                <span>Call Urgent Support: +91 95159 80170</span>
+              </a>
             </div>
           </div>
 
