@@ -30,6 +30,38 @@ export const classifyAuthError = (err) => {
     };
   }
 
+  // 2. Google / Social Auth specific errors (Prevents masking native Google errors as generic network failures)
+  const rawMsg = (err.message || '').toString();
+  const lowerMsg = rawMsg.toLowerCase();
+  if (
+    lowerMsg.includes('google') || 
+    lowerMsg.includes('user_cancelled') || 
+    lowerMsg.includes('canceled') || 
+    lowerMsg.includes('cancelled') ||
+    lowerMsg.includes('developer console') || 
+    lowerMsg.includes('credential') || 
+    lowerMsg.includes('10:') ||
+    lowerMsg.includes('12500') ||
+    lowerMsg.includes('sign in failed')
+  ) {
+    if (lowerMsg.includes('cancel')) {
+      return {
+        code: 'AUTH_CANCELLED',
+        message: 'Google Sign-In was cancelled.'
+      };
+    }
+    if (lowerMsg.includes('developer') || lowerMsg.includes('10:') || lowerMsg.includes('12500') || lowerMsg.includes('not configured')) {
+      return {
+        code: 'GOOGLE_CONFIG_REQUIRED',
+        message: 'Google Sign-In requires adding the Android SHA-1 in Google Cloud. In the meantime, please enter your 10-digit mobile number above for instant login!'
+      };
+    }
+    return {
+      code: 'GOOGLE_AUTH_FAILED',
+      message: 'Google Sign-In could not be completed on this device. Please use your 10-digit mobile number above to sign in instantly!'
+    };
+  }
+
   // 2. Network Unreachable / CORS Blocked (No Response Object)
   if (!err.response) {
     if (err.message === 'Network Error' || err.code === 'ERR_NETWORK') {
