@@ -81,8 +81,8 @@ const AboutFixvoModal = ({ onClose }) => {
               <a href="tel:+919515980170" className="flex items-center gap-2 p-2.5 rounded-xl bg-slate-50 border border-slate-200 text-slate-800 no-underline hover:bg-slate-100">
                 <PhoneCall size={16} className="text-emerald-600" /> +91 95159 80170
               </a>
-              <a href="mailto:support@fixvo.in" className="flex items-center gap-2 p-2.5 rounded-xl bg-slate-50 border border-slate-200 text-slate-800 no-underline hover:bg-slate-100">
-                <Mail size={16} className="text-blue-600" /> support@fixvo.in
+              <a href="mailto:supportfixvo@gmail.com" className="flex items-center gap-2 p-2.5 rounded-xl bg-slate-50 border border-slate-200 text-slate-800 no-underline hover:bg-slate-100">
+                <Mail size={16} className="text-blue-600" /> supportfixvo@gmail.com
               </a>
             </div>
           </div>

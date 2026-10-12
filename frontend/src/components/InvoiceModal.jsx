@@ -40,7 +40,7 @@ function buildClientInvoice(booking) {
       tradeName: 'Fixvo App',
       address: 'Madanapalle & Region, Andhra Pradesh, India',
       phone: '+91 95159 80170',
-      email: 'fixvosupport@gmail.com'
+      email: 'supportfixvo@gmail.com'
     },
     itemizedCharges: [
       {
@@ -182,8 +182,8 @@ const InvoiceModal = ({ booking, onClose }) => {
   <div><span class="label">Payment Method</span><div style="font-size:13px;font-weight:700;margin-top:2px;">${inv.paymentMethod === 'cash' ? '💵 Cash on Delivery' : '💳 Online Payment ('+paidMethod+')'}</div><div style="font-size:11px;color:#64748b;font-family:monospace;margin-top:2px;">Txn: ${inv.transactionId || 'N/A'}</div></div>
   <div style="text-align:right;"><span class="label">Grand Total Paid</span><div class="total-amount">₹${inv.totalAmount}</div><div style="font-size:11px;color:#64748b;">All taxes & platform fees included</div></div>
 </div>
-<div class="warranty"><strong>🛡️ 30-Day Fixvo Service Warranty</strong><div>This service is covered under Fixvo's 30-day rework warranty. For assistance, reach out at fixvosupport@gmail.com.</div></div>
-<div class="footer"><p>${biz.legalName || 'Fixvo Technologies'} • ${biz.address || 'Andhra Pradesh, India'}</p><p>Support: <strong>${biz.email || 'fixvosupport@gmail.com'}</strong> • Phone: <strong>${biz.phone || '+91 95159 80170'}</strong></p></div>
+<div class="warranty"><strong>🛡️ 30-Day Fixvo Service Warranty</strong><div>This service is covered under Fixvo's 30-day rework warranty. For assistance, reach out at supportfixvo@gmail.com.</div></div>
+<div class="footer"><p>${biz.legalName || 'Fixvo Technologies'} • ${biz.address || 'Andhra Pradesh, India'}</p><p>Support: <strong>${biz.email || 'supportfixvo@gmail.com'}</strong> • Phone: <strong>${biz.phone || '+91 95159 80170'}</strong></p></div>
 </body></html>`;
 
     try {
@@ -408,7 +408,7 @@ const InvoiceModal = ({ booking, onClose }) => {
             {/* Footer */}
             <div className="pt-4 border-t border-slate-100 text-center text-[10px] text-slate-400 space-y-1">
               <p>{biz.legalName || 'Fixvo Technologies'} • {biz.address || 'Madanapalle & Region, Andhra Pradesh, India'}</p>
-              <p>Support: <strong>fixvosupport@gmail.com</strong> • Phone: <strong>+91 95159 80170</strong></p>
+              <p>Support: <strong>supportfixvo@gmail.com</strong> • Phone: <strong>+91 95159 80170</strong></p>
             </div>
 
           </div>

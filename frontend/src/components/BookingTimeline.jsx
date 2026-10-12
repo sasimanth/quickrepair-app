@@ -16,34 +16,23 @@ import {
 } from 'lucide-react';
 
 const STAGES = [
-  { key: 'pending', label: 'Booking Confirmed', desc: 'Order placed and submitted', icon: CheckCircle2 },
-  { key: 'assigned', label: 'Technician Assigned', desc: 'Matched with local specialist', icon: UserCheck },
-  { key: 'accepted', label: 'Technician Accepted', desc: 'Technician confirmed job slot', icon: UserCheck },
-  { key: 'on_the_way', label: 'On The Way', desc: 'Technician traveling to your location', icon: Truck },
-  { key: 'arrived', label: 'Technician Arrived', desc: 'Specialist reached doorstep', icon: MapPin },
-  { key: 'inspection_started', label: 'Inspection Started', desc: 'Problem diagnosis under way', icon: Wrench },
-  { key: 'quote_pending', label: 'Final Quote Submitted', desc: 'Awaiting your quote approval', icon: FileText },
-  { key: 'in_progress', label: 'Repair Work In Progress', desc: 'Service repair work active', icon: Wrench },
-  { key: 'completed', label: 'Work Completed', desc: 'Repair completed successfully', icon: CheckSquare },
-  { key: 'payment_completed', label: 'Payment Completed', desc: 'Invoice generated & ready', icon: CreditCard }
+  { key: 'step_1', stepNum: 1, label: 'Booking Confirmed & Assigned', desc: 'Order placed and matched with specialist', icon: CheckCircle2 },
+  { key: 'step_2', stepNum: 2, label: 'Technician Accepted & Diagnostic Quote', desc: 'Specialist confirms slot, inspects issue & sends quote', icon: UserCheck },
+  { key: 'step_3', stepNum: 3, label: 'Repair Work In Progress', desc: 'Approved quote & active repair underway', icon: Wrench },
+  { key: 'step_4', stepNum: 4, label: 'Job Completed & Verified', desc: 'Service completed successfully & invoice ready', icon: CheckSquare }
 ];
 
-const STATUS_RANK = {
-  'pending': 1,
-  'queued': 1,
-  'assigned': 2,
-  'accepted': 3,
-  'on_the_way': 4,
-  'arrived': 5,
-  'inspection_started': 6,
-  'quote_pending': 7,
-  'quote_clarification': 7,
-  'quote_rejected': 7,
-  'quote_approved': 8,
-  'in_progress': 8,
-  'completed': 9,
-  'payment_completed': 10,
-  'cash_completed': 10
+const getEffectiveStep = (status, paymentStatus) => {
+  if (['completed', 'payment_completed', 'cash_completed'].includes(status) || ['completed', 'cash_completed', 'paid'].includes(paymentStatus)) {
+    return 4;
+  }
+  if (['quote_approved', 'in_progress'].includes(status)) {
+    return 3;
+  }
+  if (['accepted', 'on_the_way', 'arrived', 'inspection_started', 'quote_pending', 'quote_clarification', 'quote_rejected'].includes(status)) {
+    return 2;
+  }
+  return 1; // pending, queued, assigned
 };
 
 const formatDate = (dateStr) => {
@@ -69,21 +58,24 @@ const BookingTimeline = ({ booking }) => {
   const paymentStatus = booking.paymentStatus || 'pending';
   const isCancelled = currentStatus === 'cancelled';
   const isRejected = currentStatus === 'rejected';
-  const isCompleted = currentStatus === 'completed' || paymentStatus === 'completed' || paymentStatus === 'cash_completed' || paymentStatus === 'paid';
-
-  // Effective status calculation
-  let effectiveRank = STATUS_RANK[currentStatus] || 1;
-  if (isCompleted) {
-    effectiveRank = 10;
-  }
+  const effectiveStep = isCancelled ? 1 : getEffectiveStep(currentStatus, paymentStatus);
+  const isCompleted = effectiveStep === 4;
 
   const timelineEvents = booking.timelineEvents || [];
 
-  const getEventTime = (stageKey) => {
-    const match = timelineEvents.find(e => e.status === stageKey || (stageKey === 'payment_completed' && (e.status.includes('payment') || e.status.includes('cash'))));
-    if (match && match.timestamp) return formatDate(match.timestamp);
-    if (stageKey === 'pending') return formatDate(booking.createdAt || booking.date);
-    if (isCompleted && (stageKey === 'completed' || stageKey === 'payment_completed')) return formatDate(booking.updatedAt || new Date());
+  const getEventTime = (stepNum) => {
+    if (stepNum === 1) return formatDate(booking.createdAt || booking.date);
+    if (stepNum === 4 && isCompleted) return formatDate(booking.updatedAt || new Date());
+    if (timelineEvents.length > 0) {
+      if (stepNum === 2) {
+        const ev = timelineEvents.find(e => ['accepted', 'on_the_way', 'arrived', 'quote_pending'].includes(e.status));
+        if (ev?.timestamp) return formatDate(ev.timestamp);
+      }
+      if (stepNum === 3) {
+        const ev = timelineEvents.find(e => ['quote_approved', 'in_progress'].includes(e.status));
+        if (ev?.timestamp) return formatDate(ev.timestamp);
+      }
+    }
     return null;
   };
 
@@ -119,11 +111,10 @@ const BookingTimeline = ({ booking }) => {
 
       {/* Flipkart-Style Vertical Connected Timeline */}
       <div className="relative pl-6 space-y-6 before:absolute before:left-3 before:top-2 before:bottom-2 before:w-0.5 before:bg-slate-200">
-        {STAGES.map((stage, idx) => {
-          const stageRank = STATUS_RANK[stage.key];
-          const isDone = !isCancelled && (effectiveRank > stageRank || (isCompleted && stageRank <= 10));
-          const isCurrent = !isCancelled && !isDone && effectiveRank === stageRank;
-          const eventTime = getEventTime(stage.key);
+        {STAGES.map((stage) => {
+          const isDone = !isCancelled && effectiveStep > stage.stepNum;
+          const isCurrent = !isCancelled && effectiveStep === stage.stepNum;
+          const eventTime = getEventTime(stage.stepNum);
 
           const StageIcon = stage.icon;
 

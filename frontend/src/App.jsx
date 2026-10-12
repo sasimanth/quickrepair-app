@@ -124,11 +124,28 @@ const PromoBanner = () => {
   );
 };
 
+import SplashScreen from './components/SplashScreen';
+
 const AppContent = () => {
   const location = useLocation();
   const navigate = useNavigate();
   const { user, loading } = useAuth();
   const isNative = Capacitor.isNativePlatform();
+
+  const [showSplash, setShowSplash] = useState(() => {
+    try {
+      return !sessionStorage.getItem('fixvo_splash_shown');
+    } catch {
+      return true;
+    }
+  });
+
+  const handleSplashFinish = () => {
+    try {
+      sessionStorage.setItem('fixvo_splash_shown', 'true');
+    } catch {}
+    setShowSplash(false);
+  };
 
   const isHome = location.pathname === '/';
   const isDashboard = ['/dashboard', '/technician-dashboard', '/admin-dashboard'].includes(location.pathname);
@@ -182,6 +199,7 @@ const AppContent = () => {
 
   return (
     <div className="min-h-screen bg-slate-50 flex flex-col relative">
+      {showSplash && <SplashScreen onFinish={handleSplashFinish} />}
       {!isNative && isHome && <PromoBanner />}
       {!isNative && <Navbar />}
       <main className="flex-grow flex flex-col">

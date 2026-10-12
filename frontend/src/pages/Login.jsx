@@ -167,48 +167,89 @@ const Login = () => {
   };
 
   return (
-    <div className="min-h-screen bg-slate-100 flex items-center justify-center sm:p-4">
-      {/* Mobile view full stretchable container matching App Login Page */}
-      <div className="relative w-full min-h-screen sm:min-h-0 sm:max-w-md bg-white sm:rounded-[2.5rem] shadow-2xl border-0 sm:border border-slate-200 p-6 sm:p-8 text-slate-900 text-left flex flex-col justify-between">
+    <div className="min-h-screen bg-gradient-to-b from-slate-900 via-slate-950 to-slate-900 flex items-center justify-center p-0 sm:p-6 relative overflow-hidden font-sans">
+      {/* Background Ambient Lighting */}
+      <div className="absolute top-[-10%] left-[-10%] w-[50%] h-[50%] bg-blue-600/10 rounded-full blur-[120px] pointer-events-none"></div>
+      <div className="absolute bottom-[-10%] right-[-10%] w-[50%] h-[50%] bg-indigo-600/10 rounded-full blur-[120px] pointer-events-none"></div>
+
+      {/* Main Login Card */}
+      <div className="relative w-full min-h-screen sm:min-h-0 sm:max-w-md bg-white sm:rounded-[2.5rem] shadow-2xl border-0 sm:border border-slate-100 p-6 sm:p-8 text-slate-900 text-left flex flex-col justify-between z-10">
         
         <div>
           {/* Top Bar: Back to Home (Web Only) & Skip Button */}
-          <div className="flex justify-between items-center mb-4">
+          <div className="flex justify-between items-center mb-6">
             {!isNative ? (
               <button 
                 type="button"
                 onClick={() => navigate('/')}
-                className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-full border border-slate-200 hover:bg-slate-50 text-slate-700 hover:text-slate-900 font-bold text-xs transition-all cursor-pointer bg-white shadow-2xs"
+                className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-full border border-slate-200 hover:bg-slate-50 text-slate-700 hover:text-slate-900 font-bold text-xs transition-all cursor-pointer bg-white shadow-xs active:scale-95"
               >
-                <ArrowLeft size={14} /> Back to Home
+                <ArrowLeft size={14} /> Back
               </button>
             ) : <div />}
             
             <button 
               type="button"
               onClick={() => navigate('/dashboard')}
-              className="px-4 py-1.5 rounded-full border border-slate-300 hover:bg-slate-100 text-slate-700 font-bold text-xs transition-all cursor-pointer bg-white ml-auto"
+              className="px-4 py-1.5 rounded-full bg-slate-100 hover:bg-slate-200 text-slate-700 font-extrabold text-xs transition-all cursor-pointer border border-slate-200 active:scale-95 ml-auto"
             >
-              Skip
+              Skip →
             </button>
           </div>
 
           {/* Brand Icon Header */}
-          <div className="flex justify-start mb-5">
-            <div className="w-14 h-14 bg-blue-50 border border-blue-100 rounded-2xl flex items-center justify-center text-blue-600 shadow-sm overflow-hidden p-1.5">
-              <img src={fixvoLogo} alt="Fixvo" className="w-full h-full object-cover scale-110" />
+          <div className="flex items-center gap-3.5 mb-6">
+            <div className="w-14 h-14 bg-gradient-to-br from-blue-600 to-indigo-700 rounded-2xl flex items-center justify-center text-white shadow-lg shadow-blue-600/20 p-2 overflow-hidden shrink-0">
+              <img src={fixvoLogo} alt="Fixvo" className="w-full h-full object-contain filter brightness-110" />
             </div>
+            <div>
+              <div className="flex items-center gap-2">
+                <h1 className="text-xl font-black text-slate-900 tracking-tight leading-none">
+                  FIX<span className="text-blue-600">VO</span>
+                </h1>
+                <span className="bg-blue-50 text-blue-700 text-[10px] font-black px-2 py-0.5 rounded-full border border-blue-200 uppercase tracking-wider">
+                  Secure Auth
+                </span>
+              </div>
+              <p className="text-[11px] text-slate-500 font-semibold mt-1">Smart · Fast · Reliable Doorstep Repairs</p>
+            </div>
+          </div>
+
+          {/* Mode Switcher Tabs */}
+          <div className="grid grid-cols-2 p-1 bg-slate-100/90 rounded-2xl mb-6 border border-slate-200/80">
+            <button
+              type="button"
+              onClick={() => { setAuthMode('phone'); setError(''); }}
+              className={`py-2 text-xs font-black rounded-xl transition-all border-none cursor-pointer ${
+                authMode === 'phone'
+                  ? 'bg-white text-blue-600 shadow-sm'
+                  : 'text-slate-500 hover:text-slate-800 bg-transparent'
+              }`}
+            >
+              Mobile Number
+            </button>
+            <button
+              type="button"
+              onClick={() => { setAuthMode('email'); setError(''); }}
+              className={`py-2 text-xs font-black rounded-xl transition-all border-none cursor-pointer ${
+                authMode === 'email'
+                  ? 'bg-white text-blue-600 shadow-sm'
+                  : 'text-slate-500 hover:text-slate-800 bg-transparent'
+              }`}
+            >
+              Email & Password
+            </button>
           </div>
 
           {/* Headline & Subtitle */}
           <div className="mb-5">
-            <h2 className="text-2xl sm:text-3xl font-extrabold text-slate-900 tracking-tight">
-              {authMode === 'phone' ? 'Enter your phone number' : 'Welcome back'}
+            <h2 className="text-2xl font-black text-slate-900 tracking-tight">
+              {authMode === 'phone' ? 'Enter your mobile number' : 'Welcome back to Fixvo'}
             </h2>
-            <p className="text-slate-500 text-xs sm:text-sm mt-1 font-medium leading-relaxed">
+            <p className="text-slate-500 text-xs mt-1 font-medium leading-relaxed">
               {authMode === 'phone' 
-                ? "We'll send you a text with a verification code. Standard tariff may apply." 
-                : 'Sign in to access your saved addresses, bookings, and rewards.'}
+                ? "Instant 1-click verification. We will link your account seamlessly." 
+                : 'Sign in to access your active repairs, quotes, and saved addresses.'}
             </p>
           </div>
 
@@ -216,64 +257,69 @@ const Login = () => {
           {error && (
             <div className="bg-rose-50 text-rose-700 p-3.5 rounded-2xl mb-4 text-xs font-bold border border-rose-200 flex items-center gap-2.5 animate-in fade-in duration-200">
               <span className="w-4 h-4 rounded-full bg-rose-500 text-white flex items-center justify-center text-[10px] font-black shrink-0">!</span>
-              <span>{error}</span>
+              <span className="flex-1">{error}</span>
             </div>
           )}
 
           {/* Phone Input Mode */}
           {authMode === 'phone' && (
             <form onSubmit={handlePhoneSubmit} className="space-y-4">
-              <div className="flex border border-slate-300 rounded-2xl overflow-hidden focus-within:border-blue-600 focus-within:ring-2 focus-within:ring-blue-100 transition-all bg-white">
-                <div className="flex items-center gap-1.5 px-3.5 py-3.5 bg-slate-50/50 border-r border-slate-200 text-sm font-bold text-slate-800 shrink-0">
-                  <span>+91</span>
-                  <ChevronDown size={14} className="text-slate-500" />
+              <div className="flex border-2 border-slate-200 rounded-2xl overflow-hidden focus-within:border-blue-600 focus-within:ring-4 focus-within:ring-blue-100/60 transition-all bg-white shadow-xs">
+                <div className="flex items-center gap-1.5 px-3.5 py-3.5 bg-slate-50 border-r border-slate-200 text-sm font-extrabold text-slate-800 shrink-0">
+                  <span>🇮🇳 +91</span>
+                  <ChevronDown size={14} className="text-slate-400" />
                 </div>
                 <input 
                   type="tel"
                   required
+                  autoFocus
                   maxLength={10}
                   value={phone}
                   onChange={(e) => setPhone(e.target.value.replace(/\D/g, ''))}
-                  placeholder="Phone number"
-                  className="w-full px-4 py-3.5 text-base font-bold text-slate-900 outline-none bg-white placeholder:text-slate-300 tracking-wider"
+                  placeholder="Enter 10-digit number"
+                  className="w-full px-4 py-3.5 text-base font-extrabold text-slate-900 outline-none bg-white placeholder:text-slate-350 tracking-wider"
                 />
               </div>
 
               <button
                 type="submit"
-                disabled={loading}
-                className="w-full py-3.5 bg-[#E8EEFD] hover:bg-blue-600 hover:text-white text-[#3B66D6] font-bold text-sm sm:text-base rounded-2xl transition-all shadow-none flex items-center justify-center gap-2 cursor-pointer border-none outline-none active:scale-98"
+                disabled={loading || phone.length < 10}
+                className={`w-full py-3.5 font-black text-sm rounded-2xl transition-all shadow-md flex items-center justify-center gap-2 cursor-pointer border-none outline-none active:scale-98 ${
+                  phone.length >= 10 && !loading
+                    ? 'bg-blue-600 hover:bg-blue-700 text-white shadow-blue-600/20'
+                    : 'bg-slate-100 text-slate-400 cursor-not-allowed shadow-none'
+                }`}
               >
-                {loading ? <Loader2 className="animate-spin" size={18} /> : 'Continue'}
+                {loading ? <Loader2 className="animate-spin" size={18} /> : 'Continue to Dashboard →'}
               </button>
             </form>
           )}
 
           {/* Email Input Mode */}
           {authMode === 'email' && (
-            <form onSubmit={handleEmailSubmit} className="space-y-3">
+            <form onSubmit={handleEmailSubmit} className="space-y-3.5">
               <div>
-                <label className="text-[10px] font-extrabold text-slate-400 uppercase tracking-wider block ml-1 mb-1">Email Address</label>
+                <label className="text-[10px] font-extrabold text-slate-500 uppercase tracking-wider block ml-1 mb-1">Email Address</label>
                 <input 
                   type="email" 
                   required 
                   name="email" 
                   value={emailData.email} 
                   onChange={(e) => setEmailData({ ...emailData, email: e.target.value })}
-                  className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-2xl text-xs font-bold text-slate-900 focus:border-blue-600 focus:bg-white outline-none transition-all" 
+                  className="w-full px-4 py-3.5 bg-white border-2 border-slate-200 rounded-2xl text-xs font-bold text-slate-900 focus:border-blue-600 focus:ring-4 focus:ring-blue-100/60 outline-none transition-all shadow-xs" 
                   placeholder="name@example.com"
                 />
               </div>
 
               <div>
-                <label className="text-[10px] font-extrabold text-slate-400 uppercase tracking-wider block ml-1 mb-1">Password</label>
+                <label className="text-[10px] font-extrabold text-slate-500 uppercase tracking-wider block ml-1 mb-1">Password</label>
                 <input 
                   type="password" 
                   required 
                   name="password" 
                   value={emailData.password} 
                   onChange={(e) => setEmailData({ ...emailData, password: e.target.value })}
-                  className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-2xl text-xs font-bold text-slate-900 focus:border-blue-600 focus:bg-white outline-none transition-all" 
+                  className="w-full px-4 py-3.5 bg-white border-2 border-slate-200 rounded-2xl text-xs font-bold text-slate-900 focus:border-blue-600 focus:ring-4 focus:ring-blue-100/60 outline-none transition-all shadow-xs" 
                   placeholder="••••••••"
                 />
               </div>
@@ -281,9 +327,9 @@ const Login = () => {
               <button
                 type="submit"
                 disabled={loading}
-                className="w-full py-3.5 bg-blue-600 hover:bg-blue-700 text-white font-extrabold text-sm rounded-2xl transition-all shadow-md flex items-center justify-center gap-2 cursor-pointer border-none outline-none mt-2 active:scale-98"
+                className="w-full py-3.5 bg-blue-600 hover:bg-blue-700 text-white font-black text-sm rounded-2xl transition-all shadow-md shadow-blue-600/20 flex items-center justify-center gap-2 cursor-pointer border-none outline-none mt-2 active:scale-98"
               >
-                {loading ? <Loader2 className="animate-spin" size={18} /> : 'Sign In'}
+                {loading ? <Loader2 className="animate-spin" size={18} /> : 'Sign In with Email'}
               </button>
             </form>
           )}
@@ -293,7 +339,7 @@ const Login = () => {
             <div className="absolute inset-0 flex items-center">
               <div className="w-full border-t border-slate-200"></div>
             </div>
-            <span className="relative px-3 bg-white text-[11px] font-bold uppercase text-slate-400 tracking-widest">
+            <span className="relative px-3 bg-white text-[11px] font-black uppercase text-slate-400 tracking-widest">
               OR
             </span>
           </div>
@@ -303,7 +349,7 @@ const Login = () => {
             type="button"
             onClick={triggerGoogleLogin}
             disabled={googleLoading}
-            className="w-full py-3.5 px-4 bg-white hover:bg-slate-50 border border-slate-300 rounded-2xl text-slate-800 font-bold text-xs sm:text-sm shadow-2xs transition-all flex items-center justify-center gap-3 cursor-pointer"
+            className="w-full py-3.5 px-4 bg-white hover:bg-slate-50 border-2 border-slate-200 hover:border-slate-300 rounded-2xl text-slate-800 font-extrabold text-xs sm:text-sm shadow-xs transition-all flex items-center justify-center gap-3 cursor-pointer active:scale-98"
           >
             {googleLoading ? (
               <Loader2 className="animate-spin text-blue-600" size={18} />
@@ -321,37 +367,21 @@ const Login = () => {
 
         {/* Bottom Navigation Links */}
         <div className="mt-6 pt-4 border-t border-slate-100 text-xs font-bold text-slate-600">
-          {authMode === 'phone' ? (
-            <div className="flex items-center justify-between">
-              <Link 
-                to="/signup" 
-                className="text-blue-600 hover:underline cursor-pointer font-bold text-xs"
-              >
-                New user? Create Account
-              </Link>
-              <button 
-                type="button" 
-                onClick={() => { setAuthMode('email'); setError(''); }} 
-                className="text-slate-600 hover:text-slate-900 underline cursor-pointer border-none bg-transparent font-bold text-xs"
-              >
-                Email Login
-              </button>
-            </div>
-          ) : (
-            <div className="text-center">
-              <button 
-                type="button" 
-                onClick={() => { setAuthMode('phone'); setError(''); }} 
-                className="text-blue-600 hover:underline cursor-pointer border-none bg-transparent font-bold text-xs"
-              >
-                ← Back to Phone Login
-              </button>
-            </div>
-          )}
+          <div className="flex items-center justify-between">
+            <Link 
+              to="/signup" 
+              className="text-blue-600 hover:text-blue-700 hover:underline cursor-pointer font-extrabold text-xs"
+            >
+              New to Fixvo? Create Account
+            </Link>
+            <span className="text-[10px] text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded-full font-black border border-emerald-200">
+              ⚡ 30-Min Dispatch
+            </span>
+          </div>
 
           {/* Footer Notice */}
           <p className="mt-4 text-center text-[10px] text-slate-400 font-medium leading-relaxed">
-            By continuing, you agree to our <a href="/terms" target="_blank" className="text-slate-600 underline">Terms of Use</a> and <a href="/privacy" target="_blank" className="text-slate-600 underline">Privacy Policy</a>.
+            By continuing, you agree to Fixvo's <a href="/terms" target="_blank" className="text-slate-600 underline font-bold">Terms of Use</a> and <a href="/privacy" target="_blank" className="text-slate-600 underline font-bold">Privacy Policy</a>.
           </p>
         </div>
 

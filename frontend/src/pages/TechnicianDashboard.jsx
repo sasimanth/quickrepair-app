@@ -1074,106 +1074,75 @@ const TechnicianDashboard = () => {
                               const jobId = job._id || job.id;
                               const isUpdating = updatingJobs[jobId];
                               return (
-                                <div className="flex flex-wrap gap-2 w-full md:w-auto">
+                                <div className="flex flex-col gap-2.5 w-full">
+                                  {/* Step 1: Accept or Decline Request (Rendered ONLY once) */}
                                   {['pending', 'assigned'].includes(job.status) && (
-                                    <>
+                                    <div className="grid grid-cols-2 gap-2 w-full">
                                       <button
                                         disabled={isUpdating}
                                         onClick={() => updateJobStatus(jobId, 'accepted')}
-                                        className="px-5 py-2.5 bg-blue-600 hover:bg-blue-700 text-white font-extrabold rounded-xl text-xs uppercase tracking-wider cursor-pointer border-none shadow-xs flex items-center gap-1.5"
+                                        className="py-3.5 bg-blue-600 hover:bg-blue-700 text-white font-extrabold rounded-2xl text-xs uppercase tracking-wider cursor-pointer border-none shadow-md flex items-center justify-center gap-1.5 transition-all active:scale-98"
                                       >
-                                        <CheckCircle size={14} /> Accept Request
+                                        <CheckCircle size={16} /> Accept Request
                                       </button>
                                       <button
                                         disabled={isUpdating}
                                         onClick={() => setDeclineJobId(jobId)}
-                                        className="px-4 py-2.5 bg-rose-50 text-rose-700 hover:bg-rose-100 border border-rose-200 font-extrabold rounded-xl text-xs uppercase tracking-wider cursor-pointer"
+                                        className="py-3.5 bg-rose-50 text-rose-700 hover:bg-rose-100 border border-rose-200 font-extrabold rounded-2xl text-xs uppercase tracking-wider cursor-pointer flex items-center justify-center transition-all active:scale-98"
                                       >
                                         Decline
                                       </button>
-                                    </>
+                                    </div>
                                   )}
 
-                                  {/* Re-laid out active job action buttons matching screenshot */}
-                                  <div className="flex flex-col gap-2.5 w-full mt-2">
-                                    {/* Primary Workflow Stage Button (Full Width) */}
-                                    {['pending', 'assigned'].includes(job.status) && (
-                                      <div className="grid grid-cols-2 gap-2">
-                                        <button
-                                          disabled={isUpdating}
-                                          onClick={() => updateJobStatus(jobId, 'accepted')}
-                                          className="py-3 bg-blue-600 hover:bg-blue-700 text-white font-extrabold rounded-2xl text-xs uppercase tracking-wider cursor-pointer border-none shadow-md flex items-center justify-center gap-1.5"
-                                        >
-                                          <CheckCircle size={15} /> Accept Request
-                                        </button>
-                                        <button
-                                          disabled={isUpdating}
-                                          onClick={() => setDeclineJobId(jobId)}
-                                          className="py-3 bg-rose-50 text-rose-700 hover:bg-rose-100 border border-rose-200 font-extrabold rounded-2xl text-xs uppercase tracking-wider cursor-pointer flex items-center justify-center"
-                                        >
-                                          Decline
-                                        </button>
+                                  {/* Step 2: Arrived & Submit Quote (Single clean action instead of 4 clicks) */}
+                                  {['accepted', 'on_the_way', 'arrived', 'inspection_started'].includes(job.status) && (
+                                    <button
+                                      disabled={isUpdating}
+                                      onClick={() => handleOpenQuoteModal(job)}
+                                      className="w-full py-3.5 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white font-black rounded-2xl text-xs sm:text-sm uppercase tracking-wider cursor-pointer border-none shadow-md flex items-center justify-center gap-2 transition-all active:scale-98"
+                                    >
+                                      <Wrench size={18} /> SUBMIT DIAGNOSTIC QUOTE
+                                    </button>
+                                  )}
+
+                                  {/* Quote Pending Banner */}
+                                  {job.status === 'quote_pending' && (
+                                    <div className="w-full p-3.5 bg-purple-50 border border-purple-200 rounded-2xl flex items-center justify-between text-xs font-bold text-purple-900">
+                                      <div className="flex items-center gap-2">
+                                        <Clock size={16} className="text-purple-600 animate-spin" />
+                                        <span>Quote Sent (₹{job.finalQuote || 0}) • Awaiting User Approval</span>
                                       </div>
-                                    )}
-
-                                    {job.status === 'accepted' && (
-                                      <button
-                                        disabled={isUpdating}
-                                        onClick={() => updateJobStatus(jobId, 'on_the_way')}
-                                        className="w-full py-3.5 bg-[#E65100] hover:bg-orange-700 text-white font-black rounded-2xl text-xs sm:text-sm uppercase tracking-wider cursor-pointer border-none shadow-md flex items-center justify-center gap-2"
-                                      >
-                                        <Truck size={18} /> START ROUTE
-                                      </button>
-                                    )}
-
-                                    {job.status === 'on_the_way' && (
-                                      <button
-                                        disabled={isUpdating}
-                                        onClick={() => updateJobStatus(jobId, 'arrived')}
-                                        className="w-full py-3.5 bg-blue-600 hover:bg-blue-700 text-white font-black rounded-2xl text-xs sm:text-sm uppercase tracking-wider cursor-pointer border-none shadow-md flex items-center justify-center gap-2"
-                                      >
-                                        <MapPin size={18} /> CONFIRM ARRIVAL
-                                      </button>
-                                    )}
-
-                                    {job.status === 'arrived' && (
-                                      <button
-                                        disabled={isUpdating}
-                                        onClick={() => updateJobStatus(jobId, 'inspection_started')}
-                                        className="w-full py-3.5 bg-indigo-600 hover:bg-indigo-700 text-white font-black rounded-2xl text-xs sm:text-sm uppercase tracking-wider cursor-pointer border-none shadow-md flex items-center justify-center gap-2"
-                                      >
-                                        <Wrench size={18} /> START INSPECTION
-                                      </button>
-                                    )}
-
-                                    {job.status === 'inspection_started' && (
                                       <button
                                         onClick={() => handleOpenQuoteModal(job)}
-                                        className="w-full py-3.5 bg-indigo-600 hover:bg-indigo-700 text-white font-black rounded-2xl text-xs sm:text-sm uppercase tracking-wider cursor-pointer border-none shadow-md flex items-center justify-center gap-2"
+                                        className="px-3 py-1 bg-purple-600 text-white rounded-lg text-[10px] font-extrabold uppercase border-none cursor-pointer hover:bg-purple-700"
                                       >
-                                        <Wrench size={18} /> SUBMIT FINAL QUOTE
+                                        Revise
                                       </button>
-                                    )}
+                                    </div>
+                                  )}
 
-                                    {job.status === 'quote_approved' && (
-                                      <button
-                                        disabled={isUpdating}
-                                        onClick={() => updateJobStatus(jobId, 'in_progress')}
-                                        className="w-full py-3.5 bg-purple-600 hover:bg-purple-700 text-white font-black rounded-2xl text-xs sm:text-sm uppercase tracking-wider cursor-pointer border-none shadow-md flex items-center justify-center gap-2"
-                                      >
-                                        <Wrench size={18} /> START REPAIR WORK
-                                      </button>
-                                    )}
+                                  {/* Step 3: Start Repair Work (After user approves quote) */}
+                                  {job.status === 'quote_approved' && (
+                                    <button
+                                      disabled={isUpdating}
+                                      onClick={() => updateJobStatus(jobId, 'in_progress')}
+                                      className="w-full py-3.5 bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700 text-white font-black rounded-2xl text-xs sm:text-sm uppercase tracking-wider cursor-pointer border-none shadow-md flex items-center justify-center gap-2 transition-all active:scale-98"
+                                    >
+                                      <Wrench size={18} /> START REPAIR WORK
+                                    </button>
+                                  )}
 
-                                    {job.status === 'in_progress' && (
-                                      <button
-                                        disabled={isUpdating}
-                                        onClick={() => updateJobStatus(jobId, 'completed')}
-                                        className="w-full py-3.5 bg-emerald-600 hover:bg-emerald-700 text-white font-black rounded-2xl text-xs sm:text-sm uppercase tracking-wider cursor-pointer border-none shadow-md flex items-center justify-center gap-2"
-                                      >
-                                        <CheckCircle size={18} /> COMPLETE JOB
-                                      </button>
-                                    )}
+                                  {/* Step 4: Complete Job */}
+                                  {job.status === 'in_progress' && (
+                                    <button
+                                      disabled={isUpdating}
+                                      onClick={() => updateJobStatus(jobId, 'completed')}
+                                      className="w-full py-3.5 bg-emerald-600 hover:bg-emerald-700 text-white font-black rounded-2xl text-xs sm:text-sm uppercase tracking-wider cursor-pointer border-none shadow-md flex items-center justify-center gap-2 transition-all active:scale-98"
+                                    >
+                                      <CheckCircle size={18} /> COMPLETE JOB
+                                    </button>
+                                  )}
 
                                     {/* Middle Row: 50/50 Split for DIRECTIONS & CALL */}
                                     {['accepted', 'quote_approved', 'on_the_way', 'arrived', 'inspection_started', 'quote_pending', 'in_progress'].includes(job.status) && (
@@ -1208,7 +1177,6 @@ const TechnicianDashboard = () => {
                                       </button>
                                     )}
                                   </div>
-                                </div>
                               );
                             })()}
                           </div>

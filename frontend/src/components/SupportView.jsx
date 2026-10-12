@@ -139,7 +139,7 @@ const SupportView = ({
         </a>
 
         <a
-          href="mailto:support@fixvo.com"
+          href="mailto:supportfixvo@gmail.com"
           className="bg-slate-900/40 p-5 rounded-2xl border border-white/5 hover:border-indigo-500/30 transition-all flex flex-col items-center text-center justify-between min-h-[140px] text-slate-300 no-underline cursor-pointer group"
         >
           <Mail size={28} className="text-indigo-400 group-hover:scale-110 transition-transform" />

@@ -463,117 +463,156 @@ const Home = () => {
 
       <div className="max-w-5xl mx-auto px-4 pb-24 relative z-10">
         
-        {/* 2. HERO & SMART SEARCH BAR SECTION */}
-        <section className="pt-24 sm:pt-28 md:pt-32 pb-14 text-center max-w-4xl mx-auto relative z-10">
+        {/* 2. HERO SECTION INSPIRED BY REFERENCE */}
+        <section className="pt-20 sm:pt-24 md:pt-28 pb-12 text-center max-w-4xl mx-auto relative z-10">
           <motion.div 
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.6 }}
             className="space-y-6"
           >
-            {/* Eyebrow Badge */}
-            <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-blue-50 border border-blue-100 text-xs font-black uppercase tracking-widest text-blue-700 shadow-sm">
-              <Zap size={13} className="text-amber-500 fill-current" />
-              <span>⚡ 30-Minute Dispatch Guarantee • Madanapalle & Region</span>
+            {/* Eyebrow Badge (Reference Image 1) */}
+            <div className="inline-flex items-center gap-2 px-5 py-2 rounded-full bg-emerald-50/90 border border-emerald-200/80 text-xs sm:text-sm font-black uppercase tracking-widest text-emerald-800 shadow-xs">
+              <Sparkles size={14} className="text-emerald-600" />
+              <span>SMART • FAST • RELIABLE</span>
             </div>
 
             {/* Headline */}
-            <h1 className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-black text-slate-900 tracking-tight leading-[1.05]">
-              Instant Doorstep Repairs & <br />
-              <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-600 via-indigo-600 to-sky-600">
-                Certified Home Care.
+            <h1 className="text-5xl sm:text-6xl md:text-7xl lg:text-8xl font-black text-slate-900 tracking-tight leading-[1.05]">
+              Whatever's broken, <br />
+              <span className="text-transparent bg-clip-text bg-gradient-to-r from-emerald-600 via-teal-600 to-blue-600">
+                we fix it.
               </span>
             </h1>
 
             {/* Subtitle */}
-            <p className="text-slate-600 text-sm sm:text-base md:text-lg max-w-2xl mx-auto leading-relaxed font-medium">
-              Book background-checked local technicians for AC, appliance, plumbing, and deep home cleaning with fixed upfront quotes and zero hidden fees.
+            <p className="text-slate-600 text-sm sm:text-base md:text-lg max-w-2xl mx-auto leading-relaxed font-semibold">
+              Verified professionals for plumbing, electrical, bike repair, appliances and more — booked in seconds, tracked live, done right. More categories on the way.
             </p>
 
-            {/* 4 Trust Pills */}
-            <div className="flex flex-wrap justify-center gap-2.5 pt-2">
-              <div className="flex items-center gap-2 rounded-full border border-slate-200 bg-white px-3.5 py-1.5 shadow-sm">
-                <ShieldCheck size={14} className="text-blue-600" />
-                <span className="text-xs font-bold text-slate-700">Certified Technicians</span>
-              </div>
-              <div className="flex items-center gap-2 rounded-full border border-slate-200 bg-white px-3.5 py-1.5 shadow-sm">
-                <Clock size={14} className="text-sky-600" />
-                <span className="text-xs font-bold text-slate-700">30-Min Dispatch</span>
-              </div>
-              <div className="flex items-center gap-2 rounded-full border border-slate-200 bg-white px-3.5 py-1.5 shadow-sm">
-                <Star size={14} className="text-amber-500 fill-current" />
-                <span className="text-xs font-bold text-slate-700">4.9/5 Rating</span>
-              </div>
-              <div className="flex items-center gap-2 rounded-full border border-slate-200 bg-white px-3.5 py-1.5 shadow-sm">
-                <CheckCircle2 size={14} className="text-emerald-600" />
-                <span className="text-xs font-bold text-slate-700">Upfront Digital Quotes</span>
-              </div>
+            {/* App Store Buttons & Instant CTA */}
+            <div className="flex flex-wrap justify-center items-center gap-3 pt-2">
+              <a
+                href="#download-app"
+                onClick={(e) => { e.preventDefault(); setIsAppModalOpen(true); }}
+                className="inline-flex items-center gap-3 px-6 py-3.5 bg-emerald-800 hover:bg-emerald-900 text-white rounded-2xl font-bold text-xs sm:text-sm shadow-lg shadow-emerald-900/20 transition-all transform hover:-translate-y-0.5 no-underline cursor-pointer"
+              >
+                <FaGooglePlay className="text-xl text-emerald-300" />
+                <div className="text-left leading-tight">
+                  <span className="block text-[9px] uppercase tracking-wider text-emerald-200 font-extrabold">Get it on</span>
+                  <span className="block font-black text-xs sm:text-sm">Google Play</span>
+                </div>
+              </a>
+
+              <a
+                href="#download-app"
+                onClick={(e) => { e.preventDefault(); setIsAppModalOpen(true); }}
+                className="inline-flex items-center gap-3 px-6 py-3.5 bg-white hover:bg-slate-50 text-slate-800 border-2 border-slate-200/90 rounded-2xl font-bold text-xs sm:text-sm shadow-xs transition-all transform hover:-translate-y-0.5 no-underline cursor-pointer"
+              >
+                <FaApple className="text-2xl text-slate-900" />
+                <div className="text-left leading-tight">
+                  <span className="block text-[9px] uppercase tracking-wider text-slate-400 font-extrabold">Coming Soon on</span>
+                  <span className="block font-black text-xs sm:text-sm">App Store</span>
+                </div>
+              </a>
+
+              <button
+                onClick={() => handleBookingClick('ac_repair')}
+                className="inline-flex items-center gap-2 px-6 py-3.5 bg-blue-600 hover:bg-blue-700 text-white rounded-2xl font-black text-xs sm:text-sm shadow-lg shadow-blue-600/25 transition-all transform hover:-translate-y-0.5 cursor-pointer border-none"
+              >
+                <Zap size={16} className="text-amber-400 fill-amber-400" />
+                <span>Book Service Online</span>
+              </button>
             </div>
 
-            {/* Service Promise Cards */}
-            <div className="grid gap-4 sm:grid-cols-2 pt-6 text-left">
-              <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm hover:shadow-md transition-shadow">
-                <div className="flex items-center gap-3">
-                  <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-emerald-50 text-emerald-600 border border-emerald-100">
-                    <ShieldCheck size={20} />
-                  </span>
-                  <div>
-                    <p className="text-[10px] font-black uppercase tracking-[0.18em] text-slate-400">Fixvo Guarantee</p>
-                    <p className="text-sm font-extrabold text-slate-800">Upfront digital estimates. Police-verified fixers.</p>
-                  </div>
-                </div>
+            {/* Trust Pills (Reference Image 1: 5.0 Rating & Verified Professionals) */}
+            <div className="flex flex-wrap justify-center items-center gap-3 pt-3">
+              <div className="flex items-center gap-1.5 px-4 py-2 rounded-full border border-slate-200 bg-white text-slate-800 text-xs font-black shadow-xs">
+                <Star size={15} className="text-amber-500 fill-amber-500" />
+                <span>5.0 Rating</span>
               </div>
-
-              <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm hover:shadow-md transition-shadow">
-                <div className="flex items-center gap-3">
-                  <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-sky-50 text-sky-600 border border-sky-100">
-                    <MapPin size={20} />
-                  </span>
-                  <div>
-                    <p className="text-[10px] font-black uppercase tracking-[0.18em] text-slate-400">Active Coverage</p>
-                    <p className="text-sm font-extrabold text-slate-800">Madanapalle, Kadiri, Rayachoty, Galiveedu & region.</p>
-                  </div>
-                </div>
+              <div className="flex items-center gap-1.5 px-4 py-2 rounded-full border border-emerald-200 bg-emerald-50/50 text-emerald-800 text-xs font-black shadow-xs">
+                <ShieldCheck size={16} className="text-emerald-600" />
+                <span>Verified Professionals</span>
+              </div>
+              <div className="flex items-center gap-1.5 px-4 py-2 rounded-full border border-blue-200 bg-blue-50/50 text-blue-800 text-xs font-black shadow-xs">
+                <Clock size={15} className="text-blue-600" />
+                <span>30-Min Fast Dispatch</span>
               </div>
             </div>
           </motion.div>
         </section>
 
-        {/* 3. HOW FIXVO WORKS IN 4 STEPS (Premium White Card Theme) */}
-        <section className="my-12 py-10 px-6 sm:px-10 bg-white border border-slate-200/90 rounded-[2.5rem] shadow-xl text-slate-900 relative overflow-hidden">
-          <div className="absolute top-0 right-0 w-80 h-80 bg-blue-50/60 rounded-full blur-3xl pointer-events-none"></div>
-          
-          <div className="text-center max-w-2xl mx-auto mb-10 relative z-10">
-            <span className="px-3.5 py-1 rounded-full bg-blue-50 text-blue-700 font-extrabold text-xs uppercase tracking-widest border border-blue-200/80">
-              Simple & Fast Workflow
+        {/* 3. HOW FIXVO WORKS SECTION (Reference Image 2: Vertical Stepper Card Flow) */}
+        <section className="my-10 py-12 px-6 sm:px-10 bg-slate-50/80 border border-slate-200/90 rounded-[2.5rem] shadow-sm text-slate-900 relative">
+          <div className="text-center max-w-xl mx-auto mb-10">
+            <span className="text-[11px] font-black uppercase tracking-widest text-emerald-700 bg-emerald-100/80 px-3.5 py-1 rounded-full border border-emerald-200">
+              HOW IT WORKS
             </span>
-            <h2 className="text-3xl sm:text-4xl font-black tracking-tight text-slate-900 mt-3">How Fixvo Works in 4 Easy Steps</h2>
-            <p className="text-slate-500 text-xs sm:text-sm mt-2 font-semibold">Get doorstep repairs and home services done hassle-free in minutes.</p>
+            <h2 className="text-3xl sm:text-4xl font-black tracking-tight text-slate-900 mt-3">
+              How FIXVO Works
+            </h2>
+            <p className="text-slate-500 text-xs sm:text-sm mt-1.5 font-semibold">
+              Book a service in just a few simple steps
+            </p>
           </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 relative z-10">
+          {/* Vertical Stepper Cards with Connecting Vertical Line (Exact match of Reference Image 2) */}
+          <div className="max-w-xl mx-auto relative space-y-6">
+            {/* Vertical connector line */}
+            <div className="absolute left-[19px] sm:left-[23px] top-6 bottom-6 w-0.5 bg-slate-200 z-0"></div>
+
             {[
-              { step: "01", title: "Select Service", desc: "Choose from 25+ repair, installation, or cleaning services.", icon: "📱", badge: "bg-blue-50 text-blue-600 border-blue-100" },
-              { step: "02", title: "Instant Match", desc: "Police-verified local fixer assigned & dispatched in 30 mins.", icon: "⚡", badge: "bg-amber-50 text-amber-600 border-amber-100" },
-              { step: "03", title: "Upfront Quote", desc: "Approve the transparent in-app quote before any work starts.", icon: "📋", badge: "bg-purple-50 text-purple-600 border-purple-100" },
-              { step: "04", title: "Pay & Warranty", desc: "Pay via online or cash after completion with 30-day warranty.", icon: "✨", badge: "bg-emerald-50 text-emerald-600 border-emerald-100" },
-            ].map((s, idx) => (
-              <div key={idx} className="bg-slate-50/80 border border-slate-200/80 rounded-2xl p-6 relative flex flex-col justify-between hover:bg-white hover:shadow-md transition-all duration-300">
-                <div className="flex items-center justify-between">
-                  <span className="text-xs font-black text-slate-400 tracking-widest uppercase">Step {s.step}</span>
-                  <span className={`w-9 h-9 rounded-xl flex items-center justify-center text-xl border ${s.badge}`}>
-                    {s.icon}
-                  </span>
+              {
+                step: 1,
+                title: "Choose Service",
+                desc: "Browse from trusted verified services.",
+                icon: Search,
+                action: () => scrollToSection('services')
+              },
+              {
+                step: 2,
+                title: "Book Instantly",
+                desc: "Confirm your location and book.",
+                icon: Clock,
+                action: () => handleBookingClick('ac_repair')
+              },
+              {
+                step: 3,
+                title: "Get Service",
+                desc: "Verified pros complete the job.",
+                icon: Wrench,
+                action: () => handleBookingClick('plumbing_work')
+              }
+            ].map((s) => {
+              const StepIcon = s.icon;
+              return (
+                <div key={s.step} className="relative z-10 flex items-center gap-4 sm:gap-6 group">
+                  {/* Step Number Circle */}
+                  <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-full bg-emerald-600 text-white font-black text-sm sm:text-base flex items-center justify-center shrink-0 shadow-md shadow-emerald-600/20 group-hover:scale-105 transition-transform">
+                    {s.step}
+                  </div>
+
+                  {/* Card */}
+                  <div 
+                    onClick={s.action}
+                    className="flex-1 bg-white hover:bg-emerald-50/30 border border-slate-200 hover:border-emerald-300 rounded-3xl p-4 sm:p-5 flex items-center gap-4 shadow-sm hover:shadow-md transition-all cursor-pointer"
+                  >
+                    <div className="w-12 h-12 rounded-2xl bg-emerald-50 border border-emerald-100 flex items-center justify-center text-emerald-600 shrink-0 group-hover:scale-110 transition-transform">
+                      <StepIcon size={22} />
+                    </div>
+                    <div>
+                      <h3 className="font-black text-base sm:text-lg text-slate-900 group-hover:text-emerald-700 transition-colors">
+                        {s.title}
+                      </h3>
+                      <p className="text-xs sm:text-sm text-slate-500 font-medium mt-0.5">
+                        {s.desc}
+                      </p>
+                    </div>
+                  </div>
                 </div>
-                <div className="my-4 text-left">
-                  <h3 className="font-black text-lg text-slate-900 mb-1">{s.title}</h3>
-                  <p className="text-xs text-slate-500 leading-relaxed font-medium">{s.desc}</p>
-                </div>
-                <div className="w-full h-1.5 bg-slate-200 rounded-full overflow-hidden mt-2">
-                  <div className="h-full bg-blue-600 rounded-full" style={{ width: `${(idx + 1) * 25}%` }}></div>
-                </div>
-              </div>
-            ))}
+              );
+            })}
           </div>
         </section>
 

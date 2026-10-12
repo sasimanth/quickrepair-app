@@ -204,6 +204,7 @@ const triggerNotifications = async (req, booking, type) => {
       if (booking.providerId) {
         io.to(`user_${booking.providerId}`).emit('job_update', payload);
       }
+      io.emit('job_update', payload);
     }
   } catch (e) {
     console.error('Trigger Notifications Error:', e);
