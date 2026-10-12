@@ -45,3 +45,9 @@ lerna-debug.log*
 # System files
 .DS_Store
 Thumbs.db
+
+# Android APK binaries
+*.apk
+*.aab
+apk/
+frontend/android/app/build/
