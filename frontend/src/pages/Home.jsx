@@ -35,7 +35,8 @@ import {
   ArrowUpRight,
   Wallet,
   Building2,
-  Award
+  Award,
+  Wrench
 } from 'lucide-react';
 import { FaInstagram, FaLinkedin, FaXTwitter, FaWhatsapp, FaApple, FaGooglePlay } from 'react-icons/fa6';
 import founderImg from '../assets/sasi_founder.jpeg';

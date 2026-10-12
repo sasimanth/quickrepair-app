@@ -7,7 +7,7 @@ import SearchableServiceSelector from '../components/SearchableServiceSelector';
 import SearchableAreaSelector from '../components/SearchableAreaSelector';
 import { subscribeToPushNotifications } from '../services/pushNotification';
 import { requestFcmPermission } from '../services/firebase';
-import { Calendar, MapPin, Smartphone, AlertCircle, Clock, CheckCircle, PackageSearch, XCircle, Plus, LayoutDashboard, Wrench, Settings, Star, User, ChevronRight, MessageSquare, Camera, UploadCloud, Loader2, Shield, ShieldCheck, HelpCircle, Truck, Home, Search, Eye, Zap, Maximize2, Hash, Layers, Paintbrush, Tv, X, CreditCard, Sparkles, PhoneCall, Bell, Copy, Share2, Trash2, Edit, CheckSquare, RefreshCw, Menu, Laptop, Tablet, Gamepad2, Watch, Wifi, BatteryCharging, Activity, Droplet, Video, Wind, Snowflake, ChevronDown, ChevronUp, Code, LogOut, Briefcase, Mic, FileText, ClipboardList, Headphones, Gift, Compass, Bike } from 'lucide-react';
+import { Calendar, MapPin, Smartphone, AlertCircle, Clock, CheckCircle, PackageSearch, XCircle, Plus, LayoutDashboard, Wrench, Settings, Star, User, ChevronRight, MessageSquare, Camera, UploadCloud, Loader2, Shield, ShieldCheck, HelpCircle, Truck, Home, Search, Eye, Zap, Maximize2, Hash, Layers, Paintbrush, Tv, X, CreditCard, Sparkles, PhoneCall, Bell, Copy, Share2, Trash2, Edit, CheckSquare, RefreshCw, Menu, Laptop, Tablet, Gamepad2, Watch, Wifi, BatteryCharging, Activity, Droplet, Video, Wind, Snowflake, ChevronDown, ChevronUp, Code, LogOut, Briefcase, Mic, FileText, ClipboardList, Headphones, Gift, Compass } from 'lucide-react';
 import ChatModal from '../components/ChatModal';
 import ReviewModal from '../components/ReviewModal';
 import PaymentModal from '../components/PaymentModal';
@@ -17,10 +17,7 @@ import NativeDevicesModal from '../components/NativeDevicesModal';
 import PaymentMethodsModal from '../components/PaymentMethodsModal';
 import AboutFixvoModal from '../components/AboutFixvoModal';
 import VerificationModal from '../components/VerificationModal';
-import bikeBanner from '../assets/banners/bike_banner.png';
-import acBanner from '../assets/banners/ac_banner.png';
-import electricianBanner from '../assets/banners/electrician_banner.png';
-import roWaterBanner from '../assets/banners/ro_water_banner.png';
+import FixvoAiAssistantModal from '../components/FixvoAiAssistant/FixvoAiAssistantModal';
 import { socket } from '../services/socket';
 import { playNotificationSound } from '../services/soundEffects';
 import LoadingSkeleton from '../components/LoadingSkeleton';
@@ -437,22 +434,24 @@ const UserDashboard = () => {
     fetchData(true);
     subscribeToPushNotifications();
     requestFcmPermission();
-    const interval = setInterval(() => fetchData(false), 8000);
-
-    const handleLocationUpdate = (data) => {
-       setLiveLocations(prev => ({ ...prev, [data.techId]: [data.lat, data.lng] }));
-    };
+    const interval = setInterval(() => fetchData(false), 4000);
 
     if (currentUserId) {
       socket.emit('register_user', currentUserId);
     }
 
+    const handleLocationUpdate = (data) => {
+       setLiveLocations(prev => ({ ...prev, [data.techId]: [data.lat, data.lng] }));
+    };
+
     const handleJobUpdate = (updatedJob) => {
       if (!updatedJob) return;
-      const jobId = updatedJob._id || updatedJob.id;
+      const jobId = (updatedJob._id || updatedJob.id || '').toString();
+      if (!jobId) return;
+
       setBookings(prev => {
         const list = Array.isArray(prev) ? prev : [];
-        const idx = list.findIndex(b => (b._id || b.id) === jobId);
+        const idx = list.findIndex(b => (b._id || b.id || '').toString() === jobId);
         if (idx >= 0) {
           const copy = [...list];
           copy[idx] = { ...copy[idx], ...updatedJob };
@@ -462,7 +461,9 @@ const UserDashboard = () => {
       });
 
       if (updatedJob.status === 'quote_pending') {
-        showToast('Quote Received! 💰', `Technician sent a repair quote of ₹${updatedJob.quote?.amount || updatedJob.finalQuote || 0}. Please review & approve.`, 'info');
+        const quoteTotal = updatedJob.finalQuote || updatedJob.amount || 0;
+        showToast('Quote Received! 💰', `Technician sent a repair quote of ₹${quoteTotal}. Please review & approve in your active job.`, 'info');
+        playNotificationSound('high');
       } else if (updatedJob.status === 'accepted') {
         showToast('Technician Accepted! ✅', 'Your technician confirmed your booking request.', 'success');
       } else if (updatedJob.status === 'in_progress') {
@@ -558,11 +559,7 @@ const UserDashboard = () => {
       if (formData.serviceId) queryParams.append('serviceId', formData.serviceId);
       const queryString = queryParams.toString() ? `?${queryParams.toString()}` : '';
       const res = await api.get(`/technicians/nearby${queryString}`);
-      const techList = res.data || [];
-      setTechnicians(techList);
-      if (techList && techList.length > 0) {
-        setSelectedTech(techList[0]);
-      }
+      setTechnicians(res.data || []);
     } catch (err) {
       console.error('Failed to fetch technicians', err);
       setTechnicians([]);
@@ -570,12 +567,6 @@ const UserDashboard = () => {
       setFetchingTechs(false);
     }
   };
-
-  useEffect(() => {
-    if (step === 2 && technicians.length > 0 && !selectedTech) {
-      setSelectedTech(technicians[0]);
-    }
-  }, [step, technicians, selectedTech]);
 
   const [isBooking, setIsBooking] = useState(false);
 
@@ -937,174 +928,6 @@ const UserDashboard = () => {
     { id: 'notifications', label: 'Notifications', icon: Bell },
     { id: 'support', label: 'Help & Support', icon: HelpCircle },
     { id: 'menu', label: 'Account', icon: User },
-  ];
-
-  const getGreeting = () => {
-    const hour = new Date().getHours();
-    if (hour < 12) return 'Good morning ☀️';
-    if (hour < 17) return 'Good afternoon 🌤️';
-    return 'Good evening 🌙';
-  };
-
-  const promoBanners = useMemo(() => [
-    {
-      id: 'bike',
-      badge: 'SMART • FAST • RELIABLE',
-      brand: 'FIXVO.',
-      headline: 'Smooth Rides. Fixed Right.',
-      sub: 'Expert bike repair & service for every ride — booked in seconds, tracked live.',
-      points: ['Expert Technicians', 'Quality Service', 'On-Time Doorstep'],
-      image: bikeBanner,
-      serviceId: 'vehicle',
-      serviceName: 'Vehicle Breakdown & Bike Repair',
-      accent: 'from-emerald-950 via-teal-950 to-emerald-900',
-      badgeColor: 'bg-emerald-400 text-slate-950'
-    },
-    {
-      id: 'ac',
-      badge: 'SUMMER CHILL GUARANTEE',
-      brand: 'FIXVO.',
-      headline: 'Beat The Heat. AC Master Service.',
-      sub: 'Deep jet pump cleaning, gas refill & PCB repairs with 30-day warranty.',
-      points: ['Deep Jet Wash', 'Genuine Gas Refill', '30-Day Guarantee'],
-      image: acBanner,
-      serviceId: 'ac_repair',
-      serviceName: 'AC Repair & Service',
-      accent: 'from-blue-950 via-cyan-950 to-sky-900',
-      badgeColor: 'bg-cyan-400 text-slate-950'
-    },
-    {
-      id: 'electrical',
-      badge: '100% SHOCK-PROOF SAFETY',
-      brand: 'FIXVO.',
-      headline: 'Certified Electricians At Doorstep.',
-      sub: 'Short-circuit fixes, smart switches, MCB tripping & appliance wiring.',
-      points: ['Licensed Experts', 'Transparent Rates', 'Instant 30-Min Visit'],
-      image: electricianBanner,
-      serviceId: 'electrical',
-      serviceName: 'Electrical & Wiring',
-      accent: 'from-amber-950 via-orange-950 to-yellow-900',
-      badgeColor: 'bg-amber-400 text-slate-950'
-    },
-    {
-      id: 'ro',
-      badge: 'PURE & HEALTHY LIVING',
-      brand: 'FIXVO.',
-      headline: 'Pure Drinking Water. RO Care.',
-      sub: 'Multi-stage RO membrane replacement, filter flush & digital TDS check.',
-      points: ['100% Genuine Filters', 'TDS Water Check', 'Doorstep Support'],
-      image: roWaterBanner,
-      serviceId: 'ro_water',
-      serviceName: 'RO Water Purifier',
-      accent: 'from-teal-950 via-emerald-950 to-teal-900',
-      badgeColor: 'bg-teal-300 text-slate-950'
-    }
-  ], []);
-
-  const [currentBannerIndex, setCurrentBannerIndex] = useState(0);
-
-  useEffect(() => {
-    const timer = setInterval(() => {
-      setCurrentBannerIndex(prev => (prev + 1) % promoBanners.length);
-    }, 4000);
-    return () => clearInterval(timer);
-  }, [promoBanners.length]);
-
-  const topTechniciansList = useMemo(() => {
-    if (technicians && technicians.length > 0) return technicians;
-    return [
-      {
-        _id: 'tech_top_1',
-        name: 'Suvankar kar',
-        category: 'plumbing',
-        profession: 'plumber',
-        rating: 4.9,
-        jobsCompleted: 142,
-        isOnline: false,
-        statusText: 'Currently offline',
-        initial: 'S'
-      },
-      {
-        _id: 'tech_top_2',
-        name: 'Jitendra Pradhan',
-        category: 'electrical',
-        profession: 'electrician',
-        rating: 5.0,
-        jobsCompleted: 188,
-        isOnline: false,
-        statusText: 'Currently offline',
-        initial: 'J'
-      },
-      {
-        _id: 'tech_top_3',
-        name: 'Rajesh Kumar',
-        category: 'vehicle',
-        profession: 'bike repair',
-        rating: 4.9,
-        jobsCompleted: 116,
-        isOnline: true,
-        statusText: 'Available now',
-        initial: 'R'
-      },
-      {
-        _id: 'tech_top_4',
-        name: 'Amit Sharma',
-        category: 'ac_repair',
-        profession: 'ac specialist',
-        rating: 4.8,
-        jobsCompleted: 94,
-        isOnline: true,
-        statusText: 'Available now',
-        initial: 'A'
-      }
-    ];
-  }, [technicians]);
-
-  const expertiseServices = [
-    { id: 'electrical', name: 'Electrician', icon: Zap, bg: 'bg-violet-100 text-violet-700' },
-    { id: 'plumbing', name: 'Plumber', icon: Wrench, bg: 'bg-sky-100 text-sky-700' },
-    { id: 'vehicle', name: 'Bike Repair', icon: Bike, bg: 'bg-rose-100 text-rose-700' },
-    { id: 'ac_repair', name: 'AC Repair', icon: Snowflake, bg: 'bg-cyan-100 text-cyan-700' },
-    { id: 'ro_water', name: 'Water Purifier', icon: Droplet, bg: 'bg-blue-100 text-blue-700' },
-    { id: 'washing_machine', name: 'Washing Mach...', icon: RefreshCw, bg: 'bg-indigo-100 text-indigo-700' },
-    { id: 'appliance', name: 'Appliance', icon: Tv, bg: 'bg-amber-100 text-amber-700' },
-    { id: 'cleaning', name: 'Home Cleaning', icon: Sparkles, bg: 'bg-emerald-100 text-emerald-700' },
-  ];
-
-  const [openFaqIndex, setOpenFaqIndex] = useState(null);
-  const toggleFaq = (idx) => {
-    setOpenFaqIndex(prev => prev === idx ? null : idx);
-  };
-
-  const faqs = [
-    {
-      q: 'What is FIXVO?',
-      a: 'FIXVO is your on-demand home service platform connecting you to verified local technicians for plumbing, electrical, bike repair, appliances and more — booked in seconds, tracked live, done right.'
-    },
-    {
-      q: 'How do I book a service?',
-      a: 'Choose your desired service, describe the problem, confirm your location, and FIXVO immediately matches you with the top-rated local technician.'
-    },
-    {
-      q: 'How quickly can a technician reach me?',
-      a: 'Technicians typically reach your doorstep in under 30 minutes for urgent repair requests, or at your selected scheduled date and time slot.'
-    },
-    {
-      q: 'Are FIXVO professionals verified?',
-      a: 'Yes, 100%. Every professional on FIXVO undergoes thorough identity checks, background verification, trade assessment, and follows standardized transparent pricing.'
-    },
-    {
-      q: 'Can I book multiple services at once?',
-      a: 'Yes! You can book multiple services for different appliances or vehicles simultaneously and monitor each order live from your Orders tab.'
-    },
-    {
-      q: 'Can I cancel a booking?',
-      a: 'Yes, you can cancel any booking before work begins with zero cancellation charges and instant status update.'
-    },
-    {
-      q: 'Can I book a service anytime?',
-      a: 'Yes, FIXVO operates 24/7 with round-the-clock emergency assistance available for electrical outages, plumbing leaks, and vehicle breakdowns.'
-    }
   ];
 
   // Helper component to render quote approval card
@@ -1567,233 +1390,171 @@ const UserDashboard = () => {
               {activeSubTab === 'overview' && (
                 <div className="space-y-6 animate-in fade-in duration-300">
                   
-                  {/* 1. App-like Forest Emerald Header & Auto-Scrolling Banner (Reference Image 3 & 4) */}
-                  <div className="bg-[#183D2D] rounded-3xl p-5 sm:p-7 text-white shadow-xl space-y-5">
-                    {/* Top Row: User Greeting, Name, Location, Notifications & Avatar */}
-                    <div className="flex items-start justify-between gap-4">
-                      <div className="space-y-1">
-                        <span className="text-emerald-300 text-xs sm:text-sm font-semibold flex items-center gap-1.5">
-                          {getGreeting()}
-                        </span>
-                        <h2 className="text-xl sm:text-2xl lg:text-3xl font-black text-white tracking-tight leading-snug">
-                          {profile?.name || authUser?.name || 'Gangireddygari Sasimanth Reddy'}
-                        </h2>
-                        <button
-                          onClick={openLocationExplanationModal}
-                          className="mt-1 inline-flex items-center gap-1.5 text-emerald-200/90 hover:text-white text-xs font-bold uppercase tracking-wider bg-emerald-900/60 hover:bg-emerald-900/90 border border-emerald-700/60 rounded-full px-3 py-1 transition-all cursor-pointer"
-                        >
-                          <MapPin size={13} className="text-emerald-400 shrink-0" />
-                          <span className="truncate max-w-[200px] sm:max-w-xs">
-                            CURRENT - {geoLocation?.area || geoLocation?.city || selectedLocation || 'Main Bazar, Chennai'}
-                          </span>
-                          <ChevronDown size={12} className="text-emerald-400 shrink-0" />
-                        </button>
-                      </div>
-
-                      <div className="flex items-center gap-2.5 shrink-0">
-                        <button
-                          onClick={() => switchTab('notifications')}
-                          className="w-11 h-11 rounded-full bg-emerald-900/60 hover:bg-emerald-900 border border-emerald-700/60 text-white flex items-center justify-center relative cursor-pointer transition-all shadow-xs"
-                          title="Notifications"
-                        >
-                          <Bell size={18} className="text-emerald-100" />
-                          <span className="absolute top-2.5 right-2.5 w-2 h-2 rounded-full bg-emerald-400 ring-2 ring-[#183D2D]"></span>
-                        </button>
-                        <button
-                          onClick={() => switchTab('menu')}
-                          className="w-11 h-11 rounded-full bg-[#A3E635] hover:bg-[#bef264] text-[#183D2D] font-black text-base flex items-center justify-center shadow-md cursor-pointer border-none transition-all"
-                          title="Account Profile"
-                        >
-                          {(profile?.name || authUser?.name || 'G')[0].toUpperCase()}
-                        </button>
-                      </div>
+                  {/* 1. Header Bar: Fixvo Brand + Location Selector Box */}
+                  <div className="flex items-center justify-between pb-1">
+                    <div>
+                      <h1 className="text-3xl sm:text-4xl font-black text-slate-900 tracking-tighter">
+                        Fixvo<span className="text-blue-600">.</span>
+                      </h1>
                     </div>
 
-                    {/* 2. Rounded Live Search Bar (Reference Image 3) */}
-                    <div className="relative">
-                      <div className="flex items-center bg-white rounded-full p-3 px-5 shadow-lg transition-all focus-within:ring-2 focus-within:ring-emerald-400">
-                        <Search size={18} className="text-slate-400 mr-3 shrink-0" />
-                        <input
-                          type="text"
-                          placeholder='Search "Electrician"'
-                          value={homeSearchQuery}
-                          onChange={(e) => setHomeSearchQuery(e.target.value)}
-                          className="w-full bg-transparent border-0 text-slate-900 text-sm font-semibold outline-none focus:ring-0 placeholder:text-slate-400"
-                        />
-                        {homeSearchQuery && (
-                          <button
-                            onClick={() => setHomeSearchQuery('')}
-                            className="p-1 text-slate-400 hover:text-slate-600 rounded-full border-none bg-transparent cursor-pointer"
-                          >
-                            <X size={14} />
-                          </button>
-                        )}
-                      </div>
-                    </div>
-
-                    {/* 3. Auto-Scrolling Image Banner Carousel (Reference Image 3) */}
-                    <div className="relative overflow-hidden rounded-3xl bg-slate-950 shadow-2xl border border-emerald-800/40">
-                      {promoBanners.map((banner, idx) => {
-                        const isActive = idx === currentBannerIndex;
-                        return (
-                          <div
-                            key={banner.id}
-                            className={`transition-all duration-700 ease-in-out ${
-                              isActive ? 'opacity-100 relative z-10 translate-x-0' : 'opacity-0 absolute inset-0 translate-x-full pointer-events-none'
-                            }`}
-                          >
-                            <div className="grid grid-cols-1 md:grid-cols-12 items-center min-h-[220px] sm:min-h-[240px]">
-                              {/* Left Text & Action */}
-                              <div className="p-6 sm:p-7 md:col-span-7 flex flex-col justify-between gap-3 text-white z-10">
-                                <div className="space-y-1.5">
-                                  <div className="flex items-center gap-2">
-                                    <span className={`text-[10px] font-black uppercase px-2.5 py-0.5 rounded-full ${banner.badgeColor}`}>
-                                      {banner.badge}
-                                    </span>
-                                    <span className="text-[11px] font-black tracking-wider text-emerald-300">{banner.brand}</span>
-                                  </div>
-                                  <h2 className="text-xl sm:text-2xl lg:text-3xl font-black text-white tracking-tight leading-tight pt-1">
-                                    {banner.headline}
-                                  </h2>
-                                  <p className="text-xs text-slate-300 font-medium leading-relaxed max-w-md">
-                                    {banner.sub}
-                                  </p>
-                                </div>
-
-                                <div className="flex flex-wrap items-center gap-2 pt-1 text-[11px] font-bold text-slate-200">
-                                  {banner.points.map((pt, pIdx) => (
-                                    <span key={pIdx} className="inline-flex items-center gap-1 bg-white/10 px-2.5 py-1 rounded-full backdrop-blur-xs">
-                                      <CheckCircle size={12} className="text-emerald-400" /> {pt}
-                                    </span>
-                                  ))}
-                                </div>
-
-                                <button
-                                  onClick={() => {
-                                    setFormData(prev => ({ ...prev, serviceId: banner.serviceId, serviceName: banner.serviceName }));
-                                    setShowForm(true);
-                                    setStep(1);
-                                  }}
-                                  className="self-start mt-2 px-5 py-2.5 bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-black text-xs uppercase tracking-wider rounded-xl shadow-lg transition-all transform hover:scale-105 active:scale-95 cursor-pointer border-none flex items-center gap-2"
-                                >
-                                  <span>{banner.cta}</span>
-                                  <ChevronRight size={14} className="stroke-[3]" />
-                                </button>
-                              </div>
-
-                              {/* Right Image Container */}
-                              <div className="md:col-span-5 h-48 md:h-full relative overflow-hidden flex items-center justify-center">
-                                <img
-                                  src={banner.image}
-                                  alt={banner.headline}
-                                  className="w-full h-full object-cover rounded-2xl md:rounded-r-3xl md:rounded-l-none"
-                                />
-                                <div className="absolute inset-0 bg-gradient-to-t md:bg-gradient-to-r from-slate-950/80 via-transparent to-transparent pointer-events-none"></div>
-                              </div>
-                            </div>
-                          </div>
-                        );
-                      })}
-
-                      {/* Carousel Indicator Dots */}
-                      <div className="absolute bottom-3 left-6 z-20 flex items-center gap-1.5">
-                        {promoBanners.map((_, dotIdx) => (
-                          <button
-                            key={dotIdx}
-                            onClick={() => setCurrentBannerIndex(dotIdx)}
-                            className={`h-1.5 rounded-full transition-all border-none cursor-pointer ${
-                              dotIdx === currentBannerIndex ? 'w-6 bg-emerald-400' : 'w-2 bg-white/40 hover:bg-white/70'
-                            }`}
-                            aria-label={`Slide ${dotIdx + 1}`}
-                          />
-                        ))}
-                      </div>
-                    </div>
-
-                    {/* 4. • TOP TECHNICIANS • Section (Reference Images 3 & 4) */}
-                    <div className="space-y-4 pt-1">
-                      <div className="text-center">
-                        <span className="inline-block bg-[#F5E6CA] text-[#183D2D] font-black text-xs uppercase tracking-widest px-6 py-1.5 rounded-full shadow-xs">
-                          • TOP TECHNICIANS •
-                        </span>
-                      </div>
-
-                      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3.5">
-                        {topTechniciansList.slice(0, 4).map((tech) => (
-                          <div
-                            key={tech._id || tech.id}
-                            className="bg-emerald-900/40 hover:bg-emerald-900/60 border border-emerald-700/60 rounded-2xl p-4 flex flex-col justify-between gap-3 text-white transition-all shadow-xs"
-                          >
-                            <div className="flex items-center gap-3">
-                              <div className="w-12 h-12 rounded-full bg-teal-800 text-emerald-200 font-black text-lg flex items-center justify-center shrink-0 border border-teal-600/50">
-                                {tech.initial || (tech.name || 'T')[0].toUpperCase()}
-                              </div>
-                              <div className="min-w-0">
-                                <h4 className="font-extrabold text-sm text-white truncate">{tech.name}</h4>
-                                <p className="text-xs text-emerald-300 font-semibold capitalize truncate">{tech.profession || tech.skills?.[0] || 'Technician'}</p>
-                                <div className="flex items-center gap-1 mt-0.5">
-                                  <span className={`w-1.5 h-1.5 rounded-full ${tech.isOnline ? 'bg-emerald-400 animate-pulse' : 'bg-slate-400'}`}></span>
-                                  <span className="text-[10px] text-emerald-200/70 font-medium">
-                                    {tech.isOnline ? 'Available now' : 'Currently offline'}
-                                  </span>
-                                </div>
-                              </div>
-                            </div>
-
-                            <button
-                              onClick={() => {
-                                setSelectedTech(tech);
-                                setFormData(prev => ({
-                                  ...prev,
-                                  serviceId: tech.category || 'electrical',
-                                  serviceName: tech.profession ? (tech.profession.charAt(0).toUpperCase() + tech.profession.slice(1)) : 'Home Repair'
-                                }));
-                                setShowForm(true);
-                                setStep(1);
-                              }}
-                              className={`w-full py-2 rounded-xl text-xs font-black uppercase tracking-wider transition-all cursor-pointer border-none flex items-center justify-center gap-1 shadow-xs ${
-                                tech.isOnline 
-                                  ? 'bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-black' 
-                                  : 'bg-emerald-950/80 hover:bg-emerald-900 text-emerald-200/90 border border-emerald-700/50'
-                              }`}
-                            >
-                              {tech.isOnline ? 'Book Now' : 'Select Pro'}
-                            </button>
-                          </div>
-                        ))}
+                    <div 
+                      onClick={openLocationExplanationModal}
+                      className="bg-white border border-slate-200 hover:border-slate-300 rounded-2xl p-2 px-3 shadow-xs flex items-center justify-between gap-3 cursor-pointer transition-all max-w-[210px] sm:max-w-xs"
+                    >
+                      <MapPin size={20} className="text-slate-900 shrink-0 fill-slate-900/10" />
+                      <div className="min-w-0 flex-1 text-left">
+                        <div className="flex items-center gap-1">
+                          <h4 className="text-xs font-black text-slate-900 truncate">
+                            {geoLocation?.area || geoLocation?.city || selectedLocation || 'Angallu'}
+                          </h4>
+                          <ChevronDown size={12} className="text-slate-400 shrink-0" />
+                        </div>
+                        <p className="text-[10px] text-slate-400 font-semibold truncate leading-none mt-0.5">
+                          {geoLocation?.city ? `${geoLocation.city}${geoLocation.state ? `- ${geoLocation.state}` : ''}` : selectedSubLocation}
+                        </p>
                       </div>
                     </div>
                   </div>
 
-                  {/* 5. OUR EXPERTISE Clean 8-Service Grid (Reference Image 4) */}
-                  <div id="our-expertise-section" className="bg-white border border-slate-200/80 rounded-3xl p-6 sm:p-8 shadow-xs space-y-6">
-                    <div className="text-center sm:text-left">
-                      <h3 className="text-lg sm:text-xl font-black text-slate-900 tracking-widest uppercase">
-                        OUR EXPERTISE
-                      </h3>
-                      <p className="text-xs text-slate-500 font-semibold mt-0.5">
-                        Verified master technicians ready for doorstep dispatch
-                      </p>
+                  {/* 2. Live Search Bar */}
+                  <div className="relative">
+                    <div className="flex items-center bg-white border border-slate-200/90 rounded-2xl p-3 px-4 shadow-xs focus-within:border-slate-400 focus-within:shadow-md transition-all">
+                      <Search size={18} className="text-slate-400 mr-3 shrink-0" />
+                      <input 
+                        type="text"
+                        placeholder="Search"
+                        value={homeSearchQuery}
+                        onChange={(e) => setHomeSearchQuery(e.target.value)}
+                        className="w-full bg-transparent border-0 text-slate-900 text-sm font-semibold outline-none focus:ring-0 placeholder:text-slate-400"
+                      />
+                      {homeSearchQuery && (
+                        <button 
+                          onClick={() => setHomeSearchQuery('')}
+                          className="p-1 text-slate-400 hover:text-slate-600 rounded-full border-none bg-transparent cursor-pointer"
+                        >
+                          <X size={14} />
+                        </button>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* 3. Hero Fixvo AI Voice & Broadcast Request Cards */}
+                  <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+                    {/* Fixvo AI Assistant Banner */}
+                    <div className="bg-gradient-to-br from-blue-600 via-indigo-600 to-blue-700 text-white rounded-3xl p-6 shadow-xl relative overflow-hidden flex flex-col justify-between gap-4">
+                      <div className="absolute -right-8 -bottom-8 w-36 h-36 bg-white/10 rounded-full blur-xl pointer-events-none"></div>
+                      <div className="space-y-1.5 z-10">
+                        <div className="flex items-center gap-2">
+                          <span className="bg-amber-400 text-slate-950 text-[10px] font-black uppercase px-2.5 py-0.5 rounded-full shadow-xs">
+                            AI Voice Booking
+                          </span>
+                          <span className="text-[11px] text-blue-200 font-bold">Telugu & English</span>
+                        </div>
+                        <h2 className="text-xl sm:text-2xl font-black text-white tracking-tight pt-1">
+                          Fixvo AI Assistant
+                        </h2>
+                        <p className="text-xs text-blue-100 font-medium leading-relaxed">
+                          Speak or type your service problem to auto-match local experts instantly.
+                        </p>
+                      </div>
+
+                      <button
+                        onClick={() => setShowAiModal(true)}
+                        className="self-start px-4 py-2.5 bg-white text-blue-700 hover:bg-blue-50 font-black text-xs rounded-2xl shadow-lg transition-all transform hover:scale-105 cursor-pointer border-none flex items-center gap-2 z-10"
+                      >
+                        <Mic size={15} className="text-blue-600 animate-pulse" />
+                        <span>Speak with AI Assistant →</span>
+                      </button>
                     </div>
 
-                    <div className="grid grid-cols-2 sm:grid-cols-4 md:grid-cols-4 lg:grid-cols-8 gap-3 sm:gap-4">
-                      {expertiseServices.map((srv) => {
+                    {/* Broadcast Request Banner Card */}
+                    <div className="bg-[#0F141C] text-white rounded-3xl p-6 shadow-xl relative overflow-hidden flex items-center justify-between gap-4">
+                      <div className="space-y-1.5 z-10">
+                        <h2 className="text-xl sm:text-2xl font-black text-white tracking-tight">
+                          Need a repair?
+                        </h2>
+                        <p className="text-xs text-slate-300 font-medium leading-relaxed max-w-[200px] sm:max-w-xs">
+                          Broadcast your request to local fixers near you manually.
+                        </p>
+                      </div>
+
+                      <button
+                        onClick={() => {
+                          setShowForm(true);
+                          setStep(1);
+                        }}
+                        className="w-12 h-12 rounded-full bg-white/15 hover:bg-white/25 text-white flex items-center justify-center transition-all transform hover:scale-105 cursor-pointer border-none shadow-md shrink-0 z-10"
+                        title="Broadcast Request"
+                      >
+                        <ChevronRight size={24} className="text-white" />
+                      </button>
+                    </div>
+                  </div>
+
+                  {/* 4. "Explore Fixvo Services" Grid (4 Columns, Fixvo Blue Theme) */}
+                  <div className="pt-2">
+                    <div className="flex justify-between items-center mb-4">
+                      <h3 className="text-xl sm:text-2xl font-black text-slate-900 tracking-tight">
+                        Explore Fixvo Services
+                      </h3>
+                      <button
+                        onClick={() => setShowAllServices(prev => !prev)}
+                        className="px-3.5 py-1.5 bg-blue-50 hover:bg-blue-100 text-blue-700 font-extrabold text-xs rounded-full border-none cursor-pointer flex items-center gap-1 transition-all"
+                      >
+                        {showAllServices ? (
+                          <>
+                            <span>Show Less</span>
+                            <ChevronUp size={14} />
+                          </>
+                        ) : (
+                          <>
+                            <span>Show More</span>
+                            <ChevronDown size={14} />
+                          </>
+                        )}
+                      </button>
+                    </div>
+
+                    {/* All Fixvo Core Services in 4-Column Grid on Mobile */}
+                    <div className="grid grid-cols-4 sm:grid-cols-4 md:grid-cols-6 lg:grid-cols-8 gap-3 sm:gap-4">
+                      {[
+                        { id: 'ac_repair', label: 'AC Repair & Service', icon: Snowflake, color: 'text-blue-600 bg-blue-50 border-blue-200' },
+                        { id: 'appliance', label: 'Appliance Repair', icon: Tv, color: 'text-indigo-600 bg-indigo-50 border-indigo-200' },
+                        { id: 'plumbing', label: 'Plumbing & Sanitary', icon: Wrench, color: 'text-cyan-600 bg-cyan-50 border-cyan-200' },
+                        { id: 'electrical', label: 'Electrical & Wiring', icon: Zap, color: 'text-amber-600 bg-amber-50 border-amber-200' },
+                        { id: 'cleaning', label: 'Deep Home Cleaning', icon: Sparkles, color: 'text-emerald-600 bg-emerald-50 border-emerald-200' },
+                        { id: 'carpentry', label: 'Carpentry & Furniture', icon: Wrench, color: 'text-amber-700 bg-amber-50 border-amber-200' },
+                        { id: 'painting', label: 'Painting & Finishing', icon: Paintbrush, color: 'text-rose-600 bg-rose-50 border-rose-200' },
+                        { id: 'ro_water', label: 'RO Water Purifier', icon: Droplet, color: 'text-sky-600 bg-sky-50 border-sky-200' },
+                        { id: 'cctv', label: 'CCTV & Security', icon: Video, color: 'text-purple-600 bg-purple-50 border-purple-200' },
+                        { id: 'vehicle', label: 'Vehicle Breakdown', icon: Truck, color: 'text-orange-600 bg-orange-50 border-orange-200' },
+                        { id: 'inverter', label: 'Inverter & Battery', icon: BatteryCharging, color: 'text-yellow-600 bg-yellow-50 border-yellow-200' },
+                        { id: 'emergency', label: '24/7 Emergency Fix', icon: PhoneCall, color: 'text-red-600 bg-red-50 border-red-200' },
+                        { id: 'geyser', label: 'Geyser & Heater', icon: Zap, color: 'text-blue-600 bg-blue-50 border-blue-200' },
+                        { id: 'pest_control', label: 'Pest Control', icon: Shield, color: 'text-emerald-600 bg-emerald-50 border-emerald-200' },
+                        { id: 'house_wash', label: 'Exterior House Wash', icon: Droplet, color: 'text-cyan-600 bg-cyan-50 border-cyan-200' },
+                        { id: 'chimney', label: 'Kitchen Chimney Fix', icon: Wind, color: 'text-slate-700 bg-slate-100 border-slate-200' },
+                      ]
+                      .filter(s => !homeSearchQuery || s.label.toLowerCase().includes(homeSearchQuery.toLowerCase()))
+                      .slice(0, (showAllServices || homeSearchQuery) ? 16 : 8)
+                      .map((srv) => {
                         const SrvIcon = srv.icon;
                         return (
                           <button
                             key={srv.id}
                             onClick={() => {
-                              setFormData(prev => ({ ...prev, serviceId: srv.id, serviceName: srv.name }));
+                              setFormData(prev => ({ ...prev, serviceId: srv.id, serviceName: srv.label }));
                               setShowForm(true);
                               setStep(1);
                             }}
-                            className="flex flex-col items-center justify-center p-3 rounded-2xl hover:bg-slate-50 border border-slate-100 hover:border-slate-300 transition-all cursor-pointer group outline-none bg-transparent"
+                            className="bg-white hover:bg-blue-50/60 border border-slate-200/80 hover:border-blue-300 rounded-3xl p-3 sm:p-4 flex flex-col items-center justify-center text-center gap-2 cursor-pointer shadow-2xs hover:shadow-md transition-all group border-none outline-none"
                           >
-                            <div className={`w-14 h-14 rounded-full flex items-center justify-center ${srv.bg} group-hover:scale-110 transition-transform shadow-xs`}>
-                              <SrvIcon size={24} className="stroke-[2.2]" />
+                            <div className={`w-12 h-12 sm:w-14 sm:h-14 rounded-2xl flex items-center justify-center border ${srv.color} group-hover:scale-105 transition-transform`}>
+                              <SrvIcon size={22} className="stroke-[2]" />
                             </div>
-                            <span className="text-xs font-black text-slate-800 group-hover:text-emerald-700 mt-2.5 text-center leading-tight">
-                              {srv.name}
+                            <span className="text-[11px] sm:text-xs font-black text-slate-900 group-hover:text-blue-600 leading-tight">
+                              {srv.label}
                             </span>
                           </button>
                         );
@@ -1839,28 +1600,12 @@ const UserDashboard = () => {
                           </div>
                           <div className="grid grid-cols-4 gap-1 relative pt-1">
                             {[
-                              { key: 'step_1', label: 'Requested' },
-                              { key: 'step_2', label: 'Tech & Quote' },
-                              { key: 'step_3', label: 'In Progress' },
-                              { key: 'step_4', label: 'Completed' }
+                              { key: 'pending', label: 'Requested' },
+                              { key: 'accepted', label: 'Assigned' },
+                              { key: 'on_the_way', label: 'En Route' },
+                              { key: 'completed', label: 'Completed' }
                             ].map((st, idx) => {
-                              const orderMap = {
-                                pending: 1,
-                                queued: 1,
-                                assigned: 1,
-                                accepted: 2,
-                                on_the_way: 2,
-                                arrived: 2,
-                                inspection_started: 2,
-                                quote_pending: 2,
-                                quote_clarification: 2,
-                                quote_rejected: 2,
-                                quote_approved: 3,
-                                in_progress: 3,
-                                completed: 4,
-                                payment_completed: 4,
-                                cash_completed: 4
-                              };
+                              const orderMap = { pending: 1, assigned: 2, accepted: 2, on_the_way: 3, arrived: 3, quote_submitted: 3, quote_approved: 3, completed: 4 };
                               const currentStep = orderMap[activeBooking.status] || 1;
                               const isActive = (idx + 1) <= currentStep;
                               const isCurrent = (idx + 1) === currentStep;
@@ -1981,49 +1726,6 @@ const UserDashboard = () => {
                       </div>
                     )}
                   </div>
-
-                  {/* 6. FAQ - Frequently Asked Questions (Reference Image 5) */}
-                  <div className="bg-white border border-slate-200/90 rounded-3xl p-6 sm:p-8 shadow-xs space-y-6">
-                    <div className="text-center space-y-1">
-                      <span className="text-teal-700 text-xs font-black tracking-widest uppercase block">
-                        FAQ
-                      </span>
-                      <h3 className="text-2xl sm:text-3xl font-black text-slate-900 tracking-tight">
-                        Frequently Asked Questions
-                      </h3>
-                      <p className="text-xs text-slate-500 font-medium">
-                        Everything you need to know about FIXVO.
-                      </p>
-                    </div>
-
-                    <div className="space-y-3 max-w-3xl mx-auto">
-                      {faqs.map((faq, fIdx) => {
-                        const isOpen = openFaqIndex === fIdx;
-                        return (
-                          <div
-                            key={fIdx}
-                            className="border border-slate-200/90 rounded-2xl overflow-hidden transition-all bg-white shadow-2xs hover:border-slate-300"
-                          >
-                            <button
-                              onClick={() => toggleFaq(fIdx)}
-                              className="w-full p-4 sm:p-5 flex items-center justify-between gap-4 text-left font-extrabold text-sm text-slate-900 bg-transparent border-none cursor-pointer"
-                            >
-                              <span>{faq.q}</span>
-                              <ChevronDown
-                                size={18}
-                                className={`text-slate-400 shrink-0 transition-transform duration-200 ${isOpen ? 'rotate-180 text-teal-700' : ''}`}
-                              />
-                            </button>
-                            {isOpen && (
-                              <div className="px-5 pb-5 pt-1 text-xs text-slate-600 font-medium leading-relaxed border-t border-slate-100 bg-slate-50/50">
-                                {faq.a}
-                              </div>
-                            )}
-                          </div>
-                        );
-                      })}
-                    </div>
-                  </div>
                 </div>
               )}
 
@@ -2140,24 +1842,32 @@ const UserDashboard = () => {
                                 <BookingTimeline booking={b} />
 
                                 {/* Quick Actions */}
-                                <div className="grid grid-cols-2 gap-2.5 pt-2 border-t border-slate-100">
+                                <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 pt-2 border-t border-slate-100">
                                   {(b.providerPhone || b.providerId?.phone) && (
                                     <a 
                                       href={`tel:${formatPhoneLink(b.providerPhone || b.providerId?.phone)}`}
-                                      className="flex items-center justify-center gap-1.5 py-2.5 rounded-xl text-xs font-black uppercase tracking-wider bg-emerald-600 text-white hover:bg-emerald-700 cursor-pointer no-underline text-center shadow-xs transition-colors"
+                                      className="flex items-center justify-center gap-1.5 py-2.5 rounded-xl text-xs font-black uppercase tracking-wider bg-emerald-600 text-white hover:bg-emerald-700 cursor-pointer no-underline text-center shadow-xs"
                                     >
                                       <PhoneCall size={14} /> Call Pro
                                     </a>
                                   )}
                                   <button 
                                     onClick={() => setChatBookingId(b._id)}
-                                    className="flex items-center justify-center gap-1.5 py-2.5 rounded-xl text-xs font-black uppercase tracking-wider bg-slate-800 text-white hover:bg-slate-900 cursor-pointer border-none outline-none relative shadow-xs transition-colors"
+                                    className="flex items-center justify-center gap-1.5 py-2.5 rounded-xl text-xs font-black uppercase tracking-wider bg-slate-800 text-white hover:bg-slate-900 cursor-pointer border-none outline-none relative shadow-xs"
                                   >
                                     <MessageSquare size={14} /> Chat
                                     {b.unreadCount > 0 && (
                                       <span className="absolute -top-1.5 -right-1.5 bg-rose-600 text-white rounded-full text-[9px] font-black w-4.5 h-4.5 flex items-center justify-center border border-white animate-pulse">{b.unreadCount}</span>
                                     )}
                                   </button>
+                                  <a
+                                    href={`https://wa.me/?text=${encodeURIComponent(`Fixvo Service Booking Update:\nService: ${b.serviceName || 'Home Repair'} (#${((b._id || b.id || '').toString()).slice(-6).toUpperCase()})\nStatus: ${(b.status || 'Pending').replace(/_/g, ' ')}\nTechnician: ${b.technicianName || 'Expert Pro'}\nLocation: ${b.location || 'Madanapalle'}`)}`}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    className="col-span-2 sm:col-span-1 flex items-center justify-center gap-1.5 py-2.5 rounded-xl text-xs font-black uppercase tracking-wider bg-emerald-50 text-emerald-700 hover:bg-emerald-100 border border-emerald-200 cursor-pointer no-underline text-center shadow-xs"
+                                  >
+                                    <Share2 size={14} className="text-emerald-600" /> WhatsApp
+                                  </a>
                                 </div>
 
                                 {!['completed', 'cancelled', 'rejected'].includes(b.status) && (
@@ -2529,66 +2239,37 @@ const UserDashboard = () => {
         )}
       </div>
 
-      {/* Floating Bottom App Navigation Dock (Reference Images 2, 3, 4, 5) */}
-      <div className="fixed bottom-3 inset-x-0 z-50 px-3 flex justify-center pointer-events-none">
-        <nav className="pointer-events-auto bg-white/95 backdrop-blur-md border border-slate-200/90 shadow-2xl rounded-full px-4 py-2 flex items-center justify-between gap-3 sm:gap-6 max-w-md w-full">
-          <button
-            onClick={() => switchTab('overview')}
-            className={`flex flex-col items-center justify-center py-1 px-2.5 rounded-full border-none bg-transparent cursor-pointer transition-all ${
-              activeSubTab === 'overview' ? 'text-teal-700 font-black' : 'text-slate-400 hover:text-slate-600 font-semibold'
-            }`}
-          >
-            <Home size={20} className={activeSubTab === 'overview' ? 'text-teal-700 stroke-[2.5]' : 'text-slate-400'} />
-            <span className="text-[10px] mt-0.5">Home</span>
-          </button>
-
-          <button
-            onClick={() => {
-              switchTab('overview');
-              setTimeout(() => {
-                document.getElementById('our-expertise-section')?.scrollIntoView({ behavior: 'smooth' });
-              }, 100);
-            }}
-            className="flex flex-col items-center justify-center py-1 px-2.5 rounded-full border-none bg-transparent cursor-pointer transition-all text-slate-400 hover:text-slate-600 font-semibold"
-          >
-            <Layers size={20} className="text-slate-400" />
-            <span className="text-[10px] mt-0.5">Services</span>
-          </button>
-
-          <button
-            onClick={() => switchTab('bookings')}
-            className={`flex flex-col items-center justify-center py-1 px-2.5 rounded-full border-none bg-transparent cursor-pointer transition-all relative ${
-              activeSubTab === 'bookings' ? 'text-teal-700 font-black' : 'text-slate-400 hover:text-slate-600 font-semibold'
-            }`}
-          >
-            <PackageSearch size={20} className={activeSubTab === 'bookings' ? 'text-teal-700 stroke-[2.5]' : 'text-slate-400'} />
-            <span className="text-[10px] mt-0.5">Orders</span>
-            {activeBooking && (
-              <span className="absolute top-0 right-2 w-2 h-2 bg-teal-600 rounded-full animate-ping"></span>
-            )}
-          </button>
-
-          <button
-            onClick={() => switchTab('menu')}
-            className={`flex flex-col items-center justify-center py-1 px-2.5 rounded-full border-none bg-transparent cursor-pointer transition-all ${
-              activeSubTab === 'menu' ? 'text-teal-700 font-black' : 'text-slate-400 hover:text-slate-600 font-semibold'
-            }`}
-          >
-            <User size={20} className={activeSubTab === 'menu' ? 'text-teal-700 stroke-[2.5]' : 'text-slate-400'} />
-            <span className="text-[10px] mt-0.5">Profile</span>
-          </button>
-
-          <button
-            onClick={() => {
-              setShowForm(true);
-              setStep(1);
-            }}
-            className="ml-auto px-4 py-2.5 bg-gradient-to-r from-teal-700 to-emerald-700 hover:from-teal-800 hover:to-emerald-800 text-white rounded-full font-black text-xs uppercase tracking-wider flex items-center gap-1.5 shadow-lg shadow-teal-700/30 border-none cursor-pointer transform hover:scale-105 active:scale-95 transition-all"
-          >
-            <span>FIX NOW</span>
-          </button>
-        </nav>
-      </div>
+      {/* Urban Company Mobile Bottom App Navigation Bar */}
+      <nav className="md:hidden fixed bottom-0 left-0 right-0 bg-white border-t border-slate-200 py-2 px-4 flex justify-around items-center z-50 shadow-lg">
+        {[
+          { id: 'overview', label: 'Home', icon: Home },
+          { id: 'bookings', label: 'Bookings', icon: Calendar },
+          { id: 'book', label: 'Book', icon: Plus, isAction: true },
+          { id: 'wallet', label: 'Wallet', icon: CreditCard },
+          { id: 'menu', label: 'Account', icon: User }
+        ].map(nav => {
+          const IconComp = nav.icon;
+          const isActive = activeSubTab === nav.id;
+          return (
+            <button
+              key={nav.id}
+              onClick={() => {
+                if (nav.isAction) {
+                  setShowForm(true);
+                } else {
+                  switchTab(nav.id);
+                }
+              }}
+              className={`flex flex-col items-center justify-center gap-1 transition-all border-none outline-none cursor-pointer bg-transparent ${
+                isActive ? 'text-blue-600 font-extrabold' : 'text-slate-400 hover:text-slate-700'
+              }`}
+            >
+              <IconComp size={20} className={isActive ? 'text-blue-600 stroke-[2.5]' : ''} />
+              <span className="text-[10px] tracking-tight">{nav.label}</span>
+            </button>
+          );
+        })}
+      </nav>
 
       {/* Modals & Overlays */}
       {chatBookingId && (
@@ -2823,7 +2504,17 @@ const UserDashboard = () => {
         ))}
       </div>
 
-
+      {/* Fixvo AI Assistant Modal */}
+      <FixvoAiAssistantModal
+        isOpen={showAiModal}
+        onClose={() => setShowAiModal(false)}
+        userProfile={profile}
+        savedAddresses={addresses}
+        onApplyDraftToForm={handleApplyDraftToForm}
+        onConfirmBooking={handleConfirmBookingFromAi}
+        onOpenChat={(bId) => setChatBookingId(bId)}
+        onOpenWallet={() => switchTab('wallet')}
+      />
 
       {/* Tech Onboarding Application Modal */}
       {showTechOnboarding && (

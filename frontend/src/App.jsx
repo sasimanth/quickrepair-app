@@ -134,9 +134,10 @@ const AppContent = () => {
 
   const [showSplash, setShowSplash] = useState(() => {
     try {
+      if (!isNative) return false;
       return !sessionStorage.getItem('fixvo_splash_shown');
     } catch {
-      return true;
+      return false;
     }
   });
 

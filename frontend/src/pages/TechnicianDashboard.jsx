@@ -627,16 +627,20 @@ const TechnicianDashboard = () => {
     showToast('Quote Sent! 📄', `Quote of ₹${finalPrice} submitted to customer for approval.`, 'success');
     
     try {
-      await api.put(`/bookings/${jobId}/quote`, {
+      const { data: updatedData } = await api.put(`/bookings/${jobId}/quote`, {
          serviceCharge: sCharge,
          sparePartsCost: pCost,
          transportCharge: tCharge,
-         quoteReason: quoteForm.quoteReason,
+         quoteReason: quoteForm.quoteReason || 'Diagnostic quote and replacement parts',
          quotePhoto: quotePhotoVal,
          detectedIssues: quoteForm.detectedIssues
       });
+      if (updatedData) {
+        setJobs(prevJobs => prevJobs.map(job => (job._id === jobId || job.id === jobId) ? { ...job, ...updatedData } : job));
+      }
     } catch (error) {
-      console.warn("Backend quote sync warning, retained optimistic quote state", error);
+      console.error("Backend quote sync error:", error);
+      showToast('Quote Sync Error ⚠️', error.response?.data?.message || 'Server sync error while saving quote.', 'error');
     } finally {
       setUpdatingJobs(prev => ({ ...prev, [jobId]: false }));
     }

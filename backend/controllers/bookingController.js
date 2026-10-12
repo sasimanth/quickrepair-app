@@ -124,7 +124,7 @@ const triggerNotifications = async (req, booking, type) => {
     }
 
     // 1. Create DB Notification and Web Push for recipient (if valid user ID)
-    if (recipientId && !recipientId.startsWith('tech-')) {
+    if (recipientId && !recipientId.startsWith('tech-') && mongoose.Types.ObjectId.isValid(recipientId)) {
       const notifType = ['accepted', 'rejected', 'on_the_way', 'arrived', 'inspection_started'].includes(type) ? 'booking' : 'system';
       const User = require('../models/User');
       const recipientUser = await User.findById(recipientId);
@@ -809,8 +809,22 @@ const submitQuote = async (req, res) => {
     const booking = await Booking.findById(req.params.id);
     if (!booking) return res.status(404).json({ message: 'Booking not found' });
     
-    if (req.user.role === 'technician' && booking.providerId !== req.user.id && !(booking.providerId?.startsWith('tech-'))) {
-       return res.status(403).json({ message: 'Not authorized for this booking assignment' });
+    // Technician ownership validation & auto-binding
+    if (req.user.role === 'technician') {
+      const techUserId = (req.user._id || req.user.id || '').toString();
+      const currentProv = (booking.providerId || '').toString();
+      if (!currentProv || currentProv.startsWith('tech-')) {
+        booking.providerId = techUserId;
+        booking.providerEmail = req.user.email;
+      } else if (currentProv !== techUserId) {
+        const Technician = require('../models/Technician');
+        const techProf = await Technician.findOne({ userId: req.user.id });
+        if (techProf && (techProf._id.toString() === currentProv || techProf.userId?.toString() === currentProv)) {
+          booking.providerId = techUserId;
+        } else {
+          return res.status(403).json({ message: 'Not authorized for this booking assignment' });
+        }
+      }
     }
 
     const sCharge = Number(serviceCharge || 0);
@@ -819,19 +833,15 @@ const submitQuote = async (req, res) => {
     const total = sCharge + pCost + tCharge;
 
     const existingRevisions = booking.quoteRevisions || [];
-    const isRevision = existingRevisions.length > 0 || booking.finalQuote !== null;
+    const isRevision = existingRevisions.length > 0 && booking.finalQuote !== null;
 
-    if (isRevision) {
-      // 1. Revision notes are mandatory
-      if (!quoteReason || !quoteReason.trim()) {
-        return res.status(400).json({ message: 'Revision reason/notes are mandatory for modifying an existing quote.' });
-      }
-
-      // 2. Maximum revision count is 3
-      if (existingRevisions.length >= 3) {
-        return res.status(400).json({ message: 'Maximum quote revision limit (3) reached. Cannot modify further.' });
-      }
+    if (isRevision && existingRevisions.length >= 3) {
+      return res.status(400).json({ message: 'Maximum quote revision limit (3) reached. Cannot modify further.' });
     }
+
+    const finalReason = (quoteReason && quoteReason.trim()) 
+      ? quoteReason.trim() 
+      : (isRevision ? 'Revised job quote scope & diagnostic findings' : 'Initial diagnostic quote');
 
     const nextVersion = existingRevisions.length + 1;
 
@@ -842,9 +852,9 @@ const submitQuote = async (req, res) => {
       sparePartsCost: pCost,
       transportCharge: tCharge,
       finalQuote: total,
-      quoteReason: quoteReason || 'Initial diagnostic quote',
-      detectedIssues,
-      quotePhoto,
+      quoteReason: finalReason,
+      detectedIssues: detectedIssues || '',
+      quotePhoto: quotePhoto || null,
       status: 'pending',
       createdAt: new Date()
     });
@@ -860,34 +870,61 @@ const submitQuote = async (req, res) => {
     booking.sparePartsCost = pCost;
     booking.transportCharge = tCharge;
     booking.finalQuote = total;
-    booking.quoteReason = quoteReason;
-    booking.detectedIssues = detectedIssues;
-    booking.quotePhoto = quotePhoto;
+    booking.quoteReason = finalReason;
+    booking.detectedIssues = detectedIssues || '';
+    booking.quotePhoto = quotePhoto || null;
     
     // Move booking back to quote_pending
     booking.status = 'quote_pending';
     booking.quoteApproved = false;
 
     const updatedBooking = await booking.save();
-    await updatedBooking.populate('serviceId', 'name price');
+    if (booking.serviceId && mongoose.Types.ObjectId.isValid(booking.serviceId)) {
+      await updatedBooking.populate('serviceId', 'name price');
+    }
+
+    const payload = typeof updatedBooking.toObject === 'function' ? updatedBooking.toObject() : { ...updatedBooking };
+
+    // Explicit real-time broadcast so user dashboard and rooms receive it immediately
+    const io = global.io || (req && req.app ? req.app.get('io') : null);
+    if (io) {
+      io.emit('job_update', payload);
+      io.emit('quote_updated', payload);
+      if (booking.userId) {
+        io.to(`user_${booking.userId}`).emit('job_update', payload);
+        io.to(`user_${booking.userId}`).emit('quote_updated', payload);
+      }
+      io.to(`booking_${booking._id}`).emit('job_update', payload);
+      io.to(`track_booking_${booking._id}`).emit('job_update', payload);
+      io.to(`chat_${booking._id}`).emit('job_update', payload);
+    }
     
-    notifyUser({
-      userId: booking.userId,
-      email: booking.userEmail,
-      type: 'both',
-      subject: isRevision ? `Quote Updated – Please Review` : 'Action Required: Approve Final Quote',
-      text: isRevision 
-        ? `Your technician updated the quote to ₹${total} (Reason: ${quoteReason}). Please review and approve.`
-        : `Your technician has diagnosed the issue and provided a final quote of ₹${total}. Please review and approve in the app.`,
-      notifType: 'booking',
-      bookingId: booking._id.toString()
-    });
+    try {
+      notifyUser({
+        userId: booking.userId,
+        email: booking.userEmail,
+        type: 'both',
+        subject: isRevision ? `Quote Updated – Please Review` : 'Action Required: Approve Final Quote',
+        text: isRevision 
+          ? `Your technician updated the quote to ₹${total} (Reason: ${finalReason}). Please review and approve.`
+          : `Your technician has diagnosed the issue and provided a final quote of ₹${total}. Please review and approve in the app.`,
+        notifType: 'booking',
+        bookingId: booking._id.toString()
+      });
+    } catch (notifErr) {
+      console.warn('Quote notification dispatch suppressed error:', notifErr.message);
+    }
 
     // Call Automated Notification System
-    await triggerNotifications(req, updatedBooking, 'quote_pending');
+    try {
+      await triggerNotifications(req, updatedBooking, 'quote_pending');
+    } catch (trigErr) {
+      console.warn('Trigger notifications warning:', trigErr.message);
+    }
 
     res.json(updatedBooking);
   } catch (error) {
+    console.error('Submit quote error:', error);
     res.status(400).json({ message: error.message });
   }
 };
